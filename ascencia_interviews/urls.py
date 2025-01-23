@@ -16,9 +16,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from adminpanel.views import *
+from adminpanel.views.auth_view import login_view, register_view, logout_view, index
+from adminpanel.views.institute_view import institute_list, institute_add, institute_update, institute_delete
 
 urlpatterns = [
     path("index/", index),
     path("admin/", admin.site.urls),
+    path('login/', login_view, name='login'),
+    path('register/', register_view, name='register'),
+    path('logout/', logout_view, name='logout'),
+    path('institute/', institute_list, name='institute_list'),
+    path('institute/add', institute_add, name='institute_add'),
+    path("institute/update/<id>/", institute_update, name="institute_update"),
+    path("institute/delete/<id>/", institute_delete, name="institute_delete"),
 ]

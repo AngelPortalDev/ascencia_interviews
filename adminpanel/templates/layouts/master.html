@@ -11,6 +11,16 @@
 {% include "layouts/head.html" %}
 
   <body>
+    {% if messages %}
+      <div class="alert-container">
+          {% for message in messages %}
+              <div class="alert alert-{{ message.tags }}">
+                  <span class="alert-message">{{ message }}</span>
+                  <span class="alert-close" onclick="closeAlert(this)">×</span>
+              </div>
+          {% endfor %}
+      </div>
+    {% endif %}
     <!-- Layout wrapper -->
     <div class="layout-wrapper layout-content-navbar">
       <div class="layout-container">
