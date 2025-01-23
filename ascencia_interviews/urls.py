@@ -36,4 +36,9 @@ urlpatterns = [
     # courses
     path('courses/', courses, name='courses'),
     path('course/add', course_add, name='course_add'),
+    
+    # Dashboards
+    path("dashboard/",userdashboard),
+    path("admindashboard/",admindashboard)
+    
 ]
