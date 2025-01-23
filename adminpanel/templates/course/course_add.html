@@ -1,0 +1,36 @@
+{% extends "layouts/master.html" %} 
+{% block content %} 
+{% load static %}
+  <!-- Content wrapper -->
+  <div class="content-wrapper">
+    <!-- Content -->
+    <div class="container-xxl flex-grow-1 container-p-y">
+      <div class="card mb-6">
+        <h5 class="card-header">Course Add</h5>
+        <hr>
+        <form class="card-body" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row g-6">
+                <div class="col-md-6">
+                  <label class="form-label" for="course_name">Institute</label>
+                  <select id="institute_id" class="form-select">
+                    <option value="" disabled selected>Select Institute</option>
+                    {% for institute in institutes %}
+                      <option value="{{ institute.institute_id }}">test</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="course_name">Course Name</label>
+                  <input type="text" id="course_name" name="course_name" class="form-control" placeholder="Course Name">
+                </div>
+            </div>
+            <div class="pt-6">
+                <button type="submit" class="btn btn-primary mt-3">Submit</button>
+            </div>
+        </form>
+      </div>
+
+    </div>
+
+{% endblock %}
