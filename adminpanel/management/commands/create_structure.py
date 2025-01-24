@@ -20,6 +20,7 @@ class Command(BaseCommand):
             os.path.join(app_dir, 'models', 'institute.py'),
             os.path.join(app_dir, 'models', 'course.py'),
             os.path.join(app_dir, 'models', 'question.py'),
+            os.path.join(app_dir, 'models', 'common_question.py'),
 
 
             # views

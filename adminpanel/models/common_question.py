@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
-from adminpanel.models.institute import Institute  
 
 
 class ActiveManager(models.Manager):
@@ -10,13 +9,9 @@ class ActiveManager(models.Manager):
         return super().get_queryset().filter(deleted_at__isnull=True)
 
 
-class Course(models.Model):
-    course_name = models.CharField(max_length=255)
-    institute_id = models.ForeignKey(
-        Institute, 
-        on_delete=models.CASCADE, 
-        related_name='courses'
-    )
+class CommonQuestion(models.Model):
+    question = models.TextField()
+    answer = models.TextField(blank=True, null=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -24,29 +19,28 @@ class Course(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['institute_id']),
+            models.Index(fields=['id']),
         ]
-        verbose_name = "Course"
-        verbose_name_plural = "Courses"
+        verbose_name = "CommonQuestion"
+        verbose_name_plural = "CommonQuestion"
 
     def soft_delete(self):
-        """Soft delete the course by setting the deleted_at field."""
+        """Soft delete the question by setting the deleted_at field."""
         self.deleted_at = timezone.now()
         self.save()
 
     def restore(self):
-        """Restore the course by clearing the deleted_at field."""
+        """Restore the question by clearing the deleted_at field."""
         self.deleted_at = None
         self.save()
 
     @property
     def is_deleted(self):
-        """Check if the course is soft deleted."""
-
+        """Check if the question is soft deleted."""
         return self.deleted_at is not None
 
     def __str__(self):
-        return self.course_name
+        return self.question
 
     # Managers
     objects = models.Manager()  # Default manager for all records

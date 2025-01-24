@@ -89,6 +89,27 @@
                 <div data-i18n="Basic">Course</div>
               </a>
             </li>
+            <!-- Question -->
+            <li class="menu-item {% if '/question' in request.path or '/common_question' in request.path %}active open{% endif %}">
+              <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon bx bx-help-circle" aria-hidden="true"></i>
+                <div data-i18n="Form Elements">Questions</div>
+              </a>
+              <ul class="menu-sub">
+                <li class="menu-item {% if '/common_question' in request.path %}active{% endif %}">
+                  <a href="{% url 'common_questions' %}" class="menu-link">
+                    <div data-i18n="Basic Inputs">Common Question</div>
+                  </a>
+                </li>
+                <li class="menu-item {% if '/question' in request.path %}active{% endif %}">
+                  <a href="{% url 'questions' %}" class="menu-link">
+                    <div data-i18n="Basic Inputs">Customize Question</div>
+                  </a>
+                </li>
+              </ul>
+            </li>
+            
+
 
           </ul>
         </aside>

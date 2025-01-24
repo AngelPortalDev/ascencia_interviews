@@ -109,14 +109,14 @@ def course_update(request, id):
             result = save_data(Course, data, where={'id': id})
 
             if result['status']:
-                messages.success(request, "Institute updated successfully!")
+                messages.success(request, "Course updated successfully!")
                 return redirect('courses')
             else:
                 messages.error(request, result.get('error', "Failed to update the course."))
                 return render(request, 'course/course_update.html', {'course': course, 'institutes': institutes })
 
         except Exception as e:
-            messages.error(request, f"An error occurred while updating the institute: {e}")
+            messages.error(request, f"An error occurred while updating the course: {e}")
             return render(request, 'course/course_update.html', {'course': course, 'institutes': institutes })
 
     return render(request, 'course/course_update.html', {'course': course, 'institutes': institutes })
