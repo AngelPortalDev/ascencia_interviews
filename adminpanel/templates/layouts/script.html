@@ -21,6 +21,10 @@
     <script async defer src="https://buttons.github.io/buttons.js' %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js"></script>
+    
     
     <!-- Main JS -->
     <script src="{% static 'js/common.js' %}"></script>
@@ -32,6 +36,15 @@
                     alert.fadeOut(); // Hide the alert after 5 seconds with fadeOut effect
                 }, 3000); // 5000 milliseconds = 5 seconds
             });
+
+            if (!$.fn.DataTable.isDataTable('#DataTables_Table_0')) {
+                $('#DataTables_Table_0').DataTable({
+                    // responsive: true,
+                    // paging: true,
+                    searching: true,
+                    ordering: true
+                });
+            }
         });
 
     </script>

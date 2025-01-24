@@ -1,0 +1,37 @@
+{% extends "layouts/master.html" %} 
+{% block content %} 
+{% load static %}
+  <!-- Content wrapper -->
+  <div class="content-wrapper">
+    <!-- Content -->
+    <div class="container-xxl flex-grow-1 container-p-y">
+      <div class="card mb-6">
+        <h5 class="card-header">Common Question Update</h5>
+        <hr>
+        <form class="card-body" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row g-6">
+              <div class="col-md-12">
+                <label class="form-label" for="question">Question</label>
+                <input type="text" id="question" name="question" value="{{question.question}}" class="form-control" placeholder="Question">
+                {% if errors.question %}
+                    <small class="text-danger">{{ errors.question }}</small>
+                {% endif %}
+              </div>
+              <div class="col-md-12 mt-3">
+                <label class="form-label" for="answer">Question</label>
+                <textarea id="answer" name="answer" class="form-control" placeholder="Answer">{{ answer.answer }}</textarea>
+                {% if errors.answer %}
+                    <small class="text-danger">{{ errors.answer }}</small>
+                {% endif %}
+              </div>
+            </div>
+            <div class="pt-6">
+                <button type="submit" class="btn btn-primary mt-3">Submit</button>
+            </div>
+        </form>
+      </div>
+
+    </div>
+
+{% endblock %}

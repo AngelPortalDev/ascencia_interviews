@@ -1,0 +1,54 @@
+{%  extends "layouts/master.html"  %}
+
+{% block content %}
+
+
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow-lg border-0">
+        <div class="card-body text-center">
+          <div class="position-relative">
+            <img src="https://img.freepik.com/premium-vector/vector-flat-illustration-black-color-suitable-social-media-profiles-icons-screensavers-as-template-avatar-user-profile-person-icon-profile-picturex9_719432-1588.jpg?semt=ais_incoming" id="profileImage" class="img-fluid rounded-circle mb-3" style="width: 150px; height: 150px; border: 2px solid #6c757d;">
+            <label for="profileImageInput">
+              <i class='bx bxs-pencil fs-3 position-absolute' style="top:5px;left:110px;background:#ffffff; cursor:pointer; border-radius:50%; padding:5px;"></i>
+              <input type="file" id="profileImageInput" accept="image/*" style="display: none;">
+            </label>
+          </div>
+          <h3 class="card-title mt-4 mb-3">John Doe</h3>
+          <div class="text-left w-75 mx-auto">
+            <div class="mb-2">
+              <label class="font-weight-bold">Email:</label>
+              <p>abc@gmail.com</p>
+            </div>
+            <div class="mb-2">
+              <label class="font-weight-bold">Phone No:</label>
+              <p>+91-9899943124</p>
+            </div>
+            <div class="mb-2">
+              <label class="font-weight-bold">Student Id:</label>
+              <p>BCC12110</p>
+            </div>
+          </div>
+          <hr>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  $(document).ready(function() {
+    $("#profileImageInput").change(function() {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        $("#profileImage").attr("src", e.target.result);
+      };
+      reader.readAsDataURL(this.files[0]);
+    });
+  });
+</script>
+{% endblock %}
+
+
+

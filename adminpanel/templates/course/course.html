@@ -12,7 +12,7 @@
             <div class="row card-header flex-column flex-md-row pb-0">
               <div class="d-md-flex justify-content-between align-items-center dt-layout-start col-md-auto me-auto mt-0">
                 <h5 class="card-title mb-0 text-md-start text-center">
-                  Institute Table
+                  Course Table
                 </h5>
               </div>
               <div class="d-md-flex justify-content-between align-items-center dt-layout-end col-md-auto ms-auto mt-0">
@@ -25,10 +25,10 @@
                           <span class="d-none d-sm-inline-block">Export</span></span></span>
                     </button>
                   </div> -->
-                  <a href="{% url 'institute_add' %}" class="btn create-new btn-primary" tabindex="0" aria-controls="DataTables_Table_0" type="button"
+                  <a href="{% url 'course_add' %}" class="btn create-new btn-primary" tabindex="0" aria-controls="DataTables_Table_0" type="button"
                     fdprocessedid="gbgsua">
                     <span><span class="d-flex align-items-center gap-2"><i class="icon-base bx bx-plus icon-sm"></i>
-                        <span class="d-none d-sm-inline-block">Add Institute</span></span></span>
+                        <span class="d-none d-sm-inline-block">Add Course</span></span></span>
                     </a>
                 </div>
               </div>
@@ -65,7 +65,7 @@
                         </th>
                         <th data-dt-column="4" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc"
                           aria-label="Email: Activate to sort" tabindex="0">
-                          <span class="dt-column-title" role="button">Institute Id</span><span class="dt-column-order"></span>
+                          <span class="dt-column-title" role="button">Course Name</span><span class="dt-column-order"></span>
                         </th>
                         <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc"
                           aria-label="Name: Activate to sort" tabindex="0">
@@ -78,16 +78,17 @@
                       </tr>
                   </thead>
                   <tbody>
-                      {% for institute in institutes %}
+                      {% for course in courses %}
                         <tr>
                           <td class="dt-select">
                             <input aria-label="Select row" class="form-check-input" type="checkbox" />
                           </td>
-                          <td>{{institute.institute_id}}</td>
-                          <td>{{institute.institute_name}}</td>
+                          <td>{{course.course_name}}</td>
+                          <td>{{course.institute_id}}</td>
                           <td class="d-flex align-items-center">
-                              <a href="{% url 'institute_update' id=institute.encoded_id %}" class="btn btn-icon item-edit"><i class="icon-base bx bx-edit icon-sm"></i></a>
-                                <a href="javascript:void(0);" onclick="confirmDelete('{{ institute.encoded_id }}', '/adminpanel/institute/delete/')" class="btn btn-icon item-trash">
+                              <a href="{% url 'course_update' id=course.encoded_id %}" class="btn btn-icon item-edit"><i
+                                class="icon-base bx bx-edit icon-sm"></i></a>
+                                <a href="javascript:void(0);" onclick="confirmDelete('{{ course.encoded_id }}', '/adminpanel/course/delete/')" class="btn btn-icon item-trash">
                                     <i class="icon-base bx bx-trash icon-sm"></i>
                                 </a>
                               
