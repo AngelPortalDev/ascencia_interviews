@@ -12,7 +12,7 @@ def index(request):
 def login_view(request):
     # If the user is already authenticated, redirect to the index page
     if request.user.is_authenticated:
-        return redirect('/index')
+        return redirect('/admindashboard')
 
     # If the request method is POST, authenticate the user
     if request.method == 'POST':
@@ -29,7 +29,7 @@ def login_view(request):
         # If user is authenticated, log them in
         if user is not None:
             login(request, user)
-            return redirect('/index')  # Redirect to the index page
+            return redirect('/admindashboard')  # Redirect to the index page
         else:
             messages.error(request, 'Invalid email or password.')
             return redirect('login') 
@@ -38,7 +38,7 @@ def login_view(request):
 
 def register_view(request):
     if request.user.is_authenticated:
-        return redirect('/index')
+        return redirect('/admindashboard')
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')

@@ -15,10 +15,11 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from adminpanel.views.auth_view import login_view, register_view, logout_view, index
 from adminpanel.views.institute_view import institute_list, institute_add, institute_update, institute_delete
-from adminpanel.views.course_view import courses, course_add
+from adminpanel.views.course_view import courses, course_add, course_update, course_delete
+from adminpanel.views.dashboard_view import admindashboard
 
 urlpatterns = [
     path("index/", index),
@@ -27,18 +28,22 @@ urlpatterns = [
     path('register/', register_view, name='register'),
     path('logout/', logout_view, name='logout'),
 
-    # institute
-    path('institute/', institute_list, name='institute_list'),
-    path('institute/add', institute_add, name='institute_add'),
-    path("institute/update/<id>/", institute_update, name="institute_update"),
-    path("institute/delete/<id>/", institute_delete, name="institute_delete"),
+    path('adminpanel/', include([
+        # institute
+        path('institute/', institute_list, name='institute_list'),
+        path('institute/add', institute_add, name='institute_add'),
+        path("institute/update/<id>/", institute_update, name="institute_update"),
+        path("institute/delete/<id>/", institute_delete, name="institute_delete"),
 
-    # courses
-    path('courses/', courses, name='courses'),
-    path('course/add', course_add, name='course_add'),
-    
-    # Dashboards
-    path("dashboard/",userdashboard),
-    path("admindashboard/",admindashboard)
+        # courses
+        path('courses/', courses, name='courses'),
+        path('course/add', course_add, name='course_add'),
+        path("course/update/<id>/", course_update, name="course_update"),
+        path("course/delete/<id>/", course_delete, name="course_delete"),
+        
+        # Dashboards
+        # path("dashboard/",userdashboard),
+        path("admindashboard/", admindashboard, name='admindashboard')
+    ])),
     
 ]

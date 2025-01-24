@@ -13,7 +13,7 @@ from django.utils import timezone
 @login_required
 def courses(request):
     try:
-        courses = Course.objects.filter(deleted_at__isnull=True)
+        courses = Course.active_objects.all()
         course_data = [
             {
                 'course_name': course.course_name,
@@ -27,23 +27,30 @@ def courses(request):
 
     except Exception as e:
         messages.error(request, f"An error occurred while fetching the courses: {e}")
-        return redirect('index') 
+        return redirect('admindashboard') 
 
 @login_required
 def course_add(request):
+
+    institutes = Institute.objects.filter(deleted_at__isnull=True)
+    errors = {}
     if request.method == 'POST':
         data = request.POST
         course_name = data.get('course_name')
         institute_id = data.get('institute_id')
 
-        if not course_name or not institute_id:
-            messages.error(request, "Both Course Name and Institute ID are required.")
-            return render(request, 'course/course_add.html')
+        if not course_name:
+            errors['course_name'] = "Course Name is required."
+        if not institute_id:
+            errors['institute_id'] = "Institute is required."
 
+        if errors:
+            return render(request, 'course/course_add.html', {'institutes': institutes, 'errors': errors})
         try:
+            institute = Institute.objects.get(id=institute_id)
             data_to_save = {
                 'course_name': course_name,
-                'institute_id': institute_id,
+                'institute_id': institute,
             }
 
             result = save_data(Course, data_to_save)
@@ -53,87 +60,87 @@ def course_add(request):
                 return redirect('courses')
             else:
                 messages.error(request, "Failed to save the course. Please try again.")
-                return render(request, 'course/course_add.html')
+                return render(request, 'course/course_add.html', {'institutes': institutes})
 
         except IntegrityError as e:
             messages.error(request, "A database error occurred. Please try again later.")
-            return render(request, 'course/course_add.html')
+            return render(request, 'course/course_add.html', {'institutes': institutes})
 
         except Exception as e:
             messages.error(request, f"An error occurred: {e}")
-            return render(request, 'course/course_add.html')
+            return render(request, 'course/course_add.html', {'institutes': institutes})
 
+
+    
+    return render(request, 'course/course_add.html', {'institutes': institutes})
+
+
+@login_required
+def course_update(request, id):
+    id = base64_decode(id)
 
     institutes = Institute.objects.filter(deleted_at__isnull=True)
-    institute_data = [
-        {
-            'institute_name': institute.institute_name,
-            'institute_id': institute.id
-        }
-        for institute in institutes
-    ]
-    
-    return render(request, 'course/course_add.html', {'institutes': institute_data})
+    errors = {}
+
+    if not id:
+        return HttpResponse("Invalid ID", status=400)
+
+    course = get_object_or_404(Course, id=id)
+
+    if request.method == 'POST':
+        course_name = request.POST.get('course_name')
+        institute_id = request.POST.get('institute_id')
+
+        if not course_name:
+            errors['course_name'] = "Course Name is required."
+        if not institute_id:
+            errors['institute_id'] = "Institute is required."
+
+        if errors:
+            return render(request, 'course/course_update.html', {'course': course, 'institutes': institutes, 'errors': errors})
+
+        try:
+            institute = Institute.objects.get(id=institute_id)
+            data = {
+                'course_name': course_name,
+                'institute_id': institute,
+            }
+
+            result = save_data(Course, data, where={'id': id})
+
+            if result['status']:
+                messages.success(request, "Institute updated successfully!")
+                return redirect('courses')
+            else:
+                messages.error(request, result.get('error', "Failed to update the course."))
+                return render(request, 'course/course_update.html', {'course': course, 'institutes': institutes })
+
+        except Exception as e:
+            messages.error(request, f"An error occurred while updating the institute: {e}")
+            return render(request, 'course/course_update.html', {'course': course, 'institutes': institutes })
+
+    return render(request, 'course/course_update.html', {'course': course, 'institutes': institutes })
 
 
-# @login_required
-# def institute_update(request, id):
-#     id = base64_decode(id)
-
-#     if not id:
-#         return HttpResponse("Invalid or tampered ID", status=400)
-
-#     institute = get_object_or_404(Institute, id=id)
-
-#     if request.method == 'POST':
-#         institute_name = request.POST.get('institute_name')
-#         institute_id = request.POST.get('institute_id')
-
-#         if not institute_name or not institute_id:
-#             messages.error(request, "Both Institute Name and Institute ID are required.")
-#             return render(request, 'institute/institute_update.html', {'institute': institute})
-
-#         try:
-#             data = {
-#                 'institute_name': institute_name,
-#                 'institute_id': institute_id,
-#             }
-
-#             result = save_data(Institute, data, where={'id': id})
-
-#             if result['status']:
-#                 messages.success(request, "Institute updated successfully!")
-#                 return redirect('courses')
-#             else:
-#                 messages.error(request, result.get('error', "Failed to update the institute."))
-#                 return render(request, 'institute/institute_update.html', {'institute': institute})
-
-#         except Exception as e:
-#             messages.error(request, f"An error occurred while updating the institute: {e}")
-#             return render(request, 'institute/institute_update.html', {'institute': institute})
-
-#     return render(request, 'institute/institute_update.html', {'institute': institute})
-
-
-# @login_required
-# def institute_delete(request, id):
+@login_required
+def course_delete(request, id):
     id = base64_decode(id)
 
     if not id:
         return HttpResponse("Invalid or tampered ID", status=400)
 
     try:
-        institute = get_object_or_404(Institute, id=id)
+        course = get_object_or_404(Course, id=id)
 
-        if institute.deleted_at is not None:
-            messages.warning(request, "Institute is already soft deleted.")
+        if course.deleted_at is not None:
+            messages.warning(request, "Course is already soft deleted.")
         else:
             # Perform the soft delete
-            institute.deleted_at = timezone.now()
-            institute.save()
-            messages.success(request, "Institute deleted successfully!")
+            course.deleted_at = timezone.now()
+            course.soft_delete()
+            messages.success(request, "Course deleted successfully!")
 
     except Exception as e:
-        messages.error(request, f"An error occurred while deleting the institute: {e}")
+        messages.error(request, f"An error occurred while deleting the course: {e}")
 
     return redirect('courses')

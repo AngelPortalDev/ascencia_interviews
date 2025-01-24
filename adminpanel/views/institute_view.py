@@ -7,6 +7,8 @@ from adminpanel.models.institute import Institute
 from adminpanel.helpers import save_data, base64_encode, base64_decode
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 
 
 @login_required
@@ -31,14 +33,18 @@ def institute_list(request):
 @login_required
 def institute_add(request):
     if request.method == 'POST':
+        errors = {}
         data = request.POST
         institute_name = data.get('institute_name')
         institute_id = data.get('institute_id')
 
-        if not institute_name or not institute_id:
-            messages.error(request, "Both Institute Name and Institute ID are required.")
-            return render(request, 'institute/institute_add.html')
+        if not institute_name:
+            errors['institute_name'] = "Institute Name is required."
+        if not institute_id:
+            errors['institute_id'] = "Institute id is required."
 
+        if errors:
+            return render(request, 'institute/institute_add.html', {'errors': errors})
         try:
             data_to_save = {
                 'institute_name': institute_name,
@@ -75,12 +81,18 @@ def institute_update(request, id):
     institute = get_object_or_404(Institute, id=id)
 
     if request.method == 'POST':
+        errors = {}
         institute_name = request.POST.get('institute_name')
         institute_id = request.POST.get('institute_id')
 
-        if not institute_name or not institute_id:
-            messages.error(request, "Both Institute Name and Institute ID are required.")
-            return render(request, 'institute/institute_update.html', {'institute': institute})
+        
+        if not institute_name:
+            errors['institute_name'] = "Institute Name is required."
+        if not institute_id:
+            errors['institute_id'] = "Institute id is required."
+
+        if errors:
+            return render(request, 'institute/institute_update.html', {'errors': errors})
 
         try:
             data = {
@@ -119,7 +131,7 @@ def institute_delete(request, id):
         else:
             # Perform the soft delete
             institute.deleted_at = timezone.now()
-            institute.save()
+            institute.soft_delete()
             messages.success(request, "Institute deleted successfully!")
 
     except Exception as e:

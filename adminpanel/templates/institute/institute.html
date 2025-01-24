@@ -25,7 +25,7 @@
                           <span class="d-none d-sm-inline-block">Export</span></span></span>
                     </button>
                   </div> -->
-                  <a href="/institute/add" class="btn create-new btn-primary" tabindex="0" aria-controls="DataTables_Table_0" type="button"
+                  <a href="{% url 'institute_add' %}" class="btn create-new btn-primary" tabindex="0" aria-controls="DataTables_Table_0" type="button"
                     fdprocessedid="gbgsua">
                     <span><span class="d-flex align-items-center gap-2"><i class="icon-base bx bx-plus icon-sm"></i>
                         <span class="d-none d-sm-inline-block">Add Institute</span></span></span>
@@ -86,8 +86,7 @@
                           <td>{{institute.institute_id}}</td>
                           <td>{{institute.institute_name}}</td>
                           <td class="d-flex align-items-center">
-                              <a href="/institute/update/{{ institute.encoded_id }}" class="btn btn-icon item-edit"><i
-                                class="icon-base bx bx-edit icon-sm"></i></a>
+                              <a href="{% url 'institute_update' id=institute.encoded_id %}" class="btn btn-icon item-edit"><i class="icon-base bx bx-edit icon-sm"></i></a>
                                 <a href="javascript:void(0);" onclick="confirmDelete('{{ institute.encoded_id }}', '/institute/delete/')" class="btn btn-icon item-trash">
                                     <i class="icon-base bx bx-trash icon-sm"></i>
                                 </a>

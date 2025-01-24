@@ -2,9 +2,10 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 
+
 class Institute(models.Model):
-    institute_name = models.CharField(max_length=255)
-    institute_id = models.CharField(max_length=255, unique=True)
+    institute_name = models.CharField(max_length=255, blank=False)
+    institute_id = models.CharField(max_length=255, unique=True, blank=False)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -19,11 +20,13 @@ class Institute(models.Model):
         """Soft delete the institute by setting the deleted_at field."""
         self.deleted_at = timezone.now()
         self.save()
+        self.courses.update(deleted_at=timezone.now())
 
     def restore(self):
         """Restore the institute by clearing the deleted_at field."""
         self.deleted_at = None
         self.save()
+        self.courses.update(deleted_at=None)
 
     @property
     def is_deleted(self):

@@ -69,22 +69,22 @@
 
           <ul class="menu-inner py-1">
             <!-- Dashboard -->
-            <li class="menu-item active">
-              <a href="/index" class="menu-link">
+            <li class="menu-item  {% if '/admindashboard' in request.path %}active{% endif %}">
+              <a href="{% url 'admindashboard' %}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-home-circle"></i>
                 <div data-i18n="Analytics">Dashboard</div>
               </a>
             </li>
             <!-- Institute -->
-            <li class="menu-item">
-              <a href="/institute" class="menu-link">
+            <li class="menu-item {% if '/institute' in request.path %}active{% endif %}">
+              <a href="{% url 'institute_list' %}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-building"></i>
                 <div data-i18n="Basic">Institute</div>
               </a>
             </li>
             <!-- Course -->
-            <li class="menu-item">
-              <a href="/courses" class="menu-link">
+            <li class="menu-item {% if '/course' in request.path %}active{% endif %}">
+              <a href="{% url 'courses' %}" class="menu-link">
                 <i class="menu-icon bx bx-book" aria-hidden="true"></i>
                 <div data-i18n="Basic">Course</div>
               </a>

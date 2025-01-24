@@ -25,7 +25,7 @@
                           <span class="d-none d-sm-inline-block">Export</span></span></span>
                     </button>
                   </div> -->
-                  <a href="/course/add" class="btn create-new btn-primary" tabindex="0" aria-controls="DataTables_Table_0" type="button"
+                  <a href="{% url 'course_add' %}" class="btn create-new btn-primary" tabindex="0" aria-controls="DataTables_Table_0" type="button"
                     fdprocessedid="gbgsua">
                     <span><span class="d-flex align-items-center gap-2"><i class="icon-base bx bx-plus icon-sm"></i>
                         <span class="d-none d-sm-inline-block">Add Course</span></span></span>
@@ -86,9 +86,9 @@
                           <td>{{course.course_name}}</td>
                           <td>{{course.institute_id}}</td>
                           <td class="d-flex align-items-center">
-                              <a href="/course/update/{{ course.encoded_id }}" class="btn btn-icon item-edit"><i
+                              <a href="{% url 'course_update' id=course.encoded_id %}" class="btn btn-icon item-edit"><i
                                 class="icon-base bx bx-edit icon-sm"></i></a>
-                                <a href="javascript:void(0);" onclick="confirmDelete('{{ course.encoded_id }}', '/course/delete/')" class="btn btn-icon item-trash">
+                                <a href="javascript:void(0);" onclick="confirmDelete('{{ course.encoded_id }}', '/adminpanel/course/delete/')" class="btn btn-icon item-trash">
                                     <i class="icon-base bx bx-trash icon-sm"></i>
                                 </a>
                               
