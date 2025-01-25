@@ -1,14 +1,5 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.db import IntegrityError, transaction
-from django.http import HttpResponse
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from adminpanel.models.course import Course
-from adminpanel.models.institute import Institute
-from adminpanel.helpers import save_data, base64_encode, base64_decode
-from django.core.exceptions import ValidationError
-from django.utils import timezone
 
+from adminpanel.common_imports import *
 
 def courses(request):
     try:
