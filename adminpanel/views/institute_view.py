@@ -27,7 +27,7 @@ def institute_list(request):
 
     except Exception as e:
         messages.error(request, f"An error occurred while fetching the institutes: {e}")
-        return redirect('dashboard')  # Redirect to a safe page if needed
+        return redirect('admindashboard')  # Redirect to a safe page if needed
 
 
 @login_required
