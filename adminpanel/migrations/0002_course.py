@@ -14,20 +14,47 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Course',
+            name="Course",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('course_name', models.CharField(max_length=255)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('deleted_at', models.DateTimeField(blank=True, null=True)),
-                ('created_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
-                ('institute_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='courses', to='adminpanel.institute')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("course_names", models.CharField(max_length=255)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("deleted_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "institute_id",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="courses",
+                        to="adminpanel.institute",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Course',
-                'verbose_name_plural': 'Courses',
-                'indexes': [models.Index(fields=['institute_id'], name='adminpanel__institu_996c08_idx')],
+                "verbose_name": "Course",
+                "verbose_name_plural": "Courses",
+                "indexes": [
+                    models.Index(
+                        fields=["institute_id"], name="adminpanel__institu_996c08_idx"
+                    )
+                ],
             },
         ),
     ]
