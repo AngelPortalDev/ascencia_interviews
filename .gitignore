@@ -1,0 +1,13 @@
+
+# Environment Files
+.env
+env/
+
+# Virtual Environment
+venv/
+env/
+.venv/
+
+# Django
+db.sqlite3
+media/
