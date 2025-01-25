@@ -10,7 +10,6 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 
-@login_required
 def courses(request):
     try:
         courses = Course.active_objects.all()
@@ -29,7 +28,6 @@ def courses(request):
         messages.error(request, f"An error occurred while fetching the courses: {e}")
         return redirect('admindashboard') 
 
-@login_required
 def course_add(request):
 
     institutes = Institute.objects.filter(deleted_at__isnull=True)
@@ -75,7 +73,6 @@ def course_add(request):
     return render(request, 'course/course_add.html', {'institutes': institutes})
 
 
-@login_required
 def course_update(request, id):
     id = base64_decode(id)
 
@@ -122,7 +119,6 @@ def course_update(request, id):
     return render(request, 'course/course_update.html', {'course': course, 'institutes': institutes })
 
 
-@login_required
 def course_delete(request, id):
     id = base64_decode(id)
 

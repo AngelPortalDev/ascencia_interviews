@@ -5,6 +5,7 @@ class LoginRequiredMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        # Define a list of path prefixes for which login is required
         login_required_prefixes = [
             '/adminpanel',
         ]

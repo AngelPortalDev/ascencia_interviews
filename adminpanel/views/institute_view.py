@@ -11,7 +11,6 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 
 
-@login_required
 def institute_list(request):
     try:
         institutes = Institute.objects.filter(deleted_at__isnull=True)
@@ -30,7 +29,6 @@ def institute_list(request):
         return redirect('admindashboard')  # Redirect to a safe page if needed
 
 
-@login_required
 def institute_add(request):
     if request.method == 'POST':
         errors = {}
@@ -71,7 +69,6 @@ def institute_add(request):
     return render(request, 'institute/institute_add.html')
 
 
-@login_required
 def institute_update(request, id):
     id = base64_decode(id)
 
@@ -116,7 +113,6 @@ def institute_update(request, id):
     return render(request, 'institute/institute_update.html', {'institute': institute})
 
 
-@login_required
 def institute_delete(request, id):
     id = base64_decode(id)
 

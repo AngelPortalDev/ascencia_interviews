@@ -9,6 +9,5 @@ from django.contrib.auth.decorators import login_required
 # def userdashboard(request):
 #     return render(request, "userdashboard.html")
 
-@login_required
 def admindashboard(request):
     return render(request, "admindashboard.html")
