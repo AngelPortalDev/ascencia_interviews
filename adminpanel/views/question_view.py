@@ -1,18 +1,7 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.db import IntegrityError, transaction
-from django.http import HttpResponse
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from adminpanel.models.question import Question
-from adminpanel.models.common_question import CommonQuestion
-from adminpanel.models.course import Course
-from adminpanel.models.institute import Institute
-from adminpanel.helpers import save_data, base64_encode, base64_decode
-from django.core.exceptions import ValidationError
-from django.utils import timezone
+
+from adminpanel.common_imports import *
 
 
-@login_required
 def common_questions(request):
     try:
         questions = CommonQuestion.active_objects.all()
@@ -31,7 +20,6 @@ def common_questions(request):
         messages.error(request, f"An error occurred while fetching the questions: {e}")
         return redirect('admindashboard') 
 
-@login_required
 def common_question_add(request):
 
     courses = Course.objects.filter(deleted_at__isnull=True)
@@ -74,7 +62,6 @@ def common_question_add(request):
     return render(request, 'common_question/common_question_add.html')
 
 
-@login_required
 def common_question_update(request, id):
     id = base64_decode(id)
 
@@ -118,7 +105,6 @@ def common_question_update(request, id):
     return render(request, 'common_question/common_question_update.html', {'question': question })
 
 
-@login_required
 def common_question_delete(request, id):
     id = base64_decode(id)
 
@@ -142,7 +128,6 @@ def common_question_delete(request, id):
     return redirect('common_questions')
 
 
-@login_required
 def questions(request):
     try:
         questions = Question.active_objects.all()
@@ -162,7 +147,6 @@ def questions(request):
         messages.error(request, f"An error occurred while fetching the courses: {e}")
         return redirect('admindashboard') 
 
-@login_required
 def question_add(request):
 
     courses = Course.objects.filter(deleted_at__isnull=True)
@@ -208,7 +192,6 @@ def question_add(request):
     return render(request, 'question/question_add.html', {'courses': courses})
 
 
-@login_required
 def question_update(request, id):
     id = base64_decode(id)
 
@@ -256,7 +239,6 @@ def question_update(request, id):
     return render(request, 'question/question_update.html', {'question': question, 'courses': courses })
 
 
-@login_required
 def question_delete(request, id):
     id = base64_decode(id)
 
