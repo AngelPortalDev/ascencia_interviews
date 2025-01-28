@@ -1,0 +1,38 @@
+
+table.dataTable {
+    width: 100% !important;
+}
+
+.dataTables_wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+table.dataTable tbody td {
+    padding: 10px;
+}
+
+/* Add border between rows */
+table.dataTable tbody tr {
+    border-bottom: 1px solid #ddd; /* Light gray border for the row separator */
+}
+
+table.dataTable thead th {
+    padding: 12px;
+}
+
+@media (max-width: 767px) {
+    .dataTables_wrapper .dataTables_filter {
+        float: none;
+        text-align: left;
+    }
+
+    .dataTables_wrapper .dataTables_length {
+        float: none;
+        text-align: left;
+    }
+
+    .dataTables_wrapper .dataTables_info {
+        text-align: left;
+    }
+}
