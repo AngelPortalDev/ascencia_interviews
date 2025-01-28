@@ -10,3 +10,4 @@ from adminpanel.common_imports import *
 
 def admindashboard(request):
     return render(request, "admindashboard.html")
+
