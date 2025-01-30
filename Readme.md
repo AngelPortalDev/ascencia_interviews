@@ -1,6 +1,22 @@
 We will use :
 
 
+
+Document Verification:
+For extract text:
+EasyOCR
+pytesseract
+Textract
+
+For classification
+spaCy
+Transformers (BERT)
+
+
+
+
+
+
 Video Recording & Processing:
 1) opencv-python: For capturing video feed from the webcam.
 2) Integrate WebRTC for real-time video streaming and interaction.
