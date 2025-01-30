@@ -7,11 +7,11 @@
   >
 {% include "layouts/head.html" %}
 <body>
-    <div class="container">
+    <div class="container d-flex justify-content-center align-items-center" style="height: 100vh;">
       <div class="authentication-wrapper authentication-basic container-p-y">
         <div class="authentication-inner">
           <!-- Register -->
-          <div class="card">
+          <div class="card" style="width:100%; max-width:500px;">
             <div class="card-body">
               <!-- Logo -->
               <div class="app-brand justify-content-center">
@@ -75,7 +75,7 @@
                 </a>
               </div>
               <!-- /Logo -->
-              <h4 class="mb-2">Welcome to Sneat! 👋</h4>
+              {% comment %} <h4 class="mb-2">Welcome to Sneat! 👋</h4> {% endcomment %}
               <p class="mb-4">Please sign-in to your account and start the adventure</p>
 
                 {% if messages %}

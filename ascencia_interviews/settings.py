@@ -88,7 +88,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'ascencia-interviews',
         'USER': 'postgres',
-        'PASSWORD': '1234',
+        'PASSWORD': '123',
         'HOST': 'localhost',  # or the server IP/hostname
         'PORT': '5432',       # default PostgreSQL port
     }
