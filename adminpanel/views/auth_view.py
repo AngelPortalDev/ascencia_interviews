@@ -37,7 +37,7 @@ def login_view(request):
 
 def register_view(request):
     if request.user.is_authenticated:
-        return redirect('/admindashboard')
+        return redirect('admindashboard')
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
