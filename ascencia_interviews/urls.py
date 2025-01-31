@@ -25,7 +25,7 @@ from adminpanel.views.question_view import questions, question_add, question_upd
 
 
 # studentpanel settings
-from studentpanel.views.interview_process import interview_start
+from studentpanel.views.interview_process import interview_start, interview_panel, interview_score
 
 # interview_panel,
 # interview_score
