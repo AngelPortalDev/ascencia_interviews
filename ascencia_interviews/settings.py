@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "studentpanel",
     'api',
     'rest_framework',
+    'corsheaders',
 
 ]
 
@@ -145,3 +146,9 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = '/login/'
+
+CORS_ALLOW_ALL_ORIGINS = True
+CSRF_COOKIE_SECURE = False
+
+
+TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
