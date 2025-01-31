@@ -15,6 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.http import HttpResponseRedirect
 from django.urls import path, include
 from adminpanel.views.auth_view import login_view, register_view, logout_view, index
 from adminpanel.views.dashboard_view import admindashboard
@@ -28,6 +29,7 @@ urlpatterns = [
     path('login/', login_view, name='login'),
     path('register/', register_view, name='register'),
     path('logout/', logout_view, name='logout'),
+    path('', lambda request: HttpResponseRedirect('/adminpanel/dashboard/')),
 
     path('adminpanel/', include([
         # institute
@@ -56,7 +58,11 @@ urlpatterns = [
         
         # Dashboards
         # path('dashboard/',userdashboard),
-        path('dashboard/', admindashboard, name='admindashboard')
+        path('dashboard/', admindashboard, name='admindashboard'),
     ])),
+
+    
+    # API URLs
+    path('api/', include('api.urls')),
     
 ]
