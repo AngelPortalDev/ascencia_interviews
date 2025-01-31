@@ -11,7 +11,7 @@ class ActiveManager(models.Manager):
 
 
 class Course(models.Model):
-    course_name = models.CharField(max_length=255)
+    course_names = models.CharField(max_length=255)
     institute_id = models.ForeignKey(
         Institute, 
         on_delete=models.CASCADE, 
@@ -46,7 +46,7 @@ class Course(models.Model):
         return self.deleted_at is not None
 
     def __str__(self):
-        return self.course_name
+        return self.course_names
 
     # Managers
     objects = models.Manager()  # Default manager for all records
