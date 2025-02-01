@@ -11,7 +11,7 @@ class ActiveManager(models.Manager):
 
 
 class Course(models.Model):
-    course_names = models.CharField(max_length=255)
+    course_name = models.CharField(max_length=255)
     institute_id = models.ForeignKey(
         Institute, 
         on_delete=models.CASCADE, 

@@ -39,6 +39,9 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "adminpanel",
     "studentpanel",
+    'api',
+    'rest_framework',
+
 ]
 
 MIDDLEWARE = [

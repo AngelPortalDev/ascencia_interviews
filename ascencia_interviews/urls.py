@@ -15,6 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.http import HttpResponseRedirect
 from django.urls import path, include
 from adminpanel.views.auth_view import login_view, register_view, logout_view, index
 from adminpanel.views.dashboard_view import admindashboard
@@ -24,7 +25,7 @@ from adminpanel.views.question_view import questions, question_add, question_upd
 
 
 # studentpanel settings
-from studentpanel.views.interview_process import interview_start
+from studentpanel.views.interview_process import interview_start, interview_panel, interview_score
 
 # interview_panel,
 # interview_score
