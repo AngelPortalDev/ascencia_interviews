@@ -22,6 +22,7 @@ from adminpanel.views.dashboard_view import admindashboard
 from adminpanel.views.institute_view import institute_list, institute_add, institute_update, institute_delete
 from adminpanel.views.course_view import courses, course_add, course_update, course_delete
 from adminpanel.views.question_view import questions, question_add, question_update, question_delete, common_questions, common_question_add, common_question_update, common_question_delete
+from adminpanel.views.student_view import students
 
 
 # studentpanel settings
@@ -83,6 +84,8 @@ urlpatterns = [
             ]
         ),
     ),
+    path('students/', students, name='students'),
+
     # Interview Section URLS
     path(
         "interveiw-section/",
