@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import process_lead
+from .views import process_document
 
 urlpatterns = [
-    path('process_lead/', process_lead, name='process_lead'),
+    path('process_document', process_document, name='process_document'),
 ]
