@@ -6,13 +6,18 @@ from django.utils import timezone
 
 class Students(models.Model):
     student_id = models.IntegerField()
+    first_name = models.CharField(max_length=255,null=True)
+    last_name = models.CharField(max_length=225,null=True)
+    email = models.EmailField(max_length=225,null=True)
+    phone = models.CharField(max_length=20,null=True)  # Use CharField to handle leading zeros
+    dob = models.DateField(null=True, blank=True)  # Date of Birth field 
     student_consent = models.IntegerField()
     interview_start_at = models.DateTimeField(auto_now=True)
     answers_scores = models.IntegerField()
     sentiment_score = models.IntegerField()
     recording_file = models.TextField()
     interview_end_at = models.DateTimeField(auto_now=True)
-
+    deleted_at = models.DateTimeField(null=True, blank=True)
 
 
     class Meta:
