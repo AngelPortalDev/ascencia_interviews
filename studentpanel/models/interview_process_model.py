@@ -1,31 +1,35 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.utils.timezone import now  # Import Django's timezone utility
 
 
 
 class Students(models.Model):
-    student_id = models.IntegerField()
-    first_name = models.CharField(max_length=255,null=True)
-    last_name = models.CharField(max_length=225,null=True)
-    email = models.EmailField(max_length=225,null=True)
-    phone = models.CharField(max_length=20,null=True)  # Use CharField to handle leading zeros
-    dob = models.DateField(null=True, blank=True)  # Date of Birth field 
-    student_consent = models.IntegerField()
-    interview_start_at = models.DateTimeField(auto_now=True)
-    answers_scores = models.IntegerField()
-    sentiment_score = models.IntegerField()
-    recording_file = models.TextField()
-    interview_end_at = models.DateTimeField(auto_now=True)
+    student_id = models.CharField(max_length=100, null=True, unique=True)
+    first_name = models.CharField(max_length=255)
+    last_name = models.CharField(max_length=225)
+    email = models.EmailField(max_length=225, unique=True, blank=False)
+    phone = models.CharField(max_length=20, null=True)  # Use CharField to handle leading zeros
+    dob = models.DateField(null=True)  # Date of Birth field 
+    zoho_crm_id = models.CharField(max_length=100, unique=True, null=False)
+    student_consent = models.IntegerField(blank=False, null=True)  # You might want to validate this with choices
+    interview_start_at = models.DateTimeField(auto_now=False, blank=False, null=True)
+    answers_scores = models.IntegerField(blank=False, null=True)
+    sentiment_score = models.IntegerField(blank=False, null=True)
+    recording_file = models.TextField(blank=False, null=True)
+    interview_end_at = models.DateTimeField(auto_now=False, blank=False, null=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(default=now)  # Instead of auto_now_add=True
+    updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
-
     class Meta:
-       indexes = [
+        indexes = [
             models.Index(fields=['id']),
         ]
-        # verbose_name = "InterviewData"
-        # verbose_name_plural = "InterviewData"
+        verbose_name = "Student"
+        verbose_name_plural = "Students"
 
     def soft_delete(self):
         """Soft delete the student by setting the deleted_at field."""
