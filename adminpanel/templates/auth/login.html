@@ -71,7 +71,7 @@
                       </g>
                     </svg>
                   </span>
-                  <span class="app-brand-text demo text-body fw-bolder">Sneat</span>
+                  <span class="app-brand-text demo text-body fw-bolder">AI Interview</span>
                 </a>
               </div>
               <!-- /Logo -->
@@ -81,7 +81,7 @@
                 {% if messages %}
                     <div class="messages" id="message-container">
                         {% for message in messages %}
-                            <p class="alert {{ message.tags }}">{{ message }}</p>
+                            <p class="alert alert-danger {{ message.tags }}">{{ message }}</p>
                         {% endfor %}
                     </div>
                 {% endif %}

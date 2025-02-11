@@ -15,16 +15,18 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.http import HttpResponseRedirect
 from django.urls import path, include
 from adminpanel.views.auth_view import login_view, register_view, logout_view, index
 from adminpanel.views.dashboard_view import admindashboard
 from adminpanel.views.institute_view import institute_list, institute_add, institute_update, institute_delete
 from adminpanel.views.course_view import courses, course_add, course_update, course_delete
 from adminpanel.views.question_view import questions, question_add, question_update, question_delete, common_questions, common_question_add, common_question_update, common_question_delete
+from adminpanel.views.student_view import students_leads_api,students_list
 
 
 # studentpanel settings
-from studentpanel.views.interview_process import interview_start
+from studentpanel.views.interview_process import interview_start, interview_panel, interview_score
 
 # interview_panel,
 # interview_score
@@ -33,6 +35,7 @@ from studentpanel.views.interview_process import interview_start
 urlpatterns = [
     path("index/", index),
     path("admin/", admin.site.urls),
+    path("api/", include('api.urls')),
     path("login/", login_view, name="login"),
     path("register/", register_view, name="register"),
     path("logout/", logout_view, name="logout"),
@@ -79,9 +82,12 @@ urlpatterns = [
                 # Dashboards
                 # path('dashboard/',userdashboard),
                 path("dashboard/", admindashboard, name="admindashboard"),
+                path("students/",students_list,name="students_list")
             ]
         ),
     ),
+    path('students_leads_api/', students_leads_api, name='students_leads_api'),
+
     # Interview Section URLS
     path(
         "interveiw-section/",
