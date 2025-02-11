@@ -10,8 +10,8 @@ class APIDataFetcher:
     """Observer that fetches data from the Zoho API when notified"""
     
     def notify(self, publisher):
-        API_URL = "https://www.zohoapis.com/crm/v2/Leads/5204268000107680064/Attachments"
-        API_TOKEN = "1000.de9c1a63f860e3e76d9ee5bca3d6e898.26f08982f3a3165660f83079a78b630d"  # Store token securely
+        API_URL = "https://www.zohoapis.com/crm/v2/Leads/5204268000108826399/Attachments"
+        API_TOKEN = "1000.3df4657ba64598cab2813479f282c0b4.0990acdfb226a4b8b77b4e0eba0894b6"  # Store token securely
 
         print(f"🌐 Fetching API data for: {publisher.first_name}...")
 
