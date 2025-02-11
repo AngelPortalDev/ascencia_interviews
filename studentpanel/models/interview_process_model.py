@@ -12,7 +12,8 @@ class Students(models.Model):
     email = models.EmailField(max_length=225, unique=True, blank=False)
     phone = models.CharField(max_length=20, null=True)  # Use CharField to handle leading zeros
     dob = models.DateField(null=True)  # Date of Birth field 
-    zoho_crm_id = models.CharField(max_length=100, unique=True, null=False)
+    program = models.CharField(max_length=100, null=True, blank=True)
+    zoho_lead_id = models.CharField(max_length=100, unique=True, null=False)
     student_consent = models.IntegerField(blank=False, null=True)  # You might want to validate this with choices
     interview_start_at = models.DateTimeField(auto_now=False, blank=False, null=True)
     answers_scores = models.IntegerField(blank=False, null=True)

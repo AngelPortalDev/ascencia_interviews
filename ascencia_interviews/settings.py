@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-xm5c1eakitra$psy4$sy-8o$9la=(r9kr+a&t9msif%smg4l#u
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -92,9 +92,9 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'ascencia-interviews',
         'USER': 'postgres',
-        'PASSWORD': '123',
+        'PASSWORD': '1234',
         'HOST': 'localhost',  # or the server IP/hostname
-        'PORT': '5432',       # default PostgreSQL port
+        'PORT': '5432',     # default PostgreSQL port
     }
 }
 

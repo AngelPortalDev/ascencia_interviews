@@ -4,6 +4,9 @@ from django.views.decorators.csrf import csrf_exempt
 from adminpanel.common_imports import *
 from studentpanel.models.interview_process_model import Students
 from datetime import datetime
+
+
+
 @csrf_exempt  # Disable CSRF for webhooks
 def students_leads_api(request):
     if request.method == "POST":
@@ -16,28 +19,35 @@ def students_leads_api(request):
         date_object = datetime.strptime(dob, "%d-%m-%Y")
         formatted_date = date_object.strftime("%Y-%m-%d")
         student_id = request.POST.get('UserId')
-        zoho_crm_id =  request.POST.get('ZohoCrmId')
+        zoho_lead_id =  request.POST.get('ZohoCrmId')
+        program =  request.POST.get('Program')
+        
         try:
             data_to_save = {
                 'first_name': first_name,
                 'last_name': last_name,
-                'email':email,
-                'dob':formatted_date,
-                'phone':phone,
-                'student_id':student_id,
-                'zoho_crm_id':zoho_crm_id
+                'email': email,
+                'dob': formatted_date,
+                'phone': phone,
+                'student_id': student_id,
+                'zoho_lead_id': zoho_lead_id, 
+                'program': program,
             }
-            result = save_data(Students, data_to_save)
-            print(result)
+
+            where = {"zoho_lead_id": zoho_lead_id}
+
+            result = save_data(Students, data_to_save, where)
+            # print(r'result:', result)
+
             if result['status']:
-                    messages.success(request, "Student updated successfully!")
-                    return redirect('institute_list')
+                return JsonResponse({"status": True, "message": "Student updated successfully!"}, status=200)
             else:
-                messages.error(request, result.get('error', "Failed to update the institute."))
-                # return render(request, 'institute/institute_update.html', {'institute': institute})
+                return JsonResponse({"status": False, "error": result.get('error', "Failed to update the student.")}, status=400)
 
         except Exception as e:
-            messages.error(request, f"An error occurred while updating the institute: {e}")
+            return JsonResponse({"status": False, "error": str(e)}, status=500)
+
+    return JsonResponse({"status": False, "error": "Invalid request method"}, status=405)
             # return render(request, 'institute/institute_update.html', {'institute': institute})
     
 # def students_list(request):
@@ -56,6 +66,7 @@ def students_list(request):
                 'first_name': student.first_name,
                 'last_name': student.last_name,
                 'email': student.email,
+                'phone': student.phone,
 
             }
             for student in students

@@ -1,8 +1,10 @@
+import requests
 import tempfile
 import base64
 import mimetypes
 import pytesseract
 import cv2
+import re
 import numpy as np
 from pdf2image import convert_from_path
 from django.http import JsonResponse
@@ -11,7 +13,19 @@ from rapidfuzz import fuzz
 from concurrent.futures import ThreadPoolExecutor
 from PIL import Image
 from mindee import Client, AsyncPredictResponse, product
+from urllib.parse import parse_qs, urlparse, unquote
+from difflib import SequenceMatcher
+import logging
+import json
+from studentpanel.utils.ZohoAuth import ZohoAuth
 
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+
+
+
+ZOHO_API_BASE_URL = "https://www.zohoapis.com/crm/v7"
 
 # Initialize Mindee client
 mindee_client = Client(api_key="4951866b395bb3fefdb1e4753c6bbd8e")
@@ -19,7 +33,7 @@ mindee_client = Client(api_key="4951866b395bb3fefdb1e4753c6bbd8e")
 # Add endpoint configuration
 my_endpoint = mindee_client.create_endpoint(
     account_name="ANKITAGAVAS",
-    endpoint_name="eductional_cert_v4",
+    endpoint_name="eductional_cert_v6",
     version="1"
 )
 
@@ -128,86 +142,236 @@ def is_certificate_filename(filename):
     return any(keyword in filename for keyword in certificate_keywords)
 
 
+
+def check_eligibility(data):
+    try:
+        logging.info("Received data: %s", data)
+
+        # Extracting data
+        is_bachelor_certificate = data["prediction"]["fields"]["fields"].get("is_bachelor_certificate", "0") == "1"
+        is_intermediate_certificate = data["prediction"]["fields"]["fields"].get("is_intermediate_certificate", "0") == "1"
+        is_post_graduation_certificate = data["prediction"]["fields"]["fields"].get("is_post_graduation_certificate", "0") == "1"
+        name_of_certification = data["prediction"]["fields"]["fields"].get("name_of_certification", "").lower()
+        program = data["program"].lower()
+
+        logging.info("Bachelor Certificate: %s", is_bachelor_certificate)
+        logging.info("Intermediate Certificate: %s", is_intermediate_certificate)
+        logging.info("Post Graduation Certificate: %s", is_post_graduation_certificate)
+        logging.info("Name of Certification: %s", name_of_certification)
+        logging.info("Program: %s", program)
+
+        # Define eligibility criteria
+        eligibility_criteria = {
+            "bachelor": is_intermediate_certificate or is_bachelor_certificate or is_post_graduation_certificate,
+            "undergraduate": is_intermediate_certificate or is_bachelor_certificate or is_post_graduation_certificate,
+            "master": is_bachelor_certificate or is_post_graduation_certificate,
+            "postgraduate": is_post_graduation_certificate,
+        }
+
+        logging.info("Eligibility Criteria: %s", eligibility_criteria)
+
+        program_type = None
+        for key in eligibility_criteria.keys():
+            if key in program:
+                program_type = key
+                break
+
+        if not program_type:
+            logging.warning("Program Not Found in Criteria")
+            return False
+
+        # Special check for Computer Science programs
+        cs_keywords = ["computer science", "information technology", "software engineering"]
+        if "computer science" in program:
+            if not any(re.search(rf"\b{cs_field}\b", name_of_certification, re.IGNORECASE) for cs_field in cs_keywords):
+                logging.warning("Failed Computer Science Eligibility Check")
+                return False
+
+        # General eligibility check
+        if eligibility_criteria[program_type]:
+            logging.info("Eligibility Check Passed")
+            return True
+
+        logging.warning("Eligibility Check Failed")
+        return False
+
+    except KeyError as e:
+        logging.error("Missing key in data: %s", e)
+        return False
+    except Exception as e:
+        logging.error("Unexpected error: %s", e)
+        return False
+    
+
+def name_match_ratio(name1, name2):
+    return SequenceMatcher(None, name1.lower(), name2.lower()).ratio()
+
+
+def update_zoho_lead(lead_id, update_data):
+    try:
+        access_token = ZohoAuth.get_access_token()  # Ensure a fresh token
+        url = f"https://www.zohoapis.com/crm/v2/Leads/{lead_id}"
+        headers = {
+            "Authorization": f"Zoho-oauthtoken {access_token}",
+            "Content-Type": "application/json"
+        }
+
+        payload = {
+            "data": [
+                {
+                    "id": lead_id,  # Include the lead ID in the payload
+                    **update_data
+                }
+            ]
+        }
+
+        response = requests.put(url, json=payload, headers=headers)
+        response_data = response.json()
+
+        print("Response Data:", response_data)
+
+        if response.status_code == 200 and response_data.get("data"):
+            logging.info(f"Zoho Lead {lead_id} updated successfully")
+            return True  # Success
+        else:
+            logging.error(f"Failed to update Zoho Lead {lead_id}: {response_data}")
+            return False  # Failure
+
+    except Exception as e:
+        logging.error(f"Error updating Zoho Lead {lead_id}: {e}")
+        return False
+    
+
 @csrf_exempt
 def process_document(request):
-    if request.method == "POST":
+
+    if request.method != "POST":
+        return JsonResponse({"error": "Only POST requests are allowed"}, status=405)
+
+    try:
+        # Retrieve form data
+        uploaded_file = request.FILES.get("document")
+        zoho_first_name = request.POST.get("first_name", "").strip()
+        zoho_last_name = request.POST.get("last_name", "").strip()
+        program = request.POST.get("program", "").strip()
+        zoho_lead_id = request.POST.get("zoho_lead_id", "").strip()
+        API_TOKEN = request.POST.get("API_TOKEN", "")
+        # print(r'API_TOKEN454545:', API_TOKEN)
+
+
+        print(f"Received first_name: {zoho_first_name}, last_name: {zoho_last_name}, program: {program}")
+
+        if not uploaded_file:
+            return JsonResponse({"error": "No document uploaded"}, status=400)
+
+        # Validate file name
+        filename = re.search(r"&name=([^&]+)", uploaded_file.name.lower())
+        filename = unquote(filename.group(1)) if filename else "unknown.pdf"
+
+        print(f"Processed filename: {filename}")
+
+        if is_restricted_filename(filename):
+            return JsonResponse({"error": "Invalid file. Passport, CV, and Resume files are not allowed."}, status=400)
+
+        # Construct URL
+        url = f"https://crm.zoho.com/crm/org771809603/{uploaded_file}"
+        query_params = parse_qs(urlparse(url).query)
+
+        # Extract parent_id and file_id
+        parent_id, file_id = query_params.get("parentId", [""])[0], query_params.get("id", [""])[0]
+        file_url = f"https://www.zohoapis.com/crm/v7/Leads/{parent_id}/Attachments/{file_id}"
+        
+        # API_TOKEN = "1000.8b4ec0922ee977f16a8b5629ad27b194.e57d64ff95fcb9257010a219b9a972f7" 
+
+        # Download the file
+        headers = {"Authorization": f"Zoho-oauthtoken {API_TOKEN}", "User-Agent": "Mozilla/5.0"}
+        response = requests.get(file_url, headers=headers, allow_redirects=True)
+
+        if response.status_code != 200:
+            return JsonResponse({"error": f"Failed to download file, Status Code: {response.status_code}"}, status=400)
+
+        # Save the downloaded file temporarily
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
+            temp_file.write(response.content)
+            temp_file_path = temp_file.name
+
+        print(f"File downloaded and saved at: {temp_file_path}")
+
+        # Validate MIME type
+        mime_type = uploaded_file.content_type
+        if mime_type not in ["application/pdf", "image/png", "image/jpeg", "image/jpg"]:
+            return JsonResponse({"error": "Invalid file type. Only PDF, PNG, JPG, and JPEG files are supported."}, status=400)
+
+        # Extract text
+        extracted_text = (
+            extract_text_from_pdf(temp_file_path) if mime_type == "application/pdf"
+            else extract_text_from_image_file(temp_file_path)
+        )
+
+        if not extracted_text:
+            return JsonResponse({"error": "Text extraction failed. The document might be too blurry or contain no text."}, status=400)
+
+        # Check if the document is an educational certificate
+        if not (check_educational_keywords(extracted_text) or is_certificate_filename(filename)):
+            return JsonResponse({"message": "Error", "is_education_certificate": False}, status=200)
+
+        # Process document with Mindee
         try:
-            # Check if a file was uploaded
-            uploaded_file = request.FILES.get("document")
-            if not uploaded_file:
-                return JsonResponse({"error": "No document uploaded"}, status=400)
+            input_doc = mindee_client.source_from_path(temp_file_path)
+            result: AsyncPredictResponse = mindee_client.enqueue_and_parse(product.GeneratedV1, input_doc, endpoint=my_endpoint)
 
-            # Check for restricted filenames
-            filename = uploaded_file.name.lower()
-            if is_restricted_filename(filename):
-                return JsonResponse({"error": "Invalid file. Passport, CV, and Resume files are not allowed."}, status=400)
+            prediction = result.document.inference.prediction
+            serialized_prediction = serialize_field(vars(prediction))
 
-            # Save the uploaded file temporarily
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
-                temp_file.write(uploaded_file.read())
-                temp_file_path = temp_file.name
+            data = {"prediction": {"fields": serialized_prediction}, "program": program}
 
-            # Validate file type
-            mime_type = uploaded_file.content_type
-            if mime_type not in ["application/pdf", "image/png", "image/jpeg", "image/jpg"]:
-                return JsonResponse({"error": "Invalid file type. Only PDF, PNG, JPG, and JPEG files are supported."}, status=400)
+            # Name similarity check
+            mindee_first_name = data["prediction"]["fields"]["fields"].get("first_name", "").strip().lower()
+            mindee_last_name = data["prediction"]["fields"]["fields"].get("last_name", "").strip().lower()
+            zoho_full_name, mindee_full_name = f"{zoho_first_name} {zoho_last_name}".lower(), f"{mindee_first_name} {mindee_last_name}".lower()
 
-            # Extract text based on file type
-            try:
-                if mime_type == "application/pdf":
-                    extracted_text = extract_text_from_pdf(temp_file_path)
+            if name_match_ratio(zoho_full_name, mindee_full_name) < 0.75:
+                update_data = {"Interview_Process": "First Round Interview Hold"}
+                if update_zoho_lead(zoho_lead_id, update_data):
+                    print("Lead updated successfully")
                 else:
-                    extracted_text = extract_text_from_image_file(temp_file_path)
+                    print("Lead update failed")
+                return JsonResponse({"message": "Success", "result": False}, status=200)
 
-                if not extracted_text:
-                    return JsonResponse({"error": "Text extraction failed. The document might be too blurry or contain no text."}, status=400)
-            except Exception as e:
-                return JsonResponse({"error": f"Text extraction failed: {str(e)}"}, status=500)
+            # Completion check
+            if not data["prediction"]["fields"]["fields"].get("completion_remark"):
+                update_data = {"Interview_Process": "First Round Interview Hold"}
+                if update_zoho_lead(zoho_lead_id, update_data):
+                    print("Lead updated successfully")
+                else:
+                    print("Lead update failed")
 
-            # Check for educational certificate keywords
-            contains_edu_keywords = check_educational_keywords(extracted_text)
+                return JsonResponse({"message": "Success", "result": False}, status=200)
 
-            if contains_edu_keywords or is_certificate_filename(filename):  
-                try:
-                    # Validate MIME type again (redundant but ensures safety)
-                    mime_type, _ = mimetypes.guess_type(temp_file_path)
-                    if mime_type != 'application/pdf':
-                        return JsonResponse({"error": "Invalid file type. Only PDF files are supported."}, status=400)
+            result = check_eligibility(data)
+            
 
-                    # Create document source
-                    input_doc = mindee_client.source_from_path(temp_file_path)
+            if result:
+                update_data = {"Interview_Process": "First Round Interview"}
 
-                    # Process document asynchronously
-                    result: AsyncPredictResponse = mindee_client.enqueue_and_parse(
-                        product.GeneratedV1,  
-                        input_doc,
-                        endpoint=my_endpoint
-                    )
-
-                    # Access the parsed document data
-                    prediction = result.document.inference.prediction
-
-                    # Convert to dictionary before serialization
-                    serialized_prediction = serialize_field(vars(prediction))
-
-                    # Return success response
-                    return JsonResponse({
-                        "message": "Success",
-                        "prediction": serialized_prediction,
-                    }, status=200)
-                except Exception as e:
-                    return JsonResponse({"error": f"Mindee API processing failed: {str(e)}"}, status=500)
+                if update_zoho_lead(zoho_lead_id, update_data):
+                    print("Lead updated successfully")
+                else:
+                    print("Lead update failed")
             else:
-                return JsonResponse({
-                    "message": "Error",
-                    "is_education_certificate": False,
-                }, status=200)
+                update_data = {"Interview_Process": "First Round Interview Hold"}
+                if update_zoho_lead(zoho_lead_id, update_data):
+                    print("Lead updated successfully")
+                else:
+                    print("Lead update failed")
+
+            return JsonResponse({"message": "Success", "result": result}, status=200)
+
 
         except Exception as e:
-            return JsonResponse({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
+            return JsonResponse({"error": f"Mindee API processing failed: {str(e)}"}, status=500)
 
-    return JsonResponse({"error": "Only POST requests are allowed"}, status=405)
-
-
+    except Exception as e:
+        return JsonResponse({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
 
     

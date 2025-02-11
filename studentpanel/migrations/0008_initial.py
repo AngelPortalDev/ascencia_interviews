@@ -26,6 +26,7 @@ class Migration(migrations.Migration):
                 ('email', models.EmailField(max_length=225, unique=True)),
                 ('phone', models.CharField(max_length=20, null=True)),
                 ('dob', models.DateField(null=True)),
+                ('program', models.CharField(max_length=100, blank=True, null=True)),
                 ('zoho_crm_id', models.CharField(max_length=100, unique=True)),
                 ('student_consent', models.IntegerField(null=True)),
                 ('interview_start_at', models.DateTimeField(null=True)),

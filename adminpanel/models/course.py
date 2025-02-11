@@ -46,7 +46,7 @@ class Course(models.Model):
         return self.deleted_at is not None
 
     def __str__(self):
-        return self.course_names
+        return self.course_name
 
     # Managers
     objects = models.Manager()  # Default manager for all records
