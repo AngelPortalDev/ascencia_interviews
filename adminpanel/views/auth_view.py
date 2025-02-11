@@ -39,9 +39,9 @@ def register_view(request):
     if request.user.is_authenticated:
         return redirect('admindashboard')
     if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        email = request.POST.get('email')
+        username = request.POST.get('username','').strip()
+        password = request.POST.get('password','').strip()
+        email = request.POST.get('email','').strip()
 
         # Validate the form inputs
         if not username or not password or not email:
