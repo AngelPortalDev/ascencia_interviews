@@ -26,7 +26,11 @@ from adminpanel.views.student_view import students_leads_api,students_list
 
 
 # studentpanel settings
-from studentpanel.views.interview_process import interview_start, interview_panel, interview_score
+from studentpanel.views.interview_process import (
+    interview_start,
+    interview_panel,
+    interview_score,
+)
 
 # interview_panel,
 # interview_score
@@ -94,7 +98,9 @@ urlpatterns = [
         include(
             [
                 path(
-                    "interview-instructions/", interview_start, name="interview_start"
+                    "interview-instructions/",
+                    interview_start,
+                    name="interview-instructions",
                 ),
                 path("interview-panel/", interview_panel, name="interview_panel"),
                 # path("answer-question/", student_answer, name="student_answer"),

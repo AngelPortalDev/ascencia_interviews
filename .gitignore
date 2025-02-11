@@ -1,3 +1,7 @@
-/env/
+/env
+/adminpanel/migrations/__pycache__
+/adminpanel/models/__pycache__
+/adminpanel/view/__pycache__
+/ascencia_interviews/__pycache__
 .env
 manage.py
