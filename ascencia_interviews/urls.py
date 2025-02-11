@@ -23,6 +23,8 @@ from adminpanel.views.institute_view import institute_list, institute_add, insti
 from adminpanel.views.course_view import courses, course_add, course_update, course_delete
 from adminpanel.views.question_view import questions, question_add, question_update, question_delete, common_questions, common_question_add, common_question_update, common_question_delete
 from adminpanel.views.student_view import students_leads_api,students_list
+from django.views.generic import TemplateView
+
 
 
 # studentpanel settings
@@ -107,7 +109,12 @@ urlpatterns = [
                 # path("upload-recording/", student_upload, name="student_upload"),
                 # path("submit-interview/", student_submit, name="student_submit"),
                 path("interview-score/", interview_score, name="interview_score"),
+                # path("index/", index, name="index"),
             ]
         ),
     ),
+    path('home', TemplateView.as_view(template_name='index.html')),
+    path('terms-and-conditions', TemplateView.as_view(template_name='index.html')),
+    path('permissions', TemplateView.as_view(template_name='index.html')),
+    path('interview-player', TemplateView.as_view(template_name='index.html')),    
 ]
