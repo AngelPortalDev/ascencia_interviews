@@ -18,6 +18,9 @@ from difflib import SequenceMatcher
 import logging
 import json
 from studentpanel.utils.ZohoAuth import ZohoAuth
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 
 # Configure logging
@@ -33,7 +36,7 @@ mindee_client = Client(api_key="4951866b395bb3fefdb1e4753c6bbd8e")
 # Add endpoint configuration
 my_endpoint = mindee_client.create_endpoint(
     account_name="ANKITAGAVAS",
-    endpoint_name="eductional_cert_v6",
+    endpoint_name="eductional_cert_v4",
     version="1"
 )
 
@@ -242,6 +245,42 @@ def update_zoho_lead(lead_id, update_data):
         return False
     
 
+
+def send_email():
+    sender_email = "abdullah@angel-portal.com"
+    receiver_email = "abdullah@angel-portal.com"
+    subject = "Zoho Lead Update Notification"    
+    body = """
+        <html>
+        <body>
+            <p>Lead update was successful.</p>
+            <p>Click the link below to proceed:</p>
+            <p><a href='http://127.0.0.1:8000/interview'>Go to Interview</a></p>
+        </body>
+        </html>
+    """
+
+
+
+    msg = MIMEMultipart()
+    msg["From"] = sender_email
+    msg["To"] = receiver_email
+    msg["Subject"] = subject
+    msg.attach(MIMEText(body, "html"))
+
+    try:
+        # ✅ Use the correct SMTP server for your email provider
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:  # Change to your email provider's SMTP
+            server.starttls()
+            server.login(sender_email, "iuljudjtemskylkl")  # Use an app password if required
+            server.sendmail(sender_email, receiver_email, msg.as_string())
+        
+        print("Email sent successfully")
+    except Exception as e:
+        print(f"Email sending failed: {str(e)}")
+
+
+
 @csrf_exempt
 def process_document(request):
 
@@ -256,7 +295,6 @@ def process_document(request):
         program = request.POST.get("program", "").strip()
         zoho_lead_id = request.POST.get("zoho_lead_id", "").strip()
         API_TOKEN = request.POST.get("API_TOKEN", "")
-        # print(r'API_TOKEN454545:', API_TOKEN)
 
 
         print(f"Received first_name: {zoho_first_name}, last_name: {zoho_last_name}, program: {program}")
@@ -355,6 +393,7 @@ def process_document(request):
                 update_data = {"Interview_Process": "First Round Interview"}
 
                 if update_zoho_lead(zoho_lead_id, update_data):
+                    send_email()
                     print("Lead updated successfully")
                 else:
                     print("Lead update failed")

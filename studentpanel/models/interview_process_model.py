@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.utils.timezone import now  # Import Django's timezone utility
+from adminpanel.models.institute import Institute  
 
 
 
@@ -14,6 +15,11 @@ class Students(models.Model):
     dob = models.DateField(null=True)  # Date of Birth field 
     program = models.CharField(max_length=100, null=True, blank=True)
     zoho_lead_id = models.CharField(max_length=100, unique=True, null=False)
+    # institute_id = models.ForeignKey(
+    #     Institute, 
+    #     on_delete=models.CASCADE, 
+    #     related_name='students', null=True, blank=True
+    # )
     student_consent = models.IntegerField(blank=False, null=True)  # You might want to validate this with choices
     interview_start_at = models.DateTimeField(auto_now=False, blank=False, null=True)
     answers_scores = models.IntegerField(blank=False, null=True)

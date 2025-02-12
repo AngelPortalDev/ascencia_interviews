@@ -76,3 +76,7 @@ def students_list(request):
     except Exception as e:
         messages.error(request, f"An error occurred while fetching the students: {e}")
         return redirect('admindashboard')  # Redirect to a safe page if needed
+
+        
+def interview(request):
+        return render(request, 'student/interview.html')
