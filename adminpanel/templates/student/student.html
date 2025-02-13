@@ -97,7 +97,9 @@
                           <td>{{student.phone}}</td>
 
                           <td class="d-flex align-items-center">
-                              
+                            <a href="{% url 'student_detail' zoho_lead_id=student.zoho_lead_id %}" class="btn btn-icon item-edit"><i
+                              class="icon-base bx bx-edit icon-sm"></i>
+                            </a>
                           </td>
                         </tr>
                       {% endfor %}

@@ -67,6 +67,7 @@ def students_list(request):
                 'last_name': student.last_name,
                 'email': student.email,
                 'phone': student.phone,
+                'zoho_lead_id': student.zoho_lead_id,
 
             }
             for student in students
@@ -76,3 +77,19 @@ def students_list(request):
     except Exception as e:
         messages.error(request, f"An error occurred while fetching the students: {e}")
         return redirect('admindashboard')  # Redirect to a safe page if needed
+
+
+
+def student_detail(request, zoho_lead_id):
+    student = get_object_or_404(Students, zoho_lead_id=zoho_lead_id)
+    breadcrumb_items = [
+        {"name": "Dashboard", "url": reverse('admindashboard')},
+        {"name": "Students", "url": reverse('students_list')},
+        {"name": f"{student.first_name} {student.last_name}", "url": ""}
+    ]
+
+    return render(request, "student/student_detail.html", {
+        "student": student,
+        "show_breadcrumb": True,
+        "breadcrumb_items": breadcrumb_items
+    })

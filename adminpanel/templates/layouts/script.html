@@ -18,7 +18,7 @@
     <script src="{% static 'js/dashboards-analytics.js' %}"></script>
 
     <!-- Place this tag in your head or just before your close body tag. -->
-    <script async defer src="https://buttons.github.io/buttons.js' %}"></script>
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -47,5 +47,43 @@
             }
         });
 
+        function checkPasswordStrength() {
+            let passwordInput = document.getElementById("password");
+            let strengthIndicator = document.getElementById("password-strength");
+
+            // Check if strength indicator exists to avoid errors
+            if (!strengthIndicator) {
+                console.error("Element with ID 'password-strength' not found.");
+                return;
+            }
+
+            let password = passwordInput.value;
+            let strength = 0;
+
+            if (password.length >= 8) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[a-z]/.test(password)) strength++;
+            if (/\d/.test(password)) strength++;
+            if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++;
+
+            let colors = ["red", "orange", "yellow", "blue", "green"];
+            strengthIndicator.style.width = `${strength * 20}%`;
+            strengthIndicator.style.backgroundColor = colors[strength - 1] || "red";
+            
+        }
+
+
+
+        function togglePassword(inputId, icon) {
+            var input = document.getElementById(inputId);
+
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.replace("bx-hide", "bx-show");
+            } else {
+                input.type = "password";
+                icon.classList.replace("bx-show", "bx-hide");
+            }
+        }
     </script>
     
