@@ -10,7 +10,6 @@ from datetime import datetime
 @csrf_exempt  # Disable CSRF for webhooks
 def students_leads_api(request):
     if request.method == "POST":
-        # Get form data using request.POST
         first_name = request.POST.get('First Name')
         last_name = request.POST.get('Last Name')
         email = request.POST.get('Email')
@@ -48,13 +47,6 @@ def students_leads_api(request):
             return JsonResponse({"status": False, "error": str(e)}, status=500)
 
     return JsonResponse({"status": False, "error": "Invalid request method"}, status=405)
-            # return render(request, 'institute/institute_update.html', {'institute': institute})
-    
-# def students_list(request):
-
-#     students_list = Students.objects.all()
-#     print("Rendering students list:", students_list)  # Debugging line
-#     return render(request, 'student/student.html', {'students': students_list})
 
 
 def students_list(request):
@@ -67,6 +59,7 @@ def students_list(request):
                 'last_name': student.last_name,
                 'email': student.email,
                 'phone': student.phone,
+                'program': student.program,
                 'zoho_lead_id': student.zoho_lead_id,
 
             }
@@ -76,7 +69,7 @@ def students_list(request):
 
     except Exception as e:
         messages.error(request, f"An error occurred while fetching the students: {e}")
-        return redirect('admindashboard')  # Redirect to a safe page if needed
+        return redirect('admindashboard')
 
 
 

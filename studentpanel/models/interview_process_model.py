@@ -7,6 +7,13 @@ from adminpanel.models.institute import Institute
 
 
 class Students(models.Model):
+
+    STATUS_CHOICES = [
+        ('unverified', 'Unverified'),
+        ('verified', 'Verified'),
+        ('rejected', 'Rejected'),
+    ]
+
     student_id = models.CharField(max_length=100, null=True, unique=True)
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=225)
@@ -20,6 +27,13 @@ class Students(models.Model):
     #     on_delete=models.CASCADE, 
     #     related_name='students', null=True, blank=True
     # )
+    edu_doc_verification_status = models.CharField(
+        max_length=20, 
+        choices=STATUS_CHOICES, 
+        default='Unverified'
+    )
+    is_interview_link_sent = models.BooleanField(default=False)
+    interview_link_send_count = models.IntegerField(default=0)
     student_consent = models.IntegerField(blank=False, null=True)  # You might want to validate this with choices
     interview_start_at = models.DateTimeField(auto_now=False, blank=False, null=True)
     answers_scores = models.IntegerField(blank=False, null=True)

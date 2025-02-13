@@ -18,15 +18,20 @@ from django.contrib import admin
 from django.http import HttpResponseRedirect
 from django.urls import path, include
 from adminpanel.views.auth_view import login_view, register_view, logout_view, index
-from adminpanel.views.dashboard_view import admindashboard
+from adminpanel.views.dashboard_view import admindashboard, custom_404_view
 from adminpanel.views.institute_view import institute_list, institute_add, institute_update, institute_delete
 from adminpanel.views.course_view import courses, course_add, course_update, course_delete
 from adminpanel.views.question_view import questions, question_add, question_update, question_delete, common_questions, common_question_add, common_question_update, common_question_delete
 from adminpanel.views.profile_view import profile_update
 from adminpanel.views.student_view import students_leads_api,students_list, student_detail
 from django.views.generic import TemplateView
+from django.conf.urls import handler404
+from django.shortcuts import redirect
 
 
+
+
+handler404 = custom_404_view
 
 # studentpanel settings
 from studentpanel.views.interview_process import (
@@ -39,7 +44,11 @@ from studentpanel.views.interview_process import (
 # interview_score
 
 
+def redirect_to_dashboard(request):
+    return redirect('/adminpanel/dashboard')
+
 urlpatterns = [
+    path('', redirect_to_dashboard),
     path("index/", index),
     path("admin/", admin.site.urls),
     path("api/", include('api.urls')),

@@ -54,6 +54,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'adminpanel.middlewares.loginRequiredMiddleware.LoginRequiredMiddleware',
+    'adminpanel.middlewares.Force404Middleware.Force404Middleware',
 ]
 
 ROOT_URLCONF = 'ascencia_interviews.urls'

@@ -21,6 +21,7 @@ from studentpanel.utils.ZohoAuth import ZohoAuth
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from studentpanel.models.interview_process_model import Students
 
 
 # Configure logging
@@ -370,6 +371,10 @@ def process_document(request):
 
             if name_match_ratio(zoho_full_name, mindee_full_name) < 0.75:
                 update_data = {"Interview_Process": "First Round Interview Hold"}
+                
+                student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+                student.edu_doc_verification_status = "rejected"
+                student.save()
                 if update_zoho_lead(zoho_lead_id, update_data):
                     print("Lead updated successfully")
                 else:
@@ -379,6 +384,11 @@ def process_document(request):
             # Completion check
             if not data["prediction"]["fields"]["fields"].get("completion_remark"):
                 update_data = {"Interview_Process": "First Round Interview Hold"}
+                
+                student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+                student.edu_doc_verification_status = "rejected"
+                student.save()
+
                 if update_zoho_lead(zoho_lead_id, update_data):
                     print("Lead updated successfully")
                 else:
@@ -394,11 +404,20 @@ def process_document(request):
 
                 if update_zoho_lead(zoho_lead_id, update_data):
                     send_email()
+                    student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+                    student.edu_doc_verification_status = "approved"
+                    student.is_interview_link_sent = True
+                    student.interview_link_send_count += 1
+                    student.save()
                     print("Lead updated successfully")
                 else:
                     print("Lead update failed")
             else:
                 update_data = {"Interview_Process": "First Round Interview Hold"}
+                
+                student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+                student.edu_doc_verification_status = "rejected"
+                student.save()
                 if update_zoho_lead(zoho_lead_id, update_data):
                     print("Lead updated successfully")
                 else:

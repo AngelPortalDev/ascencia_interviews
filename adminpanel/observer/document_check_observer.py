@@ -71,21 +71,39 @@ class APIDataFetcher:
             print(f"❌ API request failed: {e}")
 
     # Signal Handler (Observer Trigger)
+    # @receiver(post_save, sender=Students)
+    # def student_created_observer(sender, instance, created, **kwargs):
+    #     if created:  # Ensure it's triggered only on creation, not updates
+    #         print(f"A new student was created: {instance}")
+            
+    #         # Create the observer instance
+    #         api_observer = APIDataFetcher()
+            
+    #         # Trigger the observer to fetch API data
+    #         api_observer.notify(instance)
+
+    #     else:
+    #         print(f"A new student was updated: {instance}")
+    #         # Create the observer instance
+    #         api_observer = APIDataFetcher()
+            
+    #         # Trigger the observer to fetch API data
+    #         api_observer.notify(instance)
+
+
     @receiver(post_save, sender=Students)
     def student_created_observer(sender, instance, created, **kwargs):
-        if created:  # Ensure it's triggered only on creation, not updates
+        if created:
             print(f"A new student was created: {instance}")
-            
-            # Create the observer instance
-            api_observer = APIDataFetcher()
-            
-            # Trigger the observer to fetch API data
-            api_observer.notify(instance)
-
         else:
-            print(f"A new student was updated: {instance}")
-            # Create the observer instance
-            api_observer = APIDataFetcher()
-            
-            # Trigger the observer to fetch API data
+            print(f"A student was updated: {instance}")
+
+        # Create the observer instance
+        api_observer = APIDataFetcher()
+
+        # Check conditions before calling notify
+        if instance.edu_doc_verification_status == 'unapproved' or (
+            instance.edu_doc_verification_status == 'rejected' and instance.interview_link_send_count < 2
+        ):
+            # Trigger API fetch only if conditions match
             api_observer.notify(instance)

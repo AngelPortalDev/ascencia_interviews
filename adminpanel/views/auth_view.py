@@ -8,6 +8,8 @@ from django.contrib.auth.decorators import login_required
 
 def index(request):
     return render(request, "index.html")
+
+
 def login_view(request):
     # If the user is already authenticated, redirect to the index page
     if request.user.is_authenticated:
@@ -17,6 +19,7 @@ def login_view(request):
     if request.method == 'POST':
         email = request.POST['email']  # Get the email from the form
         password = request.POST['password']  # Get the password from the form
+        remember_me = request.POST.get("remember-me")
 
         # Authenticate user using the email (lookup user by email)
         try:
