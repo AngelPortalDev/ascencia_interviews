@@ -42,10 +42,29 @@
                     // responsive: true,
                     // paging: true,
                     searching: true,
-                    ordering: true
+                    ordering: true,
+                    language: {
+                        searchPlaceholder: "Search records..."
+                    }
                 });
             }
+
+            $('#DataTables_Table_1').DataTable({
+                paging: true,       
+                searching: true,    
+                info: true,         
+                lengthChange: true, 
+                ordering: true,     
+                responsive: true,   
+                language: {
+                    searchPlaceholder: "Search records..."
+                }
+                    });
+
+                   
         });
+
+        {% comment %} }); {% endcomment %}
 
         function checkPasswordStrength() {
             let passwordInput = document.getElementById("password");
