@@ -12,7 +12,7 @@
             <div class="row card-header flex-column flex-md-row pb-0">
               <div class="d-md-flex justify-content-between align-items-center dt-layout-start col-md-auto me-auto mt-0">
                 <h5 class="card-title mb-0 text-md-start text-center">
-                  Question Table
+                  Question Table 
                 </h5>
               </div>
               <div class="d-md-flex justify-content-between align-items-center dt-layout-end col-md-auto ms-auto mt-0">
@@ -35,72 +35,44 @@
             </div>
             <hr>
             <div class="row m-3 my-0 justify-content-between">
-              <div class="d-md-flex justify-content-between align-items-center dt-layout-start col-md-auto me-auto mt-0">
-                <div class="dt-length">
-                  <label for="dt-length-0">Show<select name="DataTables_Table_0_length" aria-controls="DataTables_Table_0"
-                      class="form-select" id="dt-length-0" fdprocessedid="trywsk">
-                      <option value="10">10</option>
-                      <option value="25">25</option>
-                      <option value="50">50</option>
-                      <option value="100">100</option>
-                    </select>entries</label>
-                </div>
-              </div>
-              <div class="d-md-flex justify-content-between align-items-center dt-layout-end col-md-auto ms-auto mt-0">
-                <div class="dt-search mt-0 mt-md-6">
-                  <label for="dt-search-0">Search:</label><input type="search" class="form-control ms-4" id="dt-search-0"
-                    placeholder="" aria-controls="DataTables_Table_0" />
-                </div>
-              </div>
-            </div>
             <div class="justify-content-between dt-layout-table">
               <div class="d-md-flex justify-content-between align-items-center col-12 dt-layout-full col-md">
-                <table class="datatables-basic table table-bordered table-responsive dataTable dtr-column"
+                <table class="datatables-basic table table-bordered table-responsive dataTable dtr-column display nowrap"
                   id="DataTables_Table_0" aria-describedby="DataTables_Table_0_info" style="width: 100%">
-                  <thead>
-                      <tr>
-                        <th data-dt-column="1" rowspan="1" colspan="1" class="dt-select dt-orderable-none" aria-label="">
-                          <span class="dt-column-title"></span><span class="dt-column-order"></span><input
-                            class="form-check-input" type="checkbox" aria-label="Select all rows" />
-                        </th>
-                        <th data-dt-column="4" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc"
-                          aria-label="Email: Activate to sort" tabindex="0">
-                          <span class="dt-column-title" role="button">Question</span><span class="dt-column-order"></span>
-                        </th>
-                        <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc"
-                          aria-label="Name: Activate to sort" tabindex="0">
-                          <span class="dt-column-title" role="button">Course</span><span class="dt-column-order"></span>
-                        </th>
-                        <th class="d-flex align-items-center dt-orderable-none" data-dt-column="8" rowspan="1" colspan="1"
-                          aria-label="Actions">
-                          <span class="dt-column-title">Actions</span><span class="dt-column-order"></span>
-                        </th>
-                      </tr>
+                  <thead class="table-light">
+                    <tr>
+                      <th>
+                        <input class="form-check-input" type="checkbox" aria-label="Select all rows" />
+                      </th>
+                      <th>Question</th>
+                      <th>Course</th>
+                      <th>Actions</th>
+                    </tr>
                   </thead>
                   <tbody>
-                      {% for question in questions %}
-                        <tr>
-                          <td class="dt-select">
-                            <input aria-label="Select row" class="form-check-input" type="checkbox" />
-                          </td>
-                          <td>{{question.question}}</td>
-                          <td>{{question.course_id}}</td>
-                          <td class="d-flex align-items-center">
-                              <a href="{% url 'question_update' id=question.encoded_id %}" class="btn btn-icon item-edit"><i
-                                class="icon-base bx bx-edit icon-sm"></i></a>
-                                <a href="javascript:void(0);" onclick="confirmDelete('{{ question.encoded_id }}', '/adminpanel/question/delete/')" class="btn btn-icon item-trash">
-                                    <i class="icon-base bx bx-trash icon-sm"></i>
-                                </a>
-                              
-                          </td>
-                        </tr>
-                      {% endfor %}
+                    {% for question in questions %}
+                    <tr>
+                      <td><input class="form-check-input" type="checkbox" aria-label="Select row" /></td>
+                      <td class="text-start">{{ question.question }}</td>
+                      <td class="text-start">{{ question.course_id }}</td>
+                      <td>
+                        <a href="{% url 'question_update' id=question.encoded_id %}" class="btn btn-warning btn-sm text-white">
+                          <i class="bx bx-edit"></i> Edit
+                        </a>
+                        <a href="javascript:void(0);" onclick="confirmDelete('{{ question.encoded_id }}', '/adminpanel/question/delete/')" 
+                           class="btn btn-danger btn-sm text-white">
+                          <i class="bx bx-trash"></i> Delete
+                        </a>
+                      </td>
+                    </tr>
+                    {% endfor %}
                   </tbody>
                   <tfoot></tfoot>
                 </table>
               </div>
             </div>
-            <div class="row mx-3 justify-content-between">
+            
+            {% comment %} <div class="row mx-3 justify-content-between">
               <div class="d-md-flex justify-content-between align-items-center dt-layout-start col-md-auto me-auto mt-0">
                 <div class="dt-info" aria-live="polite" id="DataTables_Table_0_info" role="status">
                   Showing 1 to 10 of 100 entries
@@ -168,7 +140,7 @@
                   </nav>
                 </div>
               </div>
-            </div>
+            </div> {% endcomment %}
           </div>
         </div>
       </div>

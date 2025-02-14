@@ -1,88 +1,177 @@
 {% load static %}
 <head>
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
-    />
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
+  />
 
-    <title>Dashboard </title>
+  <title>Dashboard</title>
 
-    <meta name="description" content="" />
+  <meta name="description" content="" />
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="{% static 'img/favicon/favicon.ico' %}" />
+  <!-- Favicon -->
+  <link
+    rel="icon"
+    type="image/x-icon"
+    href="{% static 'img/favicon/favicon.ico' %}"
+  />
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap"
-      rel="stylesheet"
-    />
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap"
+    rel="stylesheet"
+  />
 
-    <!-- Icons. Uncomment required icon fonts -->
-    <link rel="stylesheet" href="{% static 'vendor/fonts/boxicons.css' %}" />
+  <!-- Icons. Uncomment required icon fonts -->
+  <link rel="stylesheet" href="{% static 'vendor/fonts/boxicons.css' %}" />
 
-    <!-- Core CSS -->
-    <link rel="stylesheet" href="{% static 'vendor/css/core.css' %}" class="template-customizer-core-css" />
-    <link rel="stylesheet" href="{% static 'vendor/css/theme-default.css' %}" class="template-customizer-theme-css" />
-    <link rel="stylesheet" href="{% static 'css/demo.css' %}" />
+  <!-- Core CSS -->
+  <link
+    rel="stylesheet"
+    href="{% static 'vendor/css/core.css' %}"
+    class="template-customizer-core-css"
+  />
+  <link
+    rel="stylesheet"
+    href="{% static 'vendor/css/theme-default.css' %}"
+    class="template-customizer-theme-css"
+  />
+  <link rel="stylesheet" href="{% static 'css/demo.css' %}" />
 
-    <!-- Vendors CSS -->
-    <link rel="stylesheet" href="{% static 'vendor/libs/perfect-scrollbar/perfect-scrollbar.css' %}" />
+  <!-- Vendors CSS -->
+  <link
+    rel="stylesheet"
+    href="{% static 'vendor/libs/perfect-scrollbar/perfect-scrollbar.css' %}"
+  />
 
-    <link rel="stylesheet" href="{% static 'vendor/libs/apex-charts/apex-charts.css' %}" />
-    <link rel="canonical" href="https://themeselection.com/item/sneat-dashboard-pro-bootstrap/" />
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.dataTables.min.css">
-    <style>/* Custom styles */
-      table.dataTable {
-          width: 100% !important;
+  <link
+    rel="stylesheet"
+    href="{% static 'vendor/libs/apex-charts/apex-charts.css' %}"
+  />
+  <link
+    rel="canonical"
+    href="https://themeselection.com/item/sneat-dashboard-pro-bootstrap/"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.dataTables.min.css"
+  />
+  <style>
+    /* Custom styles */
+    table.dataTable {
+      width: 100% !important;
+    }
+
+    .dataTables_wrapper {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    table.dataTable tbody td {
+      padding: 10px;
+    }
+
+    /* Add border between rows */
+    table.dataTable tbody tr {
+      border-bottom: 1px solid #ddd; /* Light gray border for the row separator */
+    }
+
+    table.dataTable thead th {
+      padding: 12px;
+    }
+
+    .dataTables_filter input[type="search"]:focus-visible {
+      outline: none !important;
+    }
+
+    .dataTables_length {
+      margin-bottom: 1rem;
+    }
+    .dataTables_filter {
+      margin-bottom: 1rem;
+    }
+
+    .dataTables_filter input[type="search"] {
+      border-radius: 6px !important;
+      padding: 7px !important;
+    }
+
+    .dataTables_paginate {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 15px;
+    }
+
+    .dataTables_paginate .paginate_button {
+      padding: 8px 12px;
+      margin: 0 5px;
+      border-radius: 5px;
+      background-color: #2b61ff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .dataTables_paginate .paginate_button:hover {
+      background-color: #1f4bcc;
+    }
+
+    .dataTables_paginate .paginate_button.current {
+      background-color: #ff5722;
+      font-weight: bold;
+    }
+
+    table.dataTable.no-footer{
+      border-top: 1px solid rgba(0, 0, 0, 0.3);
+      
+    }
+
+    .dataTables_wrapper .dataTables_info{
+        padding-top: .999em;
       }
-      
-      .dataTables_wrapper {
-          width: 100%;
-          overflow-x: auto;
+    
+      .dataTables_wrapper .dataTables_paginate{
+        margin-bottom:1rem !important
       }
-      
-      table.dataTable tbody td {
-          padding: 10px;
+      .dataTables_length, .dataTables_info{
+        margin-left: 1rem !important
       }
-      
-      /* Add border between rows */
-      table.dataTable tbody tr {
-          border-bottom: 1px solid #ddd; /* Light gray border for the row separator */
+      .dataTables_filter{
+        margin-right: 1rem !important;
       }
-      
-      table.dataTable thead th {
-          padding: 12px;
-      }
-      
-      @media (max-width: 767px) {
-          .dataTables_wrapper .dataTables_filter {
-              float: none;
-              text-align: left;
-          }
-      
-          .dataTables_wrapper .dataTables_length {
-              float: none;
-              text-align: left;
-          }
-      
-          .dataTables_wrapper .dataTables_info {
-              text-align: left;
-          }
-      }
-      
-    </style>
 
-    <!-- Page CSS -->
+    @media (max-width: 767px) {
+      .dataTables_wrapper .dataTables_filter {
+        float: none;
+        text-align: left;
+      }
 
-    <!-- Helpers -->
-    <script src="{% static 'vendor/js/helpers.js' %}"></script>
+      .dataTables_wrapper .dataTables_length {
+        float: none;
+        text-align: left;
+      }
 
-    <!--! Template customizer & Theme config files MUST be included after core stylesheets and helpers.js' %} in the <head> section -->
-    <!--? Config:  Mandatory theme config file contain global vars & default theme options, Set your preferred theme option in this file.  -->
-    <script src="{% static 'js/config.js' %}"></script>
-  </head>
+      .dataTables_wrapper .dataTables_info {
+        text-align: left;
+      }
+    }
+  </style>
+
+  <!-- Page CSS -->
+
+  <!-- Helpers -->
+  <script src="{% static 'vendor/js/helpers.js' %}"></script>
+
+  <!--! Template customizer & Theme config files MUST be included after core stylesheets and helpers.js' %} in the <head> section -->
+  <!--? Config:  Mandatory theme config file contain global vars & default theme options, Set your preferred theme option in this file.  -->
+  <script src="{% static 'js/config.js' %}"></script>
+</head>
