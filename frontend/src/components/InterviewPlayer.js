@@ -184,7 +184,7 @@ const InterviewPlayer = () => {
     formData.append('file', blob, filename);
   
     // try {
-      const response = await axios.post('http://192.168.1.9:8000/interview_video_upload', formData, {
+      const response = await axios.post('http://192.168.1.9:8000/interveiw-section/interview-video-upload/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
