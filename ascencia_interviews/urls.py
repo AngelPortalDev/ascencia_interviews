@@ -38,6 +38,7 @@ from studentpanel.views.interview_process import (
     interview_start,
     interview_panel,
     interview_score,
+    interview_video_upload
 )
 
 # interview_panel,
@@ -114,6 +115,8 @@ urlpatterns = [
                 # path("upload-recording/", student_upload, name="student_upload"),
                 # path("submit-interview/", student_submit, name="student_submit"),
                 path("interview-score/", interview_score, name="interview_score"),
+                path("interview-video-upload/", interview_video_upload, name="interview_video_upload"),
+
                 # path("index/", index, name="index"),
             ]
         ),
