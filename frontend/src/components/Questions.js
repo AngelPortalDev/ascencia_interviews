@@ -3,29 +3,27 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/navigation";
-import { Pagination, Navigation } from "swiper/modules";
+import Axios from "axios";
+import { Pagination, Navigation,Autoplay} from "swiper/modules";
 import ChatIcon from "../assest/icons/one.svg";
 
 const Questions = () => {
-  const [questions, setQuestions] = useState([]);
   const [countdown, setCountdown] = useState(300);
   const [userData, setUserData] = useState(null);
 
-  useEffect(() => {
+  const [getQuestions, setQuestions] = useState([]);
 
-    const fetchQuestions = async () => {
-      try {
-        const response = await fetch("https://192.168.1.9:5000/interveiw-section/interview-questions/");
-        const data = await response.json();
-        setQuestions(data.questions);
-      } catch (error) {
-        console.error("Error fetching questions:", error);
-      }
-    };
-  
+  const fetchQuestions = async () => {
+    const res = await Axios.get(
+      "https://192.168.1.15:8000/interveiw-section/interview-questions/"
+    );
+    setQuestions(res.data.questions);
+  };
+  useEffect(() => {
     fetchQuestions();
-    console.log(fetchQuestions());
-    
+  }, []);
+
+  useEffect(() => {
     const fetchData = async () => {
       const mockData = {
         name: "John Doe",
@@ -103,50 +101,36 @@ const Questions = () => {
             ),
           }}
           navigation={true}
-          modules={[Pagination, Navigation]}
+          modules={[Pagination, Navigation,Autoplay]}
           className="mySwiper"
+          autoplay={{
+            delay: 30000,
+            disableOnInteraction: false,
+          }}
         >
-          <SwiperSlide className="bg-white p-6 rounded-lg shadow-lg text-black">
-            How do you contribute to the success of your team beyond your
-            individual performance?
-          </SwiperSlide>
-          <SwiperSlide className="bg-white p-6 rounded-lg shadow-lg text-black">
-            Describe a time when you made a critical mistake and how you bounced
-            back from it.
-          </SwiperSlide>
-          <SwiperSlide className="bg-white p-6 rounded-lg shadow-lg text-black">
-            How do you handle disagreements with teammates and resolve conflicts
-            on the field?
-          </SwiperSlide>
-          <SwiperSlide className="bg-white p-6 rounded-lg shadow-lg text-black">
-            How do you stay positive and focused even when things aren't going
-            your way?
-          </SwiperSlide>
-          <SwiperSlide className="bg-white p-6 rounded-lg shadow-lg text-black">
-            How do you plan to develop your skills and reach your full
-            potential?
-          </SwiperSlide>
-          <SwiperSlide className="bg-white p-6 rounded-lg shadow-lg text-black">
-            What are your strongest athletic skills and areas where you excel?
-          </SwiperSlide>
-          <SwiperSlide className="bg-white p-6 rounded-lg shadow-lg text-black">
-            What do you believe is the greatest challenge most athletes are
-            facing today?
-          </SwiperSlide>
-          <SwiperSlide className="bg-white p-6 rounded-lg shadow-lg text-black">
-            How do you manage your athletic responsibilities and other outside
-            activities?
-          </SwiperSlide>
-          <SwiperSlide className="bg-white p-6 rounded-lg shadow-lg text-black position-relative">
-            What does your diet and nutrition plan look like when training?
-            <button
-              onClick={() => alert("Form Submitted!")}
-              className="bg-gradient-to-r from-[#ff80b5] to-[#9089fc] text-white text-xl font-semibold py-3 px-8 rounded-xl shadow-lg hover:bg-gradient-to-l transition-all right-0 bottom-0"
-              style={{ position: "absolute" }}
-            >
-              Submit
-            </button>
-          </SwiperSlide>
+          {getQuestions.map((questionItem, index) => {
+            return (
+              <SwiperSlide
+                key={index}
+                className="bg-white p-6 rounded-lg shadow-lg text-black position-relative"
+              >
+                <p>{questionItem.question}</p>
+                {index === getQuestions.length - 1 && (
+                  <button
+                    onClick={() => alert("Form Submitted!")}
+                    className="bg-gradient-to-r from-[#ff80b5] to-[#9089fc] text-white text-xl font-semibold py-3 px-8 rounded-xl shadow-lg hover:bg-gradient-to-l transition-all"
+                    style={{
+                      position: "absolute",
+                      right: "20px",
+                      bottom: "20px",
+                    }}
+                  >
+                    Submit
+                  </button>
+                )}
+              </SwiperSlide>
+            );
+          })}
         </Swiper>
 
         {/* Grid Layout for User Info and Video */}
@@ -214,9 +198,7 @@ const Questions = () => {
           </div>
 
           {/* Video Player (4 columns) */}
-          <div
-            className="col-span-12 lg:col-span-4 bg-white p-6 rounded-xl shadow-lg text-black border border-gray-200"
-          >
+          <div className="col-span-12 lg:col-span-4 bg-white p-6 rounded-xl shadow-lg text-black border border-gray-200">
             <h3 className="text-2xl font-semibold mb-6">Instructional Video</h3>
             <div className="relative aspect-w-16 aspect-h-9">
               <iframe
