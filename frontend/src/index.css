@@ -15,3 +15,40 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+
+.swiper {
+  width: 100%;
+  height: 100%;
+}
+
+.swiper-slide {
+  text-align: center;
+  font-size: 32px;
+  height: 400px !important;
+  /* background: #fff; */
+
+  /* Center slide text vertically */
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  padding: 4rem !important;
+  box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.2);
+}
+
+.swiper-slide img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
+.swiper-wrapper{
+  /* margin-top: 2rem; */
+  /* background-color: lightblue; */
+}
+.chat-notification{
+  --tw-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(190 0 0 / 61%);
+}
+
