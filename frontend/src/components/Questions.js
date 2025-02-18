@@ -7,10 +7,25 @@ import { Pagination, Navigation } from "swiper/modules";
 import ChatIcon from "../assest/icons/one.svg";
 
 const Questions = () => {
+  const [questions, setQuestions] = useState([]);
   const [countdown, setCountdown] = useState(300);
   const [userData, setUserData] = useState(null);
 
   useEffect(() => {
+
+    const fetchQuestions = async () => {
+      try {
+        const response = await fetch("https://192.168.1.9:5000/interveiw-section/interview-questions/");
+        const data = await response.json();
+        setQuestions(data.questions);
+      } catch (error) {
+        console.error("Error fetching questions:", error);
+      }
+    };
+  
+    fetchQuestions();
+    console.log(fetchQuestions());
+    
     const fetchData = async () => {
       const mockData = {
         name: "John Doe",
