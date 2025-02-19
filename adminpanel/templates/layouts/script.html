@@ -103,5 +103,44 @@
                 icon.classList.replace("bx-show", "bx-hide");
             }
         }
+
+
+        {% comment %} CommonFile {% endcomment %}
+
+        {% comment %} $(document).ready(function () {
+            $("#profileUpdate").on("click", function (event) {
+                event.preventDefault();  // Prevent form submission for now
+        
+                const successMessage = document.querySelector("#success-message")?.value;
+                const errorMessage = document.querySelector("#error-message")?.value;
+        
+                // Check for success message
+                if (successMessage) {
+                    Swal.fire({
+                        title: "Success!",
+                        text: successMessage,
+                        icon: "success",
+                        confirmButtonText: "OK",
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // After confirmation, submit the form
+                            $("#profileUpdateForm").submit();  
+                        }
+                    });
+                }
+        
+                // Check for error message
+                if (errorMessage) {
+                    Swal.fire({
+                        title: "Error!",
+                        text: errorMessage,
+                        icon: "error",
+                        confirmButtonText: "OK",
+                    });
+                }
+            });
+        });
+         {% endcomment %}
+
     </script>
     

@@ -71,11 +71,30 @@
             </div>
 
             <div class="pt-6">
-                <button type="submit" class="btn btn-primary mt-3">Submit</button>
+              <button type="submit" class="btn btn-primary mt-3">Submit</button>
             </div>
         </form>
-      </div>
-
+      </div> 
+      {% comment %} <input type="hidden" id="success-message" value="{{ success_message|default:'' }}">
+      <input type="hidden" id="error-message" value="{{ error_message|default:'' }}">  {% endcomment %}
     </div>
+
+
+  <script>
+    // Check for success or error messages and show SweetAlert
+    document.addEventListener("DOMContentLoaded", function () {
+        {% if messages %}
+            {% for message in messages %}
+                Swal.fire({
+                    icon: '{{ message.tags }}',
+                    title: '{{ message.level_tag|capfirst }}',
+                    text: '{{ message }}',
+                    showConfirmButton: true,
+                    timer: 3000
+                });
+            {% endfor %}
+        {% endif %}
+    });
+</script>
 
 {% endblock %}

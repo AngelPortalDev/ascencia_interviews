@@ -65,8 +65,12 @@ def profile_update(request):
 
             messages.success(request, "Profile updated successfully!")
             return redirect('profile_update')
+            # return render(request, 'profile/profile_update.html', {'user': user, 'success_message': "Profile updated successfully!"})
 
         except Exception as e:
-            messages.error(request, f"An error occurred while updating your profile: {e}")
+            # messages.error(request, f"An error occurred while updating your profile: {e}")
+            messages.error(request, f"An error occurred: {e}")
+            return redirect('profile_update')
 
+            # return render(request, 'profile/profile_update.html', {'user': user, 'error_message': f"An error occurred: {e}"})
     return render(request, 'profile/profile_update.html', {'user': user})
