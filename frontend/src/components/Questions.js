@@ -6,6 +6,7 @@ import "swiper/css/navigation";
 import Axios from "axios";
 import { Pagination, Navigation,Autoplay} from "swiper/modules";
 import ChatIcon from "../assest/icons/one.svg";
+import InterviewPlayer from "./InterviewPlayer.js";
 
 const Questions = () => {
   const [countdown, setCountdown] = useState(300);
@@ -136,7 +137,7 @@ const Questions = () => {
         {/* Grid Layout for User Info and Video */}
         <div className="grid grid-cols-12 gap-8 mt-12">
           {/* User Info (8 columns) */}
-          <div className="col-span-12 lg:col-span-8 bg-white p-6 rounded-xl shadow-lg text-black border border-gray-200">
+          <div className="col-span-12 lg:col-span-9 bg-white p-6 rounded-xl shadow-lg text-black border border-gray-200">
             <h3 className="text-2xl font-semibold mb-6 text-center">
               Matt Morgon
             </h3>
@@ -198,9 +199,9 @@ const Questions = () => {
           </div>
 
           {/* Video Player (4 columns) */}
-          <div className="col-span-12 lg:col-span-4 bg-white p-6 rounded-xl shadow-lg text-black border border-gray-200">
-            <h3 className="text-2xl font-semibold mb-6">Instructional Video</h3>
-            <div className="relative aspect-w-16 aspect-h-9">
+          <div className="col-span-12 lg:col-span-3 bg-white p-6 rounded-xl shadow-lg text-black border border-gray-200">
+            {/* <h3 className="text-2xl font-semibold mb-6">Instructional Video</h3> */}
+            {/* <div className="relative aspect-w-16 aspect-h-9">
               <iframe
                 src="https://www.youtube.com/embed/dQw4w9WgXcQ"
                 title="YouTube video"
@@ -209,7 +210,8 @@ const Questions = () => {
                 allowFullScreen
                 className="w-full h-full rounded-xl shadow-lg"
               ></iframe>
-            </div>
+            </div> */}
+            <InterviewPlayer/>
           </div>
         </div>
       </div>

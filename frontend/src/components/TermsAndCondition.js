@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate  } from "react-router-dom";
+import PropTypes from "prop-types";
 
-const TermsAndCondition = () => {
+const TermsAndCondition = ({ setHasAgreed }) => {
   const [isAgreed, setIsAgreed] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
@@ -18,7 +19,8 @@ const TermsAndCondition = () => {
       setErrorMessage("You must agree to the terms and conditions to proceed.");
     }
     else{
-      navigate("/permissions"); 
+      setHasAgreed(true);
+      navigate("/questions"); 
     }
   };
 
@@ -193,6 +195,10 @@ const TermsAndCondition = () => {
       </div>
     </>
   );
+};
+
+TermsAndCondition.propTypes = {
+  setHasAgreed: PropTypes.func.isRequired,
 };
 
 export default TermsAndCondition;

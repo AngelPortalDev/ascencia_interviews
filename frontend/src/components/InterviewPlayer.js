@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from 'axios';
+import axios from "axios";
+import InterviewScoreModal from './InterviewScoreModal.js';
+
 const InterviewPlayer = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -27,7 +29,6 @@ const InterviewPlayer = () => {
     // Prevent Back Button & Refresh
     const handleBackButton = (event) => {
       event.preventDefault();
-      console.log("test")
       alert("You cannot go back during the interview. Please complete it.");
       window.history.pushState(null, "", window.location.href);
     };
@@ -53,10 +54,12 @@ const InterviewPlayer = () => {
     };
   }, []);
 
-
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
 
       // Video recording
       mediaRecorderRef.current = new MediaRecorder(stream);
@@ -69,7 +72,8 @@ const InterviewPlayer = () => {
       const audioStream = new MediaStream(stream.getAudioTracks());
       audioRecorderRef.current = new MediaRecorder(audioStream);
       audioRecorderRef.current.ondataavailable = (event) => {
-        if (event.data.size > 0) recordedAudioChunksRef.current.push(event.data);
+        if (event.data.size > 0)
+          recordedAudioChunksRef.current.push(event.data);
       };
       audioRecorderRef.current.start();
 
@@ -80,7 +84,6 @@ const InterviewPlayer = () => {
     }
   };
 
-
   const stopRecording = () => {
     setIsRecording(false);
 
@@ -88,11 +91,18 @@ const InterviewPlayer = () => {
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.onstop = () => {
-        const videoBlob = new Blob(recordedChunksRef.current, { type: "video/webm" });
-        console.log("testmnhhfdsjf")
+        const videoBlob = new Blob(recordedChunksRef.current, {
+          type: "video/webm",
+        });
+        console.log("testmnhhfdsjf");
         downloadFile(videoBlob, "interview_video.webm");
-        uploadFile(videoBlob, 'interview_video.webm');
+        uploadFile(videoBlob, "interview_video.webm");
         // convertToAudio(videoBlob);
+
+        // Video Stop After Time Complete
+        const tracks = videoRef.current.srcObject.getTracks();
+        tracks.forEach(track => track.stop());
+        videoRef.current.srcObject = null; 
       };
     }
 
@@ -100,10 +110,11 @@ const InterviewPlayer = () => {
     if (audioRecorderRef.current) {
       audioRecorderRef.current.stop();
       audioRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(recordedAudioChunksRef.current, { type: "audio/mp3" });
+        const audioBlob = new Blob(recordedAudioChunksRef.current, {
+          type: "audio/mp3",
+        });
         downloadFile(audioBlob, "interview_audio.mp3");
-        uploadFile(audioBlob, 'interview_audio.mp3');
-
+        uploadFile(audioBlob, "interview_audio.mp3");
       };
     }
 
@@ -111,10 +122,10 @@ const InterviewPlayer = () => {
     const calculatedScore = Math.floor(Math.random() * 100);
     setAnswerScore(calculatedScore);
     setShowPopup(true);
-    console.log("testsdadsa")
+    console.log("testsdadsa");
 
     // Redirect to home after 5 seconds
-    setTimeout(() => navigate("/home"), 5000);
+    // setTimeout(() => navigate("/home"), 5000);
   };
 
   // const convertToAudio = (videoBlob) => {
@@ -181,40 +192,50 @@ const InterviewPlayer = () => {
   };
   const uploadFile = async (blob, filename) => {
     const formData = new FormData();
-    formData.append('file', blob, filename);
-  
+    formData.append("file", blob, filename);
+
     // try {
-      const response = await axios.post('https://192.168.1.9:5000/interveiw-section/interview-video-upload/', formData, {
+    const response = await axios.post(
+      "https://192.168.1.15:8000/interveiw-section/interview-video-upload/",
+      formData,
+      {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
-      });
-      console.log('File uploaded successfully:', response);
+      }
+    );
+    console.log("File uploaded successfully:", response);
     // } catch (error) {
     //   console.error('Error uploading file:', error);
     // }
   };
-  
+
+  const handleCloseModal =()=>{
+    setShowPopup(false);
+  }
+
   return (
-
-    <div  style={{   position:'absolute', bottom: 0,right: 0 }}>
-
-      <h2>Interview in Progress</h2>
+    <div>
+      {/* <div  style={{   position:'absolute', bottom: 0,right: 0 }}></div> */}
+      {/* <h2>Interview in Progress</h2> */}
 
       {/* Video Preview */}
-      <video ref={videoRef} autoPlay playsInline style={{ width: "50%", borderRadius: "10px" }}></video>
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        style={{ width: "100%", borderRadius: "10px" }}
+      ></video>
 
       {/* Scrolling Questions */}
-     
 
       {/* Popup Message */}
       {showPopup && (
-        <div style={{ marginTop: "20px", fontSize: "18px", color: "green", fontWeight: "bold" }}>
-          <p>Your interview has been submitted.</p>
-          <p>Your score: {answerScore}%</p>
-          <p>You will receive feedback soon.</p>
-          <p>Redirecting to home...</p>
-        </div>
+        <InterviewScoreModal
+          showPopup={showPopup}
+          answerScore={answerScore}
+          onClose={handleCloseModal}
+        />
       )}
     </div>
   );

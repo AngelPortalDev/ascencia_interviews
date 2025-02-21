@@ -18,10 +18,6 @@ const Permissions = () => {
   const navigate = useNavigate();
 
 
-  console.log("MediaDevices API:", navigator.mediaDevices);
-  console.log("getUserMedia function:", navigator.mediaDevices?.getUserMedia);
-
-
   const handleAudioPermission = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -67,7 +63,8 @@ const Permissions = () => {
     } else {
       if (audioPermission && recordVideoPermission) {
         // setShowWelcome(true);
-        navigate("/interview-player");
+        localStorage.setItem("hasPermissions", "true");
+        navigate("/questions");
       }
     }
     setOpen(false);
