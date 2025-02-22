@@ -49,27 +49,59 @@ def students_leads_api(request):
     return JsonResponse({"status": False, "error": "Invalid request method"}, status=405)
 
 
+# def students_list(request):
+#     try:
+#         students = Students.objects.filter(deleted_at__isnull=True)
+#         student_data = [
+#             {
+#                 'id': student.student_id,
+#                 'first_name': student.first_name,
+#                 'last_name': student.last_name,
+#                 'email': student.email,
+#                 'phone': student.phone,
+#                 'program': student.program,
+#                 'zoho_lead_id': student.zoho_lead_id,
+
+#             }
+#             for student in students
+#         ]
+#         return render(request, 'student/student.html', {'students': student_data})
+
+#     except Exception as e:
+#         messages.error(request, f"An error occurred while fetching the students: {e}")
+#         return redirect('admindashboard')
+
 def students_list(request):
     try:
-        students = Students.objects.filter(deleted_at__isnull=True)
-        student_data = [
-            {
-                'id': student.student_id,
-                'first_name': student.first_name,
-                'last_name': student.last_name,
-                'email': student.email,
-                'phone': student.phone,
-                'program': student.program,
-                'zoho_lead_id': student.zoho_lead_id,
+        students = Students.objects.all()
 
-            }
-            for student in students
-        ]
-        return render(request, 'student/student.html', {'students': student_data})
+        verified_students = students.filter(edu_doc_verification_status="approved")
+        rejected_students = students.filter(edu_doc_verification_status="rejected")
+
+        def format_student_data(queryset):
+            return [
+                {
+                    'id': student.student_id,
+                    'first_name': student.first_name,
+                    'last_name': student.last_name,
+                    'email': student.email,
+                    'phone': student.phone,
+                    'program': student.program,
+                    'zoho_lead_id': student.zoho_lead_id,
+                }
+                for student in queryset
+            ]
+
+        context = {
+            'verified_students': format_student_data(verified_students),
+            'rejected_students': format_student_data(rejected_students),
+        }
+        return render(request, 'student/student.html', context)
 
     except Exception as e:
         messages.error(request, f"An error occurred while fetching the students: {e}")
         return redirect('admindashboard')
+
 
 
 

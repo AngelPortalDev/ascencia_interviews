@@ -5,7 +5,6 @@
   <div class="content-wrapper">
     <!-- Content -->
     <div class="container-xxl flex-grow-1 container-p-y">
-      <!-- DataTable with Buttons -->
       <div class="card">
         <div class="card-datatable text-nowrap">
           <div id="DataTables_Table_0_wrapper" class="dt-container dt-bootstrap5 dt-empty-footer">
@@ -17,43 +16,28 @@
               </div>
               <div class="d-md-flex justify-content-between align-items-center dt-layout-end col-md-auto ms-auto mt-0">
                 <div class="dt-buttons btn-group flex-wrap mb-0">
-                  <!-- <div class="btn-group">
-                    <button class="btn buttons-collection btn-label-primary dropdown-toggle me-4" tabindex="0"
-                      aria-controls="DataTables_Table_0" type="button" aria-haspopup="dialog" aria-expanded="false"
-                      fdprocessedid="7lkvq5">
-                      <span><span class="d-flex align-items-center gap-2"><i class="icon-base bx bx-export me-sm-1"></i>
-                          <span class="d-none d-sm-inline-block">Export</span></span></span>
-                    </button>
-                  </div> -->
-                  <!-- <a href="{% url 'institute_add' %}" class="btn create-new btn-primary" tabindex="0" aria-controls="DataTables_Table_0" type="button"
-                    fdprocessedid="gbgsua">
-                    <span><span class="d-flex align-items-center gap-2"><i class="icon-base bx bx-plus icon-sm"></i>
-                        <span class="d-none d-sm-inline-block">Add Institute</span></span></span>
-                    </a> -->
                 </div>
               </div>
             </div>
             <hr>
             <div class="row m-3 my-0 justify-content-between">
               <div class="d-md-flex justify-content-between align-items-center dt-layout-start col-md-auto me-auto mt-0">
-                <!-- <div class="dt-length">
-                  <label for="dt-length-0">Show<select name="DataTables_Table_0_length" aria-controls="DataTables_Table_0"
-                      class="form-select" id="dt-length-0" fdprocessedid="trywsk">
-                      <option value="10">10</option>
-                      <option value="25">25</option>
-                      <option value="50">50</option>
-                      <option value="100">100</option>
-                    </select>entries</label>
-                </div> -->
               </div>
               <div class="d-md-flex justify-content-between align-items-center dt-layout-end col-md-auto ms-auto mt-0">
-                <!-- <div class="dt-search mt-0 mt-md-6">
-                  <label for="dt-search-0">Search:</label><input type="search" class="form-control ms-4" id="dt-search-0"
-                    placeholder="" aria-controls="DataTables_Table_0" />
-                </div> -->
               </div>
             </div>
-            <div class="justify-content-between dt-layout-table p-3">
+            <div>
+              <ul class="nav nav-tabs mb-3" id="studentTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="verified-tab" data-bs-toggle="tab" data-bs-target="#verified" type="button" role="tab" aria-controls="verified" aria-selected="true">Verified Students</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected" type="button" role="tab" aria-controls="rejected" aria-selected="false">Rejected Document Students</button>
+                </li>
+              </ul>
+              <hr>
+            </div>
+            <!-- <div class="justify-content-between dt-layout-table p-3">
               <div class="d-md-flex justify-content-between align-items-center col-12 dt-layout-full col-md">
                 <table class="table table-bordered table-responsive dataTable dtr-column"
                   id="DataTables_Table_0" aria-describedby="DataTables_Table_0_info" style="width: 100%">
@@ -63,10 +47,6 @@
                           <span class="dt-column-title"></span><span class="dt-column-order"></span><input
                             class="form-check-input" type="checkbox" aria-label="Select all rows" />
                         </th>
-                        <!-- <th data-dt-column="4" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc"
-                          aria-label="Email: Activate to sort" tabindex="0">
-                          <span class="dt-column-title" role="button">Student Id</span><span class="dt-column-order"></span>
-                        </th> -->
                         <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc"
                           aria-label="Name: Activate to sort" tabindex="0">
                           <span class="dt-column-title" role="button">Name</span><span class="dt-column-order"></span>
@@ -95,7 +75,6 @@
                           <td class="dt-select">
                             <input aria-label="Select row" class="form-check-input" type="checkbox" />
                           </td>
-                          <!-- <td>{{student.id}}</td> -->
                           <td>{{ student.first_name }} {{ student.last_name }}</td>
                           <td>{{student.email}}</td>
                           <td>{{student.phone}}</td>
@@ -117,81 +96,37 @@
                   <tfoot></tfoot>
                 </table>
               </div>
+            </div> -->
+
+            <div class="tab-content p-3" id="studentTabsContent">
+                <!-- Verified Students -->
+                <div class="tab-pane fade show active" id="verified" role="tabpanel">
+                    {% include 'student/student_table.html' with students=verified_students tab_id="verified_students_table" %}
+                </div>
+                
+                <!-- Rejected Students -->
+                <div class="tab-pane fade" id="rejected" role="tabpanel">
+                  {% include 'student/student_table.html' with students=rejected_students tab_id="rejected_students_table" %}
+                </div>
+            
             </div>
+          
             <div class="row mx-3 justify-content-between">
               <div class="d-md-flex justify-content-between align-items-center dt-layout-start col-md-auto me-auto mt-0">
-                <!-- <div class="dt-info" aria-live="polite" id="DataTables_Table_0_info" role="status">
-                  Showing 1 to 10 of 100 entries
-                </div> -->
               </div>
-              <!-- <div class="d-md-flex justify-content-between align-items-center dt-layout-end col-md-auto ms-auto mt-0">
-                <div class="dt-paging">
-                  <nav aria-label="pagination">
-                    <ul class="pagination">
-                      <li class="dt-paging-button page-item disabled">
-                        <button class="page-link previous" role="link" type="button" aria-controls="DataTables_Table_0"
-                          aria-disabled="true" aria-label="Previous" data-dt-idx="previous" tabindex="-1">
-                          <i class="icon-base bx bx-chevron-left scaleX-n1-rtl icon-sm"></i>
-                        </button>
-                      </li>
-                      <li class="dt-paging-button page-item active">
-                        <button class="page-link" role="link" type="button" aria-controls="DataTables_Table_0"
-                          aria-current="page" data-dt-idx="0" fdprocessedid="5741ql">
-                          1
-                        </button>
-                      </li>
-                      <li class="dt-paging-button page-item">
-                        <button class="page-link" role="link" type="button" aria-controls="DataTables_Table_0"
-                          data-dt-idx="1" fdprocessedid="od8bui">
-                          2
-                        </button>
-                      </li>
-                      <li class="dt-paging-button page-item">
-                        <button class="page-link" role="link" type="button" aria-controls="DataTables_Table_0"
-                          data-dt-idx="2" fdprocessedid="rk5ulw">
-                          3
-                        </button>
-                      </li>
-                      <li class="dt-paging-button page-item">
-                        <button class="page-link" role="link" type="button" aria-controls="DataTables_Table_0"
-                          data-dt-idx="3" fdprocessedid="h6stpx">
-                          4
-                        </button>
-                      </li>
-                      <li class="dt-paging-button page-item">
-                        <button class="page-link" role="link" type="button" aria-controls="DataTables_Table_0"
-                          data-dt-idx="4" fdprocessedid="nevi2r">
-                          5
-                        </button>
-                      </li>
-                      <li class="dt-paging-button page-item disabled">
-                        <button class="page-link ellipsis" role="link" type="button" aria-controls="DataTables_Table_0"
-                          aria-disabled="true" data-dt-idx="ellipsis" tabindex="-1">
-                          …
-                        </button>
-                      </li>
-                      <li class="dt-paging-button page-item">
-                        <button class="page-link" role="link" type="button" aria-controls="DataTables_Table_0"
-                          data-dt-idx="9" fdprocessedid="r3ld5b">
-                          10
-                        </button>
-                      </li>
-                      <li class="dt-paging-button page-item">
-                        <button class="page-link next" role="link" type="button" aria-controls="DataTables_Table_0"
-                          aria-label="Next" data-dt-idx="next" fdprocessedid="mxxepw">
-                          <i class="icon-base bx bx-chevron-right scaleX-n1-rtl icon-sm"></i>
-                        </button>
-                      </li>
-                    </ul>
-                  </nav>
-                </div>
-              </div> -->
             </div>
           </div>
         </div>
       </div>
-      <!--/ DataTable with Buttons -->
 
     </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        $('#verified_students_table').DataTable();
+        $('#rejected_students_table').DataTable();
+      });
+      
+    </script>
 
 {% endblock %}

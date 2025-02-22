@@ -1,0 +1,56 @@
+
+<table class="table table-bordered table-responsive dataTable dtr-column"
+    id="{{ tab_id }}" aria-describedby="{{ tab_id }}_info" style="width: 100%">
+    <thead>
+        <tr>
+            <th data-dt-column="1" rowspan="1" colspan="1" class="dt-select dt-orderable-none" aria-label="">
+                <span class="dt-column-title"></span><span class="dt-column-order"></span>
+                <input class="form-check-input" type="checkbox" aria-label="Select all rows" />
+            </th>
+            <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc"
+                aria-label="Name: Activate to sort" tabindex="0">
+                <span class="dt-column-title" role="button">Name</span><span class="dt-column-order"></span>
+            </th>
+            <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc"
+                aria-label="Email: Activate to sort" tabindex="0">
+                <span class="dt-column-title" role="button">Email</span><span class="dt-column-order"></span>
+            </th>
+            <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc"
+                aria-label="Phone No.: Activate to sort" tabindex="0">
+                <span class="dt-column-title" role="button">Phone No.</span><span class="dt-column-order"></span>
+            </th>
+            <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc"
+                aria-label="Program: Activate to sort" tabindex="0">
+                <span class="dt-column-title" role="button">Program</span><span class="dt-column-order"></span>
+            </th>
+            <th class="d-flex align-items-center dt-orderable-none" data-dt-column="8" rowspan="1" colspan="1"
+                aria-label="Actions">
+                <span class="dt-column-title">Actions</span><span class="dt-column-order"></span>
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for student in students %}
+        <tr>
+            <td class="dt-select">
+                <input aria-label="Select row" class="form-check-input" type="checkbox" />
+            </td>
+            <td>{{ student.first_name }} {{ student.last_name }}</td>
+            <td>{{ student.email }}</td>
+            <td>{{ student.phone }}</td>
+            <td>{{ student.program }}</td>
+            <td class="d-flex align-items-center">
+                <a href="{% url 'student_detail' zoho_lead_id=student.zoho_lead_id %}" class="btn btn-sm btn-light border me-2">
+                    <i class="bx bx-show"></i>
+                </a>
+                <a href="https://crm.zoho.com/crm/org771809603/tab/Leads/{{ student.zoho_lead_id }}" 
+                    target="_blank" 
+                    class="btn btn-sm btn-primary">
+                    Zoho
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot></tfoot>
+</table>
