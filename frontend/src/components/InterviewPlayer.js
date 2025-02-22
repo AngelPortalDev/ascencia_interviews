@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import InterviewScoreModal from './InterviewScoreModal.js';
+import InterviewScoreModal from "./InterviewScoreModal.js";
 
 const InterviewPlayer = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -24,13 +24,28 @@ const InterviewPlayer = () => {
   ];
 
   useEffect(() => {
+    if (localStorage.getItem("interviewExited") === "true") {
+      stopMediaStreams();
+      navigate("/");
+      return;
+    }
+
     startRecording();
 
     // Prevent Back Button & Refresh
     const handleBackButton = (event) => {
       event.preventDefault();
-      alert("You cannot go back during the interview. Please complete it.");
-      window.history.pushState(null, "", window.location.href);
+
+      const confirmLeave = window.confirm(
+        "You will lose your progress if you go back. Do you want to continue?"
+      );
+      if (confirmLeave) {
+        localStorage.setItem("interviewExited", "true");
+        navigate("/");
+      } else {
+        window.history.pushState(null, "", window.location.href);
+      }
+      // alert("You cannot go back during the interview. Please complete it.");
     };
     window.history.pushState(null, "", window.location.href);
     window.addEventListener("popstate", handleBackButton);
@@ -45,7 +60,7 @@ const InterviewPlayer = () => {
     // Stop recording after 2 minutes
     const stopTimeout = setTimeout(() => {
       stopRecording();
-    }, 12000);
+    }, 17000);
 
     return () => {
       clearInterval(questionInterval);
@@ -54,23 +69,32 @@ const InterviewPlayer = () => {
     };
   }, []);
 
+  // Start recording
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
-        audio: true,
+        audio: { noiseSuppression: false, echoCancellation: false },
       });
 
       // Video recording
-      mediaRecorderRef.current = new MediaRecorder(stream);
+      mediaRecorderRef.current = new MediaRecorder(stream, {
+        audioBitsPerSecond: 128000,
+        videoBitsPerSecond: 2500000,
+        type: "video/webm;codecs=vp8,opus",
+      });
       mediaRecorderRef.current.ondataavailable = (event) => {
         if (event.data.size > 0) recordedChunksRef.current.push(event.data);
       };
+
       mediaRecorderRef.current.start();
 
       // Audio-only recording
       const audioStream = new MediaStream(stream.getAudioTracks());
-      audioRecorderRef.current = new MediaRecorder(audioStream);
+      audioRecorderRef.current = new MediaRecorder(audioStream, {
+        audioBitsPerSecond: 128000,
+        mimeType: "audio/webm",
+      });
       audioRecorderRef.current.ondataavailable = (event) => {
         if (event.data.size > 0)
           recordedAudioChunksRef.current.push(event.data);
@@ -84,6 +108,8 @@ const InterviewPlayer = () => {
     }
   };
 
+  // Stop Recording
+
   const stopRecording = () => {
     setIsRecording(false);
 
@@ -94,15 +120,14 @@ const InterviewPlayer = () => {
         const videoBlob = new Blob(recordedChunksRef.current, {
           type: "video/webm",
         });
-        console.log("testmnhhfdsjf");
         downloadFile(videoBlob, "interview_video.webm");
         uploadFile(videoBlob, "interview_video.webm");
         // convertToAudio(videoBlob);
 
         // Video Stop After Time Complete
         const tracks = videoRef.current.srcObject.getTracks();
-        tracks.forEach(track => track.stop());
-        videoRef.current.srcObject = null; 
+        tracks.forEach((track) => track.stop());
+        videoRef.current.srcObject = null;
       };
     }
 
@@ -126,6 +151,25 @@ const InterviewPlayer = () => {
 
     // Redirect to home after 5 seconds
     // setTimeout(() => navigate("/home"), 5000);
+  };
+
+  // Stop and process audio recording once go Home Page
+  const stopMediaStreams = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const tracks = videoRef.current.srcObject.getTracks();
+      tracks.forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
+    }
+
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+    }
+
+    if (audioRecorderRef.current) {
+      audioRecorderRef.current.stop();
+    }
+
+    console.log("Camera & microphone stopped.");
   };
 
   // const convertToAudio = (videoBlob) => {
@@ -180,6 +224,10 @@ const InterviewPlayer = () => {
   //   }
   // };
 
+
+
+  // Download the File
+
   const downloadFile = (blob, filename) => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -190,6 +238,8 @@ const InterviewPlayer = () => {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
+
+  // Upload the File In the Server
   const uploadFile = async (blob, filename) => {
     const formData = new FormData();
     formData.append("file", blob, filename);
@@ -210,9 +260,9 @@ const InterviewPlayer = () => {
     // }
   };
 
-  const handleCloseModal =()=>{
+  const handleCloseModal = () => {
     setShowPopup(false);
-  }
+  };
 
   return (
     <div>
