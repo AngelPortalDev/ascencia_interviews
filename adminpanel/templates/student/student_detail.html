@@ -58,7 +58,31 @@
             <label class="form-label" for="zoho_lead_id">Zoho Lead ID</label>
             <input type="text" id="zoho_lead_id" name="zoho_lead_id" value="{{ student.zoho_lead_id }}" class="form-control" readonly>
           </div>
+          <div class="col-md-6">
+            <label class="form-label" for="edu_doc_verification_status">Status</label>
+            <input type="text" id="edu_doc_verification_status" name="edu_doc_verification_status" 
+                   value="{{ student.edu_doc_verification_status|default:''|capfirst }}" 
+                   class="form-control" readonly>
+          </div>
         </div>
+
+        <!-- Interview Details -->
+        <div class="row g-6 mt-3">
+          <div class="col-md-6">
+            <label class="form-label" for="is_interview_link_sent">Interview Link Sent</label>
+            <input type="text" id="is_interview_link_sent" name="is_interview_link_sent" 
+                   value="{% if student.is_interview_link_sent %}Yes{% else %}No{% endif %}" 
+                   class="form-control" readonly>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="interview_link_sent_count">Interview Link Sent Count</label>
+            <input type="text" id="interview_link_sent_count" name="interview_link_sent_count" 
+                   value="{{ student.interview_link_sent_count|default:0 }}" 
+                   class="form-control" readonly>
+          </div>
+        </div>
+          
+
       </form>
     </div>
   </div>

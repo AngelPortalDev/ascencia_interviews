@@ -73,8 +73,7 @@ def students_leads_api(request):
 
 def students_list(request):
     try:
-        students = Students.objects.all()
-
+        students = Students.objects.order_by('-id').filter(deleted_at__isnull=True)
         verified_students = students.filter(edu_doc_verification_status="approved")
         rejected_students = students.filter(edu_doc_verification_status="rejected")
 
@@ -91,11 +90,20 @@ def students_list(request):
                 }
                 for student in queryset
             ]
+            
+        breadcrumb_items = [
+            {"name": "Dashboard", "url": reverse('admindashboard')},
+            {"name": "Students", "url": ""},
+        ]
 
         context = {
+            'all_students': format_student_data(students),
             'verified_students': format_student_data(verified_students),
             'rejected_students': format_student_data(rejected_students),
+            "show_breadcrumb": True,
+            "breadcrumb_items": breadcrumb_items,
         }
+
         return render(request, 'student/student.html', context)
 
     except Exception as e:

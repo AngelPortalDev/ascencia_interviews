@@ -12,7 +12,19 @@ def institute_list(request):
             }
             for institute in institutes
         ]
-        return render(request, 'institute/institute.html', {'institutes': institute_data})
+            
+        breadcrumb_items = [
+            {"name": "Dashboard", "url": reverse('admindashboard')},
+            {"name": "Institutes", "url": ""},
+        ]
+
+        data = {
+            'institutes': institute_data,
+            "show_breadcrumb": True,
+            "breadcrumb_items": breadcrumb_items,
+        }
+
+        return render(request, 'institute/institute.html', data)
 
     except Exception as e:
         messages.error(request, f"An error occurred while fetching the institutes: {e}")
@@ -56,7 +68,17 @@ def institute_add(request):
             messages.error(request, f"An error occurred: {e}")
             return render(request, 'institute/institute_add.html')
 
-    return render(request, 'institute/institute_add.html')
+    breadcrumb_items = [
+        {"name": "Dashboard", "url": reverse('admindashboard')},
+        {"name": "Institutes", "url": reverse('institute_list')},
+        {"name": "Institute Add", "url": ""},
+    ]
+    data = {
+        "show_breadcrumb": True,
+        "breadcrumb_items": breadcrumb_items,
+    }
+
+    return render(request, 'institute/institute_add.html', data)
 
 
 def institute_update(request, id):
@@ -100,7 +122,19 @@ def institute_update(request, id):
             messages.error(request, f"An error occurred while updating the institute: {e}")
             return render(request, 'institute/institute_update.html', {'institute': institute})
 
-    return render(request, 'institute/institute_update.html', {'institute': institute})
+            
+    breadcrumb_items = [
+        {"name": "Dashboard", "url": reverse('admindashboard')},
+        {"name": "Institutes", "url": reverse('institute_list')},
+        {"name": "Institute Update", "url": ""},
+    ]
+    data = {
+        'institute': institute,
+        "show_breadcrumb": True,
+        "breadcrumb_items": breadcrumb_items,
+    }
+
+    return render(request, 'institute/institute_update.html', data)
 
 
 def institute_delete(request, id):

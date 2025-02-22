@@ -1,6 +1,7 @@
 {% extends "layouts/master.html" %} 
 {% block content %} 
 {% load static %}
+{% include 'layouts/breadcrumb.html' %}
   <!-- Content wrapper -->
   <div class="content-wrapper">
     <!-- Content -->
@@ -29,10 +30,13 @@
             <div>
               <ul class="nav nav-tabs mb-3" id="studentTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="verified-tab" data-bs-toggle="tab" data-bs-target="#verified" type="button" role="tab" aria-controls="verified" aria-selected="true">Verified Students</button>
+                    <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab" aria-controls="all" aria-selected="true">All</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected" type="button" role="tab" aria-controls="rejected" aria-selected="false">Rejected Document Students</button>
+                    <button class="nav-link" id="verified-tab" data-bs-toggle="tab" data-bs-target="#verified" type="button" role="tab" aria-controls="verified" aria-selected="true">Verified</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected" type="button" role="tab" aria-controls="rejected" aria-selected="false">Rejected</button>
                 </li>
               </ul>
               <hr>
@@ -99,8 +103,13 @@
             </div> -->
 
             <div class="tab-content p-3" id="studentTabsContent">
+                <!-- All Students -->
+                <div class="tab-pane fade show active" id="all" role="tabpanel">
+                    {% include 'student/student_table.html' with students=all_students tab_id="all_students_table" %}
+                </div>
+
                 <!-- Verified Students -->
-                <div class="tab-pane fade show active" id="verified" role="tabpanel">
+                <div class="tab-pane fade" id="verified" role="tabpanel">
                     {% include 'student/student_table.html' with students=verified_students tab_id="verified_students_table" %}
                 </div>
                 

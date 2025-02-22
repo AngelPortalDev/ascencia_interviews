@@ -1,10 +1,7 @@
 {% extends "layouts/master.html" %} 
 {% block content %} 
 {% load static %}
-<style>
-
-  
-</style>
+{% include 'layouts/breadcrumb.html' %}
   <!-- Content wrapper -->
   <div class="content-wrapper">
     <!-- Content -->
@@ -147,7 +144,7 @@
                       <td>{{institute.institute_name}}</td>
                       <td>
                         <a href="{% url 'institute_update' id=institute.encoded_id %}" class="btn btn-warning btn-sm text-white shadow-sm me-1">
-                          <i class="bx bx-edit icon-sm"></i> Edit
+                          <i class="bx bx-edit icon-sm"></i> Update
                         </a>
                         <a href="javascript:void(0);" onclick="confirmDelete('{{ institute.encoded_id }}', '/adminpanel/institute/delete/')" class="btn btn-danger btn-sm text-white shadow-sm">
                           <i class="bx bx-trash icon-sm"></i> Delete

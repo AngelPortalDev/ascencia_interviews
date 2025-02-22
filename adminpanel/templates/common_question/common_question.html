@@ -1,4 +1,7 @@
-{% extends "layouts/master.html" %} {% block content %} {% load static %}
+{% extends "layouts/master.html" %} 
+{% block content %} 
+{% load static %}
+{% include 'layouts/breadcrumb.html' %}
 
 <!-- Content wrapper -->
 <div class="content-wrapper">
@@ -71,7 +74,7 @@
                   <td class="text-start">{{ question.question }}</td>
                   <td>
                     <a href="{% url 'common_question_update' id=question.encoded_id %}" class="btn btn-warning btn-sm text-white">
-                      <i class="bx bx-edit"></i> Edit
+                      <i class="bx bx-edit"></i> Update
                     </a>
                     <a href="javascript:void(0);" onclick="confirmDelete('{{ question.encoded_id }}', '/adminpanel/common_question/delete/')" 
                        class="btn btn-danger btn-sm text-white">

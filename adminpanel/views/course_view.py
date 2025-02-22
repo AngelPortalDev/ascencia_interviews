@@ -12,8 +12,18 @@ def courses(request):
             }
             for course in courses
         ]
+          
+        breadcrumb_items = [
+            {"name": "Dashboard", "url": reverse('admindashboard')},
+            {"name": "Courses", "url": ""},
+        ]
+        data = {
+            'courses': course_data,
+            "show_breadcrumb": True,
+            "breadcrumb_items": breadcrumb_items,
+        }
 
-        return render(request, 'course/course.html', {'courses': course_data})
+        return render(request, 'course/course.html', data)
 
     except Exception as e:
         messages.error(request, f"An error occurred while fetching the courses: {e}")
@@ -60,8 +70,18 @@ def course_add(request):
             return render(request, 'course/course_add.html', {'institutes': institutes})
 
 
+    breadcrumb_items = [
+        {"name": "Dashboard", "url": reverse('admindashboard')},
+        {"name": "Courses", "url": reverse('courses')},
+        {"name": "Course Add", "url": ""},
+    ]
+    data = {
+        'institutes': institutes,
+        "show_breadcrumb": True,
+        "breadcrumb_items": breadcrumb_items,
+    }
     
-    return render(request, 'course/course_add.html', {'institutes': institutes})
+    return render(request, 'course/course_add.html', data)
 
 
 def course_update(request, id):
@@ -107,7 +127,19 @@ def course_update(request, id):
             messages.error(request, f"An error occurred while updating the course: {e}")
             return render(request, 'course/course_update.html', {'course': course, 'institutes': institutes })
 
-    return render(request, 'course/course_update.html', {'course': course, 'institutes': institutes })
+    breadcrumb_items = [
+        {"name": "Dashboard", "url": reverse('admindashboard')},
+        {"name": "Courses", "url": reverse('courses')},
+        {"name": "Course Update", "url": ""},
+    ]
+    data = {
+        'course': course, 
+        'institutes': institutes,
+        "show_breadcrumb": True,
+        "breadcrumb_items": breadcrumb_items,
+    }
+
+    return render(request, 'course/course_update.html', data)
 
 
 def course_delete(request, id):

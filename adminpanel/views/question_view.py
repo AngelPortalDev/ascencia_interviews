@@ -14,7 +14,17 @@ def common_questions(request):
             for question in questions
         ]
 
-        return render(request, 'common_question/common_question.html', {'questions': question_data})
+        breadcrumb_items = [
+            {"name": "Dashboard", "url": reverse('admindashboard')},
+            {"name": "Common Questions", "url": ""},
+        ]
+        data = {
+            'questions': question_data,
+            "show_breadcrumb": True,
+            "breadcrumb_items": breadcrumb_items,
+        }
+
+        return render(request, 'common_question/common_question.html', data)
 
     except Exception as e:
         messages.error(request, f"An error occurred while fetching the questions: {e}")
@@ -58,8 +68,17 @@ def common_question_add(request):
             return render(request, 'common_question/common_question_add.html')
 
 
+    breadcrumb_items = [
+        {"name": "Dashboard", "url": reverse('admindashboard')},
+        {"name": "Common Questions", "url": reverse('common_questions')},
+        {"name": "Common Question Add", "url": ""},
+    ]
+    data = {
+        "show_breadcrumb": True,
+        "breadcrumb_items": breadcrumb_items,
+    }
     
-    return render(request, 'common_question/common_question_add.html')
+    return render(request, 'common_question/common_question_add.html', data)
 
 
 def common_question_update(request, id):
@@ -102,7 +121,18 @@ def common_question_update(request, id):
             messages.error(request, f"An error occurred while updating the question: {e}")
             return render(request, 'common_question/common_question_update.html', {'question': question })
 
-    return render(request, 'common_question/common_question_update.html', {'question': question })
+    breadcrumb_items = [
+        {"name": "Dashboard", "url": reverse('admindashboard')},
+        {"name": "Common Questions", "url": reverse('common_questions')},
+        {"name": "Common Question Add", "url": ""},
+    ]
+    data = {
+        'question': question,
+        "show_breadcrumb": True,
+        "breadcrumb_items": breadcrumb_items,
+    }
+
+    return render(request, 'common_question/common_question_update.html', data)
 
 
 def common_question_delete(request, id):
@@ -141,7 +171,17 @@ def questions(request):
             for question in questions
         ]
 
-        return render(request, 'question/question.html', {'questions': question_data})
+        breadcrumb_items = [
+            {"name": "Dashboard", "url": reverse('admindashboard')},
+            {"name": "Customized Questions", "url": ""},
+        ]
+        data = {
+            'questions': question_data,
+            "show_breadcrumb": True,
+            "breadcrumb_items": breadcrumb_items,
+        }
+
+        return render(request, 'question/question.html', data)
 
     except Exception as e:
         messages.error(request, f"An error occurred while fetching the courses: {e}")
@@ -188,8 +228,20 @@ def question_add(request):
             return render(request, 'question/question_add.html', {'courses': courses})
 
 
+
+    breadcrumb_items = [
+        {"name": "Dashboard", "url": reverse('admindashboard')},
+        {"name": "Customized Questions", "url": reverse('questions')},
+        {"name": "Customized Question Add", "url": ""},
+    ]
+    data = {
+        'courses': courses,
+        "show_breadcrumb": True,
+        "breadcrumb_items": breadcrumb_items,
+    }
+
     
-    return render(request, 'question/question_add.html', {'courses': courses})
+    return render(request, 'question/question_add.html', data)
 
 
 def question_update(request, id):
@@ -236,7 +288,19 @@ def question_update(request, id):
             messages.error(request, f"An error occurred while updating the question: {e}")
             return render(request, 'question/question_update.html', {'question': question, 'courses': courses })
 
-    return render(request, 'question/question_update.html', {'question': question, 'courses': courses })
+    breadcrumb_items = [
+        {"name": "Dashboard", "url": reverse('admindashboard')},
+        {"name": "Customized Questions", "url": reverse('questions')},
+        {"name": "Customized Question Update", "url": ""},
+    ]
+    data = {
+        'question': question, 
+        'courses': courses,
+        "show_breadcrumb": True,
+        "breadcrumb_items": breadcrumb_items,
+    }
+
+    return render(request, 'question/question_update.html', data)
 
 
 def question_delete(request, id):

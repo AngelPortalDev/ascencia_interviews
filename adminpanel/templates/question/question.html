@@ -1,6 +1,7 @@
 {% extends "layouts/master.html" %} 
 {% block content %} 
 {% load static %}
+{% include 'layouts/breadcrumb.html' %}
   <!-- Content wrapper -->
   <div class="content-wrapper">
     <!-- Content -->
@@ -57,7 +58,7 @@
                       <td class="text-start">{{ question.course_id }}</td>
                       <td>
                         <a href="{% url 'question_update' id=question.encoded_id %}" class="btn btn-warning btn-sm text-white">
-                          <i class="bx bx-edit"></i> Edit
+                          <i class="bx bx-edit"></i> Update
                         </a>
                         <a href="javascript:void(0);" onclick="confirmDelete('{{ question.encoded_id }}', '/adminpanel/question/delete/')" 
                            class="btn btn-danger btn-sm text-white">

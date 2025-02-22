@@ -1,6 +1,7 @@
 {% extends "layouts/master.html" %} 
 {% block content %} 
 {% load static %}
+{% include 'layouts/breadcrumb.html' %}
   <!-- Content wrapper -->
   <div class="content-wrapper">
     <!-- Content -->
@@ -57,7 +58,7 @@
                       <td>
                         <!-- Update Link -->
                         <a href="{% url 'course_update' id=course.encoded_id %}" class="btn btn-warning btn-sm text-white">
-                          <i class="bx bx-edit"></i> Edit
+                          <i class="bx bx-edit"></i> Update
                         </a>
                         <!-- Delete Link with Confirmation -->
                         <a href="javascript:void(0);" 
