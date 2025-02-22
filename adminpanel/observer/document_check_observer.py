@@ -18,7 +18,7 @@ class APIDataFetcher:
         # API_TOKEN = "1000.8b4ec0922ee977f16a8b5629ad27b194.e57d64ff95fcb9257010a219b9a972f7"  # Store token securely
         API_TOKEN = ZohoAuth.get_access_token()
 
-        # print(r'API_TOKEN:', API_TOKEN)
+        print(r'API_TOKEN:', API_TOKEN)
         
         headers = {
             "Authorization": f"Bearer {API_TOKEN}",
@@ -102,7 +102,7 @@ class APIDataFetcher:
         api_observer = APIDataFetcher()
 
         # Check conditions before calling notify
-        if instance.edu_doc_verification_status == 'unapproved' or (
+        if instance.edu_doc_verification_status == 'Unverified' or (
             instance.edu_doc_verification_status == 'rejected' and instance.interview_link_send_count < 2
         ):
             # Trigger API fetch only if conditions match

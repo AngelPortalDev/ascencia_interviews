@@ -21,6 +21,8 @@ class Students(models.Model):
     phone = models.CharField(max_length=20, null=True)  # Use CharField to handle leading zeros
     dob = models.DateField(null=True)  # Date of Birth field 
     program = models.CharField(max_length=100, null=True, blank=True)
+    intake_year = models.CharField(max_length=100, null=True, blank=True)
+    intake_month = models.CharField(max_length=100, null=True, blank=True)
     zoho_lead_id = models.CharField(max_length=100, unique=True, null=False)
     # institute_id = models.ForeignKey(
     #     Institute, 

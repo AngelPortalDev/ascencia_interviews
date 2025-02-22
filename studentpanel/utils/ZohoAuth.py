@@ -1,6 +1,7 @@
 import requests
 import json
 from django.conf import settings
+from django.core.cache import cache
 
 class ZohoAuth:
     ZOHO_CLIENT_ID = "1000.7ED8CAF9C95QVFKAFORL6ZI3D6SQCS"
@@ -10,7 +11,10 @@ class ZohoAuth:
     
     @classmethod
     def get_access_token(cls):
-        """Fetches a new access token using refresh token"""
+        access_token = cache.get("zoho_access_token")
+        if access_token:
+            return access_token
+
         data = {
             "client_id": cls.ZOHO_CLIENT_ID,
             "client_secret": cls.ZOHO_CLIENT_SECRET,
@@ -22,6 +26,8 @@ class ZohoAuth:
         
         if response.status_code == 200:
             access_token = response.json().get("access_token")
+            cache.set("zoho_access_token", access_token, timeout=55 * 60)
             return access_token
         else:
+            print(f"Zoho Token Fetch Failed: {response.text}")
             raise Exception(f"Zoho Token Fetch Failed: {response.text}")

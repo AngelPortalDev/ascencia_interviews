@@ -23,6 +23,14 @@
                 aria-label="Program: Activate to sort" tabindex="0">
                 <span class="dt-column-title" role="button">Program</span><span class="dt-column-order"></span>
             </th>
+            <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc w-auto"
+                aria-label="Intake Year: Activate to sort" tabindex="0">
+                <span class="dt-column-title" role="button">Intake Year</span><span class="dt-column-order"></span>
+            </th>
+            <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc w-auto"
+                aria-label="Intake Month: Activate to sort" tabindex="0">
+                <span class="dt-column-title" role="button">Intake Month</span><span class="dt-column-order"></span>
+            </th>
             <th class="d-flex align-items-center dt-orderable-none w-auto" data-dt-column="8" rowspan="1" colspan="1"
                 aria-label="Actions">
                 <span class="dt-column-title">Actions</span><span class="dt-column-order"></span>
@@ -39,6 +47,8 @@
             <td>{{ student.email }}</td>
             <td>{{ student.phone }}</td>
             <td>{{ student.program }}</td>
+            <td>{{ student.intake_year }}</td>
+            <td>{{ student.intake_month }}</td>
             <td class="d-flex align-items-center">
                 <a href="{% url 'student_detail' zoho_lead_id=student.zoho_lead_id %}" class="btn btn-sm btn-light border me-2">
                     <i class="bx bx-show"></i>

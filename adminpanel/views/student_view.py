@@ -20,6 +20,8 @@ def students_leads_api(request):
         student_id = request.POST.get('UserId')
         zoho_lead_id =  request.POST.get('ZohoCrmId')
         program =  request.POST.get('Program')
+        intake_year =  request.POST.get('Intake Year')
+        intake_month =  request.POST.get('Intake Month')
         
         try:
             data_to_save = {
@@ -31,6 +33,8 @@ def students_leads_api(request):
                 'student_id': student_id,
                 'zoho_lead_id': zoho_lead_id, 
                 'program': program,
+                'intake_year': intake_year,
+                'intake_month': intake_month,
             }
 
             where = {"zoho_lead_id": zoho_lead_id}
@@ -81,12 +85,14 @@ def students_list(request):
             return [
                 {
                     'id': student.student_id,
-                    'first_name': student.first_name,
-                    'last_name': student.last_name,
-                    'email': student.email,
-                    'phone': student.phone,
-                    'program': student.program,
-                    'zoho_lead_id': student.zoho_lead_id,
+                    'first_name': getattr(student, 'first_name', '') or '',
+                    'last_name': getattr(student, 'last_name', '') or '',
+                    'email': getattr(student, 'email', '') or '',
+                    'phone': getattr(student, 'phone', '') or '',
+                    'program': getattr(student, 'program', '') or '',
+                    'intake_year': getattr(student, 'intake_year', '') or '',
+                    'intake_month': getattr(student, 'intake_month', '') or '',
+                    'zoho_lead_id': getattr(student, 'zoho_lead_id', '') or '',
                 }
                 for student in queryset
             ]
