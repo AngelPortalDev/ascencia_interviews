@@ -6,6 +6,7 @@ import {
   DialogTitle,
 } from "@headlessui/react";
 import { useNavigate } from "react-router-dom";
+import {usePermission} from '../context/PermissionContext.js';
 
 const Permissions = () => {
   
@@ -17,6 +18,7 @@ const Permissions = () => {
   const [open, setOpen] = useState(true);
   const navigate = useNavigate();
 
+  const {acceptAudioVideo}  = usePermission();
 
   const handleAudioPermission = async () => {
     try {
@@ -63,7 +65,8 @@ const Permissions = () => {
     } else {
       if (audioPermission && recordVideoPermission) {
         // setShowWelcome(true);
-        localStorage.setItem("hasPermissions", "true");
+        // localStorage.setItem("hasPermissions", "true");
+        acceptAudioVideo();
         navigate("/questions");
       }
     }

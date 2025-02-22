@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { useNavigate  } from "react-router-dom";
 import PropTypes from "prop-types";
+import { usePermission } from "../context/PermissionContext.js";
 
-const TermsAndCondition = ({ setHasAgreed }) => {
+const TermsAndCondition = () => {
   const [isAgreed, setIsAgreed] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
+
+  const {acceptTerms} = usePermission();
 
   const handleCheckboxChange = () => {
     setIsAgreed(!isAgreed);
@@ -19,8 +22,8 @@ const TermsAndCondition = ({ setHasAgreed }) => {
       setErrorMessage("You must agree to the terms and conditions to proceed.");
     }
     else{
-      setHasAgreed(true);
-      navigate("/questions"); 
+      acceptTerms();
+      navigate("/permissions"); 
     }
   };
 
