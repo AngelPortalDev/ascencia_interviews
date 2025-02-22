@@ -1,3 +1,6 @@
+
+from adminpanel.common_imports import *
+
 import requests
 import tempfile
 import base64
@@ -433,3 +436,30 @@ def process_document(request):
         return JsonResponse({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
 
     
+
+
+def fetch_interview_questions(request):
+    try:
+        # Fetch 2 random questions from commonquestions
+        common_questions = list(CommonQuestion.objects.order_by('id')[:2])
+
+        # Fetch 3 random questions from questions
+        customized_questions = list(Question.objects.order_by('id')[:3])
+
+        # Combine questions
+        questions_list = common_questions + customized_questions
+
+        # Convert to JSON serializable format
+        data = [
+            {
+                'id': q.id,
+                'question': q.question,
+                'type': 'common' if isinstance(q, CommonQuestion) else 'customized'
+            } 
+            for q in questions_list
+        ]
+
+        return JsonResponse({'status': 'success', 'questions': data})
+    
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
