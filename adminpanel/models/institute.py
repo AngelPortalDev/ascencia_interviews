@@ -5,7 +5,7 @@ from django.utils import timezone
 
 class Institute(models.Model):
     institute_name = models.CharField(max_length=255, blank=False)
-    institute_id = models.CharField(max_length=255, unique=True, blank=False)
+    crm_id = models.CharField(max_length=255, unique=True, blank=False)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -13,7 +13,7 @@ class Institute(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['institute_id']),
+            models.Index(fields=['crm_id']),
         ]
     
     def soft_delete(self):

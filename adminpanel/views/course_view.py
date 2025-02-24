@@ -7,7 +7,7 @@ def courses(request):
         course_data = [
             {
                 'course_name': course.course_name,
-                'institute_id': course.institute_id,
+                'crm_id': course.crm_id,
                 'encoded_id': base64_encode(course.id)
             }
             for course in courses
@@ -36,20 +36,20 @@ def course_add(request):
     if request.method == 'POST':
         data = request.POST
         course_name = data.get('course_name')
-        institute_id = data.get('institute_id')
+        crm_id = data.get('crm_id')
 
         if not course_name:
             errors['course_name'] = "Course Name is required."
-        if not institute_id:
-            errors['institute_id'] = "Institute is required."
+        if not crm_id:
+            errors['crm_id'] = "Institute is required."
 
         if errors:
             return render(request, 'course/course_add.html', {'institutes': institutes, 'errors': errors})
         try:
-            institute = Institute.objects.get(id=institute_id)
+            institute = Institute.objects.get(id=crm_id)
             data_to_save = {
                 'course_name': course_name,
-                'institute_id': institute,
+                'crm_id': institute,
             }
 
             result = save_data(Course, data_to_save)
@@ -97,21 +97,21 @@ def course_update(request, id):
 
     if request.method == 'POST':
         course_name = request.POST.get('course_name')
-        institute_id = request.POST.get('institute_id')
+        crm_id = request.POST.get('crm_id')
 
         if not course_name:
             errors['course_name'] = "Course Name is required."
-        if not institute_id:
-            errors['institute_id'] = "Institute is required."
+        if not crm_id:
+            errors['crm_id'] = "Institute is required."
 
         if errors:
             return render(request, 'course/course_update.html', {'course': course, 'institutes': institutes, 'errors': errors})
 
         try:
-            institute = Institute.objects.get(id=institute_id)
+            institute = Institute.objects.get(id=crm_id)
             data = {
                 'course_name': course_name,
-                'institute_id': institute,
+                'crm_id': institute,
             }
 
             result = save_data(Course, data, where={'id': id})

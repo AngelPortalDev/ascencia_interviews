@@ -6,7 +6,7 @@ def institute_list(request):
         institutes = Institute.objects.filter(deleted_at__isnull=True)
         institute_data = [
             {
-                'institute_id': institute.institute_id,
+                'crm_id': institute.crm_id,
                 'institute_name': institute.institute_name,
                 'encoded_id': base64_encode(institute.id)
             }
@@ -36,19 +36,19 @@ def institute_add(request):
         errors = {}
         data = request.POST
         institute_name = data.get('institute_name')
-        institute_id = data.get('institute_id')
+        crm_id = data.get('crm_id')
 
         if not institute_name:
             errors['institute_name'] = "Institute Name is required."
-        if not institute_id:
-            errors['institute_id'] = "Institute id is required."
+        if not crm_id:
+            errors['crm_id'] = "CRM id is required."
 
         if errors:
             return render(request, 'institute/institute_add.html', {'errors': errors})
         try:
             data_to_save = {
                 'institute_name': institute_name,
-                'institute_id': institute_id,
+                'crm_id': crm_id,
             }
 
             result = save_data(Institute, data_to_save)
@@ -92,13 +92,13 @@ def institute_update(request, id):
     if request.method == 'POST':
         errors = {}
         institute_name = request.POST.get('institute_name')
-        institute_id = request.POST.get('institute_id')
+        crm_id = request.POST.get('crm_id')
 
         
         if not institute_name:
             errors['institute_name'] = "Institute Name is required."
-        if not institute_id:
-            errors['institute_id'] = "Institute id is required."
+        if not crm_id:
+            errors['crm_id'] = "CRM id is required."
 
         if errors:
             return render(request, 'institute/institute_update.html', {'errors': errors})
@@ -106,7 +106,7 @@ def institute_update(request, id):
         try:
             data = {
                 'institute_name': institute_name,
-                'institute_id': institute_id,
+                'crm_id': crm_id,
             }
 
             result = save_data(Institute, data, where={'id': id})

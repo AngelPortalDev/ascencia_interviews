@@ -12,7 +12,7 @@ class ActiveManager(models.Manager):
 
 class Course(models.Model):
     course_name = models.CharField(max_length=255)
-    institute_id = models.ForeignKey(
+    crm_id = models.ForeignKey(
         Institute, 
         on_delete=models.CASCADE, 
         related_name='courses'
@@ -24,7 +24,7 @@ class Course(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['institute_id']),
+            models.Index(fields=['crm_id']),
         ]
         verbose_name = "Course"
         verbose_name_plural = "Courses"
