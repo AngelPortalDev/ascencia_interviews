@@ -17,10 +17,12 @@ class Command(BaseCommand):
         files = [
             # models
             os.path.join(app_dir, 'models', 'auth.py'),
+            os.path.join(app_dir, 'models', 'user.py'),
             os.path.join(app_dir, 'models', 'institute.py'),
             os.path.join(app_dir, 'models', 'course.py'),
             os.path.join(app_dir, 'models', 'question.py'),
             os.path.join(app_dir, 'models', 'common_question.py'),
+            os.path.join(app_dir, 'models', 'student_manager.py'),
 
 
             # views
@@ -29,6 +31,7 @@ class Command(BaseCommand):
             os.path.join(app_dir, 'views', 'institute_view.py'),
             os.path.join(app_dir, 'views', 'course_view.py'),
             os.path.join(app_dir, 'views', 'question_view.py'),
+            os.path.join(app_dir, 'views', 'student_manager_view.py'),
         ]
 
         # Create directories if they don't exist

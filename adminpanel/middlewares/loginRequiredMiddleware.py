@@ -1,4 +1,7 @@
 from django.shortcuts import redirect
+from django.http import HttpResponseNotFound
+from django.shortcuts import render
+
 
 class LoginRequiredMiddleware:
     def __init__(self, get_response):
@@ -17,6 +20,9 @@ class LoginRequiredMiddleware:
         if not request.user.is_authenticated and any(request.path.startswith(prefix) for prefix in login_required_prefixes):
             # If not authenticated, redirect to the login page
             return redirect(f"{login_url}?next={request.path}")
+        
+        if request.user.is_authenticated and request.user.profile.role != 0:
+            return HttpResponseNotFound(render(request, '401.html'))
 
         # Proceed to the next middleware or view
         return self.get_response(request)

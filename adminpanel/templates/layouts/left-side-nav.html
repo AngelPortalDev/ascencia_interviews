@@ -115,5 +115,12 @@
                 </li>
               </ul>
             </li>
+            <!-- Student Manager -->
+            <li class="menu-item {% if '/student_manager' in request.path %}active{% endif %}">
+              <a href="{% url 'student_managers' %}" class="menu-link">
+                <i class="menu-icon bx bx-book" aria-hidden="true"></i>
+                <div data-i18n="Basic">Student Manager</div>
+              </a>
+            </li>
           </ul>
         </aside>

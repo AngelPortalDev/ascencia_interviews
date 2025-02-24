@@ -23,6 +23,7 @@ def courses(request):
             "breadcrumb_items": breadcrumb_items,
         }
 
+        print(r'result', course_data)
         return render(request, 'course/course.html', data)
 
     except Exception as e:

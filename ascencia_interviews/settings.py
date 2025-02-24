@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "adminpanel",
     "studentpanel",
+    "studentmanagerpanel",
     'api',
     'rest_framework',
     'corsheaders',
@@ -153,3 +154,4 @@ CSRF_COOKIE_SECURE = False
 
 
 TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+

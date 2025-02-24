@@ -1,0 +1,65 @@
+{% extends "layouts/master.html" %} 
+{% block content %} 
+{% load static %}
+{% include 'layouts/breadcrumb.html' %}
+  <!-- Content wrapper -->
+  <div class="content-wrapper">
+    <!-- Content -->
+    <div class="container-xxl flex-grow-1 container-p-y">
+      <div class="card mb-6">
+        <h5 class="card-header">Student Manager Update</h5>
+        <hr>
+        <form class="card-body" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row g-6">
+              <div class="col-md-6">
+                <label class="form-label" for="first_name">First Name</label>
+                <input type="text" id="first_name" name="first_name" value="{{student_manager.first_name}}" class="form-control" placeholder="First Name">
+                {% if errors.first_name %}
+                    <small class="text-danger">{{ errors.first_name }}</small>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="last_name">Last Name</label>
+                <input type="text" id="last_name" name="last_name" value="{{student_manager.last_name}}" class="form-control" placeholder="Last Name">
+                {% if errors.last_name %}
+                    <small class="text-danger">{{ errors.last_name }}</small>
+                {% endif %}
+              </div>
+            </div>
+            <div class="row g-6 mt-3">
+              <div class="col-md-6">
+                <label class="form-label" for="email">Email</label>
+                <input type="text" id="email" name="email" value="{{student_manager.email}}" class="form-control" placeholder="Email">
+                {% if errors.email %}
+                    <small class="text-danger">{{ errors.email }}</small>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="institute_id">Institute</label>
+                <select id="institute_id" name="institute_id" class="form-select">
+                  <option value="" disabled {% if not student_manager.institute_id %}selected{% endif %}>
+                      Select Institute
+                  </option>
+                  {% for institute in institutes %}
+                      <option value="{{ institute.id }}" 
+                              {% if student_manager.institute_id.id == institute.id %}selected{% endif %}>
+                          {{ institute.institute_name }}
+                      </option>
+                  {% endfor %}
+                </select>
+                {% if errors.institute_id %}
+                    <small class="text-danger">{{ errors.institute_id }}</small>
+                {% endif %}
+              </div>
+            </div>
+            
+            <div class="pt-6">
+                <button type="submit" class="btn btn-primary mt-3">Submit</button>
+            </div>
+        </form>
+      </div>
+
+    </div>
+
+{% endblock %}

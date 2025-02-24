@@ -1,19 +1,3 @@
-"""
-URL configuration for ascencia_interviews project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/4.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.http import HttpResponseRedirect
 from django.urls import path, include
@@ -22,6 +6,7 @@ from adminpanel.views.dashboard_view import admindashboard, custom_404_view
 from adminpanel.views.institute_view import institute_list, institute_add, institute_update, institute_delete
 from adminpanel.views.course_view import courses, course_add, course_update, course_delete
 from adminpanel.views.question_view import questions, question_add, question_update, question_delete, common_questions, common_question_add, common_question_update, common_question_delete
+from adminpanel.views.student_manager_view import student_managers, student_manager_add, student_manager_update, student_manager_delete
 from adminpanel.views.profile_view import profile_update
 from adminpanel.views.student_view import students_leads_api,students_list, student_detail
 from django.views.generic import TemplateView
@@ -87,6 +72,12 @@ urlpatterns = [
                     path("question/add", question_add, name="question_add"),
                     path("question/update/<id>/", question_update, name="question_update"),
                     path("question/delete/<id>/", question_delete, name="question_delete"),
+                    
+                # student managers
+                    path("student_managers/", student_managers, name="student_managers"),
+                    path("student_manager/add", student_manager_add, name="student_manager_add"),
+                    path("student_manager/update/<id>/", student_manager_update, name="student_manager_update"),
+                    path("student_manager/delete/<id>/", student_manager_delete, name="student_manager_delete"),
 
                 # student 
                     path('student/<int:zoho_lead_id>/', student_detail, name='student_detail'),

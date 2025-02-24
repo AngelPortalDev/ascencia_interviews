@@ -49,7 +49,7 @@
           <div class="card shadow-md border-0 rounded-3 card1">
             <div class="card-body text-white text-center py-4">
               <i class="bx bx-user-circle fs-1 mb-3" style="color:#20c2e9; background:#e4f7fc; padding:5px;border-radius:10px"></i>
-              <h5 class="card-title">Total Students</h5>
+              <h5 class="card-title">Total Students {{request.user.profile.role}}</h5>
               <h3 class="card-text">{{students_count}}</h3> <!-- Dynamic data can go here -->
               <p class="text-muted">Total students in the system</p>
             </div>
