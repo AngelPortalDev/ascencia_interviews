@@ -8,6 +8,8 @@ const InterviewPlayer = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [showPopup, setShowPopup] = useState(false);
   const [answerScore, setAnswerScore] = useState(null);
+  const [videoFilePath, setVideoFilePath] = useState(null);
+  const [audioFilePath, setAudioFilePath] = useState(null);
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
@@ -120,9 +122,34 @@ const InterviewPlayer = () => {
         const videoBlob = new Blob(recordedChunksRef.current, {
           type: "video/webm",
         });
-        downloadFile(videoBlob, "interview_video.webm");
-        uploadFile(videoBlob, "interview_video.webm");
+        const now = new Date().toISOString().replace(/:/g, "-").split(".")[0]; // Format the timestamp
+        const fileNameVideo = `interview_video_${now}.webm`; // Use formatted time in filename
+        // const videoPath = uploadFile(videoBlob, fileNameVideo);
+
+        const handleFileUpload = async () => {
+          try {
+            const videoPath = await uploadFile(videoBlob, fileNameVideo);
+            console.log("Audio file path:", videoPath);
+            setVideoFilePath(videoPath);
+
+            // You can now use audioPath as needed
+          } catch (error) {
+            console.error("Failed to upload audio file:", error);
+          }
+        };
+        
+        // Ensure that handleFileUpload is called in an appropriate context
+
+   
+
+
+        handleFileUpload();
+
+        // console.log(videoPath,"sdssd video file")
+
+        // downloadFile(videoBlob, fileNameVideo);
         // convertToAudio(videoBlob);
+        console.log("test audio path  sdnasjsajdsmsm");
 
         // Video Stop After Time Complete
         const tracks = videoRef.current.srcObject.getTracks();
@@ -138,11 +165,31 @@ const InterviewPlayer = () => {
         const audioBlob = new Blob(recordedAudioChunksRef.current, {
           type: "audio/mp3",
         });
-        downloadFile(audioBlob, "interview_audio.mp3");
-        uploadFile(audioBlob, "interview_audio.mp3");
+        const now = new Date().toISOString().replace(/:/g, "-").split(".")[0]; // Format the timestamp
+        const fileNameAudio = `interview_audio_${now}.mp3`; // Use formatted time in filename
+        // downloadFile(audioBlob, fileNameAudio);
+        // const audioPath = uploadFile(audioBlob, fileNameAudio);
+
+        // console.log(audioPath,"sdssd audio file")
+        //  console.log("test audio path");
+
+        // setAudioFilePath(audioPath);
+
+        const handleFileUploadAudio = async () => {
+          try {
+            const audioPath = await uploadFile(audioBlob, fileNameAudio);
+            console.log("Audio file path:", audioPath);
+            setAudioFilePath(audioPath);
+
+            // You can now use audioPath as needed
+          } catch (error) {
+            console.error("Failed to upload audio file:", error);
+          }
+        };
+        handleFileUploadAudio()
+
       };
     }
-
     // Simulate answer score calculation
     const calculatedScore = Math.floor(Math.random() * 100);
     setAnswerScore(calculatedScore);
@@ -246,7 +293,7 @@ const InterviewPlayer = () => {
 
     // try {
     const response = await axios.post(
-      "https://192.168.1.15:8000/interveiw-section/interview-video-upload/",
+      "https://192.168.1.63:5000/interveiw-section/interview-video-upload/",
       formData,
       {
         headers: {
@@ -254,10 +301,43 @@ const InterviewPlayer = () => {
         },
       }
     );
-    console.log("File uploaded successfully:", response);
-    // } catch (error) {
-    //   console.error('Error uploading file:', error);
-    // }
+    return response.data.file_path;
+  };
+
+  useEffect(() => {
+    if (videoFilePath && audioFilePath) {
+      console.log("test video path");
+      console.log(videoFilePath);
+      console.log(audioFilePath,"AUdioFile Path....");
+
+      analyzeVideo();
+    }
+  }, [videoFilePath, audioFilePath]);
+
+  const analyzeVideo = async () => {
+    if (!videoFilePath || !audioFilePath) {
+      console.error("Video or audio path is missing.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("video_path", videoFilePath);
+    formData.append("audio_path", audioFilePath);
+
+    try {
+      const response = await axios.post(
+        "https://192.168.1.63:5000/interveiw-section/analyze-video/",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      console.log("Video analysis started successfully:", response.data);
+    } catch (error) {
+      console.error("Error analyzing video:", error);
+    }
   };
 
   const handleCloseModal = () => {
