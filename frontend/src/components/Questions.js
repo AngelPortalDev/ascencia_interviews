@@ -7,16 +7,25 @@ import Axios from "axios";
 import { Pagination, Navigation,Autoplay} from "swiper/modules";
 import ChatIcon from "../assest/icons/one.svg";
 import InterviewPlayer from "./InterviewPlayer.js";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom"; 
+import {usePermission} from '../context/PermissionContext.js';
 
 const Questions = () => {
-  const [countdown, setCountdown] = useState(300);
-  const [userData, setUserData] = useState(null);
-
+  const [countdown, setCountdown] = useState(30);
+  // const [userData, setUserData] = useState(null);
   const [getQuestions, setQuestions] = useState([]);
+  const [navigationTime, setNavigationTime] = useState(0);
+  const [isNavigationEnabled,setIsNavigationEnabled] = useState(false);
+  const [timeSpent, setTimeSpent] = useState(0); 
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+
+  const navigate = useNavigate();
+  const { submitExam } = usePermission();
 
   const fetchQuestions = async () => {
     const res = await Axios.get(
-      "https://192.168.1.15:8000/interveiw-section/interview-questions/"
+      `${process.env.REACT_APP_API_BASE_URL}interveiw-section/interview-questions/`
     );
     setQuestions(res.data.questions);
   };
@@ -25,23 +34,14 @@ const Questions = () => {
   }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const mockData = {
-        name: "John Doe",
-        email: "johndoe@example.com",
-        mobile: "123-456-7890",
-        jobId: "JOB12345",
-      };
-      setUserData(mockData);
-    };
-
-    fetchData();
 
     if (countdown > 0) {
       const timer = setInterval(() => {
         setCountdown((prev) => prev - 1);
       }, 1000);
       return () => clearInterval(timer);
+    }else{
+      // setIsNagigationEnabled(true);
     }
   }, [countdown]);
 
@@ -51,9 +51,80 @@ const Questions = () => {
     return `COUNTDOWN =  ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
   };
 
-  if (!userData) {
-    return <div>Loading...</div>;
-  }
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNavigationTime((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (timeSpent >= 10) {
+      setIsNavigationEnabled(true);
+    } else {
+      setIsNavigationEnabled(false);
+    }
+  }, [timeSpent]);
+
+  useEffect(() => {
+    setTimeSpent(0);
+  }, [currentQuestionIndex]);
+
+  const handleQuestionChange = (swiper) => {
+    setTimeSpent(0); // Reset time spent for next question
+    setCurrentQuestionIndex(swiper.realIndex); // Update current question index
+  };
+
+  const handleTimeSpent = () => {
+    // Increment time spent on current question
+    setTimeSpent((prev) => prev + 1);
+  };
+
+    // Timer to track how long the user spends on each question
+  useEffect(() => {
+      const timeTracker = setInterval(() => {
+        handleTimeSpent();
+      }, 1000);
+  
+      return () => clearInterval(timeTracker);
+  }, []);
+
+  // useEffect(()=>{
+  //   if(navigationTime > 10){
+  //     setIsNavigationEnabled(true);
+  //   }
+  // },[navigationTime])
+
+  // if (!userData) {
+  //   return <div>Loading...</div>;
+  // }
+
+
+  const handleSubmit = () => {
+    submitExam(); 
+    toast.success("Interview Submitted...", {
+      onClose: () => navigate("/"),
+      autoClose: 1500,
+    });
+  };
+
+  useEffect(()=>{
+    if(countdown === 0){
+      localStorage.setItem("InterviewSubitted", "true");
+      toast.success("Interview Submitted...", {
+        onClose: () => navigate("/"), 
+        autoClose: 1500, 
+      });
+    }
+  },[countdown]);
+
+  // useEffect(()=>{
+  //   if(localStorage.getItem("InterviewSubitted") === "true"){
+  //     toast.error("You have already submitted the interview.");
+  //     navigate("/");
+  //   }
+  // },[countdown]);
 
   return (
     <div className="relative min-h-screen bg-gradient-to-r text-white">
@@ -72,12 +143,12 @@ const Questions = () => {
       </div>
 
       {/* Countdown Timer */}
-      <div className="flex justify-between px-8 pt-12 lg:px-16">
+      <div className="flex justify-between px-8 pt-12 lg:px-16 items-center">
         <div>
-          <h3 className="text-black text-3xl">Interview Questions</h3>
+          <h3 className="text-black text-2xl">Interview Questions</h3>
         </div>
         <div
-          className={` px-4 py-2 rounded-xl text-3xl font-extrabold transition-all tracking-wider
+          className={` px-4 py-2 rounded-full text-2xl font-extrabold transition-all tracking-wider
         ${
           countdown < 30
             ? "text-red-500 animate-blink"
@@ -101,13 +172,15 @@ const Questions = () => {
               </span>
             ),
           }}
-          navigation={true}
+          navigation={isNavigationEnabled}
           modules={[Pagination, Navigation,Autoplay]}
           className="mySwiper"
           autoplay={{
             delay: 30000,
             disableOnInteraction: false,
           }}
+          onSlideChange={handleQuestionChange}
+          allowTouchMove={true}
         >
           {getQuestions.map((questionItem, index) => {
             return (
@@ -118,8 +191,8 @@ const Questions = () => {
                 <p>{questionItem.question}</p>
                 {index === getQuestions.length - 1 && (
                   <button
-                    onClick={() => alert("Form Submitted!")}
-                    className="bg-gradient-to-r from-[#ff80b5] to-[#9089fc] text-white text-xl font-semibold py-3 px-8 rounded-xl shadow-lg hover:bg-gradient-to-l transition-all"
+                    onClick={handleSubmit}
+                    className="bg-gradient-to-r from-[#ff80b5] to-[#9089fc] text-white text-lg font-semibold py-2 px-6 rounded-xl shadow-lg hover:bg-gradient-to-l transition-all"
                     style={{
                       position: "absolute",
                       right: "20px",
@@ -135,10 +208,11 @@ const Questions = () => {
         </Swiper>
 
         {/* Grid Layout for User Info and Video */}
-        <div className="grid grid-cols-12 gap-8 mt-12">
+        <div className="grid grid-cols-12 gap-8 mt-12 h-full">
           {/* User Info (8 columns) */}
-          <div className="col-span-12 lg:col-span-9 bg-white p-6 rounded-xl shadow-lg text-black border border-gray-200">
-            <h3 className="text-2xl font-semibold mb-6 text-center">
+          <div className="col-span-12 lg:col-span-9 flex flex-col justify-end bg-white p-6 rounded-xl shadow-lg text-black border border-gray-200">
+
+            <h3 className="text-xl font-semibold mb-6 text-center">
               Matt Morgon
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
@@ -153,7 +227,7 @@ const Questions = () => {
                   />
                 </div>
                 <div className="chat-notification-content ms-3">
-                  <div className="chat-notification-title text-xl font-medium text-black">
+                  <div className="chat-notification-title text-lg font-medium text-black">
                     Mobile No
                   </div>
                   <p className="chat-notification-message">+91 6789354628</p>
@@ -171,7 +245,7 @@ const Questions = () => {
                   />
                 </div>
                 <div className="chat-notification-content ms-3">
-                  <div className="chat-notification-title text-xl font-medium text-black">
+                  <div className="chat-notification-title text-lg font-medium text-black">
                     Email id
                   </div>
                   <p className="chat-notification-message">abc12@gmail.com</p>
@@ -189,7 +263,7 @@ const Questions = () => {
                   />
                 </div>
                 <div className="chat-notification-content ms-3">
-                  <div className="chat-notification-title text-xl font-medium text-black">
+                  <div className="chat-notification-title text-lg font-medium text-black">
                     Job Id
                   </div>
                   <p className="chat-notification-message">JOB11223</p>

@@ -13,10 +13,11 @@ import Questions from "./components/Questions.js";
 import ProtectedRoute from './components/ProtectedRoute.js'
 import NotFound from "./components/NotFound.js";
 import {usePermission} from "./context/PermissionContext.js";
+import { ToastContainer } from "react-toastify";
 
 function App() {
 
-  const { termsAccept, audioVideoAccepted } = usePermission();
+  const { termsAccept, audioVideoAccepted, isExamSubmitted } = usePermission();
 
 
   // const [hasAgreed, setHasAgreed] = useState(() => { 
@@ -30,18 +31,18 @@ function App() {
   return (
 
       <Router>
+        <ToastContainer/>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route
             path="/terms-and-conditions"
-            element={<TermsAndCondition />}
-          />
+            element={<ProtectedRoute element={<TermsAndCondition />} isAllowed={!isExamSubmitted} redirectPath="/"/>}/>
           <Route 
           path="/permissions" 
-          element={<ProtectedRoute element={<Permissions/>} isAllowed={termsAccept} redirectPath="/terms-and-conditions"/>} />
+          element={<ProtectedRoute element={<Permissions/>} isAllowed={termsAccept && !isExamSubmitted} redirectPath="/terms-and-conditions"/>} />
 
-          <Route path="/questions" 
-          element={<ProtectedRoute element={<Questions/>} isAllowed={audioVideoAccepted} redirectPath="/permissions"/>}/>
+          <Route path="/questions"  element={<ProtectedRoute element={<Questions/>} isAllowed={audioVideoAccepted && !isExamSubmitted} redirectPath="/permissions"/>}/>
+         {/* Add Question Router Here */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>

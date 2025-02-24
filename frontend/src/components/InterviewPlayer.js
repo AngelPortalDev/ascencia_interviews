@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import InterviewScoreModal from "./InterviewScoreModal.js";
+import { toast } from "react-toastify";
 
 const InterviewPlayer = () => {
   const [isRecording, setIsRecording] = useState(false);
@@ -106,7 +107,16 @@ const InterviewPlayer = () => {
       if (videoRef.current) videoRef.current.srcObject = stream;
       setIsRecording(true);
     } catch (error) {
-      alert("Error accessing camera and microphone.");
+      // if(!localStorage.getItem("InterviewSubitted") === "true"){
+        toast.error("Error accessing camera & microphone. Please allow permissions.",{
+          position: "top-right",
+          autoClose: 1500,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+        });
+      // }
+     
     }
   };
 
@@ -293,7 +303,7 @@ const InterviewPlayer = () => {
 
     // try {
     const response = await axios.post(
-      "https://192.168.1.63:5000/interveiw-section/interview-video-upload/",
+      `${process.env.REACT_APP_API_BASE_URL}interveiw-section/interview-video-upload/`,
       formData,
       {
         headers: {
@@ -326,7 +336,7 @@ const InterviewPlayer = () => {
 
     try {
       const response = await axios.post(
-        "https://192.168.1.63:5000/interveiw-section/analyze-video/",
+        `${process.env.REACT_APP_API_BASE_URL}interveiw-section/analyze-video/`,
         formData,
         {
           headers: {

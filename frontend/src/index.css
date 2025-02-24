@@ -24,8 +24,8 @@ code {
 
 .swiper-slide {
   text-align: center;
-  font-size: 32px;
-  height: 400px !important;
+  font-size: 24px;
+  height: 200px !important;
   /* background: #fff; */
 
   /* Center slide text vertically */
@@ -34,6 +34,9 @@ code {
   align-items: center;
   padding: 4rem !important;
   box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.2);
+  border-radius: 0px;
+  /* border: 1px solid rgb(199, 198, 198) !important; */
+  /* border-radius: 10px; */
 }
 
 .swiper-slide img {
@@ -51,4 +54,77 @@ code {
 .chat-notification{
   --tw-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(190 0 0 / 61%);
 }
+
+
+.user-info-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 100%;
+}
+
+
+/* Not found */
+
+/* NotFound.css */
+.not-found-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #f0f0f0;
+  font-family: 'Arial', sans-serif;
+}
+
+.not-found-content {
+  text-align: center;
+  background-color: #fff;
+  padding: 40px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  width: 100%;
+}
+
+.not-found-title {
+  font-size: 100px;
+  font-weight: bold;
+  color: rgb(37 99 235);
+}
+
+.not-found-message {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.go-home-btn {
+  display: inline-block;
+  padding: 12px 25px;
+  background-color: rgb(219 39 131);
+  color: #fff;
+  text-decoration: none;
+  border-radius: 5px;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.go-home-btn:hover {
+  background-color: rgb(219 39 131);
+}
+
+/* Optional: Add a simple animation */
+@keyframes bounce {
+  0%, 20%, 40%, 60%, 80%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.not-found-title {
+  animation: bounce 2s infinite;
+}
+
 

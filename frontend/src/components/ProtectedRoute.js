@@ -39,8 +39,18 @@
 
 
 import { Navigate } from "react-router-dom";
+import {usePermission} from '../context/PermissionContext.js';
+import { toast } from "react-toastify";
 
 const ProtectedRoute = ({ element, isAllowed, redirectPath  }) => {
+
+  const { isExamSubmitted } = usePermission();
+
+  if (isExamSubmitted) {
+    toast.error("You have already submitted the exam.");
+    return <Navigate to="/" />;
+  }
+
   return isAllowed ? element :  <Navigate to={redirectPath}/>
 }
 

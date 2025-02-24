@@ -18,6 +18,9 @@ export const PermissionProvider = ({children}) =>{
         localStorage.getItem("hasPermissions") === "true"
     )
 
+    const[isExamSubmitted,setIsExamSubmitted] = useState(
+        localStorage.getItem("InterviewSubitted") === "true");
+
 
     const acceptTerms = ()=>{
         setTermsAccept(true);
@@ -29,12 +32,16 @@ export const PermissionProvider = ({children}) =>{
         localStorage.setItem("hasPermissions", "true");
     }
 
+    const submitExam  = ()=>{
+        setIsExamSubmitted(true);
+        localStorage.setItem("InterviewSubitted", "true");
+    }
 
 
-    console.log("Context Values:", { termsAccept, audioVideoAccepted });
+    console.log("Context Values:", { termsAccept, audioVideoAccepted, isExamSubmitted });
 
     return(
-       <PermissionContext.Provider value={{termsAccept,audioVideoAccepted,acceptAudioVideo, acceptTerms}}>
+       <PermissionContext.Provider value={{termsAccept,audioVideoAccepted,isExamSubmitted, acceptAudioVideo, acceptTerms, submitExam }}>
         {children}
        </PermissionContext.Provider>   
     )
