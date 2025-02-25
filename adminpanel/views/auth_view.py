@@ -15,7 +15,10 @@ def login_view(request):
     
     # If the user is already authenticated, redirect to the index page
     if request.user.is_authenticated:
-        return redirect('admindashboard')
+        if request.user.profile.role == 0:
+            return redirect('admindashboard')
+        else:
+            return redirect('studentmanagerdashboard')
 
     # If the request method is POST, authenticate the user
     if request.method == 'POST':
@@ -34,7 +37,10 @@ def login_view(request):
         if user is not None:
             # if user.profile.role == 0:
                 login(request, user)
-                return redirect('admindashboard')  # Redirect to the index page
+                if request.user.profile.role == 0:
+                    return redirect('admindashboard')
+                else:
+                    return redirect('studentmanagerdashboard')  # Redirect to the index page
             # else:
             #     login(request, user)
             #     return redirect('studentmanagerdashboard')

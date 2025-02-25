@@ -1,0 +1,149 @@
+{% load static %}
+<!-- build:js assets/vendor/js/core.js' %} -->
+    <script src="{% static 'vendor/libs/jquery/jquery.js' %}"></script>
+    <script src="{% static 'vendor/libs/popper/popper.js' %}"></script>
+    <script src="{% static 'vendor/js/bootstrap.js' %}"></script>
+    <script src="{% static 'vendor/libs/perfect-scrollbar/perfect-scrollbar.js' %}"></script>
+
+    <script src="{% static 'vendor/js/menu.js' %}"></script>
+    <!-- endbuild -->
+
+    <!-- Vendors JS -->
+    <script src="{% static 'vendor/libs/apex-charts/apexcharts.js' %}"></script>
+
+    <!-- Main JS -->
+    <script src="{% static 'js/main.js' %}"></script>
+
+    <!-- Page JS -->
+    <script src="{% static 'js/dashboards-analytics.js' %}"></script>
+
+    <!-- Place this tag in your head or just before your close body tag. -->
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js"></script>
+    
+    
+    <!-- Main JS -->
+    <script src="{% static 'js/common.js' %}"></script>
+    <script>
+        $(document).ready(function() {
+            $('.alert').each(function() {
+                var alert = $(this);
+                setTimeout(function() {
+                    alert.fadeOut(); // Hide the alert after 5 seconds with fadeOut effect
+                }, 3000); // 5000 milliseconds = 5 seconds
+            });
+
+            if (!$.fn.DataTable.isDataTable('#DataTables_Table_0')) {
+                $('#DataTables_Table_0').DataTable({
+                    // responsive: true,
+                    // paging: true,
+                    searching: true,
+                    ordering: true,
+                    language: {
+                        searchPlaceholder: "Search records..."
+                    }
+                });
+            }
+
+            $('#DataTables_Table_1').DataTable({
+                paging: true,       
+                searching: true,    
+                info: true,         
+                lengthChange: true, 
+                ordering: true,     
+                language: {
+                    searchPlaceholder: "Search records..."
+                }
+                    });
+
+                   
+        });
+
+        {% comment %} }); {% endcomment %}
+
+        function checkPasswordStrength() {
+            let passwordInput = document.getElementById("password");
+            let strengthIndicator = document.getElementById("password-strength");
+
+            // Check if strength indicator exists to avoid errors
+            if (!strengthIndicator) {
+                console.error("Element with ID 'password-strength' not found.");
+                return;
+            }
+
+            let password = passwordInput.value;
+            let strength = 0;
+
+            if (password.length >= 8) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[a-z]/.test(password)) strength++;
+            if (/\d/.test(password)) strength++;
+            if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++;
+
+            let colors = ["red", "orange", "yellow", "blue", "green"];
+            strengthIndicator.style.width = `${strength * 20}%`;
+            strengthIndicator.style.backgroundColor = colors[strength - 1] || "red";
+            
+        }
+
+
+
+        function togglePassword(inputId, icon) {
+            var input = document.getElementById(inputId);
+
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.replace("bx-hide", "bx-show");
+            } else {
+                input.type = "password";
+                icon.classList.replace("bx-show", "bx-hide");
+            }
+        }
+
+
+        // {% comment %} CommonFile {% endcomment %}
+
+        // {% comment %}
+        
+        // common 
+        $(document).ready(function () {
+            $("#profileUpdate").on("click", function (event) {
+                event.preventDefault();  // Prevent form submission for now
+        
+                const successMessage = document.querySelector("#success-message")?.value;
+                const errorMessage = document.querySelector("#error-message")?.value;
+        
+                // Check for success message
+                if (successMessage) {
+                    Swal.fire({
+                        title: "Success!",
+                        text: successMessage,
+                        icon: "success",
+                        confirmButtonText: "OK",
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // After confirmation, submit the form
+                            $("#profileUpdateForm").submit();  
+                        }
+                    });
+                }
+        
+                // Check for error message
+                if (errorMessage) {
+                    Swal.fire({
+                        title: "Error!",
+                        text: errorMessage,
+                        icon: "error",
+                        confirmButtonText: "OK",
+                    });
+                }
+            });
+        });
+         {% endcomment %}
+
+    </script>
+    

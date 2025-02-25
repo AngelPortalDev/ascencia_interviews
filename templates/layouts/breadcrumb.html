@@ -1,0 +1,23 @@
+{% if show_breadcrumb %}
+<div class="container-xxl mt-3 pt-3">
+    <div class="card shadow-sm rounded-lg border-0 mb-3">
+        <div class="card-body py-3 px-4">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    {% for item in breadcrumb_items %}
+                        {% if forloop.last %}
+                            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">
+                                {{ item.name }}
+                            </li>
+                        {% else %}
+                            <li class="breadcrumb-item">
+                                <a href="{{ item.url }}" class="text-primary fw-semibold">{{ item.name }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ol>
+            </nav>
+        </div>
+    </div>
+</div>
+{% endif %}
