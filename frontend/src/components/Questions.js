@@ -33,7 +33,7 @@ const Questions = () => {
     if (res.data.questions.length > 0) {
       console.log(res.data.questions[0].encoded_id);
       console.log(res.data);
-      setActiveQuestionId(res.data.questions[0].encoded_id); // Set first question as active
+      setActiveQuestionId(res.data.questions[0].encoded_id); 
     }
   };
   useEffect(() => {
@@ -113,6 +113,7 @@ const Questions = () => {
     toast.success("Interview Submitted...", {
       onClose: () => navigate("/"),
       autoClose: 1500,
+      hideProgressBar: true,
     });
   };
 
@@ -122,6 +123,7 @@ const Questions = () => {
       toast.success("Interview Submitted...", {
         onClose: () => navigate("/"), 
         autoClose: 1500, 
+        hideProgressBar: true,
       });
     }
   },[countdown]);
@@ -282,17 +284,6 @@ const Questions = () => {
 
           {/* Video Player (4 columns) */}
           <div className="col-span-12 lg:col-span-3 bg-white p-6 rounded-xl shadow-lg text-black border border-gray-200">
-            {/* <h3 className="text-2xl font-semibold mb-6">Instructional Video</h3> */}
-            {/* <div className="relative aspect-w-16 aspect-h-9">
-              <iframe
-                src="https://www.youtube.com/embed/dQw4w9WgXcQ"
-                title="YouTube video"
-                frameBorder="0"
-                allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="w-full h-full rounded-xl shadow-lg"
-              ></iframe>
-            </div> */}
             <InterviewPlayer onTranscription={setTranscribedText} />
               {activeQuestionId && <QuestionChecker transcribedText={transcribedText} questionId={activeQuestionId} />}
              
