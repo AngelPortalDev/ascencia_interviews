@@ -6,7 +6,6 @@ from django.views.decorators.csrf import csrf_exempt
 from adminpanel.common_imports import CommonQuestion
 from django.core.files.storage import FileSystemStorage
 from django.conf import settings
-
 # from .serializers import QuestionSerializer
 # from .serializers import QuestionSerializer
 def interview_start(request):
@@ -64,12 +63,11 @@ def interview_questions(request):
             {
                 'question': question.question,
                 'answer': question.answer,
-                # 'encoded_id': base64_encode(question.id)
+                'encoded_id': question.id
             }
             for question in questions
         ]
         return JsonResponse({'questions': question_data}, status=200)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-
 

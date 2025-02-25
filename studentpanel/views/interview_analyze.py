@@ -13,8 +13,12 @@ import wave
 import speech_recognition as sr
 from langdetect import detect
 from googletrans import Translator
-# import ffmpeg
-
+from adminpanel.common_imports import CommonQuestion
+import re
+from transformers import BertTokenizer, BertModel
+import torch
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_extraction.text import TfidfVectorizer
 # ✅ Paths (Update as per your system)
 FFMPEG_PATH = r"C:\ffmpeg-2025-02-20-git-bc1a3bfd2c-full_build\bin\ffmpeg.exe"
 VOSK_MODEL_PATH = r"C:\Users\angel\Downloads\vosk-model-small-en-us-0.15\vosk-model-small-en-us-0.15"
@@ -213,3 +217,67 @@ def analyze_video(request):
             return JsonResponse({"error": "Processing failed", "details": str(e)}, status=500)
 
     return JsonResponse({"error": "Invalid request"}, status=400)
+
+
+# Load BERT model and tokenizer
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+model = BertModel.from_pretrained('bert-base-uncased')
+
+def get_sentence_embedding(sentence):
+    inputs = tokenizer(sentence, return_tensors='pt', truncation=True, padding=True)
+    with torch.no_grad():
+        outputs = model(**inputs)
+    # Use the [CLS] token embedding
+    return outputs.last_hidden_state[:, 0, :].numpy()
+@csrf_exempt
+def check_answers(request):
+    if request.method == "POST":
+        try:
+            print("ye")
+            data =  request.POST
+            transcribed_text = data.get("answer", "").strip()
+            question_id = data.get("question_id")
+
+            # Retrieve the question from the DB
+            question = CommonQuestion.objects.get(id=question_id)
+            correct_answer = question.answer.strip()
+
+            # Get embeddings for both texts
+              # Prepare the texts
+            texts = [correct_answer, transcribed_text]
+
+            # Vectorize the texts using TF-IDF
+            vectorizer = TfidfVectorizer()
+            tfidf_matrix = vectorizer.fit_transform(texts)
+
+            # Compute cosine similarity between the correct answer and the transcribed answer
+            similarity = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0]
+            similarity = float(similarity)  # Convert to native Python float
+            similarity_percentage = similarity * 100
+
+            # Define a threshold for passing
+            threshold = 0.5  # Adjust this threshold as needed
+            is_pass = similarity >= threshold
+
+            result = {
+                "correct": is_pass,
+                "similarity": similarity,
+                "pass": is_pass,
+                "similarity_percentage": similarity_percentage
+            }
+            return JsonResponse({"result": result})
+
+        except CommonQuestion.DoesNotExist:
+            return JsonResponse({"error": "Invalid question ID"}, status=400)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+def extract_score(response):
+    try:
+        result = response["choices"][0]["message"]["content"]
+        # Expecting a result that ends with a numeric score, e.g., "Score: 85"
+        match = re.search(r"(\d+)", result)
+        return int(match.group(1)) if match else 0
+    except Exception as e:
+        print("Error extracting score:", e)
+        return 0

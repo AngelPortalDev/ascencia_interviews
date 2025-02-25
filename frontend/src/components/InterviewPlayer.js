@@ -4,7 +4,7 @@ import axios from "axios";
 import InterviewScoreModal from "./InterviewScoreModal.js";
 import { toast } from "react-toastify";
 
-const InterviewPlayer = () => {
+const InterviewPlayer = ({ onTranscription }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [showPopup, setShowPopup] = useState(false);
@@ -314,15 +314,15 @@ const InterviewPlayer = () => {
     return response.data.file_path;
   };
 
-  useEffect(() => {
-    if (videoFilePath && audioFilePath) {
-      console.log("test video path");
-      console.log(videoFilePath);
-      console.log(audioFilePath,"AUdioFile Path....");
+  // useEffect(() => {
+  //   if (videoFilePath && audioFilePath) {
+  //     console.log("test video path");
+  //     console.log(videoFilePath);
+  //     console.log(audioFilePath,"AUdioFile Path....");
 
-      analyzeVideo();
-    }
-  }, [videoFilePath, audioFilePath]);
+  //     analyzeVideo();
+  //   }
+  // }, [videoFilePath, audioFilePath]);
 
   const analyzeVideo = async () => {
     if (!videoFilePath || !audioFilePath) {
@@ -344,11 +344,27 @@ const InterviewPlayer = () => {
           },
         }
       );
-      console.log("Video analysis started successfully:", response.data);
+      if (response.data && response.data.transcription) {
+        console.log("✅ Transcription Data:", response.data.transcription);
+
+        // Check if onTranscription is being called correctly
+        onTranscription(response.data.transcription);
+        console.log("📩 onTranscription Called with:", response.data.transcription);
+      } else {
+        console.warn("⚠️ Transcription response is missing expected data.");
+      }
     } catch (error) {
       console.error("Error analyzing video:", error);
     }
   };
+
+  
+  useEffect(() => {
+    if (videoFilePath && audioFilePath) {
+      analyzeVideo();
+    }
+  }, [videoFilePath, audioFilePath]);
+
 
   const handleCloseModal = () => {
     setShowPopup(false);

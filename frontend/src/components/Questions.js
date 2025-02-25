@@ -10,7 +10,7 @@ import InterviewPlayer from "./InterviewPlayer.js";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom"; 
 import {usePermission} from '../context/PermissionContext.js';
-
+import QuestionChecker from "./QuestionChecker.js";
 const Questions = () => {
   const [countdown, setCountdown] = useState(30);
   // const [userData, setUserData] = useState(null);
@@ -19,6 +19,8 @@ const Questions = () => {
   const [isNavigationEnabled,setIsNavigationEnabled] = useState(false);
   const [timeSpent, setTimeSpent] = useState(0); 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [transcribedText, setTranscribedText] = useState(""); // To hold transcribed text
+  const [activeQuestionId, setActiveQuestionId] = useState(null); // Track active question
 
   const navigate = useNavigate();
   const { submitExam } = usePermission();
@@ -28,6 +30,11 @@ const Questions = () => {
       `${process.env.REACT_APP_API_BASE_URL}interveiw-section/interview-questions/`
     );
     setQuestions(res.data.questions);
+    if (res.data.questions.length > 0) {
+      console.log(res.data.questions[0].encoded_id);
+      console.log(res.data);
+      setActiveQuestionId(res.data.questions[0].encoded_id); // Set first question as active
+    }
   };
   useEffect(() => {
     fetchQuestions();
@@ -180,6 +187,7 @@ const Questions = () => {
             disableOnInteraction: false,
           }}
           onSlideChange={handleQuestionChange}
+          // onSlideChange={(swiper) => setActiveQuestionId(getQuestions[swiper.activeIndex]?.id)} // Track active question
           allowTouchMove={true}
         >
           {getQuestions.map((questionItem, index) => {
@@ -285,7 +293,9 @@ const Questions = () => {
                 className="w-full h-full rounded-xl shadow-lg"
               ></iframe>
             </div> */}
-            <InterviewPlayer/>
+            <InterviewPlayer onTranscription={setTranscribedText} />
+              {activeQuestionId && <QuestionChecker transcribedText={transcribedText} questionId={activeQuestionId} />}
+             
           </div>
         </div>
       </div>

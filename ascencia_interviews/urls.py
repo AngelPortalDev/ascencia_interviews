@@ -12,9 +12,7 @@ from adminpanel.views.student_view import students_leads_api,students_list, stud
 from django.views.generic import TemplateView
 from django.conf.urls import handler404
 from django.shortcuts import redirect
-
-
-
+from studentpanel.views.interview_analyze import analyze_video,check_answers
 
 handler404 = custom_404_view
 
@@ -108,7 +106,9 @@ urlpatterns = [
                 # path("submit-interview/", student_submit, name="student_submit"),
                 path("interview-score/", interview_score, name="interview_score"),
                 path("interview-video-upload/", interview_video_upload, name="interview_video_upload"),
-                 path("interview-questions/", interview_questions, name="interview_questions"),
+                path("interview-questions/", interview_questions, name="interview_questions"),
+                path("analyze-video/", analyze_video, name="analyze_video"),
+                path("check-answers/", check_answers, name="check_answers")
                 # path("index/", index, name="index"),
             ]
         ),
