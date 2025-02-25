@@ -70,6 +70,11 @@
                            class="btn btn-danger btn-sm text-white">
                           <i class="bx bx-trash"></i> Delete
                         </a>
+                        <!-- Student List Link -->
+                        <a href="{% url 'student_list_by_manager' id=student_manager.encoded_id %}" 
+                          class="btn btn-info btn-sm text-white">
+                          <i class="bx bx-group"></i> Students
+                        </a>
                       </td>
                     </tr>
                     {% endfor %}

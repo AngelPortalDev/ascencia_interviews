@@ -158,3 +158,35 @@ def institute_delete(request, id):
         messages.error(request, f"An error occurred while deleting the institute: {e}")
 
     return redirect('institute_list')
+
+
+def student_managers_by_institute(request, id):
+    id = base64_decode(id)
+    institute = get_object_or_404(Institute, id=id)
+    
+    studentManagers = User.objects.filter(
+        id__in=StudentManagerProfile.objects.filter(institute_id=institute).values_list('user_id', flat=True)
+    )
+
+    student_manager_data = [
+        {
+            'first_name': studentManager.first_name,
+            'last_name': studentManager.last_name,
+            'email': studentManager.email,
+            'encoded_id': base64_encode(studentManager.id)
+        }
+        for studentManager in studentManagers
+    ]
+
+    breadcrumb_items = [
+        {"name": "Dashboard", "url": reverse('admindashboard')},
+        {"name": "Institutes", "url": reverse('institute_list')},
+        {"name": f"Student Managers - {institute.institute_name}", "url": ""}
+    ]
+
+    return render(request, 'student_manager/student_managers_by_institute.html', {
+        'student_managers': student_manager_data,
+        'institute_name': institute.institute_name,
+        "show_breadcrumb": True,
+        "breadcrumb_items": breadcrumb_items,
+    })

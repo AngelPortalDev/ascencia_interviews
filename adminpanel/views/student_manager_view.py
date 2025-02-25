@@ -3,6 +3,7 @@ from adminpanel.common_imports import *
 from django.contrib.auth import get_user_model
 from adminpanel.models.user_role import UserRoles
 from django.http import HttpResponse
+from studentpanel.models.interview_process_model import Students
 
 User = get_user_model()
 
@@ -178,7 +179,6 @@ def student_manager_update(request, id):
 
 
 
-
 def student_manager_delete(request, id):
     id = base64_decode(id)
 
@@ -186,17 +186,48 @@ def student_manager_delete(request, id):
         return HttpResponse("Invalid or tampered ID", status=400)
 
     try:
-        student_manager = get_object_or_404(StudentManager, id=id)
+        with transaction.atomic():  # Ensures all deletions happen together
+            # Fetch user
+            user = get_object_or_404(User, id=id)
 
-        if student_manager.deleted_at is not None:
-            messages.warning(request, "Record is already soft deleted.")
-        else:
-            # Perform the soft delete
-            student_manager.deleted_at = timezone.now()
-            student_manager.soft_delete()
-            messages.success(request, "Record deleted successfully!")
+            # Delete related records
+            UserRoles.objects.filter(user=user).delete()
+            StudentManagerProfile.objects.filter(user=user).delete()
+
+            # Finally, delete the user itself
+            user.delete()
+
+            messages.success(request, "Student Manager deleted successfully!")
 
     except Exception as e:
         messages.error(request, f"An error occurred while deleting the student manager: {e}")
 
     return redirect('student_managers')
+
+
+
+def student_list_by_manager(request, id):
+    # Decode the ID (if it's encoded)
+    manager_id = base64_decode(id)
+
+    # Get the Student Manager
+    student_manager = get_object_or_404(User, id=manager_id)
+
+    # Fetch students where student_manager_email matches the Student Manager's email
+    students = Students.objects.filter(student_manager_email=student_manager.email)
+
+    breadcrumb_items = [
+        {"name": "Dashboard", "url": reverse('admindashboard')},
+        {"name": "Student Managers", "url": reverse('student_managers')},
+        {
+            "name": f"Students Managed by - {student_manager.first_name} {student_manager.last_name}" if student_manager else "Unknown",
+            "url": "",
+        }
+    ]
+
+    return render(request, 'student_manager/student_list.html', {
+        "students": students,
+        "student_manager": student_manager,
+        "show_breadcrumb": True,
+        "breadcrumb_items": breadcrumb_items,
+    })

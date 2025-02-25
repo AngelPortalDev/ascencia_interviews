@@ -1,0 +1,141 @@
+{% extends "layouts/master.html" %} 
+{% block content %} 
+{% load static %}
+{% include 'layouts/breadcrumb.html' %}
+  <!-- Content wrapper -->
+  <div class="content-wrapper">
+    <!-- Content -->
+    <div class="container-xxl flex-grow-1 container-p-y">
+      <div class="card">
+        <div class="card-datatable text-nowrap">
+          <div id="DataTables_Table_0_wrapper" class="dt-container dt-bootstrap5 dt-empty-footer">
+            <div class="row card-header flex-column flex-md-row pb-0">
+              <div class="d-md-flex justify-content-between align-items-center dt-layout-start col-md-auto me-auto mt-0">
+                <h5 class="card-title mb-0 text-md-start text-center">
+                  Student Table
+                </h5>
+              </div>
+              <div class="d-md-flex justify-content-between align-items-center dt-layout-end col-md-auto ms-auto mt-0">
+                <div class="dt-buttons btn-group flex-wrap mb-0">
+                </div>
+              </div>
+            </div>
+            <hr>
+            <div class="row m-3 my-0 justify-content-between">
+              <div class="d-md-flex justify-content-between align-items-center dt-layout-start col-md-auto me-auto mt-0">
+              </div>
+              <div class="d-md-flex justify-content-between align-items-center dt-layout-end col-md-auto ms-auto mt-0">
+              </div>
+            </div>
+            <div>
+              <ul class="nav nav-tabs mb-3" id="studentTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab" aria-controls="all" aria-selected="true">All</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="verified-tab" data-bs-toggle="tab" data-bs-target="#verified" type="button" role="tab" aria-controls="verified" aria-selected="true">Verified</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected" type="button" role="tab" aria-controls="rejected" aria-selected="false">Rejected</button>
+                </li>
+              </ul>
+              <hr>
+            </div>
+            <!-- <div class="justify-content-between dt-layout-table p-3">
+              <div class="d-md-flex justify-content-between align-items-center col-12 dt-layout-full col-md">
+                <table class="table table-bordered table-responsive dataTable dtr-column"
+                  id="DataTables_Table_0" aria-describedby="DataTables_Table_0_info" style="width: 100%">
+                  <thead>
+                      <tr>
+                        <th data-dt-column="1" rowspan="1" colspan="1" class="dt-select dt-orderable-none" aria-label="">
+                          <span class="dt-column-title"></span><span class="dt-column-order"></span><input
+                            class="form-check-input" type="checkbox" aria-label="Select all rows" />
+                        </th>
+                        <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc"
+                          aria-label="Name: Activate to sort" tabindex="0">
+                          <span class="dt-column-title" role="button">Name</span><span class="dt-column-order"></span>
+                        </th>
+                        <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc"
+                          aria-label="Name: Activate to sort" tabindex="0">
+                          <span class="dt-column-title" role="button">Email</span><span class="dt-column-order"></span>
+                        </th>
+                        <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc"
+                          aria-label="Name: Activate to sort" tabindex="0">
+                          <span class="dt-column-title" role="button">Phone No.</span><span class="dt-column-order"></span>
+                        </th>
+                        <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc"
+                          aria-label="Name: Activate to sort" tabindex="0">
+                          <span class="dt-column-title" role="button">Program</span><span class="dt-column-order"></span>
+                        </th>
+                        <th class="d-flex align-items-center dt-orderable-none" data-dt-column="8" rowspan="1" colspan="1"
+                          aria-label="Actions">
+                          <span class="dt-column-title">Actions</span><span class="dt-column-order"></span>
+                        </th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      {% for student in students %}
+                        <tr>
+                          <td class="dt-select">
+                            <input aria-label="Select row" class="form-check-input" type="checkbox" />
+                          </td>
+                          <td>{{ student.first_name }} {{ student.last_name }}</td>
+                          <td>{{student.email}}</td>
+                          <td>{{student.phone}}</td>
+                          <td>{{student.program}}</td>
+
+                          <td class="d-flex align-items-center">
+                            <a href="{% url 'student_detail' zoho_lead_id=student.zoho_lead_id %}" class="btn btn-sm btn-light border me-2">
+                              <i class="bx bx-show"></i>
+                            </a>
+                            <a href="https://crm.zoho.com/crm/org771809603/tab/Leads/{{ student.zoho_lead_id }}" 
+                               target="_blank" 
+                               class="btn btn-sm btn-primary">
+                              Zoho
+                            </a>
+                          </td>
+                        </tr>
+                      {% endfor %}
+                  </tbody>
+                  <tfoot></tfoot>
+                </table>
+              </div>
+            </div> -->
+
+            <div class="tab-content p-3" id="studentTabsContent">
+                <!-- All Students -->
+                <div class="tab-pane fade show active" id="all" role="tabpanel">
+                    {% include 'student/student_table.html' with students=all_students tab_id="all_students_table" %}
+                </div>
+
+                <!-- Verified Students -->
+                <div class="tab-pane fade" id="verified" role="tabpanel">
+                    {% include 'student/student_table.html' with students=verified_students tab_id="verified_students_table" %}
+                </div>
+                
+                <!-- Rejected Students -->
+                <div class="tab-pane fade" id="rejected" role="tabpanel">
+                  {% include 'student/student_table.html' with students=rejected_students tab_id="rejected_students_table" %}
+                </div>
+            
+            </div>
+          
+            <div class="row mx-3 justify-content-between">
+              <div class="d-md-flex justify-content-between align-items-center dt-layout-start col-md-auto me-auto mt-0">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        $('#verified_students_table').DataTable();
+        $('#rejected_students_table').DataTable();
+      });
+      
+    </script>
+
+{% endblock %}

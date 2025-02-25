@@ -18,6 +18,7 @@ class Students(models.Model):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=225)
     email = models.EmailField(max_length=225, unique=True, blank=False)
+    student_manager_email = models.EmailField(max_length=225, null=True, blank=False)
     phone = models.CharField(max_length=20, null=True)  # Use CharField to handle leading zeros
     dob = models.DateField(null=True)  # Date of Birth field 
     program = models.CharField(max_length=100, null=True, blank=True)

@@ -149,6 +149,11 @@
                         <a href="javascript:void(0);" onclick="confirmDelete('{{ institute.encoded_id }}', '/adminpanel/institute/delete/')" class="btn btn-danger btn-sm text-white shadow-sm">
                           <i class="bx bx-trash icon-sm"></i> Delete
                         </a>
+                        <!-- Student Manager List Link -->
+                        <a href="{% url 'student_managers_by_institute' id=institute.encoded_id %}" 
+                          class="btn btn-info btn-sm text-white">
+                          <i class="bx bx-user"></i> Student Managers
+                        </a>
                       </td>
                     </tr>
                     {% endfor %}

@@ -3,10 +3,10 @@ from django.http import HttpResponseRedirect
 from django.urls import path, include
 from adminpanel.views.auth_view import login_view, register_view, logout_view, index
 from adminpanel.views.dashboard_view import admindashboard, custom_404_view
-from adminpanel.views.institute_view import institute_list, institute_add, institute_update, institute_delete
+from adminpanel.views.institute_view import institute_list, institute_add, institute_update, institute_delete, student_managers_by_institute
 from adminpanel.views.course_view import courses, course_add, course_update, course_delete
 from adminpanel.views.question_view import questions, question_add, question_update, question_delete, common_questions, common_question_add, common_question_update, common_question_delete
-from adminpanel.views.student_manager_view import student_managers, student_manager_add, student_manager_update, student_manager_delete
+from adminpanel.views.student_manager_view import student_managers, student_manager_add, student_manager_update, student_manager_delete, student_list_by_manager
 from adminpanel.views.profile_view import profile_update
 from adminpanel.views.student_view import students_leads_api,students_list, student_detail
 from django.views.generic import TemplateView
@@ -53,6 +53,8 @@ urlpatterns = [
                     path("institute/add", institute_add, name="institute_add"),
                     path("institute/update/<id>/", institute_update, name="institute_update"),
                     path("institute/delete/<id>/", institute_delete, name="institute_delete"),
+                    path('institute/<str:id>/student-managers/', student_managers_by_institute, name='student_managers_by_institute'),
+
 
                 # courses
                     path("courses/", courses, name="courses"),
@@ -77,6 +79,8 @@ urlpatterns = [
                     path("student_manager/add", student_manager_add, name="student_manager_add"),
                     path("student_manager/update/<id>/", student_manager_update, name="student_manager_update"),
                     path("student_manager/delete/<id>/", student_manager_delete, name="student_manager_delete"),
+                    path('student_manager/<str:id>/students/', student_list_by_manager, name='student_list_by_manager'),
+
 
                 # student 
                     path('student/<int:zoho_lead_id>/', student_detail, name='student_detail'),
