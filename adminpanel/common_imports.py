@@ -20,5 +20,5 @@ from adminpanel.models.course import Course
 from adminpanel.models.institute import Institute
 from adminpanel.models.question import Question
 from adminpanel.models.common_question import CommonQuestion
-from adminpanel.models.student_manager import StudentManager
+from adminpanel.models.student_manager_profile import StudentManagerProfile
 from django.contrib.auth.models import User

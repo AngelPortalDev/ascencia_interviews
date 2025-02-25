@@ -1,15 +1,24 @@
 
 from adminpanel.common_imports import *
+from django.contrib.auth import get_user_model
+from adminpanel.models.user_role import UserRoles
+from django.http import HttpResponse
+
+User = get_user_model()
 
 def student_managers(request):
     try:
-        studentManagers = StudentManager.active_objects.all()
+        # studentManagers = StudentManagerProfile.active_objects.all()
+        studentManagers = User.objects.filter(
+            id__in=UserRoles.objects.filter(role=1).values_list('user_id', flat=True)
+        )
+
         student_manager_data = [
             {
                 'first_name': studentManager.first_name,
                 'last_name': studentManager.last_name,
                 'email': studentManager.email,
-                'institute_id': studentManager.institute_id,
+                # 'institute_id': studentManager.institute_id,
                 'encoded_id': base64_encode(studentManager.id)
             }
             for studentManager in studentManagers
@@ -25,7 +34,6 @@ def student_managers(request):
             "breadcrumb_items": breadcrumb_items,
         }
 
-        print(r'result', student_manager_data)
         return render(request, 'student_manager/student_manager.html', data)
 
     except Exception as e:
@@ -35,6 +43,7 @@ def student_managers(request):
 
 def student_manager_add(request):
     institutes = Institute.objects.filter(deleted_at__isnull=True)
+    
     if request.method == 'POST':
         errors = {}
         data = request.POST
@@ -43,6 +52,7 @@ def student_manager_add(request):
         email = data.get('email')
         institute_id = data.get('institute_id')
 
+        # Validation
         if not first_name:
             errors['first_name'] = "First Name is required."
         if not last_name:
@@ -53,57 +63,60 @@ def student_manager_add(request):
             errors['institute_id'] = "Institute is required."
 
         if errors:
-            return render(request, 'student_manager/student_manager_add.html', {'institutes': institutes, 'errors': errors, })
+            return render(request, 'student_manager/student_manager_add.html', {'institutes': institutes, 'errors': errors})
+
         try:
-            institute = Institute.objects.get(id=institute_id)
-            data_to_save = {
-                'first_name': first_name,
-                'last_name': last_name,
-                'email': email,
-                'institute_id': institute,
-            }
+            with transaction.atomic():
+                # Create User
+                user = User.objects.create(
+                    first_name=first_name,
+                    last_name=last_name,
+                    email=email,
+                    username=email
+                )
+                user.set_password('123456')  # Set a default password or generate one
+                user.save()
 
-            result = save_data(StudentManager, data_to_save)
+                # Assign Role
+                UserRoles.objects.create(user=user, role=1)  # Assuming 2 = Student Manager
 
-            if result['status']:
-                messages.success(request, "Student Manager added successfully!")
-                return redirect('student_managers')
-            else:
-                messages.error(request, "Failed to save the student manager. Please try again.")
-                return render(request, 'student_manager/student_manager_add.html', {'institutes': institutes})
+                # Store user_id & institute_id in StudentManagerProfile
+                institute = Institute.objects.get(id=institute_id)
+                StudentManagerProfile.objects.create(user=user, institute_id=institute)
 
-        except IntegrityError as e:
+            messages.success(request, "Student Manager added successfully!")
+            return redirect('student_managers')
+
+        except IntegrityError:
             messages.error(request, "A database error occurred. Please try again later.")
-            return render(request, 'student_manager/student_manager_add.html', {'institutes': institutes})
-
         except Exception as e:
             messages.error(request, f"An error occurred: {e}")
-            return render(request, 'student_manager/student_manager_add.html', {'institutes': institutes})
 
     breadcrumb_items = [
         {"name": "Dashboard", "url": reverse('admindashboard')},
         {"name": "Student Managers", "url": reverse('student_managers')},
         {"name": "Student Manager Add", "url": ""},
     ]
-    data = {
+    
+    return render(request, 'student_manager/student_manager_add.html', {
         'institutes': institutes,
         "show_breadcrumb": True,
         "breadcrumb_items": breadcrumb_items,
-    }
-
-    return render(request, 'student_manager/student_manager_add.html', data)
+    })
 
 
 def student_manager_update(request, id):
-    id = base64_decode(id)
-
-    institutes = Institute.objects.filter(deleted_at__isnull=True)
+    id = base64_decode(id) 
     errors = {}
 
     if not id:
         return HttpResponse("Invalid ID", status=400)
 
-    student_manager = get_object_or_404(StudentManager, id=id)
+    # Get StudentManagerProfile instance
+    student_manager_profile = get_object_or_404(StudentManagerProfile, user_id=id)
+    user = student_manager_profile.user  # Get related User from the User model
+
+    institutes = Institute.objects.filter(deleted_at__isnull=True)
 
     if request.method == 'POST':
         first_name = request.POST.get('first_name')
@@ -111,53 +124,58 @@ def student_manager_update(request, id):
         email = request.POST.get('email')
         institute_id = request.POST.get('institute_id')
 
+        # Validation
         if not first_name:
             errors['first_name'] = "First Name is required."
         if not last_name:
-            errors['last_name'] = "First Name is required."
+            errors['last_name'] = "Last Name is required."
         if not email:
-            errors['email'] = "First Name is required."
+            errors['email'] = "Email is required."
         if not institute_id:
             errors['institute_id'] = "Institute is required."
 
         if errors:
-            return render(request, 'student_manager/student_manager_update.html', {'student_manager': student_manager, 'institutes': institutes, 'errors': errors})
+            return render(request, 'student_manager/student_manager_update.html', {
+                'student_manager': student_manager_profile,
+                'user': user,  # Pass the user separately
+                'institutes': institutes,
+                'errors': errors
+            })
 
         try:
-            institute = Institute.objects.get(id=institute_id)
-            data = {
-                'first_name': first_name,
-                'last_name': last_name,
-                'email': email,
-                'institute_id': institute,
-            }
+            with transaction.atomic():
+                # Update User model
+                user.first_name = first_name
+                user.last_name = last_name
+                user.email = email
+                user.username = email  # Ensuring username is updated
+                user.save()
 
-            result = save_data(StudentManager, data, where={'id': id})
+                # Update StudentManagerProfile model
+                institute = get_object_or_404(Institute, id=institute_id)
+                student_manager_profile.institute_id = institute
+                student_manager_profile.save()
 
-            if result['status']:
-                messages.success(request, "Student Manager updated successfully!")
-                return redirect('student_managers')
-            else:
-                messages.error(request, result.get('error', "Failed to update the student manager."))
-                return render(request, 'student_manager/student_manager_update.html', {'student_manager': student_manager, 'institutes': institutes })
+            messages.success(request, "Student Manager updated successfully!")
+            return redirect('student_managers')
 
         except Exception as e:
             messages.error(request, f"An error occurred while updating the student manager: {e}")
-            return render(request, 'student_manager/student_manager_update.html', {'student_manager': student_manager, 'institutes': institutes })
 
     breadcrumb_items = [
         {"name": "Dashboard", "url": reverse('admindashboard')},
         {"name": "Student Managers", "url": reverse('student_managers')},
         {"name": "Student Manager Update", "url": ""},
     ]
-    data = {
-        'student_manager': student_manager, 
+
+    return render(request, 'student_manager/student_manager_update.html', {
+        'student_manager': student_manager_profile,
+        'user': user,  # Pass the user separately
         'institutes': institutes,
         "show_breadcrumb": True,
         "breadcrumb_items": breadcrumb_items,
-    }
+    })
 
-    return render(request, 'student_manager/student_manager_update.html', data)
 
 
 

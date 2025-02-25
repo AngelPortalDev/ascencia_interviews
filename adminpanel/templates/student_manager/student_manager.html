@@ -47,7 +47,7 @@
                       <th>First Name</th>
                       <th>Last Name</th>
                       <th>Email</th>
-                      <th>Institute Name</th>
+                      {% comment %} <th>Institute Name</th> {% endcomment %}
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -58,7 +58,7 @@
                       <td class="text-start">{{ student_manager.first_name }}</td>
                       <td class="text-start">{{ student_manager.last_name }}</td>
                       <td class="text-start">{{ student_manager.email }}</td>
-                      <td class="text-start">{{ student_manager.institute_id }}</td>
+                      {% comment %} <td class="text-start">{{ student_manager.institute_id }}</td> {% endcomment %}
                       <td>
                         <!-- Update Link -->
                         <a href="{% url 'student_manager_update' id=student_manager.encoded_id %}" class="btn btn-warning btn-sm text-white">
