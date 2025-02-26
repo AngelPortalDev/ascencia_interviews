@@ -506,7 +506,7 @@ def process_document(request):
                     interview_link = StudentInterviewLink.objects.create(
                         zoho_lead_id=zoho_lead_id,
                         interview_link=interview_url,
-                        expires_at=now() + timedelta(hours=48)
+                        expires_at=now() + timedelta(hours=72)
                     )
                     send_email(interview_url, zoho_full_name, 'student@manager.com')
                     print("Lead updated successfully")
