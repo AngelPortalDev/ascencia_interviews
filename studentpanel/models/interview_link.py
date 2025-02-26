@@ -4,7 +4,7 @@ from datetime import timedelta
 
 def default_expiry():
     """Returns the default expiration time (48 hours from now)."""
-    return now() + timedelta(hours=48)
+    return now() + timedelta(hours=72)
 
 class StudentInterviewLink(models.Model):
     zoho_lead_id = models.CharField(max_length=255, help_text="Unique identifier from Zoho CRM")
