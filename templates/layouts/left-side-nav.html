@@ -130,12 +130,19 @@
             {% if request.user.profile.role == 1 %}
               <ul class="menu-inner py-1">
                 <!-- Dashboard -->
-                <li class="menu-item  {% if '/studentmanagerdashboard' in request.path %}active{% endif %}">
+                <li class="menu-item  {% if '/dashboard' in request.path %}active{% endif %}">
                   <a href="{% url 'studentmanagerdashboard' %}" class="menu-link">
                     <i class="menu-icon tf-icons bx bx-home-circle"></i>
                     <div data-i18n="Analytics">Dashboard</div>
                   </a>
                 </li> 
+                <!-- Students -->
+                <li class="menu-item {% if request.resolver_match.url_name == 'studentmanager_students_list' %}active{% endif %}">
+                  <a href="{% url 'studentmanager_students_list' %}" class="menu-link">
+                    <i class="menu-icon bx bx-book" aria-hidden="true"></i>
+                    <div data-i18n="Basic">Student</div>
+                  </a>
+                </li>
               </ul>
             {% endif %}
               
