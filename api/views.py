@@ -25,6 +25,9 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from studentpanel.models.interview_process_model import Students
+from studentpanel.models.interview_link import StudentInterviewLink
+from django.utils.timezone import now
+from datetime import timedelta
 
 
 # Configure logging
@@ -43,6 +46,10 @@ my_endpoint = mindee_client.create_endpoint(
     endpoint_name="eductional_cert_v4",
     version="1"
 )
+
+def encode_base64(data):
+    """Encodes data in Base64 format (URL-safe)."""
+    return base64.urlsafe_b64encode(str(data).encode()).decode()
 
 
 # Define educational certificate keywords
@@ -252,18 +259,18 @@ def update_zoho_lead(lead_id, update_data):
     
 
 
-def send_email(student_name, student_manager_email):
+def send_email(interview_url, student_name, student_manager_email):
     sender_email = "abdullah@angel-portal.com"
     receiver_email = "abdullah@angel-portal.com"
-    student_manager_email = "student_manager@example.com" 
+    student_manager_email = f"student_manager_email" 
     
     subject = "Zoho Lead Update Notification"    
-    body = """
+    body = f"""
         <html>
         <body>
             <p>Lead update was successful.</p>
             <p>Click the link below to proceed:</p>
-            <p><a href='http://127.0.0.1:8000/interview'>Go to Interview</a></p>
+            <p><a href='{interview_url}'>Go to Interview</a></p>
         </body>
         </html>
     """
@@ -401,8 +408,6 @@ def process_document(request):
         # Extract parent_id and file_id
         parent_id, file_id = query_params.get("parentId", [""])[0], query_params.get("id", [""])[0]
         file_url = f"https://www.zohoapis.com/crm/v7/Leads/{parent_id}/Attachments/{file_id}"
-        
-        # API_TOKEN = "1000.8b4ec0922ee977f16a8b5629ad27b194.e57d64ff95fcb9257010a219b9a972f7" 
 
         # Download the file
         headers = {"Authorization": f"Zoho-oauthtoken {API_TOKEN}", "User-Agent": "Mozilla/5.0"}
@@ -489,12 +494,21 @@ def process_document(request):
                 update_data = {"Interview_Process": "First Round Interview"}
 
                 if update_zoho_lead(zoho_lead_id, update_data):
-                    send_email(zoho_full_name, 'student@manager.com')
                     student = Students.objects.get(zoho_lead_id=zoho_lead_id)
                     student.edu_doc_verification_status = "approved"
                     student.is_interview_link_sent = True
                     student.interview_link_send_count += 1
                     student.save()
+
+                    encoded_zoho_lead_id = encode_base64(zoho_lead_id)
+                    encoded_interview_link_send_count = encode_base64(student.interview_link_send_count)
+                    interview_url = f'http://127.0.0.1:8000/interview_panel/{encoded_zoho_lead_id}/{encoded_interview_link_send_count}'
+                    interview_link = StudentInterviewLink.objects.create(
+                        zoho_lead_id=zoho_lead_id,
+                        interview_link=interview_url,
+                        expires_at=now() + timedelta(hours=48)
+                    )
+                    send_email(interview_url, zoho_full_name, 'student@manager.com')
                     print("Lead updated successfully")
                 else:
                     print("Lead update failed")
