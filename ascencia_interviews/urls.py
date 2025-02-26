@@ -38,61 +38,10 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include('api.urls')),
     path("", include('studentmanagerpanel.urls')),
+    path("", include('adminpanel.urls')),
     path("login/", login_view, name="login"),
     path("register/", register_view, name="register"),
     path("logout/", logout_view, name="logout"),
-    path(
-        "adminpanel/",
-        include(
-            [
-                # profile
-                    path('profile-update/', profile_update, name='profile_update'),
-
-                # institute
-                    path("institute/", institute_list, name="institute_list"),
-                    path("institute/add", institute_add, name="institute_add"),
-                    path("institute/update/<id>/", institute_update, name="institute_update"),
-                    path("institute/delete/<id>/", institute_delete, name="institute_delete"),
-                    path('institute/<str:id>/student-managers/', student_managers_by_institute, name='student_managers_by_institute'),
-
-
-                # courses
-                    path("courses/", courses, name="courses"),
-                    path("course/add", course_add, name="course_add"),
-                    path("course/update/<id>/", course_update, name="course_update"),
-                    path("course/delete/<id>/", course_delete, name="course_delete"),
-
-                # common questions
-                    path("common_questions/", common_questions, name="common_questions"),
-                    path("common_question/add", common_question_add, name="common_question_add"),
-                    path("common_question/update/<id>/", common_question_update, name="common_question_update"),
-                    path("common_question/delete/<id>/", common_question_delete, name="common_question_delete"),
-
-                # questions
-                    path("questions/", questions, name="questions"),
-                    path("question/add", question_add, name="question_add"),
-                    path("question/update/<id>/", question_update, name="question_update"),
-                    path("question/delete/<id>/", question_delete, name="question_delete"),
-                    
-                # student managers
-                    path("student_managers/", student_managers, name="student_managers"),
-                    path("student_manager/add", student_manager_add, name="student_manager_add"),
-                    path("student_manager/update/<id>/", student_manager_update, name="student_manager_update"),
-                    path("student_manager/delete/<id>/", student_manager_delete, name="student_manager_delete"),
-                    path('student_manager/<str:id>/students/', student_list_by_manager, name='student_list_by_manager'),
-
-
-                # student 
-                    path('student/<int:zoho_lead_id>/', student_detail, name='student_detail'),
-
-
-                # Dashboards
-                # path('dashboard/',userdashboard),
-                path("dashboard/", admindashboard, name="admindashboard"),
-                path("students/",students_list,name="students_list")
-            ]
-        ),
-    ),
     path('students_leads_api/', students_leads_api, name='students_leads_api'),
 
     # Interview Section URLS
