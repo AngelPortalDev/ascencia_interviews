@@ -59,7 +59,7 @@
                 
                     <!-- Profile -->
                     <li>
-                      <a class="dropdown-item d-flex align-items-center py-2" href="{% url 'profile_update' %}">
+                      <a class="dropdown-item d-flex align-items-center py-2" href="{% url request.user.profile.role|yesno:'studentmanager_profile_update,profile_update' %}">
                         <i class="bx bx-user me-2 fs-5 text-primary"></i> 
                         <span class="text-dark fw-medium">My Profile</span>
                       </a>

@@ -67,7 +67,7 @@ def register_view(request):
         else:
             # Create the user
             user = User.objects.create_user(username=username, email=email, password=password)
-            UserRoles.objects.create(user=user, role=1)
+            UserRoles.objects.create(user=user, role=0)
             messages.success(request, 'Registration successful. You can now log in.')
             return redirect('login') 
         

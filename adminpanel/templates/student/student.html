@@ -38,6 +38,9 @@
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected" type="button" role="tab" aria-controls="rejected" aria-selected="false">Rejected</button>
                 </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="unverified-tab" data-bs-toggle="tab" data-bs-target="#unverified" type="button" role="tab" aria-controls="unverified" aria-selected="true">Unverified</button>
+                </li>
               </ul>
               <hr>
             </div>
@@ -117,6 +120,11 @@
                 <div class="tab-pane fade" id="rejected" role="tabpanel">
                   {% include 'student/student_table.html' with students=rejected_students tab_id="rejected_students_table" %}
                 </div>
+                
+                <!-- Unverified Students -->
+                <div class="tab-pane fade" id="unverified" role="tabpanel">
+                  {% include 'student/student_table.html' with students=rejected_students tab_id="unverified_students_table" %}
+                </div>
             
             </div>
           
@@ -135,6 +143,7 @@
         $('#all_students_table').DataTable();
         $('#verified_students_table').DataTable();
         $('#rejected_students_table').DataTable();
+        $('#unverified_students_table').DataTable();
       });
       
     </script>

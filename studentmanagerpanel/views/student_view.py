@@ -11,6 +11,7 @@ def students_list(request):
         students = Students.objects.filter(deleted_at__isnull=True,student_manager_email=request.user.email ).order_by('-id')
         verified_students = students.filter(edu_doc_verification_status="approved")
         rejected_students = students.filter(edu_doc_verification_status="rejected")
+        unverified_students = students.filter(edu_doc_verification_status="Unverified")
 
         def format_student_data(queryset):
             return [
@@ -37,6 +38,7 @@ def students_list(request):
             'all_students': format_student_data(students),
             'verified_students': format_student_data(verified_students),
             'rejected_students': format_student_data(rejected_students),
+            'unverified_students': format_student_data(unverified_students),
             "show_breadcrumb": True,
             "breadcrumb_items": breadcrumb_items,
         }

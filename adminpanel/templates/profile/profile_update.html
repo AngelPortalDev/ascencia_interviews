@@ -69,14 +69,14 @@
                     {% endif %}
                 </div>
             </div>
-
-            <div class="pt-6">
-              <button type="submit" class="btn btn-primary mt-3">Submit</button>
-            </div>
+            
+            {% if request.user.profile.role == 0 %}
+              <div class="pt-6">
+                <button type="submit" class="btn btn-primary mt-3">Submit</button>
+              </div>
+            {% endif %}
         </form>
       </div> 
-      {% comment %} <input type="hidden" id="success-message" value="{{ success_message|default:'' }}">
-      <input type="hidden" id="error-message" value="{{ error_message|default:'' }}">  {% endcomment %}
     </div>
 
 

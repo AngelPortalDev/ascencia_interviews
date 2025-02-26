@@ -4,6 +4,8 @@ from django.contrib.auth import get_user_model
 from adminpanel.models.user_role import UserRoles
 from django.http import HttpResponse
 from studentpanel.models.interview_process_model import Students
+from django.contrib.auth.hashers import make_password
+import re
 
 User = get_user_model()
 
@@ -52,6 +54,8 @@ def student_manager_add(request):
         last_name = data.get('last_name')
         email = data.get('email')
         institute_id = data.get('institute_id')
+        password = data.get("password", "").strip()
+        confirm_password = data.get("confirm_password", "").strip()
 
         # Validation
         if not first_name:
@@ -62,6 +66,24 @@ def student_manager_add(request):
             errors['email'] = "Email is required."
         if not institute_id:
             errors['institute_id'] = "Institute is required."
+        if not password:
+            errors['password'] = "Password is required."
+        if not confirm_password:
+            errors['confirm_password'] = "Confirm Password is required."
+             
+        if password:
+            if len(password) < 8:
+                errors['password'] = "Password must be at least 8 characters long."
+            if not re.search(r'[A-Z]', password):
+                errors['password'] = "Password must contain at least one uppercase letter."
+            if not re.search(r'[a-z]', password):
+                errors['password'] = "Password must contain at least one lowercase letter."
+            if not re.search(r'\d', password):
+                errors['password'] = "Password must contain at least one digit."
+            if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+                errors['password'] = "Password must contain at least one special character."
+            if password != confirm_password:
+                errors['confirm_password'] = "Passwords do not match."
 
         if errors:
             return render(request, 'student_manager/student_manager_add.html', {'institutes': institutes, 'errors': errors})
@@ -84,6 +106,10 @@ def student_manager_add(request):
                 # Store user_id & institute_id in StudentManagerProfile
                 institute = Institute.objects.get(id=institute_id)
                 StudentManagerProfile.objects.create(user=user, institute_id=institute)
+                
+                if password:
+                    user.password = make_password(password)
+                    user.save()
 
             messages.success(request, "Student Manager added successfully!")
             return redirect('student_managers')
@@ -124,6 +150,8 @@ def student_manager_update(request, id):
         last_name = request.POST.get('last_name')
         email = request.POST.get('email')
         institute_id = request.POST.get('institute_id')
+        password = request.POST.get("password", "").strip()
+        confirm_password = request.POST.get("confirm_password", "").strip()
 
         # Validation
         if not first_name:
@@ -134,6 +162,20 @@ def student_manager_update(request, id):
             errors['email'] = "Email is required."
         if not institute_id:
             errors['institute_id'] = "Institute is required."
+            
+        if password:
+            if len(password) < 8:
+                errors['password'] = "Password must be at least 8 characters long."
+            if not re.search(r'[A-Z]', password):
+                errors['password'] = "Password must contain at least one uppercase letter."
+            if not re.search(r'[a-z]', password):
+                errors['password'] = "Password must contain at least one lowercase letter."
+            if not re.search(r'\d', password):
+                errors['password'] = "Password must contain at least one digit."
+            if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+                errors['password'] = "Password must contain at least one special character."
+            if password != confirm_password:
+                errors['confirm_password'] = "Passwords do not match."
 
         if errors:
             return render(request, 'student_manager/student_manager_update.html', {
@@ -156,6 +198,10 @@ def student_manager_update(request, id):
                 institute = get_object_or_404(Institute, id=institute_id)
                 student_manager_profile.institute_id = institute
                 student_manager_profile.save()
+                
+                if password:
+                    user.password = make_password(password)
+                    user.save()
 
             messages.success(request, "Student Manager updated successfully!")
             return redirect('student_managers')
