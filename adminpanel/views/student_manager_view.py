@@ -97,19 +97,16 @@ def student_manager_add(request):
                     email=email,
                     username=email
                 )
-                user.set_password('123456')  # Set a default password or generate one
+                if password:
+                    user.password = make_password(password)
                 user.save()
 
                 # Assign Role
-                UserRoles.objects.create(user=user, role=1)  # Assuming 2 = Student Manager
+                UserRoles.objects.create(user=user, role=1)  # Assuming 1 = Student Manager
 
                 # Store user_id & institute_id in StudentManagerProfile
                 institute = Institute.objects.get(id=institute_id)
                 StudentManagerProfile.objects.create(user=user, institute_id=institute)
-                
-                if password:
-                    user.password = make_password(password)
-                    user.save()
 
             messages.success(request, "Student Manager added successfully!")
             return redirect('student_managers')
