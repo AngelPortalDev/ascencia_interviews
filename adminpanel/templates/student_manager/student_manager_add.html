@@ -55,7 +55,7 @@
               <div class="col-md-6">
                   <label class="form-label" for="password">New Password</label>
                   <div class="position-relative">
-                      <input type="password" id="password" name="password" class="form-control pe-5" placeholder="Enter new password" oninput="checkPasswordStrength()">
+                      <input type="password" id="password" name="password" class="form-control pe-5" placeholder="Enter new password" oninput="checkPasswordStrength()" value="{{ request.POST.password|default:'' }}">
                       <i class="bx bx-hide toggle-password" onclick="togglePassword('password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i>
                   </div>
                   <div class="mt-2" style="height: 4px; width: 100%; background-color: #e0e0e0; border-radius: 2px; position: relative; overflow: hidden;">

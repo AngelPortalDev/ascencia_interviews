@@ -33,7 +33,7 @@
                 <div class="mb-3 mb-xl-0">
                     <div class="d-flex align-items-center flex-wrap mb-2">
                         <h3 class="text-white me-2 mb-0">Welcome Back, {{ request.user.first_name }} {{ request.user.last_name }}</h1>
-                        <a href="{% url 'profile_update' %}" class="avatar avatar-sm img-rounded bg-gray-800 dark-hover"><i class='bx bx-pencil text-white' ></i></a>
+                        <a href="{% url 'studentmanager_profile_update' %}" class="avatar avatar-sm img-rounded bg-gray-800 dark-hover"><i class='bx bx-pencil text-white' ></i></a>
                     </div>
                     <p class="text-white mb-0">Have a Good day at work</p>
                 </div>
@@ -50,7 +50,7 @@
             <div class="card-body text-white text-center py-4">
               <i class="bx bx-user-circle fs-1 mb-3" style="color:#20c2e9; background:#e4f7fc; padding:5px;border-radius:10px"></i>
               <h5 class="card-title">Total Students</h5>
-              <h3 class="card-text">0</h3> <!-- Dynamic data can go here -->
+              <h3 class="card-text">{{students_count}}</h3> <!-- Dynamic data can go here -->
               <p class="text-muted">Total students in the system</p>
             </div>
           </div>
