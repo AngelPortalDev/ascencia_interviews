@@ -22,6 +22,7 @@ def students_leads_api(request):
         program =  request.POST.get('Program')
         intake_year =  request.POST.get('Intake Year')
         intake_month =  request.POST.get('Intake Month')
+        student_manager_email = request.POST.get('Student Manager Email')
         
         try:
             data_to_save = {
@@ -35,6 +36,7 @@ def students_leads_api(request):
                 'program': program,
                 'intake_year': intake_year,
                 'intake_month': intake_month,
+                'student_manager_email': student_manager_email,
             }
 
             where = {"zoho_lead_id": zoho_lead_id}

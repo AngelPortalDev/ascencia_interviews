@@ -92,7 +92,7 @@
                   </a>
                 </li>
                 <!-- Student -->
-                <li class="menu-item {% if '/student' in request.path %}active{% endif %}">
+                <li class="menu-item {% if request.resolver_match.url_name == 'students_list' %}active{% endif %}">
                   <a href="{% url 'students_list' %}" class="menu-link">
                     <i class="menu-icon bx bx-book" aria-hidden="true"></i>
                     <div data-i18n="Basic">Student</div>

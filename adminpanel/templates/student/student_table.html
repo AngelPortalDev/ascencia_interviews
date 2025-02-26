@@ -50,7 +50,8 @@
             <td>{{ student.intake_year }}</td>
             <td>{{ student.intake_month }}</td>
             <td class="d-flex align-items-center">
-                <a href="{% url 'student_detail' zoho_lead_id=student.zoho_lead_id %}" class="btn btn-sm btn-light border me-2">
+                <a href="{% url request.user.profile.role|yesno:'studentmanager_student_detail,student_detail' zoho_lead_id=student.zoho_lead_id %}" 
+                class="btn btn-sm btn-light border me-2">
                     <i class="bx bx-show"></i>
                 </a>
                 <a href="https://crm.zoho.com/crm/org771809603/tab/Leads/{{ student.zoho_lead_id }}" 

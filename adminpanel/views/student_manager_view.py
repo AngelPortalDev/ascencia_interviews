@@ -215,6 +215,24 @@ def student_list_by_manager(request, id):
 
     # Fetch students where student_manager_email matches the Student Manager's email
     students = Students.objects.filter(student_manager_email=student_manager.email)
+    verified_students = students.filter(edu_doc_verification_status="approved")
+    rejected_students = students.filter(edu_doc_verification_status="rejected")
+    
+    def format_student_data(queryset):
+        return [
+            {
+                'id': student.student_id,
+                'first_name': getattr(student, 'first_name', '') or '',
+                'last_name': getattr(student, 'last_name', '') or '',
+                'email': getattr(student, 'email', '') or '',
+                'phone': getattr(student, 'phone', '') or '',
+                'program': getattr(student, 'program', '') or '',
+                'intake_year': getattr(student, 'intake_year', '') or '',
+                'intake_month': getattr(student, 'intake_month', '') or '',
+                'zoho_lead_id': getattr(student, 'zoho_lead_id', '') or '',
+            }
+            for student in queryset
+        ]
 
     breadcrumb_items = [
         {"name": "Dashboard", "url": reverse('admindashboard')},
@@ -226,8 +244,10 @@ def student_list_by_manager(request, id):
     ]
 
     return render(request, 'student_manager/student_list.html', {
-        "students": students,
         "student_manager": student_manager,
+        'all_students': format_student_data(students),
+        'verified_students': format_student_data(verified_students),
+        'rejected_students': format_student_data(rejected_students),
         "show_breadcrumb": True,
         "breadcrumb_items": breadcrumb_items,
     })

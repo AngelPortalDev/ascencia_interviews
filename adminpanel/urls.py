@@ -53,13 +53,13 @@ urlpatterns = [
 
 
                 # student 
+                    path("students/",students_list,name="students_list"),
                     path('student/<int:zoho_lead_id>/', student_detail, name='student_detail'),
 
 
                 # Dashboards
                 # path('dashboard/',userdashboard),
                 path("dashboard/", admindashboard, name="admindashboard"),
-                path("students/",students_list,name="students_list")
             ]
         ),
     ),

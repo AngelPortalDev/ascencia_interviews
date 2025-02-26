@@ -40,7 +40,7 @@ mindee_client = Client(api_key="4951866b395bb3fefdb1e4753c6bbd8e")
 # Add endpoint configuration
 my_endpoint = mindee_client.create_endpoint(
     account_name="ANKITAGAVAS",
-    endpoint_name="eductional_cert_v5",
+    endpoint_name="eductional_cert_v4",
     version="1"
 )
 
@@ -146,7 +146,9 @@ def is_certificate_filename(filename):
         "school", "university", "college", "institution", "faculty"
     ]
 
-    return any(keyword in filename for keyword in certificate_keywords)
+    # return any(keyword in filename for keyword in certificate_keywords)
+
+    return any(keyword.lower() in filename.lower() for keyword in EDUCATION_CERTIFICATE_KEYWORDS)
 
 
 
@@ -250,9 +252,11 @@ def update_zoho_lead(lead_id, update_data):
     
 
 
-def send_email():
+def send_email(student_name, student_manager_email):
     sender_email = "abdullah@angel-portal.com"
     receiver_email = "abdullah@angel-portal.com"
+    student_manager_email = "student_manager@example.com" 
+    
     subject = "Zoho Lead Update Notification"    
     body = """
         <html>
@@ -263,6 +267,61 @@ def send_email():
         </body>
         </html>
     """
+
+    
+    student_manager_body = f"""
+        <html>
+        <head>
+            <style>
+                body {{
+                    font-family: Arial, sans-serif;
+                    background-color: #f4f4f4;
+                    padding: 20px;
+                    text-align: center;
+                }}
+                .email-container {{
+                    max-width: 600px;
+                    margin: auto;
+                    background: #ffffff;
+                    padding: 20px;
+                    border-radius: 8px;
+                    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                }}
+                h2 {{
+                    color: #2c3e50;
+                }}
+                p {{
+                    color: #555555;
+                    font-size: 16px;
+                    line-height: 1.6;
+                }}
+                .btn {{
+                    display: inline-block;
+                    background: #007bff;
+                    color: #ffffff;
+                    text-decoration: none;
+                    padding: 10px 20px;
+                    border-radius: 5px;
+                    font-weight: bold;
+                    margin-top: 10px;
+                }}
+                .btn:hover {{
+                    background: #0056b3;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="email-container">
+                <h2>Document Verification Completed</h2>
+                <p>Dear Student Manager,</p>
+                <p>The document verification process for <strong>{student_name}</strong> has been successfully completed.</p>
+                <p>Click the button below to review the details:</p>
+                <a href='http://127.0.0.1:8000/verification' class="btn">View Verification Details</a>
+            </div>
+        </body>
+        </html>
+    """
+
 
 
 
@@ -277,7 +336,24 @@ def send_email():
         with smtplib.SMTP("smtp.gmail.com", 587) as server:  # Change to your email provider's SMTP
             server.starttls()
             server.login(sender_email, "iuljudjtemskylkl")  # Use an app password if required
-            server.sendmail(sender_email, receiver_email, msg.as_string())
+
+            # Email to the user
+            msg_user = MIMEMultipart()
+            msg_user["From"] = sender_email
+            msg_user["To"] = receiver_email
+            msg_user["Subject"] = subject
+            msg_user.attach(MIMEText(body, "html"))
+            server.sendmail(sender_email, receiver_email, msg_user.as_string())
+            # server.sendmail(sender_email, receiver_email, msg.as_string())
+
+
+            # Email to the Student Manager
+            msg_manager = MIMEMultipart()
+            msg_manager["From"] = sender_email
+            msg_manager["To"] = student_manager_email
+            msg_manager["Subject"] = "Document Verification Update"
+            msg_manager.attach(MIMEText(student_manager_body, "html"))
+            server.sendmail(sender_email, student_manager_email, msg_manager.as_string())
         
         print("Email sent successfully")
     except Exception as e:
@@ -307,8 +383,11 @@ def process_document(request):
             return JsonResponse({"error": "No document uploaded"}, status=400)
 
         # Validate file name
-        filename = re.search(r"&name=([^&]+)", uploaded_file.name.lower())
-        filename = unquote(filename.group(1)) if filename else "unknown.pdf"
+        # filename = re.search(r"&name=([^&]+)", uploaded_file.name.lower())
+        # filename = unquote(filename.group(1)) if filename else "unknown.pdf"
+
+        filename_match = re.search(r"&name=([^&]+)", uploaded_file.name.lower())
+        filename = unquote(filename_match.group(1)) if filename_match else "unknown.pdf"
 
         print(f"Processed filename: {filename}")
 
@@ -345,16 +424,20 @@ def process_document(request):
             return JsonResponse({"error": "Invalid file type. Only PDF, PNG, JPG, and JPEG files are supported."}, status=400)
 
         # Extract text
-        extracted_text = (
-            extract_text_from_pdf(temp_file_path) if mime_type == "application/pdf"
-            else extract_text_from_image_file(temp_file_path)
-        )
+        # extracted_text = (
+        #     extract_text_from_pdf(temp_file_path) if mime_type == "application/pdf"
+        #     else extract_text_from_image_file(temp_file_path)
+        # )
 
-        if not extracted_text:
-            return JsonResponse({"error": "Text extraction failed. The document might be too blurry or contain no text."}, status=400)
+        # if not extracted_text:
+        #     return JsonResponse({"error": "Text extraction failed. The document might be too blurry or contain no text."}, status=400)
 
-        # Check if the document is an educational certificate
-        if not (check_educational_keywords(extracted_text) or is_certificate_filename(filename)):
+        # # Check if the document is an educational certificate
+        # if not (check_educational_keywords(extracted_text) or is_certificate_filename(filename)):
+        #     return JsonResponse({"message": "Error", "is_education_certificate": False}, status=200)
+
+
+        if not is_certificate_filename(filename):
             return JsonResponse({"message": "Error", "is_education_certificate": False}, status=200)
 
         # Process document with Mindee
@@ -406,7 +489,7 @@ def process_document(request):
                 update_data = {"Interview_Process": "First Round Interview"}
 
                 if update_zoho_lead(zoho_lead_id, update_data):
-                    send_email()
+                    send_email(zoho_full_name, 'student@manager.com')
                     student = Students.objects.get(zoho_lead_id=zoho_lead_id)
                     student.edu_doc_verification_status = "approved"
                     student.is_interview_link_sent = True

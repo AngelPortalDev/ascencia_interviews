@@ -46,3 +46,21 @@ def students_list(request):
     except Exception as e:
         messages.error(request, f"An error occurred while fetching the students: {e}")
         return redirect('studentmanagerdashboard')
+
+        
+
+
+def student_detail(request, zoho_lead_id):
+    student = get_object_or_404(Students, zoho_lead_id=zoho_lead_id)
+    breadcrumb_items = [
+        {"name": "Dashboard", "url": reverse('studentmanagerdashboard')},
+        {"name": "Students", "url": reverse('studentmanager_students_list')},
+        {"name": f"{student.first_name} {student.last_name}", "url": ""}
+    ]
+
+
+    return render(request, "student/student_detail.html", {
+        "student": student,
+        "show_breadcrumb": True,
+        "breadcrumb_items": breadcrumb_items
+    })
