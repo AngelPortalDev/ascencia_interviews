@@ -26,9 +26,12 @@ class APIDataFetcher:
 
         zoho_lead_id = publisher.zoho_lead_id
         if zoho_lead_id == '5204268000112707003':
-            API_TOKEN = ZohoAuth.get_access_token()
+            crm_id = publisher.crm_id 
+            API_TOKEN = ZohoAuth.get_access_token(crm_id)
+            # API_TOKEN = ZohoAuth.get_access_token()
             print(r'API_TOKEN:', API_TOKEN)
         else:
+            print(r'Nahi aaya')
             raise ValueError("Invalid Zoho Lead ID. Access token generation is not allowed.")
 
 
@@ -80,6 +83,7 @@ def process_documents():
                 "last_name": publisher.last_name,
                 "program": publisher.program,
                 "zoho_lead_id": publisher.zoho_lead_id,
+                "crm_id": publisher.crm_id,
                 "API_TOKEN": API_TOKEN,
             }
             files = {"document": (file_url, file_response.content, "application/pdf")}

@@ -43,7 +43,7 @@ mindee_client = Client(api_key="4951866b395bb3fefdb1e4753c6bbd8e")
 # Add endpoint configuration
 my_endpoint = mindee_client.create_endpoint(
     account_name="ANKITAGAVAS",
-    endpoint_name="eductional_cert_v4",
+    endpoint_name="eductional_cert_v5",
     version="1"
 )
 
@@ -223,9 +223,9 @@ def name_match_ratio(name1, name2):
     return SequenceMatcher(None, name1.lower(), name2.lower()).ratio()
 
 
-def update_zoho_lead(lead_id, update_data):
+def update_zoho_lead(crm_id, lead_id, update_data):
     try:
-        access_token = ZohoAuth.get_access_token()  # Ensure a fresh token
+        access_token = ZohoAuth.get_access_token(crm_id)  # Ensure a fresh token
         url = f"https://www.zohoapis.com/crm/v2/Leads/{lead_id}"
         headers = {
             "Authorization": f"Zoho-oauthtoken {access_token}",
@@ -381,6 +381,7 @@ def process_document(request):
         zoho_last_name = request.POST.get("last_name", "").strip()
         program = request.POST.get("program", "").strip()
         zoho_lead_id = request.POST.get("zoho_lead_id", "").strip()
+        crm_id = request.POST.get("crm_id", "").strip()
         API_TOKEN = request.POST.get("API_TOKEN", "")
 
 
@@ -466,7 +467,7 @@ def process_document(request):
                 student = Students.objects.get(zoho_lead_id=zoho_lead_id)
                 student.edu_doc_verification_status = "rejected"
                 student.save()
-                if update_zoho_lead(zoho_lead_id, update_data):
+                if update_zoho_lead(crm_id, zoho_lead_id, update_data):
                     print("Lead updated successfully")
                 else:
                     print("Lead update failed")
@@ -479,8 +480,7 @@ def process_document(request):
                 student = Students.objects.get(zoho_lead_id=zoho_lead_id)
                 student.edu_doc_verification_status = "rejected"
                 student.save()
-
-                if update_zoho_lead(zoho_lead_id, update_data):
+                if update_zoho_lead(crm_id, zoho_lead_id, update_data):
                     print("Lead updated successfully")
                 else:
                     print("Lead update failed")
@@ -493,7 +493,7 @@ def process_document(request):
             if result:
                 update_data = {"Interview_Process": "First Round Interview"}
 
-                if update_zoho_lead(zoho_lead_id, update_data):
+                if update_zoho_lead(crm_id, zoho_lead_id, update_data):
                     student = Students.objects.get(zoho_lead_id=zoho_lead_id)
                     student.edu_doc_verification_status = "approved"
                     student.is_interview_link_sent = True
@@ -518,7 +518,7 @@ def process_document(request):
                 student = Students.objects.get(zoho_lead_id=zoho_lead_id)
                 student.edu_doc_verification_status = "rejected"
                 student.save()
-                if update_zoho_lead(zoho_lead_id, update_data):
+                if update_zoho_lead(crm_id, zoho_lead_id, update_data):
                     print("Lead updated successfully")
                 else:
                     print("Lead update failed")
