@@ -21,14 +21,14 @@
             <div class="row g-6">
                 <div class="col-md-6">
                   <label class="form-label" for="crm_id">CRM Id</label>
-                  <input type="text" id="crm_id" name="crm_id" value="{{institute.crm_id}}" class="form-control" placeholder="CRM Id">
+                  <input type="number" id="crm_id" name="crm_id" value="{{ request.POST.crm_id|default:institute.crm_id }}" class="form-control" placeholder="CRM Id">
                   {% if errors.crm_id %}
                     <small class="text-danger">{{ errors.crm_id }}</small>
                   {% endif %}
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="institute_name">Institute Name</label>
-                  <input type="text" id="institute_name" name="institute_name" value="{{institute.institute_name}}" class="form-control" placeholder="Institute Name">
+                  <input type="text" id="institute_name" name="institute_name" value="{{ request.POST.institute_name|default:institute.institute_name }}" class="form-control" placeholder="Institute Name">
                   {% if errors.institute_name %}
                     <small class="text-danger">{{ errors.institute_name }}</small>
                   {% endif %}

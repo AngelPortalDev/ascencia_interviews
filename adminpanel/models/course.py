@@ -28,6 +28,7 @@ class Course(models.Model):
         ]
         verbose_name = "Course"
         verbose_name_plural = "Courses"
+        unique_together = ('course_name', 'crm_id')
 
     def soft_delete(self):
         """Soft delete the course by setting the deleted_at field."""

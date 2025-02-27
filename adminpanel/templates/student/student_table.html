@@ -3,10 +3,11 @@
     id="{{ tab_id }}" aria-describedby="{{ tab_id }}_info" style="width: 100%">
     <thead>
         <tr>
-            <th data-dt-column="1" rowspan="1" colspan="1" class="dt-select dt-orderable-none w-auto" aria-label="">
+            {% comment %} <th data-dt-column="1" rowspan="1" colspan="1" class="dt-select dt-orderable-none w-auto" aria-label="">
                 <span class="dt-column-title"></span><span class="dt-column-order"></span>
                 <input class="form-check-input" type="checkbox" aria-label="Select all rows" />
-            </th>
+            </th> {% endcomment %}
+            <th>Sr No.</th>
             <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc w-auto"
                 aria-label="Name: Activate to sort" tabindex="0">
                 <span class="dt-column-title" role="button">Name</span><span class="dt-column-order"></span>
@@ -40,9 +41,10 @@
     <tbody>
         {% for student in students %}
         <tr>
-            <td class="dt-select">
+            {% comment %} <td class="dt-select">
                 <input aria-label="Select row" class="form-check-input" type="checkbox" />
-            </td>
+            </td> {% endcomment %}
+            <td>{{ forloop.counter }}</td>
             <td>{{ student.first_name }} {{ student.last_name }}</td>
             <td>{{ student.email }}</td>
             <td>{{ student.phone }}</td>

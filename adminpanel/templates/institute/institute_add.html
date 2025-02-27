@@ -21,7 +21,7 @@
             <div class="row g-6">
                 <div class="col-md-6">
                   <label class="form-label" for="crm_id">CRM Id</label>
-                  <input type="text" id="crm_id" name="crm_id" class="form-control" value="{{ request.POST.crm_id|default:'' }}" placeholder="CRM Id">
+                  <input type="number" id="crm_id" name="crm_id" class="form-control" value="{{ request.POST.crm_id|default:'' }}" placeholder="CRM Id">
                   {% if errors.crm_id %}
                     <small class="text-danger">{{ errors.crm_id }}</small>
                   {% endif %}

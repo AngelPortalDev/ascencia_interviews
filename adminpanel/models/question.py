@@ -11,8 +11,7 @@ class ActiveManager(models.Manager):
 
 
 class Question(models.Model):
-    question = models.TextField()
-    answer = models.TextField(blank=True, null=True)
+    question = models.TextField(unique=True, null=True)
     course_id = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='questions')
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -25,6 +24,7 @@ class Question(models.Model):
         ]
         verbose_name = "Question"
         verbose_name_plural = "Questions"
+        unique_together = ('question', 'course_id')
 
     def soft_delete(self):
         """Soft delete the question by setting the deleted_at field."""

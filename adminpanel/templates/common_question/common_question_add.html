@@ -21,16 +21,6 @@
                 </div>
               
             </div>
-            <div class="row g-6 mt-3">
-                <div class="col-md-12">
-                  <label class="form-label" for="answer">Answer</label>
-                  <textarea id="answer" name="answer" class="form-control" placeholder="Answer">{{ request.POST.answer|default:'' }}</textarea>
-                  {% if errors.answer %}
-                      <small class="text-danger">{{ errors.answer }}</small>
-                  {% endif %}
-                </div>
-              
-            </div>
             <div class="pt-6">
                 <button type="submit" class="btn btn-primary mt-3">Submit</button>
             </div>

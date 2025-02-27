@@ -31,7 +31,6 @@ class APIDataFetcher:
             # API_TOKEN = ZohoAuth.get_access_token()
             print(r'API_TOKEN:', API_TOKEN)
         else:
-            print(r'Nahi aaya')
             raise ValueError("Invalid Zoho Lead ID. Access token generation is not allowed.")
 
 
@@ -77,7 +76,7 @@ def process_documents():
                 continue  # Skip to the next file
 
             # Process document
-            process_api_url = "http://127.0.0.1:8000/api/process_document"
+            process_api_url = "http:/192.168.1.2:8000/api/process_document"
             data = {
                 "first_name": publisher.first_name,
                 "last_name": publisher.last_name,

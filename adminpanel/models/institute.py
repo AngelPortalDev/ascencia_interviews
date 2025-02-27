@@ -4,8 +4,8 @@ from django.utils import timezone
 
 
 class Institute(models.Model):
-    institute_name = models.CharField(max_length=255, blank=False)
-    crm_id = models.CharField(max_length=255, unique=True, blank=False)
+    institute_name = models.CharField(max_length=255, unique=True, blank=False)
+    crm_id = models.CharField(max_length=255, null=True, blank=False)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

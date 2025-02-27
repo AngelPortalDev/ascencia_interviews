@@ -10,8 +10,7 @@ class ActiveManager(models.Manager):
 
 
 class CommonQuestion(models.Model):
-    question = models.TextField()
-    answer = models.TextField(blank=True, null=True)
+    question = models.TextField(unique=True, null=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

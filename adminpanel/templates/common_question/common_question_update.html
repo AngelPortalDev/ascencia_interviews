@@ -19,13 +19,6 @@
                     <small class="text-danger">{{ errors.question }}</small>
                 {% endif %}
               </div>
-              <div class="col-md-12 mt-3">
-                <label class="form-label" for="answer">Question</label>
-                <textarea id="answer" name="answer" class="form-control" placeholder="Answer">{{ answer.answer }}</textarea>
-                {% if errors.answer %}
-                    <small class="text-danger">{{ errors.answer }}</small>
-                {% endif %}
-              </div>
             </div>
             <div class="pt-6">
                 <button type="submit" class="btn btn-primary mt-3">Submit</button>

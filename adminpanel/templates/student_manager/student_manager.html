@@ -41,9 +41,10 @@
                   id="DataTables_Table_0" aria-describedby="DataTables_Table_0_info" style="width: 100%">
                   <thead class="table-light">
                     <tr>
-                      <th>
+                      {% comment %} <th>
                         <input class="form-check-input" type="checkbox" aria-label="Select all rows" />
-                      </th>
+                      </th> {% endcomment %}
+                      <th>Sr No.</th>
                       <th>First Name</th>
                       <th>Last Name</th>
                       <th>Email</th>
@@ -54,7 +55,8 @@
                   <tbody>
                     {% for student_manager in student_managers %}
                     <tr>
-                      <td><input class="form-check-input" type="checkbox" aria-label="Select row" /></td>
+                      {% comment %} <td><input class="form-check-input" type="checkbox" aria-label="Select row" /></td> {% endcomment %}
+                      <td>{{ forloop.counter }}</td>
                       <td class="text-start">{{ student_manager.first_name }}</td>
                       <td class="text-start">{{ student_manager.last_name }}</td>
                       <td class="text-start">{{ student_manager.email }}</td>
