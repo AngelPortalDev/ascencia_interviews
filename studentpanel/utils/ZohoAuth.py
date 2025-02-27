@@ -27,6 +27,7 @@ class ZohoAuth:
         if response.status_code == 200:
             access_token = response.json().get("access_token")
             cache.set("zoho_access_token", access_token, timeout=55 * 60)
+            print(f"Zoho Token Fetch Passed: {response.text}")
             return access_token
         else:
             print(f"Zoho Token Fetch Failed: {response.text}")

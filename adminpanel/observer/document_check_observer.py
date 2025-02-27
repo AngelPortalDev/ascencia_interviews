@@ -18,8 +18,19 @@ lock = threading.Lock()
 
 class APIDataFetcher:
     def notify(self, publisher):
+
         API_URL = f"https://www.zohoapis.com/crm/v2/Leads/{publisher.zoho_lead_id}/Attachments"
-        API_TOKEN = ZohoAuth.get_access_token()
+
+        # API_TOKEN = ZohoAuth.get_access_token()
+        # print(r'API_TOKEN:', API_TOKEN)
+
+        zoho_lead_id = publisher.zoho_lead_id
+        if zoho_lead_id == '5204268000112707003':
+            API_TOKEN = ZohoAuth.get_access_token()
+            print(r'API_TOKEN:', API_TOKEN)
+        else:
+            raise ValueError("Invalid Zoho Lead ID. Access token generation is not allowed.")
+
 
         headers = {
             "Authorization": f"Bearer {API_TOKEN}",

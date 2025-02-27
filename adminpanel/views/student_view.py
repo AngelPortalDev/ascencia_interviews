@@ -18,11 +18,12 @@ def students_leads_api(request):
         date_object = datetime.strptime(dob, "%d-%m-%Y")
         formatted_date = date_object.strftime("%Y-%m-%d")
         student_id = request.POST.get('UserId')
-        zoho_lead_id =  request.POST.get('ZohoCrmId')
+        zoho_lead_id =  request.POST.get('Zoho Lead Id')
         program =  request.POST.get('Program')
         intake_year =  request.POST.get('Intake Year')
         intake_month =  request.POST.get('Intake Month')
         student_manager_email = request.POST.get('Student Manager Email')
+        crm_id = request.POST.get('CRM Id')
         
         try:
             data_to_save = {
@@ -37,6 +38,7 @@ def students_leads_api(request):
                 'intake_year': intake_year,
                 'intake_month': intake_month,
                 'student_manager_email': student_manager_email,
+                'crm_id': crm_id,
             }
 
             where = {"zoho_lead_id": zoho_lead_id}
