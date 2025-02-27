@@ -12,7 +12,7 @@ import { useNavigate,useParams } from "react-router-dom";
 import {usePermission} from '../context/PermissionContext.js';
 import QuestionChecker from "./QuestionChecker.js";
 const Questions = () => {
-  const [countdown, setCountdown] = useState(300);
+  const [countdown, setCountdown] = useState(60);
   // const [userData, setUserData] = useState(null);
   const [getQuestions, setQuestions] = useState([]);
   const [navigationTime, setNavigationTime] = useState(0);
@@ -36,7 +36,7 @@ const Questions = () => {
     );
     setQuestions(res.data.questions);
     if (res.data.questions.length > 0) {
-      // console.log(res.data.questions[0].encoded_id);
+      // console.log(res.data.questions[1].encoded_id);
       // console.log(res.data);
       setActiveQuestionId(res.data.questions[0].encoded_id); 
     }
@@ -54,6 +54,13 @@ const Questions = () => {
       return () => clearInterval(timer);
     }else{
       // setIsNagigationEnabled(true);
+      if(currentQuestionIndex < getQuestions.length-1){
+        setCurrentQuestionIndex((prev)=>prev+1);
+        setActiveQuestionId(getQuestions[currentQuestionIndex + 1]?.encoded_id); 
+        setCountdown(60);
+      }else{
+        handleSubmit();
+      }
     }
   }, [countdown]);
 
@@ -88,10 +95,11 @@ const Questions = () => {
   const handleQuestionChange = useCallback((swiper) => {
     setTimeSpent(0); // Reset time spent for next question
     // setCurrentQuestionIndex(swiper.realIndex); // Update current question index
-    const newQuestionId = getQuestions[swiper.activeIndex]?.id;
+    const newQuestionId = getQuestions[swiper.activeIndex]?.encoded_id;
     if (newQuestionId !== activeQuestionId) {
-        setActiveQuestionId(newQuestionId);
+      setActiveQuestionId(newQuestionId);
     }
+    setCountdown(60);
   }, [activeQuestionId, getQuestions]);
 
   // Prevent unnecessary re-renders of InterviewPlayer
@@ -101,7 +109,7 @@ const Questions = () => {
       student_id={student_id} 
       question_id={activeQuestionId} 
     />    
-  ), []);
+  ), [activeQuestionId,student_id]);
 
   const handleTimeSpent = () => {
     // Increment time spent on current question
@@ -227,12 +235,12 @@ const Questions = () => {
           modules={[Pagination, Navigation,Autoplay]}
           className="mySwiper"
           autoplay={{
-            delay: 30000,
+            delay: 60000,
             disableOnInteraction: false,
           }}
           onSlideChange={handleQuestionChange}
           // onSlideChange={(swiper) => setActiveQuestionId(getQuestions[swiper.activeIndex]?.id)} // Track active question
-          allowTouchMove={true}
+          allowTouchMove={false}
         >
           {getQuestions.map((questionItem, index) => {
             return (
