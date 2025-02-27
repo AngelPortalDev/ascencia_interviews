@@ -19,56 +19,121 @@ const InterviewPlayer = ({ onTranscription,student_id,question_id }) => {
   const recordedAudioChunksRef = useRef([]);
   const navigate = useNavigate();
 
+  // useEffect(() => {
+  //   const startNewRecording = () => {
+  //     startRecording(
+  //       videoRef,
+  //       mediaRecorderRef,
+  //       audioRecorderRef,
+  //       recordedChunksRef,
+  //       recordedAudioChunksRef,
+  //       () => {},
+  //       setIsRecording,
+  //       setVideoFilePath,
+  //       setAudioFilePath,
+  //       student_id,
+  //       question_id
+  //     );
+  //   }
+  //   startNewRecording();
+
+  //   if (localStorage.getItem("interviewExited") === "true") {
+  //     const stopTimeout = setTimeout(() => {
+  //       stopRecording(
+  //         videoRef,
+  //         mediaRecorderRef,
+  //         audioRecorderRef,
+  //         recordedChunksRef,
+  //         recordedAudioChunksRef,
+  //         setVideoFilePath,
+  //         setAudioFilePath,
+  //         student_id,
+  //         question_id,
+  //         startNewRecording 
+  //       );
+  //       // stopMediaStreams();
+  //       // navigate("/");
+       
+  //     },60000)
+     
+  //   }
+
+  //   // Prevent Back Button & Refresh
+  //   const handleBackButton = (event) => {
+  //     event.preventDefault();
+
+  //     const confirmLeave = window.confirm(
+  //       "You will lose your progress if you go back. Do you want to continue?"
+  //     );
+  //     if (confirmLeave) {
+  //       localStorage.setItem("interviewExited", "true");
+  //       navigate("/");
+  //     } else {
+  //       window.history.pushState(null, "", window.location.href);
+  //     }
+  //     // alert("You cannot go back during the interview. Please complete it.");
+  //   };
+  //   window.history.pushState(null, "", window.location.href);
+  //   window.addEventListener("popstate", handleBackButton);
+
+  //   // Stop recording after 2 minutes
+  //   // const stopTimeout = setTimeout(() => {
+  //   //   stopRecording(
+  //   //     videoRef,
+  //   //     mediaRecorderRef,
+  //   //     audioRecorderRef,
+  //   //     recordedChunksRef,
+  //   //     recordedAudioChunksRef,
+  //   //     setVideoFilePath,
+  //   //     setAudioFilePath,
+  //   //     student_id,
+  //   //     question_id
+  //   //   );
+  //   //   // stopMediaStreams();
+  //   //   // showSuccessToast("Interview Submitted Successfully...")
+  //   //   // navigate("/");
+  //   // },10000);
+
+  //   return () => {
+  //     // clearInterval(questionInterval);
+  //     clearTimeout(stopTimeout);
+  //     window.removeEventListener("popstate", handleBackButton);
+  //   };
+  // }, []);
+
+  // Analayze Video
+
+  // useEffect(() => {
+  //   if (videoFilePath && audioFilePath) {
+  //     analyzeVideo(videoFilePath, audioFilePath, onTranscription);
+  //   }
+  // }, [videoFilePath, audioFilePath, onTranscription]);
+
   useEffect(() => {
-    if (localStorage.getItem("interviewExited") === "true") {
-      stopRecording(
+
+    if (!question_id) {
+      console.error('question_id is not defined');
+      return;
+    }
+
+
+    const startNewRecording = () => {
+      startRecording(
         videoRef,
         mediaRecorderRef,
         audioRecorderRef,
         recordedChunksRef,
         recordedAudioChunksRef,
+        setIsRecording,
         setVideoFilePath,
         setAudioFilePath,
         student_id,
         question_id
       );
-      // stopMediaStreams();
-      // navigate("/");
-      return;
-    }
-
-    startRecording(
-      videoRef,
-      mediaRecorderRef,
-      audioRecorderRef,
-      recordedChunksRef,
-      recordedAudioChunksRef,
-      setIsRecording,
-      setVideoFilePath,
-      setAudioFilePath,
-      student_id,
-      question_id
-    );
-
-    // Prevent Back Button & Refresh
-    const handleBackButton = (event) => {
-      event.preventDefault();
-
-      const confirmLeave = window.confirm(
-        "You will lose your progress if you go back. Do you want to continue?"
-      );
-      if (confirmLeave) {
-        localStorage.setItem("interviewExited", "true");
-        navigate("/");
-      } else {
-        window.history.pushState(null, "", window.location.href);
-      }
-      // alert("You cannot go back during the interview. Please complete it.");
     };
-    window.history.pushState(null, "", window.location.href);
-    window.addEventListener("popstate", handleBackButton);
+  
+    startNewRecording();
 
-    // Stop recording after 2 minutes
     const stopTimeout = setTimeout(() => {
       stopRecording(
         videoRef,
@@ -79,27 +144,14 @@ const InterviewPlayer = ({ onTranscription,student_id,question_id }) => {
         setVideoFilePath,
         setAudioFilePath,
         student_id,
-        question_id
+        question_id,
+        startNewRecording 
       );
-      // stopMediaStreams();
-      // showSuccessToast("Interview Submitted Successfully...")
-      // navigate("/");
-    },17000);
-
-    return () => {
-      // clearInterval(questionInterval);
-      clearTimeout(stopTimeout);
-      window.removeEventListener("popstate", handleBackButton);
-    };
-  }, []);
-
-  // Analayze Video
-
-  // useEffect(() => {
-  //   if (videoFilePath && audioFilePath) {
-  //     analyzeVideo(videoFilePath, audioFilePath, onTranscription);
-  //   }
-  // }, [videoFilePath, audioFilePath, onTranscription]);
+    }, 10000); // 10 seconds per question
+  
+    return () => clearTimeout(stopTimeout);
+  }, [question_id]); 
+  
 
   const handleCloseModal = () => {
     setShowPopup(false);

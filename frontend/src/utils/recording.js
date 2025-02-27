@@ -39,7 +39,7 @@ export const startRecording = async (videoRef, mediaRecorderRef, audioRecorderRe
     }
   };
   
-  export const stopRecording = (videoRef, mediaRecorderRef, audioRecorderRef, recordedChunksRef, recordedAudioChunksRef, setVideoFilePath, setAudioFilePath,student_id,question_id) => {
+  export const stopRecording = (videoRef, mediaRecorderRef, audioRecorderRef, recordedChunksRef, recordedAudioChunksRef, setVideoFilePath, setAudioFilePath,student_id,question_id,onRecordingComplete ) => {
     // Stop video and audio recording, process the files, and upload them
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
@@ -48,7 +48,8 @@ export const startRecording = async (videoRef, mediaRecorderRef, audioRecorderRe
         const fileNameVideo = `interview_video_${student_id}_${question_id}_${new Date().toISOString().replace(/:/g, "-").split(".")[0]}.webm`;
         downloadFile(videoBlob, fileNameVideo);
         uploadFile(videoBlob, fileNameVideo,student_id,question_id).then(setVideoFilePath);
-      };
+        recordedChunksRef.current = [];
+        };
     }
   
     if (audioRecorderRef.current) {
@@ -58,13 +59,26 @@ export const startRecording = async (videoRef, mediaRecorderRef, audioRecorderRe
         const fileNameAudio = `interview_audio_${student_id}_${question_id}_${new Date().toISOString().replace(/:/g, "-").split(".")[0]}.mp3`;
         downloadFile(audioBlob, fileNameAudio);
         uploadFile(audioBlob, fileNameAudio,student_id,question_id).then(setAudioFilePath);
-      };
+        recordedAudioChunksRef.current = [];
+              };
     }
   
     // Stop media tracks
-    const tracks = videoRef.current.srcObject.getTracks();
-    tracks.forEach((track) => track.stop());
+    // const tracks = videoRef.current.srcObject.getTracks();
+    // tracks.forEach((track) => track.stop());
+    // videoRef.current.srcObject = null;
+
+// ✅ Stop all media tracks before starting new recording
+if (videoRef.current && videoRef.current.srcObject) {
+  const tracks = videoRef.current.srcObject.getTracks();
+    tracks.forEach((track) => {
+      track.stop();
+    });
     videoRef.current.srcObject = null;
+}
+    setTimeout(() => {
+      onRecordingComplete(); 
+    }, 500);
   };
 
 
