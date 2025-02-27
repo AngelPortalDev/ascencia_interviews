@@ -3,7 +3,7 @@
 import axios from "axios";
 
 // Uplaod File
-export const uploadFile = async (blob, filename) => {
+export const uploadFile = async (blob, filename,student_id,question_id) => {
   const formData = new FormData();
   formData.append("file", blob, filename);
 

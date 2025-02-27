@@ -5,7 +5,7 @@ import {
   DialogPanel,
   DialogTitle,
 } from "@headlessui/react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useParams } from "react-router-dom";
 import {usePermission} from '../context/PermissionContext.js';
 
 const Permissions = () => {
@@ -19,7 +19,7 @@ const Permissions = () => {
   const navigate = useNavigate();
 
   const {acceptAudioVideo}  = usePermission();
-
+  const { student_id } = useParams();
   const handleAudioPermission = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -67,7 +67,7 @@ const Permissions = () => {
         // setShowWelcome(true);
         // localStorage.setItem("hasPermissions", "true");
         acceptAudioVideo();
-        navigate("/questions");
+        navigate(`/questions/${student_id}`);
       }
     }
     setOpen(false);

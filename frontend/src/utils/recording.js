@@ -1,7 +1,7 @@
 // utils/recording.js
 import {uploadFile,downloadFile} from './fileUpload.js';
 
-export const startRecording = async (videoRef, mediaRecorderRef, audioRecorderRef, recordedChunksRef, recordedAudioChunksRef, setIsRecording, setVideoFilePath, setAudioFilePath) => {
+export const startRecording = async (videoRef, mediaRecorderRef, audioRecorderRef, recordedChunksRef, recordedAudioChunksRef, setIsRecording, setVideoFilePath, setAudioFilePath,student_id,question_id) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
@@ -39,15 +39,15 @@ export const startRecording = async (videoRef, mediaRecorderRef, audioRecorderRe
     }
   };
   
-  export const stopRecording = (videoRef, mediaRecorderRef, audioRecorderRef, recordedChunksRef, recordedAudioChunksRef, setVideoFilePath, setAudioFilePath) => {
+  export const stopRecording = (videoRef, mediaRecorderRef, audioRecorderRef, recordedChunksRef, recordedAudioChunksRef, setVideoFilePath, setAudioFilePath,student_id,question_id) => {
     // Stop video and audio recording, process the files, and upload them
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.onstop = () => {
         const videoBlob = new Blob(recordedChunksRef.current, { type: "video/webm" });
-        const fileNameVideo = `interview_video_${new Date().toISOString().replace(/:/g, "-").split(".")[0]}.webm`;
+        const fileNameVideo = `interview_video_${student_id}_${question_id}_${new Date().toISOString().replace(/:/g, "-").split(".")[0]}.webm`;
         downloadFile(videoBlob, fileNameVideo);
-        uploadFile(videoBlob, fileNameVideo).then(setVideoFilePath);
+        uploadFile(videoBlob, fileNameVideo,student_id,question_id).then(setVideoFilePath);
       };
     }
   
@@ -55,9 +55,9 @@ export const startRecording = async (videoRef, mediaRecorderRef, audioRecorderRe
       audioRecorderRef.current.stop();
       audioRecorderRef.current.onstop = () => {
         const audioBlob = new Blob(recordedAudioChunksRef.current, { type: "audio/mp3" });
-        const fileNameAudio = `interview_audio_${new Date().toISOString().replace(/:/g, "-").split(".")[0]}.mp3`;
+        const fileNameAudio = `interview_audio_${student_id}_${question_id}_${new Date().toISOString().replace(/:/g, "-").split(".")[0]}.mp3`;
         downloadFile(audioBlob, fileNameAudio);
-        uploadFile(audioBlob, fileNameAudio).then(setAudioFilePath);
+        uploadFile(audioBlob, fileNameAudio,student_id,question_id).then(setAudioFilePath);
       };
     }
   

@@ -22,7 +22,8 @@ from studentpanel.views.interview_process import (
     interview_panel,
     interview_score,
     interview_video_upload,
-    interview_questions
+    interview_questions,
+    student_data
 )
 
 # interview_panel,
@@ -62,13 +63,15 @@ urlpatterns = [
                 path("interview-video-upload/", interview_video_upload, name="interview_video_upload"),
                 path("interview-questions/", interview_questions, name="interview_questions"),
                 path("analyze-video/", analyze_video, name="analyze_video"),
-                path("check-answers/", check_answers, name="check_answers")
+                path("check-answers/", check_answers, name="check_answers"),
+                path("student-data/", student_data, name="student_data")
+
                 # path("index/", index, name="index"),
             ]
         ),
     ),
-    path('home', TemplateView.as_view(template_name='index.html')),
-    path('terms-and-conditions', TemplateView.as_view(template_name='index.html')),
-    path('permissions', TemplateView.as_view(template_name='index.html')),
-    path('interview-player', TemplateView.as_view(template_name='index.html')),    
+    path('interview_panel/<str:student_id>/', TemplateView.as_view(template_name='index.html')),
+    path('terms-and-conditions/', TemplateView.as_view(template_name='index.html')),
+    path('permissions/<str:student_id>/', TemplateView.as_view(template_name='index.html')),
+    path('interview-player/<str:student_id>/', TemplateView.as_view(template_name='index.html')),      
 ]

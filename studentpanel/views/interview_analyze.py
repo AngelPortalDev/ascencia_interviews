@@ -19,27 +19,28 @@ from transformers import BertTokenizer, BertModel
 import torch
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
+from gpt4all import GPT4All
 # ✅ Paths (Update as per your system)
 FFMPEG_PATH = r"C:\ffmpeg-2025-02-20-git-bc1a3bfd2c-full_build\bin\ffmpeg.exe"
-VOSK_MODEL_PATH = r"C:\Users\angel\Downloads\vosk-model-small-en-us-0.15\vosk-model-small-en-us-0.15"
+# VOSK_MODEL_PATH = r"C:\Users\angel\Downloads\vosk-model-small-en-us-0.15\vosk-model-small-en-us-0.15"
 
 # ✅ Initialize Vosk Model
-def initialize_vosk_model():
-    if not os.path.exists(VOSK_MODEL_PATH):
-        raise Exception("Vosk model not found!")
-    return Model(VOSK_MODEL_PATH)
+# def initialize_vosk_model():
+#     if not os.path.exists(VOSK_MODEL_PATH):
+#         raise Exception("Vosk model not found!")
+#     return Model(VOSK_MODEL_PATH)
 
-vosk_model = initialize_vosk_model()
+# vosk_model = initialize_vosk_model()
 
 # ✅ Handle File Upload
-def handle_uploaded_file(f):
-    upload_dir = os.path.join(settings.MEDIA_ROOT, "uploads", "student_interview")
-    os.makedirs(upload_dir, exist_ok=True)
-    file_path = os.path.join(upload_dir, f.name)
-    with open(file_path, 'wb+') as destination:
-        for chunk in f.chunks():
-            destination.write(chunk)
-    return file_path
+# def handle_uploaded_file(f):
+#     upload_dir = os.path.join(settings.MEDIA_ROOT, "uploads", "student_interview")
+#     os.makedirs(upload_dir, exist_ok=True)
+#     file_path = os.path.join(upload_dir, f.name)
+#     with open(file_path, 'wb+') as destination:
+#         for chunk in f.chunks():
+#             destination.write(chunk)
+#     return file_path
 
 # ✅ Extract & Enhance Audio
 def extract_audio(video_path):
@@ -183,7 +184,6 @@ def analyze_sentiment(text):
         "polarity": sentiment.polarity,  # -1 (negative) to 1 (positive)
         "subjectivity": sentiment.subjectivity,  # 0 (objective) to 1 (subjective),
         "sentiment": sentiment_label
-
     }
 
 
@@ -192,11 +192,8 @@ def analyze_sentiment(text):
 def analyze_video(request):
     if request.method == 'POST':
         data = request.POST
-        print(data)
         video_path = data.get('video_path')
         audio_path = data.get('audio_path')
-        print("test")
-        print(audio_path)
         # Extract audio
         extracted_audio = extract_audio(video_path)
         if not extracted_audio:
@@ -231,53 +228,77 @@ def get_sentence_embedding(sentence):
     return outputs.last_hidden_state[:, 0, :].numpy()
 @csrf_exempt
 def check_answers(request):
-    if request.method == "POST":
-        try:
-            print("ye")
-            data =  request.POST
-            transcribed_text = data.get("answer", "").strip()
-            question_id = data.get("question_id")
+    start_time = time.time()  # Start timing
+    data = request.POST
+    answer = data.get("answer", "").strip()
+    question_id = data.get("question_id")  # Assuming question ID contains the actual question
+    student_id = data.get("student_id") # Get the logged-in student's ID
 
-            # Retrieve the question from the DB
-            question = CommonQuestion.objects.get(id=question_id)
-            correct_answer = question.answer.strip()
+    if not question_id or not answer or not student_id:
+        return JsonResponse({"error": "Question and answer and students are required."}, status=400)
 
-            # Get embeddings for both texts
-              # Prepare the texts
-            texts = [correct_answer, transcribed_text]
 
-            # Vectorize the texts using TF-IDF
-            vectorizer = TfidfVectorizer()
-            tfidf_matrix = vectorizer.fit_transform(texts)
+    question_data = CommonQuestion.objects.get(id=question_id)
 
-            # Compute cosine similarity between the correct answer and the transcribed answer
-            similarity = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0]
-            similarity = float(similarity)  # Convert to native Python float
-            similarity_percentage = similarity * 100
+    # enrolled_courses = get_student_details(student_id)
+    # print(enrolled_courses)
+    # if not enrolled_courses:
+    #     return JsonResponse({"error": "No enrolled courses found for the student."}, status=400)
+    # 🔥 Enhanced prompt with logical consistency check
+    prompt = f"""
+    You are an AI evaluator for university applications.  
+    Your task is to **evaluate answers based on meaning, not just grammar.**  
 
-            # Define a threshold for passing
-            threshold = 0.5  # Adjust this threshold as needed
-            is_pass = similarity >= threshold
+    **Evaluation Criteria:**
+    1️⃣ **Relevance to the question** (Is the answer actually about the program?)  
+    2️⃣ **Logical correctness** (Does the explanation make sense?)  
+    3️⃣ **Grammar & clarity** (Is the sentence well-structured?)  
 
-            result = {
-                "correct": is_pass,
-                "similarity": similarity,
-                "pass": is_pass,
-                "similarity_percentage": similarity_percentage
-            }
-            return JsonResponse({"result": result})
+    **Scoring Rules:**  
+    - **1-2/10** → Completely incorrect or unrelated (e.g., AI research for a Psychology degree).  
+    - **3-5/10** → Somewhat related but logically weak.  
+    - **6-8/10** → Relevant but lacks details.  
+    - **9-10/10** → Strong, detailed, and logical answer.  
 
-        except CommonQuestion.DoesNotExist:
-            return JsonResponse({"error": "Invalid question ID"}, status=400)
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
+    **Example of a bad answer (Wrong Logic):**
+    Question: "Why do you want to study Psychology?"  
+    Answer: "I want to study Psychology because I love coding and want to build AI systems."  
+    **Score: 1/10 (Completely incorrect - AI is not related to Psychology).**
 
-def extract_score(response):
+    **Example of a good answer (Correct Logic):**
+    Question: "Why do you want to study Psychology?"  
+    Answer: "I am fascinated by human behavior and want to specialize in Cognitive Psychology to understand how people think."  
+    **Score: 9/10 (Relevant, clear, and logical).**
+
+    Now, evaluate the following answer:  
+    **Question:** {question_data.question}  
+    **Answer:** {answer}  
+
+    Provide a score out of 10 and feedback in this format:  
+    **Score: X/10**  
+    **Feedback: [Your analysis]**  
+    """
+
     try:
-        result = response["choices"][0]["message"]["content"]
-        # Expecting a result that ends with a numeric score, e.g., "Score: 85"
-        match = re.search(r"(\d+)", result)
-        return int(match.group(1)) if match else 0
+        model_path = r"C:\Users\angel\Ascencia_Interviews\ascencia_interviews\studentpanel\models\mistral-7b-instruct-v0.2.Q2_K.gguf"
+        
+        print("Loading model...")  # Debugging
+        model = GPT4All(model_path)
+        print("Model loaded successfully!")  # Debugging
+
+        response = model.generate(prompt)
+        print("AI Response:", response)  # Debugging
+
+        # Improved regex to extract score
+        match = re.search(r"Score:\s*(\d{1,2})\/10", response)
+        score = int(match.group(1)) if match else None
+
+        
+        end_time = time.time()  # End timing
+        response_time = round(end_time - start_time, 2)  # Calculate response time
+
+        return JsonResponse({"score": score, "feedback": response, "response_time": f"{response_time} sec"})
+
     except Exception as e:
-        print("Error extracting score:", e)
-        return 0
+        return JsonResponse({"error": str(e)}, status=500)
+    # return enrolled_courses

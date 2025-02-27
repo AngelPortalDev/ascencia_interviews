@@ -6,7 +6,7 @@ import { startRecording, stopRecording } from "../utils/recording.js";
 import { analyzeVideo } from "../utils/fileUpload.js";
 import useVisibilityWarning from "../hooks/useVisibilityWarning.js";
 
-const InterviewPlayer = ({ onTranscription }) => {
+const InterviewPlayer = ({ onTranscription,student_id,question_id }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [answerScore, setAnswerScore] = useState(null);
@@ -28,7 +28,9 @@ const InterviewPlayer = ({ onTranscription }) => {
         recordedChunksRef,
         recordedAudioChunksRef,
         setVideoFilePath,
-        setAudioFilePath
+        setAudioFilePath,
+        student_id,
+        question_id
       );
       // stopMediaStreams();
       // navigate("/");
@@ -43,7 +45,9 @@ const InterviewPlayer = ({ onTranscription }) => {
       recordedAudioChunksRef,
       setIsRecording,
       setVideoFilePath,
-      setAudioFilePath
+      setAudioFilePath,
+      student_id,
+      question_id
     );
 
     // Prevent Back Button & Refresh
@@ -73,12 +77,14 @@ const InterviewPlayer = ({ onTranscription }) => {
         recordedChunksRef,
         recordedAudioChunksRef,
         setVideoFilePath,
-        setAudioFilePath
+        setAudioFilePath,
+        student_id,
+        question_id
       );
       // stopMediaStreams();
       // showSuccessToast("Interview Submitted Successfully...")
       // navigate("/");
-    }, 7000);
+    },17000);
 
     return () => {
       // clearInterval(questionInterval);
@@ -89,11 +95,11 @@ const InterviewPlayer = ({ onTranscription }) => {
 
   // Analayze Video
 
-  useEffect(() => {
-    if (videoFilePath && audioFilePath) {
-      analyzeVideo(videoFilePath, audioFilePath, onTranscription);
-    }
-  }, [videoFilePath, audioFilePath, onTranscription]);
+  // useEffect(() => {
+  //   if (videoFilePath && audioFilePath) {
+  //     analyzeVideo(videoFilePath, audioFilePath, onTranscription);
+  //   }
+  // }, [videoFilePath, audioFilePath, onTranscription]);
 
   const handleCloseModal = () => {
     setShowPopup(false);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useCallback, useMemo } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/pagination";
@@ -8,11 +8,11 @@ import { Pagination, Navigation,Autoplay} from "swiper/modules";
 import ChatIcon from "../assest/icons/one.svg";
 import InterviewPlayer from "./InterviewPlayer.js";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate,useParams } from "react-router-dom"; 
 import {usePermission} from '../context/PermissionContext.js';
 import QuestionChecker from "./QuestionChecker.js";
 const Questions = () => {
-  const [countdown, setCountdown] = useState(30);
+  const [countdown, setCountdown] = useState(300);
   // const [userData, setUserData] = useState(null);
   const [getQuestions, setQuestions] = useState([]);
   const [navigationTime, setNavigationTime] = useState(0);
@@ -21,6 +21,11 @@ const Questions = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [transcribedText, setTranscribedText] = useState(""); // To hold transcribed text
   const [activeQuestionId, setActiveQuestionId] = useState(null); // Track active question
+  const [student, setStudent] = useState(null);
+  const { student_id } = useParams(); // Get encoded student_id from URL
+  const  decoded_student_id = atob(student_id); // Decode Base64
+
+  // console.log("Decoded Student ID:", decoded_student_id);
 
   const navigate = useNavigate();
   const { submitExam } = usePermission();
@@ -31,8 +36,8 @@ const Questions = () => {
     );
     setQuestions(res.data.questions);
     if (res.data.questions.length > 0) {
-      console.log(res.data.questions[0].encoded_id);
-      console.log(res.data);
+      // console.log(res.data.questions[0].encoded_id);
+      // console.log(res.data);
       setActiveQuestionId(res.data.questions[0].encoded_id); 
     }
   };
@@ -78,10 +83,25 @@ const Questions = () => {
     setTimeSpent(0);
   }, [currentQuestionIndex]);
 
-  const handleQuestionChange = (swiper) => {
+
+
+  const handleQuestionChange = useCallback((swiper) => {
     setTimeSpent(0); // Reset time spent for next question
-    setCurrentQuestionIndex(swiper.realIndex); // Update current question index
-  };
+    // setCurrentQuestionIndex(swiper.realIndex); // Update current question index
+    const newQuestionId = getQuestions[swiper.activeIndex]?.id;
+    if (newQuestionId !== activeQuestionId) {
+        setActiveQuestionId(newQuestionId);
+    }
+  }, [activeQuestionId, getQuestions]);
+
+  // Prevent unnecessary re-renders of InterviewPlayer
+  const interviewPlayerMemo = useMemo(() => (
+      <InterviewPlayer 
+      onTranscription={setTranscribedText} 
+      student_id={student_id} 
+      question_id={activeQuestionId} 
+    />    
+  ), []);
 
   const handleTimeSpent = () => {
     // Increment time spent on current question
@@ -128,6 +148,28 @@ const Questions = () => {
     }
   },[countdown]);
 
+  const fetchStudentData = async (student_id) => {
+    // console.log(student_id, 'student data');
+
+    const formData = new FormData();
+    formData.append("student_id", student_id);
+
+    try {
+        const res = await Axios.post(
+            `${process.env.REACT_APP_API_BASE_URL}interveiw-section/student-data/`,
+            formData // ✅ Pass formData here
+        );
+        if (res.data && res.data.student_data.length > 0) {
+          setStudent(res.data.student_data[0]); // Get first object
+        }
+    } catch (error) {
+        console.error("Error fetching student data:", error);
+        return null; // Return null or handle the error properly
+    }
+};
+  useEffect(() => {
+    fetchStudentData(student_id);
+  }, []);
   // useEffect(()=>{
   //   if(localStorage.getItem("InterviewSubitted") === "true"){
   //     toast.error("You have already submitted the interview.");
@@ -221,9 +263,9 @@ const Questions = () => {
         <div className="grid grid-cols-12 gap-8 mt-12 h-full">
           {/* User Info (8 columns) */}
           <div className="col-span-12 lg:col-span-9 flex flex-col justify-end bg-white p-6 rounded-xl shadow-lg text-black border border-gray-200">
-
+    
             <h3 className="text-xl font-semibold mb-6 text-center">
-              Matt Morgon
+              {student ? `${student.first_name} ${student.last_name}` : "Not found"}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
               {/* Mobile No */}
@@ -240,7 +282,7 @@ const Questions = () => {
                   <div className="chat-notification-title text-lg font-medium text-black">
                     Mobile No
                   </div>
-                  <p className="chat-notification-message">+91 6789354628</p>
+                  <p className="chat-notification-message">{student ? student.mobile_no : ""}</p>
                 </div>
               </div>
 
@@ -258,7 +300,7 @@ const Questions = () => {
                   <div className="chat-notification-title text-lg font-medium text-black">
                     Email id
                   </div>
-                  <p className="chat-notification-message">abc12@gmail.com</p>
+                  <p className="chat-notification-message">{student ? student.email_id : ""}</p>
                 </div>
               </div>
 
@@ -276,7 +318,7 @@ const Questions = () => {
                   <div className="chat-notification-title text-lg font-medium text-black">
                     Job Id
                   </div>
-                  <p className="chat-notification-message">JOB11223</p>
+                  <p className="chat-notification-message">{student ? student.zoho_lead_id : ""}</p>
                 </div>
               </div>
             </div>
@@ -284,8 +326,13 @@ const Questions = () => {
 
           {/* Video Player (4 columns) */}
           <div className="col-span-12 lg:col-span-3 bg-white p-6 rounded-xl shadow-lg text-black border border-gray-200">
-            <InterviewPlayer onTranscription={setTranscribedText} />
-              {activeQuestionId && <QuestionChecker transcribedText={transcribedText} questionId={activeQuestionId} />}
+              {/* <InterviewPlayer 
+                onTranscription={setTranscribedText} 
+                student_id={student_id} 
+                activeQuestionId={activeQuestionId} 
+              />             */}
+              {interviewPlayerMemo}
+              {/* {activeQuestionId && <QuestionChecker transcribedText={transcribedText} questionId={activeQuestionId} />} */}
              
           </div>
         </div>

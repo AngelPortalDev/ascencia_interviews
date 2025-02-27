@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate  } from "react-router-dom";
+import { useNavigate,useParams } from "react-router-dom";
 import PropTypes from "prop-types";
 import { usePermission } from "../context/PermissionContext.js";
 
@@ -17,13 +17,15 @@ const TermsAndCondition = () => {
     }
   };
 
+  const { student_id } = useParams();
+
   const handleSubmit = () => {
     if (!isAgreed) {
       setErrorMessage("You must agree to the terms and conditions to proceed.");
     }
     else{
-      acceptTerms();
-      navigate("/permissions"); 
+      acceptTerms(student_id);
+      navigate(`/permissions/${student_id}`);  // Navigate dynamically
     }
   };
 
