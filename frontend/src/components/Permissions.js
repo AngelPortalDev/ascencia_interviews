@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect  } from "react";
 import {
   Dialog,
   DialogBackdrop,
@@ -7,6 +7,7 @@ import {
 } from "@headlessui/react";
 import { useNavigate,useParams } from "react-router-dom";
 import {usePermission} from '../context/PermissionContext.js';
+
 
 const Permissions = () => {
   
@@ -72,6 +73,15 @@ const Permissions = () => {
     }
     setOpen(false);
   };
+
+
+  useEffect(() => {
+    const termsAccepted = localStorage.getItem("termsAccepted");
+
+    if (termsAccepted !== "true") {
+      navigate("/terms-and-conditions");
+    }
+  }, [navigate]);
 
   return (
     <div>

@@ -41,8 +41,8 @@ urlpatterns = [
         ),
     ),
 
-    path('interview_panel/<str:student_id>/', TemplateView.as_view(template_name='index.html')),
-    path('terms-and-conditions/', TemplateView.as_view(template_name='index.html')),
-    path('permissions/<str:student_id>/', TemplateView.as_view(template_name='index.html')),
-    path('interview-player/<str:student_id>/', TemplateView.as_view(template_name='index.html')),    
+    # path('interview_panel/<str:student_id>/', TemplateView.as_view(template_name='index.html')),
+    # path('terms-and-conditions/', TemplateView.as_view(template_name='index.html')),
+    # path('permissions/', TemplateView.as_view(template_name='index.html')),
+    # path('interview-player/<str:student_id>/', TemplateView.as_view(template_name='index.html')),    
 ]
