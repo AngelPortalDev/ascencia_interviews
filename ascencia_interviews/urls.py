@@ -9,22 +9,11 @@ from adminpanel.views.question_view import questions, question_add, question_upd
 from adminpanel.views.student_manager_view import student_managers, student_manager_add, student_manager_update, student_manager_delete, student_list_by_manager
 from adminpanel.views.profile_view import profile_update
 from adminpanel.views.student_view import students_leads_api,students_list, student_detail
-from django.views.generic import TemplateView
 from django.conf.urls import handler404
 from django.shortcuts import redirect
-from studentpanel.views.interview_analyze import analyze_video,check_answers
 
 handler404 = custom_404_view
 
-# studentpanel settings
-from studentpanel.views.interview_process import (
-    interview_start,
-    interview_panel,
-    interview_score,
-    interview_video_upload,
-    interview_questions,
-    student_data
-)
 
 # interview_panel,
 # interview_score
@@ -38,40 +27,39 @@ urlpatterns = [
     path("index/", index),
     path("admin/", admin.site.urls),
     path("api/", include('api.urls')),
-    path("", include('studentmanagerpanel.urls')),
     path("", include('adminpanel.urls')),
+    path("", include('studentpanel.urls')),
+    path("", include('studentmanagerpanel.urls')),
     path("login/", login_view, name="login"),
     path("register/", register_view, name="register"),
     path("logout/", logout_view, name="logout"),
     path('students_leads_api/', students_leads_api, name='students_leads_api'),
 
     # Interview Section URLS
-    path(
-        "interveiw-section/",
-        include(
-            [
-                path(
-                    "interview-instructions/",
-                    interview_start,
-                    name="interview-instructions",
-                ),
-                path("interview-panel/", interview_panel, name="interview_panel"),
-                # path("answer-question/", student_answer, name="student_answer"),
-                # path("upload-recording/", student_upload, name="student_upload"),
-                # path("submit-interview/", student_submit, name="student_submit"),
-                path("interview-score/", interview_score, name="interview_score"),
-                path("interview-video-upload/", interview_video_upload, name="interview_video_upload"),
-                path("interview-questions/", interview_questions, name="interview_questions"),
-                path("analyze-video/", analyze_video, name="analyze_video"),
-                path("check-answers/", check_answers, name="check_answers"),
-                path("student-data/", student_data, name="student_data")
 
-                # path("index/", index, name="index"),
-            ]
-        ),
-    ),
-    path('interview_panel/<str:student_id>/', TemplateView.as_view(template_name='index.html')),
-    path('terms-and-conditions/', TemplateView.as_view(template_name='index.html')),
-    path('permissions/<str:student_id>/', TemplateView.as_view(template_name='index.html')),
-    path('interview-player/<str:student_id>/', TemplateView.as_view(template_name='index.html')),      
+    # path(
+    #     "interveiw-section/",
+    #     include(
+    #         [
+    #             path(
+    #                 "interview-instructions/",
+    #                 interview_start,
+    #                 name="interview-instructions",
+    #             ),
+    #             path("interview-panel/", interview_panel, name="interview_panel"),
+    #             # path("answer-question/", student_answer, name="student_answer"),
+    #             # path("upload-recording/", student_upload, name="student_upload"),
+    #             # path("submit-interview/", student_submit, name="student_submit"),
+    #             path("interview-score/", interview_score, name="interview_score"),
+    #             path("interview-video-upload/", interview_video_upload, name="interview_video_upload"),
+    #             path("interview-questions/", interview_questions, name="interview_questions"),
+    #             path("analyze-video/", analyze_video, name="analyze_video"),
+    #             path("check-answers/", check_answers, name="check_answers"),
+    #             path("student-data/", student_data, name="student_data")
+
+    #             # path("index/", index, name="index"),
+    #         ]
+    #     ),
+    # ),
+  
 ]

@@ -76,7 +76,7 @@ def process_documents():
                 continue  # Skip to the next file
 
             # Process document
-            process_api_url = "http:/192.168.1.2:8000/api/process_document"
+            process_api_url = "http:/192.168.1.2:9000/api/process_document"
             data = {
                 "first_name": publisher.first_name,
                 "last_name": publisher.last_name,
