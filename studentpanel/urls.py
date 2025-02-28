@@ -10,7 +10,7 @@ from studentpanel.views.interview_process import (
     interview_questions,
     student_data
 )
-from studentpanel.views.interview_analyze import analyze_video,check_answers
+from studentpanel.views.interview_analyze import analyze_video,check_answers, merge_videos
 from django.views.generic import TemplateView
 
 
@@ -40,6 +40,7 @@ urlpatterns = [
             ]
         ),
     ),
+    path('merge-videos/', merge_videos, name='merge_videos')
 
     # path('interview_panel/<str:student_id>/', TemplateView.as_view(template_name='index.html')),
     # path('terms-and-conditions/', TemplateView.as_view(template_name='index.html')),

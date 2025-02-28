@@ -20,6 +20,13 @@ import torch
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
 from gpt4all import GPT4All
+import cv2
+import numpy as np
+import subprocess
+
+
+
+
 # ✅ Paths (Update as per your system)
 FFMPEG_PATH = r"C:\ffmpeg-2025-02-20-git-bc1a3bfd2c-full_build\bin\ffmpeg.exe"
 # VOSK_MODEL_PATH = r"C:\Users\angel\Downloads\vosk-model-small-en-us-0.15\vosk-model-small-en-us-0.15"
@@ -302,3 +309,185 @@ def check_answers(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
     # return enrolled_courses
+
+
+
+
+
+
+# def convert_to_webm(video_path, output_path):
+#     """ Converts a video to WebM format using VP9 codec. """
+#     command = f'ffmpeg -i "{video_path}" -c:v libvpx-vp9 -b:v 1M -c:a libopus "{output_path}"'
+#     subprocess.run(command, shell=True, check=True)
+
+# def merge_videos(uploads_folder, video_files, output_filename="merged_video.webm"):
+#     # video_files = ["1.webm", "2.webm"] 
+#     converted_files = []
+#     list_file_path = os.path.join(uploads_folder, "video_list.txt").replace("\\", "/")
+
+#     # Convert all videos to WebM format
+#     for video in video_files:
+#         input_path = os.path.join(uploads_folder, video).replace("\\", "/")
+#         if not os.path.exists(input_path):
+#             return f"Error: {video} not found in uploads folder."
+
+#         output_path = os.path.join(uploads_folder, f"{os.path.splitext(video)[0]}_converted.webm").replace("\\", "/")
+#         convert_to_webm(input_path, output_path)
+#         converted_files.append(output_path)
+
+#     # Create video list file
+#     with open(list_file_path, "w") as f:
+#         for video in converted_files:
+#             f.write(f"file '{video}'\n")
+
+#     # Define output path
+#     output_path = os.path.join(uploads_folder, output_filename).replace("\\", "/")
+
+#     # Merge converted WebM files
+#     command = f'ffmpeg -f concat -safe 0 -i "{list_file_path}" -c copy "{output_path}"'
+    
+#     try:
+#         subprocess.run(command, shell=True, check=True)
+#         return f"Merged video saved at: {output_path}"
+#     except subprocess.CalledProcessError as e:
+#         return f"Error merging videos: {e}"
+
+# # Example usage
+# zoho_lead_id = '787878'
+# video_files = ["1.webm", "2.webm"] 
+# uploads_folder = "C:/xampp/htdocs/ascencia_interviews/uploads/787878"
+# print(merge_videos(uploads_folder, video_files))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def compress_video(input_path, output_path, target_size_mb=19):
+    """Compresses a video to fit within the specified size limit."""
+    target_size = target_size_mb * 1024 * 1024  # Convert MB to bytes
+
+    # Get the original file size
+    original_size = os.path.getsize(input_path)
+
+    if original_size <= target_size:
+        return f"Compression not needed, size: {original_size / (1024 * 1024):.2f} MB"
+
+    # Compression settings
+    bitrate = (target_size * 8) / os.path.getmtime(input_path)  # Approximate bitrate calculation
+    compressed_output = os.path.splitext(output_path)[0] + "_compressed.mp4"
+
+    compress_command = (
+        f'ffmpeg -i "{input_path}" -b:v {bitrate} -c:v libx264 -preset fast '
+        f'-c:a aac -b:a 128k -movflags +faststart "{compressed_output}"'
+    )
+
+    try:
+        subprocess.run(compress_command, shell=True, check=True)
+        return f"Compressed video saved at: {compressed_output}"
+    except subprocess.CalledProcessError as e:
+        return f"Error compressing video: {e}"
+
+
+
+def convert_video(input_path, output_path, target_format):
+    """ Converts a video to the specified format with correct encoding. """
+    if target_format == "webm":
+        command = f'ffmpeg -i "{input_path}" -c:v libvpx-vp9 -b:v 1M -c:a libopus "{output_path}"'
+    elif target_format == "mp4":
+        command = f'ffmpeg -i "{input_path}" -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -movflags +faststart "{output_path}"'
+    elif target_format == "mov":
+        command = f'ffmpeg -i "{input_path}" -c:v prores -c:a pcm_s16le "{output_path}"'
+    else:
+        return f"Unsupported format: {target_format}"
+
+    subprocess.run(command, shell=True, check=True)
+
+
+
+def get_uploads_folder():
+    """Returns the absolute path to the 'uploads' folder in the project root."""
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))  # Go two levels up
+    uploads_folder = os.path.join(project_root, "uploads")  # Point to the correct uploads folder
+    return uploads_folder.replace("\\", "/")  # Normalize path
+
+
+def merge_videos(zoho_lead_id, base_uploads_folder="C:/xampp/htdocs/ascencia_interviews/uploads"):
+    """ Merges all videos in the lead's folder into a single file of the detected format. """
+    # uploads_folder = os.path.join(base_uploads_folder, zoho_lead_id).replace("\\", "/")
+
+    uploads_folder = os.path.join(get_uploads_folder(), zoho_lead_id)
+
+    # Check if the folder exists
+    if not os.path.exists(uploads_folder):
+        return f"Error: Folder {uploads_folder} does not exist."
+
+    video_files = [f for f in os.listdir(uploads_folder) if f.endswith((".webm", ".mp4", ".mov"))]
+    
+    if not video_files:
+        return f"Error: No video files found in {uploads_folder}."
+
+    # Detect the format from the first video file
+    first_video_ext = os.path.splitext(video_files[0])[1][1:]  # Extract extension without the dot
+    target_format = first_video_ext.lower()  # Normalize format (webm, mp4, mov)
+
+    converted_files = []
+    list_file_path = os.path.join(uploads_folder, "video_list.txt").replace("\\", "/")
+    output_filename = f"merged_video.{target_format}"
+    output_path = os.path.join(uploads_folder, output_filename).replace("\\", "/")
+
+    # Convert all videos to the detected format
+    for video in video_files:
+        input_path = os.path.join(uploads_folder, video).replace("\\", "/")
+        output_path_converted = os.path.join(uploads_folder, f"{os.path.splitext(video)[0]}_converted.{target_format}").replace("\\", "/")
+
+        if not video.endswith(f".{target_format}"):  # Convert only if needed
+            convert_video(input_path, output_path_converted, target_format)
+            converted_files.append(output_path_converted)
+        else:
+            converted_files.append(input_path)
+
+    # Create video list file
+    with open(list_file_path, "w") as f:
+        for video in converted_files:
+            f.write(f"file '{video}'\n")
+
+    # Select correct encoding based on target format
+    if target_format == "webm":
+        merge_command = f'ffmpeg -f concat -safe 0 -i "{list_file_path}" -c:v libvpx-vp9 -b:v 1M -c:a libopus "{output_path}"'
+    elif target_format == "mp4":
+        merge_command = f'ffmpeg -f concat -safe 0 -i "{list_file_path}" -map 0:v -map 0:a -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -movflags +faststart "{output_path}"'
+    elif target_format == "mov":
+        merge_command = f'ffmpeg -f concat -safe 0 -i "{list_file_path}" -c:v prores -c:a pcm_s16le "{output_path}"'
+    else:
+        return f"Unsupported format: {target_format}"
+
+    # Merge videos with re-encoding
+    try:
+        subprocess.run(merge_command, shell=True, check=True)
+        # Check size and compress if needed
+        # if os.path.getsize(output_path) > (19 * 1024 * 1024):
+        #     return compress_video(output_path, output_path)
+
+        return f"Merged video saved at: {output_path}"  
+    except subprocess.CalledProcessError as e:
+        return f"Error merging videos: {e}"
+    
+# Example usage
+# zoho_lead_id = "797979"
+# print(merge_videos(zoho_lead_id))
