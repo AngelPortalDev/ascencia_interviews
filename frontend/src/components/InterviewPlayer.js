@@ -103,11 +103,14 @@ const InterviewPlayer = ({ onTranscription,student_id,question_id }) => {
 
   // Analayze Video
 
-  // useEffect(() => {
-  //   if (videoFilePath && audioFilePath) {
-  //     analyzeVideo(videoFilePath, audioFilePath, onTranscription);
-  //   }
-  // }, [videoFilePath, audioFilePath, onTranscription]);
+  useEffect(() => {
+    if (videoFilePath && audioFilePath) {
+      console.log(student_id);
+      console.log(question_id);
+
+      analyzeVideo(videoFilePath, audioFilePath, onTranscription,student_id,question_id);
+    }
+  }, [videoFilePath, audioFilePath, onTranscription]);
 
   useEffect(() => {
 
@@ -147,7 +150,7 @@ const InterviewPlayer = ({ onTranscription,student_id,question_id }) => {
         question_id,
         startNewRecording 
       );
-    }, 10000); // 10 seconds per question
+    }, 60000); // 10 seconds per question
   
     return () => clearTimeout(stopTimeout);
   }, [question_id]); 
