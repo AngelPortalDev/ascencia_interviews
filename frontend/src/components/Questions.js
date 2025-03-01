@@ -1,4 +1,4 @@
-import React, { useState, useEffect,useCallback, useMemo } from "react";
+import React, { useState, useEffect,useCallback, useMemo,useRef } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/pagination";
@@ -8,9 +8,11 @@ import { Pagination, Navigation,Autoplay} from "swiper/modules";
 import ChatIcon from "../assest/icons/one.svg";
 import InterviewPlayer from "./InterviewPlayer.js";
 import { toast } from "react-toastify";
-import { useNavigate,useParams } from "react-router-dom"; 
+import { useNavigate,useParams,useLocation } from "react-router-dom"; 
 import {usePermission} from '../context/PermissionContext.js';
 import QuestionChecker from "./QuestionChecker.js";
+import { startRecording,stopRecording } from "../utils/recording.js";
+
 const Questions = () => {
   const [countdown, setCountdown] = useState(60);
   // const [userData, setUserData] = useState(null);
@@ -23,28 +25,90 @@ const Questions = () => {
   const [activeQuestionId, setActiveQuestionId] = useState(null); // Track active question
   const [student, setStudent] = useState(null);
   const { student_id } = useParams(); // Get encoded student_id from URL
-  const  decoded_student_id = atob(student_id); // Decode Base64
+  // const  decoded_student_id = atob(student_id); // Decode Base64
 
-  // console.log("Decoded Student ID:", decoded_student_id);
+  // const { student_id } = useParams();
+      let decoded_student_id = null;
+
+      try {
+        if (student_id) {
+          decoded_student_id = atob(student_id);
+        } else {
+          console.error("Error: student_id is undefined or empty");
+        }
+      } catch (error) {
+        console.error("Invalid Base64 encoding:", error);
+      }
+
+
+  const location  = useLocation();
+
+
+  //  // Recording State & Refs
+    const [videoFilePath, setVideoFilePath] = useState(null);
+    const [audioFilePath, setAudioFilePath] = useState(null);
+    const videoRef = useRef(null);
+    const mediaRecorderRef = useRef(null);
+    const recordedChunksRef = useRef([]);
+    const audioRecorderRef = useRef(null);
+    const recordedAudioChunksRef = useRef([]);
+    const [isRecording, setIsRecording] = useState(false);
+    const [isFirstQuestionSet, setIsFirstQuestionSet] = useState(false);
+
+
 
   const navigate = useNavigate();
   const { submitExam } = usePermission();
 
+  // ***********  Fetch QUestions ***********
   const fetchQuestions = async () => {
-    const res = await Axios.get(
-      `${process.env.REACT_APP_API_BASE_URL}interveiw-section/interview-questions/`
-    );
-    setQuestions(res.data.questions);
-    if (res.data.questions.length > 0) {
-      // console.log(res.data.questions[1].encoded_id);
-      // console.log(res.data);
-      setActiveQuestionId(res.data.questions[0].encoded_id); 
+    try {
+      const res = await Axios.get(
+        `${process.env.REACT_APP_API_BASE_URL}interveiw-section/interview-questions/`
+      );
+  
+      if (res.data && res.data.questions && res.data.questions.length > 0) {
+        setQuestions(res.data.questions);
+        setActiveQuestionId(res.data.questions[0].encoded_id);
+      } else {
+        console.warn("No questions found in the response.");
+        setQuestions([]); // Ensure state is updated with an empty array
+      }
+    } catch (error) {
+      console.error("Error fetching questions:", error);
     }
   };
+  
   useEffect(() => {
     fetchQuestions();
   }, []);
 
+
+  // ************* Get First Question id *********
+
+  useEffect(() => {
+    if (getQuestions.length > 0 && !isFirstQuestionSet) {
+      const firstQuestion = getQuestions[0];
+      setActiveQuestionId(firstQuestion.encoded_id); 
+      setIsFirstQuestionSet(true); 
+      
+      // Start the recording for the first question
+      startRecording(
+        videoRef,
+        mediaRecorderRef,
+        audioRecorderRef,
+        recordedChunksRef,
+        recordedAudioChunksRef,
+        setIsRecording,
+        setVideoFilePath,
+        setAudioFilePath,
+        student_id,
+        firstQuestion.encoded_id 
+      );
+    }
+  }, [getQuestions, isFirstQuestionSet]);
+
+   // ************* Handle Countdown *************
   useEffect(() => {
 
     if (countdown > 0) {
@@ -62,7 +126,7 @@ const Questions = () => {
         handleSubmit();
       }
     }
-  }, [countdown]);
+  }, [countdown,getQuestions, currentQuestionIndex]);
 
   const formatTime = (time) => {
     const minutes = Math.floor(time / 60);
@@ -78,8 +142,9 @@ const Questions = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // ************ User Spent More Than 30 seconds then navigation enabled ****************
   useEffect(() => {
-    if (timeSpent >= 10) {
+    if (timeSpent >= 30) {
       setIsNavigationEnabled(true);
     } else {
       setIsNavigationEnabled(false);
@@ -93,14 +158,44 @@ const Questions = () => {
 
 
   const handleQuestionChange = useCallback((swiper) => {
-    setTimeSpent(0); // Reset time spent for next question
-    // setCurrentQuestionIndex(swiper.realIndex); // Update current question index
+    setTimeSpent(0); // Reset time tracker
     const newQuestionId = getQuestions[swiper.activeIndex]?.encoded_id;
     if (newQuestionId !== activeQuestionId) {
       setActiveQuestionId(newQuestionId);
     }
-    setCountdown(60);
+    
+ 
+  
+    // ************* Stop current recording and start a new one ************
+    stopRecording(
+      videoRef,
+      mediaRecorderRef,
+      audioRecorderRef,
+      recordedChunksRef,
+      recordedAudioChunksRef,
+      setVideoFilePath,
+      setAudioFilePath,
+      student_id,
+      activeQuestionId, 
+      () => {
+        startRecording(
+          videoRef,
+          mediaRecorderRef,
+          audioRecorderRef,
+          recordedChunksRef,
+          recordedAudioChunksRef,
+          setIsRecording,
+          setVideoFilePath,
+          setAudioFilePath,
+          student_id,
+          newQuestionId
+        );
+      }
+    );
+       // ******** On click Arrow icon Reset countdown ************
+       setCountdown(60); 
   }, [activeQuestionId, getQuestions]);
+  
 
   // Prevent unnecessary re-renders of InterviewPlayer
   const interviewPlayerMemo = useMemo(() => (
@@ -125,18 +220,15 @@ const Questions = () => {
       return () => clearInterval(timeTracker);
   }, []);
 
-  // useEffect(()=>{
-  //   if(navigationTime > 10){
-  //     setIsNavigationEnabled(true);
-  //   }
-  // },[navigationTime])
 
-  // if (!userData) {
-  //   return <div>Loading...</div>;
-  // }
-
-
+  // ************ Interview Submit Go to Home Page ****************************
   const handleSubmit = () => {
+    // Stop media before navigating
+  if (videoRef.current && videoRef.current.srcObject) {
+    const tracks = videoRef.current.srcObject.getTracks();
+    tracks.forEach(track => track.stop()); 
+    videoRef.current.srcObject = null;
+  }
     submitExam(); 
     toast.success("Interview Submitted...", {
       onClose: () => navigate("/"),
@@ -145,16 +237,6 @@ const Questions = () => {
     });
   };
 
-  useEffect(()=>{
-    if(countdown === 0){
-      localStorage.setItem("InterviewSubitted", "true");
-      toast.success("Interview Submitted...", {
-        onClose: () => navigate("/"), 
-        autoClose: 1500, 
-        hideProgressBar: true,
-      });
-    }
-  },[countdown]);
 
   const fetchStudentData = async (student_id) => {
     // console.log(student_id, 'student data');
@@ -177,13 +259,23 @@ const Questions = () => {
 };
   useEffect(() => {
     fetchStudentData(student_id);
-  }, []);
-  // useEffect(()=>{
-  //   if(localStorage.getItem("InterviewSubitted") === "true"){
-  //     toast.error("You have already submitted the interview.");
-  //     navigate("/");
-  //   }
-  // },[countdown]);
+  }, [student_id]);
+
+
+  // Stop Media Steam when user visit home page 
+  useEffect(() => {
+      if (location.pathname === "/") { 
+        if (videoRef.current && videoRef.current.srcObject) {
+          const tracks = videoRef.current.srcObject.getTracks();
+          console.log("tracks: " + tracks)
+          tracks.forEach(track => track.stop());
+          videoRef.current.srcObject = null;
+        }
+      }
+  }, [location]);
+
+
+
 
   return (
     <div className="relative min-h-screen bg-gradient-to-r text-white">
@@ -232,6 +324,7 @@ const Questions = () => {
             ),
           }}
           navigation={isNavigationEnabled}
+          allowSlidePrev={false}
           modules={[Pagination, Navigation,Autoplay]}
           className="mySwiper"
           autoplay={{
