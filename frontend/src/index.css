@@ -128,3 +128,22 @@ code {
 }
 
 
+.swiper-button-prev {
+  color: lightgray !important;
+  pointer-events: auto !important;
+}
+
+
+.swiper-button-prev:after, .swiper-rtl .swiper-button-next:after{
+  color: lightgray !important;
+  pointer-events: auto !important;
+}
+
+.swiper-button-prev, .swiper-rtl .swiper-button-next{
+  pointer-events: none !important;
+}
+
+.swiper-button-prev:after, .swiper-rtl .swiper-button-next:after {
+  cursor: auto;
+  content: 'prev';
+}
