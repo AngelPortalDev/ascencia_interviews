@@ -103,6 +103,13 @@
                     allow="autoplay; encrypted-media" 
                     allowfullscreen>
                 </iframe>
+
+                <!-- Download and Delete Buttons -->
+                <div class="mt-3 d-flex justify-content-between">
+                  <button class="btn btn-danger" onclick="confirmDeleteVideo('{{ student.bunny_stream_video_id }}')">
+                      Delete Video
+                  </button>
+                </div>
             {% else %}
                 <div class="text-center">
                     <p>No interview video available.</p>
@@ -116,5 +123,44 @@
     </div>
   </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function confirmDeleteVideo(videoId) {
+        if (confirm("Are you sure you want to delete this video? This action cannot be undone!")) {
+            fetch(`/delete-video/{{ student.id }}/` , {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ "video_id": videoId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Response received:", data);
+                if (data.success) {
+                    console.log("Showing success popup...");
+                    Swal.fire({
+                        title: "Deleted!",
+                        text: "Video deleted successfully.",
+                        icon: "success",
+                        confirmButtonText: "OK"
+                    }).then(() => {
+                        location.reload(); // Reload page after clicking OK
+                    });
+                } else {
+                    console.log("Showing error popup...");
+                    Swal.fire({
+                        title: "Error!",
+                        text: "Failed to delete video: " + data.message,
+                        icon: "error",
+                        confirmButtonText: "OK"
+                    });
+                }
+            })
+            .catch(error => console.error("Error deleting video:", error));
+        }
+    }
+</script>
 
 {% endblock %}

@@ -537,3 +537,35 @@ def merge_videos(zoho_lead_id, base_uploads_folder="C:/xampp/htdocs/ascencia_int
 # Example usage
 # zoho_lead_id = "5204268000112707003"
 # print(merge_videos(zoho_lead_id))
+
+
+
+
+
+def delete_video(request, student_id):
+    BUNNY_STREAM_API_KEY = "e31364b4-b2f4-4221-aac3bd5d34e5-6769-4f29"  # Replace with your actual Library Key
+    BUNNY_STREAM_LIBRARY_ID = "390607"
+    if request.method == "POST":
+        try:
+            student = Students.objects.get(id=student_id)
+            video_id = student.bunny_stream_video_id
+            
+            if not video_id:
+                return JsonResponse({"success": False, "message": "No video ID found!"})
+
+            # BunnyStream API Call to Delete Video
+            delete_url = f"https://video.bunnycdn.com/library/{BUNNY_STREAM_LIBRARY_ID}/videos/{video_id}"
+            headers = {"AccessKey": BUNNY_STREAM_API_KEY}
+            response = requests.delete(delete_url, headers=headers)
+            print(r'status_code:', response.status_code)
+            if response.status_code in [200, 204]:
+                student.bunny_stream_video_id = None
+                student.save()
+                return JsonResponse({"success": True, "debug": "Delete API reached"}) 
+
+            else:
+                return JsonResponse({"success": False, "message": response.text})
+        
+        except Students.DoesNotExist:
+            return JsonResponse({"success": False, "message": "Student not found!"})
+    return JsonResponse({"success": False, "message": "Invalid request!"})
