@@ -23,6 +23,8 @@ from gpt4all import GPT4All
 import cv2
 import numpy as np
 import subprocess
+import requests
+from studentpanel.models.interview_process_model import Students
 
 
 
@@ -369,10 +371,48 @@ def check_answers(request):
 
 
 
+def upload_to_bunnystream(video_path):
+    BUNNY_STREAM_LIBRARY_KEY = "e31364b4-b2f4-4221-aac3bd5d34e5-6769-4f29"  # Replace with your actual Library Key
+    BUNNY_STREAM_LIBRARY_ID = "390607"  # Replace with your actual Library ID
 
+    """Uploads a compressed video to BunnyStream and returns the video URL."""
+    print("Video Path:", video_path)
+    video_name = os.path.basename(video_path)
 
+    # 1. Create Video Entry
+    create_url = f"https://video.bunnycdn.com/library/{BUNNY_STREAM_LIBRARY_ID}/videos"
+    headers = {
+        "AccessKey": BUNNY_STREAM_LIBRARY_KEY,
+        "Content-Type": "application/json"
+    }
+    
+    response = requests.post(create_url, json={"title": video_name}, headers=headers)
+    # print("Create Response:", response.status_code, response.text)
 
+    # if response.status_code != 201:
+    #     return f"Error creating video entry: {response.text}"
 
+    video_id = response.json().get("guid")
+    if not video_id:
+        return "Error: Video GUID not received."
+
+    # 2. Upload Video File (Corrected URL & Headers)
+    upload_url = f"https://video.bunnycdn.com/library/{BUNNY_STREAM_LIBRARY_ID}/videos/{video_id}"
+    headers = {
+        "AccessKey": BUNNY_STREAM_LIBRARY_KEY,
+        "Content-Type": "application/octet-stream"
+    }
+
+    with open(video_path, "rb") as video_file:
+        upload_response = requests.put(upload_url, headers=headers, data=video_file)
+        return video_id
+        
+    print("Upload Response:", upload_response.status_code, upload_response.text)
+
+    if upload_response.status_code != 201:  # BunnyStream returns 201 for success
+        return f"Error uploading video: {upload_response.text}"
+
+    return f"https://iframe.mediadelivery.net/embed/{BUNNY_STREAM_LIBRARY_ID}/{video_id}"
 
 
 
@@ -484,10 +524,16 @@ def merge_videos(zoho_lead_id, base_uploads_folder="C:/xampp/htdocs/ascencia_int
         # if os.path.getsize(output_path) > (19 * 1024 * 1024):
         #     return compress_video(output_path, output_path)
 
+        video_id = upload_to_bunnystream(output_path)
+
+        student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        student.bunny_stream_video_id = video_id
+        student.save()
+        return f"video_id: {video_id}"  
         return f"Merged video saved at: {output_path}"  
     except subprocess.CalledProcessError as e:
         return f"Error merging videos: {e}"
     
 # Example usage
-# zoho_lead_id = "797979"
+# zoho_lead_id = "5204268000112707003"
 # print(merge_videos(zoho_lead_id))

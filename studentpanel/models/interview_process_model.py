@@ -38,6 +38,7 @@ class Students(models.Model):
     )
     is_interview_link_sent = models.BooleanField(default=False)
     interview_link_send_count = models.IntegerField(default=0)
+    bunny_stream_video_id = models.CharField(max_length=255, null=True, blank=True)
     student_consent = models.IntegerField(blank=False, null=True)  # You might want to validate this with choices
     interview_start_at = models.DateTimeField(auto_now=False, blank=False, null=True)
     answers_scores = models.IntegerField(blank=False, null=True)

@@ -92,6 +92,24 @@
                    class="form-control" readonly>
           </div>
         </div>
+        <hr>
+        <div class="row g-6 mt-3">
+            {% if student.bunny_stream_video_id %}
+                <iframe 
+                    src="https://iframe.mediadelivery.net/play/390607/{{ student.bunny_stream_video_id }}" 
+                    width="100%" 
+                    height="500px" 
+                    frameborder="0" 
+                    allow="autoplay; encrypted-media" 
+                    allowfullscreen>
+                </iframe>
+            {% else %}
+                <div class="text-center">
+                    <p>No interview video available.</p>
+                </div>
+            {% endif %}
+        </div>
+      
           
 
       </form>
