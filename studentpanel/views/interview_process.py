@@ -24,12 +24,13 @@ def interview_score(request):
     return render(request, "interview-score.html")
 
 
-def handle_uploaded_file(f):
-    upload_dir = os.path.join(settings.STUDENT_UPLOAD, 'uploads/student_interview/')
+def handle_uploaded_file(file,student_id):
+
+    upload_dir = os.path.join(settings.STUDENT_UPLOAD, 'uploads', 'student_interview', student_id)
     os.makedirs(upload_dir, exist_ok=True)
-    file_path = os.path.join(upload_dir, f.name)
+    file_path = os.path.join(upload_dir, file.name)
     with open(file_path, 'wb+') as destination:
-        for chunk in f.chunks():
+        for chunk in file.chunks():
             destination.write(chunk)
     return file_path
 # app = Flask(__name__)
@@ -39,7 +40,8 @@ def interview_video_upload(request):
     # print(r"test")
     if request.method == 'POST' and 'file' in request.FILES:
         file = request.FILES['file']
-        file_path = handle_uploaded_file(file)
+        student_id = request.POST.get('student_id')
+        file_path = handle_uploaded_file(file,student_id)
         return JsonResponse({'message': 'File successfully uploaded', 'file_path': file_path})
     else:
         return JsonResponse({'error': 'No file part in the request'}, status=400)
@@ -66,7 +68,7 @@ def interview_questions(request):
         question_data = [
             {
                 'question': question.question,
-                'answer': question.answer,
+                # 'answer': question.answer,
                 'encoded_id': question.id
             }
             for question in questions
@@ -128,8 +130,10 @@ def student_interview_answers(request):
         student_id = request.POST.get('student_id')
         zoho_lead_id = request.POST.get('zoho_lead_id')
         question_id = request.POST.get('question_id')
-        answer_text = request.POST.get('Phone')
+        answer_text = request.POST.get('answer_text')
         sentiment_score = request.POST.get('sentiment_score')
+        # sent_subj = request.POST.get('sent_subj')
+
         grammar_accuracy = request.POST.get('grammar_accuracy')
         try:
             data_to_save = {
@@ -138,6 +142,7 @@ def student_interview_answers(request):
                 'question_id': question_id,
                 'answer_text': answer_text,
                 'sentiment_score': sentiment_score,
+                # 'sent_subj':"sdas",
                 'grammar_accuracy': grammar_accuracy,
                 'zoho_lead_id': zoho_lead_id
             }

@@ -8,11 +8,12 @@ from adminpanel.models.institute import Institute
 
 class StudentInterviewAnswers(models.Model):
     
-    student_id = models.CharField(max_length=100, null=True, unique=True)
-    zoho_lead_id = models.CharField(max_length=100, unique=True, null=False)
+    student_id = models.CharField(max_length=100, null=True,)
+    zoho_lead_id = models.CharField(max_length=100,null=False)
     question_id = models.IntegerField(blank=False, null=True)
     answer_text = models.TextField(blank=False, null=True)
-    sentiment_score = models.IntegerField(blank=False, null=True)
+    sentiment_score = models.TextField(blank=False, null=True)
+    sent_subj = models.TextField(blank=False, null=True)
     grammar_accuracy=models.TextField(blank=False, null=True)
     interview_end_at = models.DateTimeField(auto_now=False, blank=False, null=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)

@@ -203,6 +203,8 @@ def analyze_video(request):
         data = request.POST
         video_path = data.get('video_path')
         audio_path = data.get('audio_path')
+        question_id = data.get('question_id')
+        student_id = data.get('student_id')
         # Extract audio
         extracted_audio = extract_audio(video_path)
         if not extracted_audio:
@@ -217,7 +219,9 @@ def analyze_video(request):
                 "transcription": transcribed_text,
                 "sentiment": sentiment_analysis,
                 "grammar_results": grammar_results,
-                "status": "success"
+                "status": "success",
+                "question_id": question_id,
+                "student_id": student_id,
             })
         except Exception as e:
             return JsonResponse({"error": "Processing failed", "details": str(e)}, status=500)

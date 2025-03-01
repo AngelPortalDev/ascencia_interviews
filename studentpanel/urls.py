@@ -8,7 +8,8 @@ from studentpanel.views.interview_process import (
     interview_score,
     interview_video_upload,
     interview_questions,
-    student_data
+    student_data,
+    student_interview_answers
 )
 from studentpanel.views.interview_analyze import analyze_video,check_answers, merge_videos
 from django.views.generic import TemplateView
@@ -34,7 +35,10 @@ urlpatterns = [
                 path("interview-questions/", interview_questions, name="interview_questions"),
                 path("analyze-video/", analyze_video, name="analyze_video"),
                 path("check-answers/", check_answers, name="check_answers"),
-                path("student-data/", student_data, name="student_data")
+                path("student-data/", student_data, name="student_data"),
+                path("student-interview-answers/", student_interview_answers, name="student_interview_answers")
+
+
 
                 # path("index/", index, name="index"),
             ]
