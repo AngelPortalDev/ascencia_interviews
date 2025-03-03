@@ -5,7 +5,7 @@ import {
   DialogPanel,
   DialogTitle,
 } from "@headlessui/react";
-import { useNavigate,useParams } from "react-router-dom";
+import { useNavigate,useParams,useLocation } from "react-router-dom";
 import {usePermission} from '../context/PermissionContext.js';
 
 
@@ -18,9 +18,18 @@ const Permissions = () => {
 
   const [open, setOpen] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const encoded_zoho_lead_id = location.state?.encoded_zoho_lead_id || null;
+  const encoded_interview_link_send_count = location.state?.encoded_interview_link_send_count || null;
+
+  // console.log("lead id: " + encoded_zoho_lead_id)
+  // console.log("interview link: " + encoded_interview_link_send_count)
+
+
 
   const {acceptAudioVideo}  = usePermission();
-  const { student_id } = useParams();
+  // const { encoded_zoho_lead_id } = useParams();
   const handleAudioPermission = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -68,7 +77,10 @@ const Permissions = () => {
         // setShowWelcome(true);
         // localStorage.setItem("hasPermissions", "true");
         acceptAudioVideo();
-        navigate(`/questions/${student_id}`);
+        // navigate(`/questions/${encoded_zoho_lead_id}/${encoded_interview_link_send_count}`);
+        navigate(`/questions`, {
+          state: { encoded_zoho_lead_id, encoded_interview_link_send_count }
+        });
       }
     }
     setOpen(false);

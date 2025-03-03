@@ -24,24 +24,10 @@ const Questions = () => {
   const [transcribedText, setTranscribedText] = useState(""); // To hold transcribed text
   const [activeQuestionId, setActiveQuestionId] = useState(null); // Track active question
   const [student, setStudent] = useState(null);
-  const { student_id } = useParams(); // Get encoded student_id from URL
-  // const  decoded_student_id = atob(student_id); // Decode Base64
-
-  // const { student_id } = useParams();
-      let decoded_student_id = null;
-
-      try {
-        if (student_id) {
-          decoded_student_id = atob(student_id);
-        } else {
-          console.error("Error: student_id is undefined or empty");
-        }
-      } catch (error) {
-        console.error("Invalid Base64 encoding:", error);
-      }
-
-
+  // const { student_id } = useParams(); // Get encoded student_id from URL
   const location  = useLocation();
+  const encoded_zoho_lead_id = location.state?.encoded_zoho_lead_id || null;
+  const zoho_lead_id = atob(encoded_zoho_lead_id);
 
 
   //  // Recording State & Refs
@@ -102,7 +88,8 @@ const Questions = () => {
         setIsRecording,
         setVideoFilePath,
         setAudioFilePath,
-        student_id,
+        // student_id,
+        zoho_lead_id,
         firstQuestion.encoded_id 
       );
     }
@@ -175,36 +162,45 @@ const Questions = () => {
       recordedAudioChunksRef,
       setVideoFilePath,
       setAudioFilePath,
-      student_id,
+      // student_id,
+      zoho_lead_id,
       activeQuestionId, 
       () => {
-        startRecording(
-          videoRef,
-          mediaRecorderRef,
-          audioRecorderRef,
-          recordedChunksRef,
-          recordedAudioChunksRef,
-          setIsRecording,
-          setVideoFilePath,
-          setAudioFilePath,
-          student_id,
-          newQuestionId
-        );
+
+        try{
+          startRecording(
+            videoRef,
+            mediaRecorderRef,
+            audioRecorderRef,
+            recordedChunksRef,
+            recordedAudioChunksRef,
+            setIsRecording,
+            setVideoFilePath,
+            setAudioFilePath,
+            // student_id,
+            zoho_lead_id,
+            newQuestionId
+          );
+        }catch(err){
+          console.error("Failed to start recording:", err);
+        }
+
+       
       }
     );
        // ******** On click Arrow icon Reset countdown ************
        setCountdown(60); 
-  }, [activeQuestionId, getQuestions]);
+  }, [activeQuestionId, getQuestions,zoho_lead_id]);
   
 
   // Prevent unnecessary re-renders of InterviewPlayer
   const interviewPlayerMemo = useMemo(() => (
       <InterviewPlayer 
       onTranscription={setTranscribedText} 
-      student_id={student_id} 
+      zoho_lead_id={zoho_lead_id} 
       question_id={activeQuestionId} 
     />    
-  ), [activeQuestionId,student_id]);
+  ), [activeQuestionId,zoho_lead_id]);
 
   const handleTimeSpent = () => {
     // Increment time spent on current question
@@ -221,14 +217,21 @@ const Questions = () => {
   }, []);
 
 
+
+  const stopMediaStream = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const tracks = videoRef.current.srcObject.getTracks();
+      tracks.forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+      console.log("🎤📷 Media stream stopped immediately.");
+    }
+  };
+
   // ************ Interview Submit Go to Home Page ****************************
   const handleSubmit = () => {
+    // e.preventDefault();
     // Stop media before navigating
-  if (videoRef.current && videoRef.current.srcObject) {
-    const tracks = videoRef.current.srcObject.getTracks();
-    tracks.forEach(track => track.stop()); 
-    videoRef.current.srcObject = null;
-  }
+    stopMediaStream()
     submitExam(); 
     toast.success("Interview Submitted...", {
       onClose: () => navigate("/"),
@@ -238,11 +241,11 @@ const Questions = () => {
   };
 
 
-  const fetchStudentData = async (student_id) => {
+  const fetchStudentData = async (zoho_lead_id) => {
     // console.log(student_id, 'student data');
 
     const formData = new FormData();
-    formData.append("student_id", student_id);
+    formData.append("zoho_lead_id", zoho_lead_id);
 
     try {
         const res = await Axios.post(
@@ -258,21 +261,21 @@ const Questions = () => {
     }
 };
   useEffect(() => {
-    fetchStudentData(student_id);
-  }, [student_id]);
+    if(zoho_lead_id){
+      fetchStudentData(zoho_lead_id);
+    }
+  }, [zoho_lead_id]);
 
 
-  // Stop Media Steam when user visit home page 
-  useEffect(() => {
-      if (location.pathname === "/") { 
-        if (videoRef.current && videoRef.current.srcObject) {
-          const tracks = videoRef.current.srcObject.getTracks();
-          console.log("tracks: " + tracks)
-          tracks.forEach(track => track.stop());
-          videoRef.current.srcObject = null;
-        }
-      }
-  }, [location]);
+  useEffect(()=>{
+    if (location.pathname === "/") {
+      stopMediaStream(); 
+    }
+
+    return () => {
+      stopMediaStream(); 
+    };
+  },[location])
 
 
 

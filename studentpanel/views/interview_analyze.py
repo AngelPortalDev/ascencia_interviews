@@ -20,10 +20,13 @@ import torch
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
 from gpt4all import GPT4All
+import librosa
 import cv2
 import numpy as np
 import subprocess
 import requests
+import numpy as np
+import base64
 from studentpanel.models.interview_process_model import Students
 
 from django.conf import settings
@@ -211,7 +214,39 @@ def analyze_sentiment(text):
         "sentiment_score": round(sentiment_score, 2)  # 0 to 100% dynamically
     }
 
+def calculate_confidence_level(audio_path):
+    try:
+        y, sr = librosa.load(audio_path, sr=16000)  # Load audio
+        rms = librosa.feature.rms(y=y)  # Root Mean Square Energy (Loudness)
+        speech_rate = librosa.beat.tempo(y, sr=sr)[0]  # Estimate speed
+        silence = np.mean(y == 0)  # Check for silent parts
 
+        # Compute confidence score based on voice properties
+        confidence_score = 10  # Start with max score
+
+        if np.mean(rms) < 0.02:  # Too soft
+            confidence_score -= 3  
+        elif np.mean(rms) > 0.08:  # Too loud
+            confidence_score -= 1  
+
+        if speech_rate < 90:  # Too slow = Hesitation
+            confidence_score -= 2
+        elif speech_rate > 160:  # Too fast = Nervousness
+            confidence_score -= 1  
+
+        if silence > 0.2:  # Too many pauses
+            confidence_score -= 2
+
+        confidence_score = max(1, min(10, confidence_score))  # Keep score between 1-10
+
+        feedback = "Very confident" if confidence_score >= 8 else \
+                   "Moderate confidence" if confidence_score >= 5 else \
+                   "Needs improvement"
+
+        return {"confidence_score": confidence_score, "feedback": feedback}
+
+    except Exception as e:
+        return {"confidence_score": None, "feedback": f"Error analyzing confidence: {str(e)}"}
 # ✅ Django View (API Endpoint)
 @csrf_exempt
 def analyze_video(request):
@@ -220,7 +255,14 @@ def analyze_video(request):
         video_path = data.get('video_path')
         audio_path = data.get('audio_path')
         question_id = data.get('question_id')
-        student_id = data.get('student_id')
+        zoho_lead_id = data.get('zoho_lead_id')
+        print("data",data)
+        
+        try:
+            question_id = base64.b64decode(question_id).decode("utf-8")
+            zoho_lead_id = base64.b64decode(zoho_lead_id).decode("utf-8")
+        except Exception as e:
+            return JsonResponse({"error": f"Failed to decode Base64: {str(e)}"}, status=400)
         # Extract audio
         extracted_audio = extract_audio(video_path)
         if not extracted_audio:
@@ -230,6 +272,7 @@ def analyze_video(request):
             transcribed_text = transcribe_audio(extracted_audio)
             sentiment_analysis = analyze_sentiment(transcribed_text)
             grammar_results = check_grammar(transcribed_text)
+            confidence_level = calculate_confidence_level(extracted_audio)
 
             return JsonResponse({
                 "transcription": transcribed_text,
@@ -237,7 +280,8 @@ def analyze_video(request):
                 "grammar_results": grammar_results,
                 "status": "success",
                 "question_id": question_id,
-                "student_id": student_id,
+                "zoho_lead_id": zoho_lead_id,
+                "confidence_level": confidence_level,
             })
         except Exception as e:
             return JsonResponse({"error": "Processing failed", "details": str(e)}, status=500)
@@ -261,15 +305,15 @@ def check_answers(request):
     data = request.POST
     answer = data.get("answer", "").strip()
     question_id = data.get("question_id")  # Assuming question ID contains the actual question
-    student_id = data.get("student_id") # Get the logged-in student's ID
+    zoho_lead_id = data.get("zoho_lead_id") # Get the logged-in student's ID
 
-    if not question_id or not answer or not student_id:
+    if not question_id or not answer or not zoho_lead_id:
         return JsonResponse({"error": "Question and answer and students are required."}, status=400)
 
 
     question_data = CommonQuestion.objects.get(id=question_id)
 
-    # enrolled_courses = get_student_details(student_id)
+    # enrolled_courses = get_student_details(zoho_lead_id)
     # print(enrolled_courses)
     # if not enrolled_courses:
     #     return JsonResponse({"error": "No enrolled courses found for the student."}, status=400)
@@ -528,12 +572,12 @@ def merge_videos(zoho_lead_id, base_uploads_folder="C:/xampp/htdocs/ascencia_int
 
 
 
-def delete_video(request, student_id):
+def delete_video(request, zoho_lead_id):
     # BUNNY_STREAM_API_KEY = "e31364b4-b2f4-4221-aac3bd5d34e5-6769-4f29"  # Replace with your actual Library Key
     # BUNNY_STREAM_LIBRARY_ID = "390607"
     if request.method == "POST":
         try:
-            student = Students.objects.get(id=student_id)
+            student = Students.objects.get(id=zoho_lead_id)
             video_id = student.bunny_stream_video_id
             
             if not video_id:

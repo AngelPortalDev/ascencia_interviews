@@ -6,7 +6,8 @@ import { startRecording, stopRecording } from "../utils/recording.js";
 import { analyzeVideo } from "../utils/fileUpload.js";
 import useVisibilityWarning from "../hooks/useVisibilityWarning.js";
 
-const InterviewPlayer = ({ onTranscription,student_id,question_id }) => {
+
+const InterviewPlayer = ({ onTranscription,zoho_lead_id,question_id }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [answerScore, setAnswerScore] = useState(null);
@@ -18,6 +19,9 @@ const InterviewPlayer = ({ onTranscription,student_id,question_id }) => {
   const audioRecorderRef = useRef(null);
   const recordedAudioChunksRef = useRef([]);
   const navigate = useNavigate();
+
+
+  // console.log("Inyterview Player",student_id)
 
   // useEffect(() => {
   //   const startNewRecording = () => {
@@ -105,10 +109,10 @@ const InterviewPlayer = ({ onTranscription,student_id,question_id }) => {
 
   useEffect(() => {
     if (videoFilePath && audioFilePath) {
-      console.log(student_id);
-      console.log(question_id);
+      // console.log(zoho_lead_id,"zoho_lead_id Interview Player");
+      // console.log(question_id,"question_id Interview player");
 
-      analyzeVideo(videoFilePath, audioFilePath, onTranscription,student_id,question_id);
+      analyzeVideo(videoFilePath, audioFilePath, onTranscription,zoho_lead_id,question_id);
     }
   }, [videoFilePath, audioFilePath, onTranscription]);
 
@@ -130,7 +134,7 @@ const InterviewPlayer = ({ onTranscription,student_id,question_id }) => {
         setIsRecording,
         setVideoFilePath,
         setAudioFilePath,
-        student_id,
+        zoho_lead_id,
         question_id
       );
     };
@@ -146,7 +150,7 @@ const InterviewPlayer = ({ onTranscription,student_id,question_id }) => {
         recordedAudioChunksRef,
         setVideoFilePath,
         setAudioFilePath,
-        student_id,
+        zoho_lead_id,
         question_id,
         startNewRecording 
       );

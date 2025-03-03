@@ -17,16 +17,16 @@ def interview_start(request):
 
 
 def interview_panel(request):
-    return render(request, "interview-panel.html")
+    return render(request, "interview-panel.html") 
 
 
 def interview_score(request):
     return render(request, "interview-score.html")
 
 
-def handle_uploaded_file(file,student_id):
+def handle_uploaded_file(file,zoho_lead_id):
 
-    upload_dir = os.path.join(settings.STUDENT_UPLOAD, 'uploads', 'student_interview', student_id)
+    upload_dir = os.path.join(settings.STUDENT_UPLOAD, 'uploads', 'interview_upload', zoho_lead_id)
     os.makedirs(upload_dir, exist_ok=True)
     file_path = os.path.join(upload_dir, file.name)
     with open(file_path, 'wb+') as destination:
@@ -35,16 +35,25 @@ def handle_uploaded_file(file,student_id):
     return file_path
 # app = Flask(__name__)
 # @app.route('/interveiw-section/interview_video_upload',methods=['POST'])
+
+
 @csrf_exempt
 def interview_video_upload(request):
-    # print(r"test")
     if request.method == 'POST' and 'file' in request.FILES:
         file = request.FILES['file']
-        student_id = request.POST.get('student_id')
-        file_path = handle_uploaded_file(file,student_id)
+        encoded_zoho_lead_id = request.POST.get('zoho_lead_id')
+
+        try:
+            zoho_lead_id = base64.b64decode(encoded_zoho_lead_id).decode("utf-8")
+        except Exception as e:
+            return JsonResponse({"error": f"Failed to decode Base64: {str(e)}"}, status=400)
+
+        file_path = handle_uploaded_file(file, zoho_lead_id)
+
         return JsonResponse({'message': 'File successfully uploaded', 'file_path': file_path})
-    else:
-        return JsonResponse({'error': 'No file part in the request'}, status=400)
+    
+    return JsonResponse({'error': 'No file part in the request'}, status=400)
+
 
 
 
@@ -136,6 +145,8 @@ def student_interview_answers(request):
 
         grammar_accuracy = request.POST.get('grammar_accuracy')
         try:
+            zoho_lead_id = base64.b64decode(zoho_lead_id).decode("utf-8")
+            question_id = base64.b64decode(question_id).decode("utf-8")
             data_to_save = {
                 'student_id': student_id,
                 'zoho_lead_id': zoho_lead_id,

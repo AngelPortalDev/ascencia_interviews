@@ -33,15 +33,15 @@ function App() {
       <Router>
         <ToastContainer/>
         <Routes>
-          <Route path="/interview_panel/:student_id" element={<Home />} />
+          <Route path="/interview_panel/:encoded_zoho_lead_id/:encoded_interview_link_send_count" element={<Home />} />
           <Route
             path="/terms-and-conditions/"
             element={<ProtectedRoute element={<TermsAndCondition />} isAllowed={!isExamSubmitted} redirectPath="/"/>}/>
           <Route 
-          path="/permissions/:student_id" 
+          path="/permissions/" 
           element={<ProtectedRoute element={<Permissions/>} isAllowed={termsAccept && !isExamSubmitted} redirectPath="/terms-and-conditions"/>} />
 
-          <Route path="/questions/:student_id"  element={<ProtectedRoute element={<Questions/>} isAllowed={audioVideoAccepted && !isExamSubmitted} redirectPath="/permissions"/>}/>
+          <Route path="/questions"  element={<ProtectedRoute element={<Questions/>} isAllowed={audioVideoAccepted && !isExamSubmitted} redirectPath="/permissions"/>}/>
          {/* Add Question Router Here */}
           <Route path="*" element={<NotFound />} />
         </Routes>

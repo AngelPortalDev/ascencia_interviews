@@ -1,14 +1,23 @@
 import { useState } from "react";
-import { useNavigate,useParams } from "react-router-dom";
+import { useNavigate,useParams,useLocation } from "react-router-dom";
 import PropTypes from "prop-types";
 import { usePermission } from "../context/PermissionContext.js";
 
 const TermsAndCondition = () => {
+  const location = useLocation();
   const [isAgreed, setIsAgreed] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
 
   const {acceptTerms} = usePermission();
+
+  const encoded_zoho_lead_id = location.state?.encoded_zoho_lead_id || null;
+  const encoded_interview_link_send_count = location.state?.encoded_interview_link_send_count || null;
+
+
+  // console.log("encoded_zoho_lead_id",encoded_zoho_lead_id)
+  // console.log("encoded_interview_link_send_count",encoded_interview_link_send_count)
+
 
   const handleCheckboxChange = () => {
     setIsAgreed(!isAgreed);
@@ -17,15 +26,16 @@ const TermsAndCondition = () => {
     }
   };
 
-  const { student_id } = useParams();
+  // const { encoded_zoho_lead_id } = useParams();
 
   const handleSubmit = () => {
     if (!isAgreed) {
       setErrorMessage("You must agree to the terms and conditions to proceed.");
     }
     else{
-      acceptTerms(student_id);
-      navigate(`/permissions/${student_id}`);  // Navigate dynamically
+      acceptTerms();
+      // navigate(`/permissions/${encoded_zoho_lead_id}`);  // Navigate dynamically
+      navigate("/permissions", { state: { encoded_zoho_lead_id,encoded_interview_link_send_count } }); 
     }
   };
 

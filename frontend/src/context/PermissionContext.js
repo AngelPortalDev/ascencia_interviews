@@ -22,7 +22,7 @@ export const PermissionProvider = ({children}) =>{
         localStorage.getItem("InterviewSubitted") === "true");
 
 
-    const acceptTerms = (student_id)=>{
+    const acceptTerms = (zoho_lead_id)=>{
         setTermsAccept(true);
         localStorage.setItem("termsAccepted", "true");
     }
