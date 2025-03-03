@@ -172,27 +172,39 @@ def transcribe_audio(audio_path):
 #         return "Negative"
 #     else:
 #         return "Neutral"
+def clean_polarity(value):
+    try:
+        # Convert to float and ensure it's within the valid range
+        polarity = float(value)
+        if polarity < -1.0:
+            polarity = -1.0
+        elif polarity > 1.0:
+            polarity = 1.0
+        return polarity
+    except ValueError:
+        return 0.0  # Default to neutral if conversion fails
+    
 def analyze_sentiment(text):
     detected_language = detect(text)
-    
     
     # If the language is not English, translate it
     if detected_language != 'en':
         translator = Translator()
         translated = translator.translate(text, src=detected_language, dest='en')
         text = translated.text
+    
     sentiment = TextBlob(text).sentiment
 
-    if sentiment.polarity > 0:
-        sentiment_label = "Positive"
-    elif sentiment.polarity < 0:
-        sentiment_label = "Negative"
-    else:
-        sentiment_label = "Neutral"
+    # Clean polarity value
+    polarity = clean_polarity(sentiment.polarity)
+
+    # Convert polarity (-1 to 1) into a percentage (0 to 100)
+    sentiment_score = (polarity + 1) * 50  
+
     return {
-        "polarity": sentiment.polarity,  # -1 (negative) to 1 (positive)
+        "polarity": polarity,  # -1 (negative) to 1 (positive)
         "subjectivity": sentiment.subjectivity,  # 0 (objective) to 1 (subjective),
-        "sentiment": sentiment_label
+        "sentiment_score": round(sentiment_score, 2)  # 0 to 100% dynamically
     }
 
 
