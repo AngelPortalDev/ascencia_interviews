@@ -26,6 +26,10 @@ import subprocess
 import requests
 from studentpanel.models.interview_process_model import Students
 
+from django.conf import settings
+from adminpanel.utils import send_email
+
+
 
 
 
@@ -333,72 +337,21 @@ def check_answers(request):
 
 
 
-# def convert_to_webm(video_path, output_path):
-#     """ Converts a video to WebM format using VP9 codec. """
-#     command = f'ffmpeg -i "{video_path}" -c:v libvpx-vp9 -b:v 1M -c:a libopus "{output_path}"'
-#     subprocess.run(command, shell=True, check=True)
-
-# def merge_videos(uploads_folder, video_files, output_filename="merged_video.webm"):
-#     # video_files = ["1.webm", "2.webm"] 
-#     converted_files = []
-#     list_file_path = os.path.join(uploads_folder, "video_list.txt").replace("\\", "/")
-
-#     # Convert all videos to WebM format
-#     for video in video_files:
-#         input_path = os.path.join(uploads_folder, video).replace("\\", "/")
-#         if not os.path.exists(input_path):
-#             return f"Error: {video} not found in uploads folder."
-
-#         output_path = os.path.join(uploads_folder, f"{os.path.splitext(video)[0]}_converted.webm").replace("\\", "/")
-#         convert_to_webm(input_path, output_path)
-#         converted_files.append(output_path)
-
-#     # Create video list file
-#     with open(list_file_path, "w") as f:
-#         for video in converted_files:
-#             f.write(f"file '{video}'\n")
-
-#     # Define output path
-#     output_path = os.path.join(uploads_folder, output_filename).replace("\\", "/")
-
-#     # Merge converted WebM files
-#     command = f'ffmpeg -f concat -safe 0 -i "{list_file_path}" -c copy "{output_path}"'
-    
-#     try:
-#         subprocess.run(command, shell=True, check=True)
-#         return f"Merged video saved at: {output_path}"
-#     except subprocess.CalledProcessError as e:
-#         return f"Error merging videos: {e}"
-
-# # Example usage
-# zoho_lead_id = '787878'
-# video_files = ["1.webm", "2.webm"] 
-# uploads_folder = "C:/xampp/htdocs/ascencia_interviews/uploads/787878"
-# print(merge_videos(uploads_folder, video_files))
-
-
-
-
-
-
-
-
-
 
 
 
 def upload_to_bunnystream(video_path):
-    BUNNY_STREAM_LIBRARY_KEY = "e31364b4-b2f4-4221-aac3bd5d34e5-6769-4f29"  # Replace with your actual Library Key
-    BUNNY_STREAM_LIBRARY_ID = "390607"  # Replace with your actual Library ID
+    # BUNNY_STREAM_API_KEY = "e31364b4-b2f4-4221-aac3bd5d34e5-6769-4f29"  # Replace with your actual Library Key
+    # BUNNY_STREAM_LIBRARY_ID = "390607"  # Replace with your actual Library ID
 
     """Uploads a compressed video to BunnyStream and returns the video URL."""
-    print("Video Path:", video_path)
+    # print("Video Path:", video_path)
     video_name = os.path.basename(video_path)
 
     # 1. Create Video Entry
-    create_url = f"https://video.bunnycdn.com/library/{BUNNY_STREAM_LIBRARY_ID}/videos"
+    create_url = f"https://video.bunnycdn.com/library/{settings.BUNNY_STREAM_LIBRARY_ID}/videos"
     headers = {
-        "AccessKey": BUNNY_STREAM_LIBRARY_KEY,
+        "AccessKey": settings.BUNNY_STREAM_API_KEY,
         "Content-Type": "application/json"
     }
     
@@ -412,10 +365,10 @@ def upload_to_bunnystream(video_path):
     if not video_id:
         return "Error: Video GUID not received."
 
-    # 2. Upload Video File (Corrected URL & Headers)
-    upload_url = f"https://video.bunnycdn.com/library/{BUNNY_STREAM_LIBRARY_ID}/videos/{video_id}"
+    # 2. Upload Video File (Corrected URL & Headers)    
+    upload_url = f"https://video.bunnycdn.com/library/{settings.BUNNY_STREAM_LIBRARY_ID}/videos/{video_id}"
     headers = {
-        "AccessKey": BUNNY_STREAM_LIBRARY_KEY,
+        "AccessKey": settings.BUNNY_STREAM_API_KEY,
         "Content-Type": "application/octet-stream"
     }
 
@@ -428,7 +381,7 @@ def upload_to_bunnystream(video_path):
     if upload_response.status_code != 201:  # BunnyStream returns 201 for success
         return f"Error uploading video: {upload_response.text}"
 
-    return f"https://iframe.mediadelivery.net/embed/{BUNNY_STREAM_LIBRARY_ID}/{video_id}"
+    return f"https://iframe.mediadelivery.net/embed/{settings.BUNNY_STREAM_LIBRARY_ID}/{video_id}"
 
 
 
@@ -483,7 +436,7 @@ def get_uploads_folder():
     return uploads_folder.replace("\\", "/")  # Normalize path
 
 
-def merge_videos(zoho_lead_id, base_uploads_folder="C:/xampp/htdocs/ascencia_interviews/uploads"):
+def merge_videos(zoho_lead_id, base_uploads_folder="C:/xampp/htdocs/ascencia_interviews/uploads/Interview Videos"):
     """ Merges all videos in the lead's folder into a single file of the detected format. """
     # uploads_folder = os.path.join(base_uploads_folder, zoho_lead_id).replace("\\", "/")
 
@@ -545,6 +498,23 @@ def merge_videos(zoho_lead_id, base_uploads_folder="C:/xampp/htdocs/ascencia_int
         student = Students.objects.get(zoho_lead_id=zoho_lead_id)
         student.bunny_stream_video_id = video_id
         student.save()
+        
+        url = 'http://192.168.1.16:8000/adminpanel/student/5204268000112707003/'
+        # student manager
+        send_email(
+            subject="Interview Process Completed",
+            message=f"""
+                    <html>
+                    <body>
+                        <p>Lead update was successful.</p>
+                        <p>The interview process is completed. Please review the video here:</p>
+                        <p><a href='{url}'>Check Interview Video</a></p>
+                    </body>
+                    </html>
+                """,
+            recipient=["abdullah@angel-portal.com"],
+            # cc=["admin@example.com", "hr@example.com"]  # CC recipients
+        )
         return f"video_id: {video_id}"  
         return f"Merged video saved at: {output_path}"  
     except subprocess.CalledProcessError as e:
@@ -559,8 +529,8 @@ def merge_videos(zoho_lead_id, base_uploads_folder="C:/xampp/htdocs/ascencia_int
 
 
 def delete_video(request, student_id):
-    BUNNY_STREAM_API_KEY = "e31364b4-b2f4-4221-aac3bd5d34e5-6769-4f29"  # Replace with your actual Library Key
-    BUNNY_STREAM_LIBRARY_ID = "390607"
+    # BUNNY_STREAM_API_KEY = "e31364b4-b2f4-4221-aac3bd5d34e5-6769-4f29"  # Replace with your actual Library Key
+    # BUNNY_STREAM_LIBRARY_ID = "390607"
     if request.method == "POST":
         try:
             student = Students.objects.get(id=student_id)
@@ -570,8 +540,8 @@ def delete_video(request, student_id):
                 return JsonResponse({"success": False, "message": "No video ID found!"})
 
             # BunnyStream API Call to Delete Video
-            delete_url = f"https://video.bunnycdn.com/library/{BUNNY_STREAM_LIBRARY_ID}/videos/{video_id}"
-            headers = {"AccessKey": BUNNY_STREAM_API_KEY}
+            delete_url = f"https://video.bunnycdn.com/library/{settings.BUNNY_STREAM_LIBRARY_ID}/videos/{video_id}"
+            headers = {"AccessKey": settings.BUNNY_STREAM_API_KEY}
             response = requests.delete(delete_url, headers=headers)
             print(r'status_code:', response.status_code)
             if response.status_code in [200, 204]:

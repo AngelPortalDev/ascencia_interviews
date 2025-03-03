@@ -28,6 +28,7 @@ from studentpanel.models.interview_process_model import Students
 from studentpanel.models.interview_link import StudentInterviewLink
 from django.utils.timezone import now
 from datetime import timedelta
+from adminpanel.utils import send_email
 
 
 # Configure logging
@@ -259,112 +260,112 @@ def update_zoho_lead(crm_id, lead_id, update_data):
     
 
 
-def send_email(interview_url, student_name, student_manager_email):
-    sender_email = "abdullah@angel-portal.com"
-    receiver_email = "abdullah@angel-portal.com"
-    student_manager_email = f"student_manager_email" 
+# def send_email(interview_url, student_name, student_manager_email):
+#     sender_email = "abdullah@angel-portal.com"
+#     receiver_email = "abdullah@angel-portal.com"
+#     student_manager_email = f"student_manager_email" 
     
-    subject = "Zoho Lead Update Notification"    
-    body = f"""
-        <html>
-        <body>
-            <p>Lead update was successful.</p>
-            <p>Click the link below to proceed:</p>
-            <p><a href='{interview_url}'>Go to Interview</a></p>
-        </body>
-        </html>
-    """
+#     subject = "Zoho Lead Update Notification"    
+#     body = f"""
+#         <html>
+#         <body>
+#             <p>Lead update was successful.</p>
+#             <p>Click the link below to proceed:</p>
+#             <p><a href='{interview_url}'>Go to Interview</a></p>
+#         </body>
+#         </html>
+#     """
 
     
-    student_manager_body = f"""
-        <html>
-        <head>
-            <style>
-                body {{
-                    font-family: Arial, sans-serif;
-                    background-color: #f4f4f4;
-                    padding: 20px;
-                    text-align: center;
-                }}
-                .email-container {{
-                    max-width: 600px;
-                    margin: auto;
-                    background: #ffffff;
-                    padding: 20px;
-                    border-radius: 8px;
-                    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-                }}
-                h2 {{
-                    color: #2c3e50;
-                }}
-                p {{
-                    color: #555555;
-                    font-size: 16px;
-                    line-height: 1.6;
-                }}
-                .btn {{
-                    display: inline-block;
-                    background: #007bff;
-                    color: #ffffff;
-                    text-decoration: none;
-                    padding: 10px 20px;
-                    border-radius: 5px;
-                    font-weight: bold;
-                    margin-top: 10px;
-                }}
-                .btn:hover {{
-                    background: #0056b3;
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="email-container">
-                <h2>Document Verification Completed</h2>
-                <p>Dear Student Manager,</p>
-                <p>The document verification process for <strong>{student_name}</strong> has been successfully completed.</p>
-                <p>Click the button below to review the details:</p>
-                <a href='http://127.0.0.1:8000/verification' class="btn">View Verification Details</a>
-            </div>
-        </body>
-        </html>
-    """
+#     student_manager_body = f"""
+#         <html>
+#         <head>
+#             <style>
+#                 body {{
+#                     font-family: Arial, sans-serif;
+#                     background-color: #f4f4f4;
+#                     padding: 20px;
+#                     text-align: center;
+#                 }}
+#                 .email-container {{
+#                     max-width: 600px;
+#                     margin: auto;
+#                     background: #ffffff;
+#                     padding: 20px;
+#                     border-radius: 8px;
+#                     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+#                 }}
+#                 h2 {{
+#                     color: #2c3e50;
+#                 }}
+#                 p {{
+#                     color: #555555;
+#                     font-size: 16px;
+#                     line-height: 1.6;
+#                 }}
+#                 .btn {{
+#                     display: inline-block;
+#                     background: #007bff;
+#                     color: #ffffff;
+#                     text-decoration: none;
+#                     padding: 10px 20px;
+#                     border-radius: 5px;
+#                     font-weight: bold;
+#                     margin-top: 10px;
+#                 }}
+#                 .btn:hover {{
+#                     background: #0056b3;
+#                 }}
+#             </style>
+#         </head>
+#         <body>
+#             <div class="email-container">
+#                 <h2>Document Verification Completed</h2>
+#                 <p>Dear Student Manager,</p>
+#                 <p>The document verification process for <strong>{student_name}</strong> has been successfully completed.</p>
+#                 <p>Click the button below to review the details:</p>
+#                 <a href='http://127.0.0.1:8000/verification' class="btn">View Verification Details</a>
+#             </div>
+#         </body>
+#         </html>
+#     """
 
 
 
 
-    msg = MIMEMultipart()
-    msg["From"] = sender_email
-    msg["To"] = receiver_email
-    msg["Subject"] = subject
-    msg.attach(MIMEText(body, "html"))
+#     msg = MIMEMultipart()
+#     msg["From"] = sender_email
+#     msg["To"] = receiver_email
+#     msg["Subject"] = subject
+#     msg.attach(MIMEText(body, "html"))
 
-    try:
-        # ✅ Use the correct SMTP server for your email provider
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:  # Change to your email provider's SMTP
-            server.starttls()
-            server.login(sender_email, "iuljudjtemskylkl")  # Use an app password if required
+#     try:
+#         # ✅ Use the correct SMTP server for your email provider
+#         with smtplib.SMTP("smtp.gmail.com", 587) as server:  # Change to your email provider's SMTP
+#             server.starttls()
+#             server.login(sender_email, "iuljudjtemskylkl")  # Use an app password if required
 
-            # Email to the user
-            msg_user = MIMEMultipart()
-            msg_user["From"] = sender_email
-            msg_user["To"] = receiver_email
-            msg_user["Subject"] = subject
-            msg_user.attach(MIMEText(body, "html"))
-            server.sendmail(sender_email, receiver_email, msg_user.as_string())
-            # server.sendmail(sender_email, receiver_email, msg.as_string())
+#             # Email to the user
+#             msg_user = MIMEMultipart()
+#             msg_user["From"] = sender_email
+#             msg_user["To"] = receiver_email
+#             msg_user["Subject"] = subject
+#             msg_user.attach(MIMEText(body, "html"))
+#             server.sendmail(sender_email, receiver_email, msg_user.as_string())
+#             # server.sendmail(sender_email, receiver_email, msg.as_string())
 
 
-            # Email to the Student Manager
-            msg_manager = MIMEMultipart()
-            msg_manager["From"] = sender_email
-            msg_manager["To"] = student_manager_email
-            msg_manager["Subject"] = "Document Verification Update"
-            msg_manager.attach(MIMEText(student_manager_body, "html"))
-            server.sendmail(sender_email, student_manager_email, msg_manager.as_string())
+#             # Email to the Student Manager
+#             msg_manager = MIMEMultipart()
+#             msg_manager["From"] = sender_email
+#             msg_manager["To"] = student_manager_email
+#             msg_manager["Subject"] = "Document Verification Update"
+#             msg_manager.attach(MIMEText(student_manager_body, "html"))
+#             server.sendmail(sender_email, student_manager_email, msg_manager.as_string())
         
-        print("Email sent successfully")
-    except Exception as e:
-        print(f"Email sending failed: {str(e)}")
+#         print("Email sent successfully")
+#     except Exception as e:
+#         print(f"Email sending failed: {str(e)}")
 
 
 
@@ -508,7 +509,83 @@ def process_document(request):
                         interview_link=interview_url,
                         expires_at=now() + timedelta(hours=72)
                     )
-                    send_email(interview_url, zoho_full_name, 'student@manager.com')
+                    # send_email(interview_url, zoho_full_name, 'student@manager.com')
+                    
+                    # student
+                    send_email(
+                        subject="Zoho Lead Update Notification",
+                        message=f"""
+                                <html>
+                                <body>
+                                    <p>Lead update was successful.</p>
+                                    <p>Click the link below to proceed:</p>
+                                    <p><a href='{interview_url}'>Go to Interview</a></p>
+                                </body>
+                                </html>
+                            """,
+                        recipient=["abdullah@angel-portal.com"],
+                        # cc=["admin@example.com", "hr@example.com"]  # CC recipients
+                    )
+
+                    # student manager 
+                    send_email(
+                        subject="Document Verification Complete",
+                        message=f"""
+                            <html>
+                            <head>
+                                <style>
+                                    body {{
+                                        font-family: Arial, sans-serif;
+                                        background-color: #f4f4f4;
+                                        padding: 20px;
+                                        text-align: center;
+                                    }}
+                                    .email-container {{
+                                        max-width: 600px;
+                                        margin: auto;
+                                        background: #ffffff;
+                                        padding: 20px;
+                                        border-radius: 8px;
+                                        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                                    }}
+                                    h2 {{
+                                        color: #2c3e50;
+                                    }}
+                                    p {{
+                                        color: #555555;
+                                        font-size: 16px;
+                                        line-height: 1.6;
+                                    }}
+                                    .btn {{
+                                        display: inline-block;
+                                        background: #007bff;
+                                        color: #ffffff;
+                                        text-decoration: none;
+                                        padding: 10px 20px;
+                                        border-radius: 5px;
+                                        font-weight: bold;
+                                        margin-top: 10px;
+                                    }}
+                                    .btn:hover {{
+                                        background: #0056b3;
+                                    }}
+                                </style>
+                            </head>
+                            <body>
+                                <div class="email-container">
+                                    <h2>Document Verification Completed</h2>
+                                    <p>Dear Student Manager,</p>
+                                    <p>The document verification process for <strong>{zoho_full_name}</strong> has been successfully completed.</p>
+                                    <p>Click the button below to review the details:</p>
+                                    <a href='http://127.0.0.1:8000/verification' class="btn">View Verification Details</a>
+                                </div>
+                            </body>
+                            </html>
+                        """,
+                        recipient=["abdullah@angel-portal.com"],
+                        # cc=["admin@example.com", "hr@example.com"]  # CC recipients
+                    )
+
                     print("Lead updated successfully")
                 else:
                     print("Lead update failed")
