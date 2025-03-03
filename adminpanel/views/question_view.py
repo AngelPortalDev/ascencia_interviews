@@ -8,6 +8,7 @@ def common_questions(request):
         question_data = [
             {
                 'question': question.question,
+                'crm_id': question.crm_id,
                 'encoded_id': base64_encode(question.id)
             }
             for question in questions
@@ -31,7 +32,7 @@ def common_questions(request):
 
 def common_question_add(request):
 
-    courses = Course.objects.filter(deleted_at__isnull=True)
+    institutes = Institute.objects.filter(deleted_at__isnull=True)
     errors = {}
 
     breadcrumb_items = [
@@ -43,7 +44,10 @@ def common_question_add(request):
     if request.method == 'POST':
         data = request.POST
         question = data.get('question')
+        crm_id = data.get('crm_id')
 
+        if not crm_id:
+            errors['crm_id'] = "Institute is required."
         if not question:
             errors['question'] = "Question is required." 
         else:
@@ -51,10 +55,12 @@ def common_question_add(request):
                 errors['question'] = "Question must be unique."
 
         if errors:
-            return render(request, 'common_question/common_question_add.html', {'errors': errors, "show_breadcrumb": True, "breadcrumb_items": breadcrumb_items, })
+            return render(request, 'common_question/common_question_add.html', {'errors': errors, 'institutes': institutes, "show_breadcrumb": True, "breadcrumb_items": breadcrumb_items, })
         try:
+            institute = Institute.objects.get(id=crm_id)
             data_to_save = {
                 'question': question,
+                'crm_id': institute,
             }
 
             result = save_data(CommonQuestion, data_to_save)
@@ -64,18 +70,19 @@ def common_question_add(request):
                 return redirect('common_questions')
             else:
                 messages.error(request, "Failed to save the question. Please try again.")
-                return render(request, 'common_question/common_question_add.html', {"show_breadcrumb": True, "breadcrumb_items": breadcrumb_items, })
+                return render(request, 'common_question/common_question_add.html', { 'institutes': institutes, "show_breadcrumb": True, "breadcrumb_items": breadcrumb_items, })
 
         except IntegrityError as e:
             messages.error(request, "A database error occurred. Please try again later.")
-            return render(request, 'common_question/common_question_add.html', {"show_breadcrumb": True, "breadcrumb_items": breadcrumb_items, })
+            return render(request, 'common_question/common_question_add.html', { 'institutes': institutes, "show_breadcrumb": True, "breadcrumb_items": breadcrumb_items, })
 
         except Exception as e:
             messages.error(request, f"An error occurred: {e}")
-            return render(request, 'common_question/common_question_add.html', {"show_breadcrumb": True, "breadcrumb_items": breadcrumb_items, })
+            return render(request, 'common_question/common_question_add.html', { 'institutes': institutes, "show_breadcrumb": True, "breadcrumb_items": breadcrumb_items, })
 
 
-    data = {
+    data = { 
+        'institutes': institutes,
         "show_breadcrumb": True,
         "breadcrumb_items": breadcrumb_items,
     }
@@ -86,6 +93,7 @@ def common_question_add(request):
 def common_question_update(request, id):
     id = base64_decode(id)
 
+    institutes = Institute.objects.filter(deleted_at__isnull=True)
     errors = {}
 
     breadcrumb_items = [
@@ -101,7 +109,10 @@ def common_question_update(request, id):
 
     if request.method == 'POST':
         question = request.POST.get('question')
+        crm_id = request.POST.get('crm_id')
 
+        if not crm_id:
+            errors['crm_id'] = "Institute is required."
         if not question:
             errors['question'] = "Question is required."
         else:
@@ -110,11 +121,13 @@ def common_question_update(request, id):
 
         if errors:
             question = get_object_or_404(CommonQuestion, id=id)
-            return render(request, 'common_question/common_question_update.html', {'question': question, "show_breadcrumb": True, "breadcrumb_items": breadcrumb_items, 'errors': errors})
+            return render(request, 'common_question/common_question_update.html', {'question': question, 'institutes': institutes, "show_breadcrumb": True, "breadcrumb_items": breadcrumb_items, 'errors': errors})
 
         try:
+            institute = Institute.objects.get(id=crm_id)
             data = {
                 'question': question,
+                'crm_id': institute
             }
 
             result = save_data(CommonQuestion, data, where={'id': id})
@@ -124,14 +137,15 @@ def common_question_update(request, id):
                 return redirect('common_questions')
             else:
                 messages.error(request, result.get('error', "Failed to update the question."))
-                return render(request, 'common_question/common_question_update.html', {'question': question, "show_breadcrumb": True,"breadcrumb_items": breadcrumb_items, })
+                return render(request, 'common_question/common_question_update.html', {'question': question, 'institutes': institutes, "show_breadcrumb": True,"breadcrumb_items": breadcrumb_items, })
 
         except Exception as e:
             messages.error(request, f"An error occurred while updating the question: {e}")
-            return render(request, 'common_question/common_question_update.html', {'question': question, "show_breadcrumb": True, "breadcrumb_items": breadcrumb_items, })
+            return render(request, 'common_question/common_question_update.html', {'question': question, 'institutes': institutes, "show_breadcrumb": True, "breadcrumb_items": breadcrumb_items, })
 
     data = {
         'question': question,
+        'institutes': institutes,
         "show_breadcrumb": True,
         "breadcrumb_items": breadcrumb_items,
     }

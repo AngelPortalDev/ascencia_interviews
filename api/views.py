@@ -612,16 +612,20 @@ def process_document(request):
     
 
 
-def fetch_interview_questions(request):
+def fetch_interview_questions(request, crm_id):
     try:
         # Fetch 2 random questions from commonquestions
-        common_questions = list(CommonQuestion.objects.order_by('id')[:2])
+        if crm_id:
+            common_questions = list(CommonQuestion.objects.filter(crm_id=crm_id).order_by('id')[:2])
+        else:
+            common_questions = []
 
         # Fetch 3 random questions from questions
-        customized_questions = list(Question.objects.order_by('id')[:3])
+        # customized_questions = list(Question.objects.order_by('id')[:3])
 
         # Combine questions
-        questions_list = common_questions + customized_questions
+        # questions_list = common_questions + customized_questions
+        questions_list = common_questions
 
         # Convert to JSON serializable format
         data = [
