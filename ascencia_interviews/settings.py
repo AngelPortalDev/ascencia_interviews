@@ -43,7 +43,9 @@ INSTALLED_APPS = [
     'api',
     'rest_framework',
     'corsheaders',
-
+    'sslserver',
+    'django_extensions',
+    'commands'
 ]
 
 MIDDLEWARE = [
@@ -56,6 +58,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'adminpanel.middlewares.loginRequiredMiddleware.LoginRequiredMiddleware',
     'adminpanel.middlewares.Force404Middleware.Force404Middleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'ascencia_interviews.urls'
@@ -94,12 +97,35 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'ascencia-interviews',
         'USER': 'postgres',
-        'PASSWORD': '1234',
+        'PASSWORD': 'root',
         'HOST': 'localhost',  # or the server IP/hostname
         'PORT': '5432',     # default PostgreSQL port
     }
 }
 
+# abdulla database
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'ascencia-interviews',
+#         'USER': 'postgres',
+#         'PASSWORD': '1234',
+#         'HOST': 'localhost',  # or the server IP/hostname
+#         'PORT': '5432',     # default PostgreSQL port
+#     }
+# }
+
+# ashish database
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'ascencia-interviews',
+#         'USER': 'postgres',
+#         'PASSWORD': '123',
+#         'HOST': 'localhost',  # or the server IP/hostname
+#         'PORT': '5432',     # default PostgreSQL port
+#     }
+# }
 
 
 # Password validation
@@ -144,14 +170,44 @@ STATICFILES_DIRS = [
 STATIC_ROOT = BASE_DIR / "staticfiles"
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
-
+STUDENT_UPLOAD = BASE_DIR 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = '/login/'
 
 CORS_ALLOW_ALL_ORIGINS = True
 CSRF_COOKIE_SECURE = False
+SECURE_SSL_REDIRECT = True  # Redirect all HTTP requests to HTTPS
+SESSION_COOKIE_SECURE = True  # Ensure cookies are sent over HTTPS
+CSRF_COOKIE_SECURE = True  # Ensure CSRF cookies are sent over HTTPS
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+CORS_ALLOWED_ORIGINS = [
+    'https://192.168.1.63:3000',  # React app URL
+]
 
+# HTTP Strict Transport Security (HSTS) settings
+SECURE_HSTS_SECONDS = 31536000         # Enforce HTTPS for 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True    # Apply to all subdomains
+SECURE_HSTS_PRELOAD = True               # Allow your domain to be included in browsers’ HSTS preload list
+
+# Additional security settings (optional but recommended)
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
 
 TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
+ADMIN_BASE_URL = "http://192.168.1.16:8000"
+
+BUNNY_STREAM_API_KEY = "e31364b4-b2f4-4221-aac3bd5d34e5-6769-4f29"  # Replace with your actual Library Key
+BUNNY_STREAM_LIBRARY_ID = "390607"
+
+
+# Email Settings
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587 
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+EMAIL_HOST_USER = "abdullah@angel-portal.com"
+EMAIL_HOST_PASSWORD = "iuljudjtemskylkl"
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
