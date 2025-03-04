@@ -77,7 +77,12 @@ if (videoRef.current && videoRef.current.srcObject) {
     videoRef.current.srcObject = null;
 }
     setTimeout(() => {
-      onRecordingComplete(); 
+      // onRecordingComplete(); 
+      if (typeof onRecordingComplete === 'function') {
+        onRecordingComplete();
+      } else {
+        console.warn("onRecordingComplete is not a function.");
+      }
     }, 500);
   };
 

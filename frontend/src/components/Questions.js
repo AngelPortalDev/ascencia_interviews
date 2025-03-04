@@ -12,6 +12,7 @@ import { useNavigate,useParams,useLocation } from "react-router-dom";
 import {usePermission} from '../context/PermissionContext.js';
 import QuestionChecker from "./QuestionChecker.js";
 import { startRecording,stopRecording } from "../utils/recording.js";
+import usePageReloadSubmit from "../hooks/usePageReloadSubmit.js";
 
 const Questions = () => {
   const [countdown, setCountdown] = useState(60);
@@ -20,7 +21,7 @@ const Questions = () => {
   const [navigationTime, setNavigationTime] = useState(0);
   const [isNavigationEnabled,setIsNavigationEnabled] = useState(false);
   const [timeSpent, setTimeSpent] = useState(0); 
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(1);
   const [transcribedText, setTranscribedText] = useState(""); // To hold transcribed text
   const [activeQuestionId, setActiveQuestionId] = useState(null); // Track active question
   const [student, setStudent] = useState(null);
@@ -42,7 +43,8 @@ const Questions = () => {
     const [isFirstQuestionSet, setIsFirstQuestionSet] = useState(false);
 
 
-
+    // Hoocks for go back to previous page
+    usePageReloadSubmit(videoRef, mediaRecorderRef, audioRecorderRef, recordedChunksRef, recordedAudioChunksRef);
   const navigate = useNavigate();
   const { submitExam } = usePermission();
 
@@ -110,6 +112,7 @@ const Questions = () => {
         setActiveQuestionId(getQuestions[currentQuestionIndex + 1]?.encoded_id); 
         setCountdown(60);
       }else{
+        stopMediaStream()
         handleSubmit();
       }
     }
@@ -198,7 +201,7 @@ const Questions = () => {
       <InterviewPlayer 
       onTranscription={setTranscribedText} 
       zoho_lead_id={zoho_lead_id} 
-      question_id={activeQuestionId} 
+      question_id={activeQuestionId}
     />    
   ), [activeQuestionId,zoho_lead_id]);
 

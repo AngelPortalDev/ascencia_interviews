@@ -45,10 +45,11 @@ import { toast } from "react-toastify";
 const ProtectedRoute = ({ element, isAllowed, redirectPath  }) => {
 
   const { isExamSubmitted } = usePermission();
+  const examSubmitted = localStorage.getItem("InterviewSubmitted") === "true";
 
-  if (isExamSubmitted) {
+  if (isExamSubmitted || examSubmitted) {
     toast.error("You have already submitted the exam.");
-    return <Navigate to="/" />;
+    return <Navigate to="/interviewsubmitted" replace />;
   }
 
   return isAllowed ? element :  <Navigate to={redirectPath}/>

@@ -156,6 +156,7 @@ const Permissions = () => {
                           checked={audioPermission}
                           onChange={handleAudioPermission}
                           className="h-5 w-5 text-blue-600 border-gray-300 rounded"
+                          id="audioPermission"
                         />
                         <label
                           htmlFor="audioPermission"
@@ -174,6 +175,7 @@ const Permissions = () => {
                           checked={recordVideoPermission}
                           onChange={handleVideoPermission}
                           className="h-5 w-5 text-blue-600 border-gray-300 rounded"
+                          id="videoPermission"
                         />
                         <label
                           htmlFor="videoPermission"
