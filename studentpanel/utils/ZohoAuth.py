@@ -49,8 +49,60 @@ class ZohoAuth:
 
     ZOHO_TOKEN_URL = "https://accounts.zoho.com/oauth/v2/token"
 
+
     @classmethod
     def get_access_token(cls, crm_id):
+        """Fetch Zoho access token with caching and retry mechanism (without throttling)."""
+        
+        if crm_id not in cls.ZOHO_CREDENTIALS:
+            raise ValueError(f"Invalid Zoho CRM ID: {crm_id}")
+
+        cache_key = f"zoho_access_token_{crm_id}"
+        access_token = cache.get(cache_key)
+
+        # ✅ Return cached token if available
+        if access_token:
+            return access_token
+
+        creds = cls.ZOHO_CREDENTIALS[crm_id]
+        data = {
+            "client_id": creds["client_id"],
+            "client_secret": creds["client_secret"],
+            "refresh_token": creds["refresh_token"],
+            "grant_type": "refresh_token"
+        }
+
+        max_retries = 5  # ✅ Limit retries to prevent overloading Zoho API
+        delay = 5  # Initial retry delay (in seconds)
+
+        for attempt in range(max_retries):
+            response = requests.post(cls.ZOHO_TOKEN_URL, data=data)
+            response_json = response.json()
+
+            if response.status_code == 200 and "access_token" in response_json:
+                access_token = response_json["access_token"]
+                
+                # ✅ Cache the token for ~55 minutes
+                cache.set(cache_key, access_token, timeout=55 * 60)
+
+                print(f"✅ Zoho Token Fetch Passed for CRM {crm_id}")
+                return access_token
+
+            elif response_json.get("error") == "access_denied":
+                print(f"⏳ Too many requests to Zoho API. Retrying in {delay} seconds...")
+                time.sleep(delay)
+                delay *= 2  # ✅ Exponential Backoff (5s, 10s, 20s...)
+            else:
+                print(f"❌ Zoho Token Fetch Failed for CRM {crm_id}: {response.text}")
+                break  # Stop retrying if it's another error
+
+        raise Exception(f"Zoho Token Fetch Failed for CRM {crm_id} after {max_retries} attempts.")
+
+
+
+
+    # @classmethod
+    # def get_access_token(cls, crm_id):
         if crm_id not in cls.ZOHO_CREDENTIALS:
             raise ValueError(f"Invalid Zoho CRM ID: {crm_id}")
 

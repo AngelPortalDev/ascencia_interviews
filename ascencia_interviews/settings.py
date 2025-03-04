@@ -45,7 +45,9 @@ INSTALLED_APPS = [
     'corsheaders',
     'sslserver',
     'django_extensions',
-    'commands'
+    'commands',
+    'django_q',
+
 ]
 
 MIDDLEWARE = [
@@ -92,28 +94,28 @@ WSGI_APPLICATION = 'ascencia_interviews.wsgi.application'
 #     }
 # }
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'ascencia-interviews',
-        'USER': 'postgres',
-        'PASSWORD': 'root',
-        'HOST': 'localhost',  # or the server IP/hostname
-        'PORT': '5432',     # default PostgreSQL port
-    }
-}
-
-# abdulla database
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
 #         'NAME': 'ascencia-interviews',
 #         'USER': 'postgres',
-#         'PASSWORD': '1234',
+#         'PASSWORD': 'root',
 #         'HOST': 'localhost',  # or the server IP/hostname
 #         'PORT': '5432',     # default PostgreSQL port
 #     }
 # }
+
+# abdulla database
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'ascencia-interviews',
+        'USER': 'postgres',
+        'PASSWORD': '1234',
+        'HOST': 'localhost',  # or the server IP/hostname
+        'PORT': '5432',     # default PostgreSQL port
+    }
+}
 
 # ashish database
 # DATABASES = {
@@ -175,24 +177,24 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = '/login/'
 
-CORS_ALLOW_ALL_ORIGINS = True
-CSRF_COOKIE_SECURE = False
-SECURE_SSL_REDIRECT = True  # Redirect all HTTP requests to HTTPS
-SESSION_COOKIE_SECURE = True  # Ensure cookies are sent over HTTPS
-CSRF_COOKIE_SECURE = True  # Ensure CSRF cookies are sent over HTTPS
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-CORS_ALLOWED_ORIGINS = [
-    'https://192.168.1.63:3000',  # React app URL
-]
+# CORS_ALLOW_ALL_ORIGINS = True
+# CSRF_COOKIE_SECURE = False
+# SECURE_SSL_REDIRECT = True  # Redirect all HTTP requests to HTTPS
+# SESSION_COOKIE_SECURE = True  # Ensure cookies are sent over HTTPS
+# CSRF_COOKIE_SECURE = True  # Ensure CSRF cookies are sent over HTTPS
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# CORS_ALLOWED_ORIGINS = [
+#     'https://192.168.1.63:3000',  # React app URL
+# ]
 
-# HTTP Strict Transport Security (HSTS) settings
-SECURE_HSTS_SECONDS = 31536000         # Enforce HTTPS for 1 year
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True    # Apply to all subdomains
-SECURE_HSTS_PRELOAD = True               # Allow your domain to be included in browsers’ HSTS preload list
+# # HTTP Strict Transport Security (HSTS) settings
+# SECURE_HSTS_SECONDS = 31536000         # Enforce HTTPS for 1 year
+# SECURE_HSTS_INCLUDE_SUBDOMAINS = True    # Apply to all subdomains
+# SECURE_HSTS_PRELOAD = True               # Allow your domain to be included in browsers’ HSTS preload list
 
-# Additional security settings (optional but recommended)
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
+# # Additional security settings (optional but recommended)
+# SECURE_BROWSER_XSS_FILTER = True
+# SECURE_CONTENT_TYPE_NOSNIFF = True
 
 TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
@@ -211,3 +213,18 @@ EMAIL_USE_SSL = False
 EMAIL_HOST_USER = "abdullah@angel-portal.com"
 EMAIL_HOST_PASSWORD = "iuljudjtemskylkl"
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
+
+
+
+
+Q_CLUSTER = {
+    "name": "DjangoQCluster",
+    "workers": 4,  # Number of worker processes
+    "timeout": 90,  # Task timeout in seconds
+    "retry": 120,  # Retry failed tasks after 2 minutes
+    "queue_limit": 50,  # Maximum number of queued tasks
+    "bulk": 10,  # Number of tasks processed at once
+    "orm": "default",  # Use Django ORM for task management
+}

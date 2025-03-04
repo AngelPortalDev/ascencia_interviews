@@ -14,7 +14,7 @@ class Students(models.Model):
         ('rejected', 'Rejected'),
     ]
 
-    student_id = models.CharField(max_length=100, null=True, unique=True)
+    student_id = models.CharField(max_length=100, null=True, blank=True)
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=225)
     email = models.EmailField(max_length=225, unique=True, blank=False)
