@@ -20,7 +20,6 @@ import torch
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
 from gpt4all import GPT4All
-import librosa
 import cv2
 import numpy as np
 import subprocess
@@ -31,8 +30,12 @@ from studentpanel.models.interview_process_model import Students
 
 from django.conf import settings
 from adminpanel.utils import send_email
-
-
+import logging
+from collections import defaultdict
+from studentpanel.models.student_interview_answer import StudentInterviewAnswers
+logger = logging.getLogger(__name__)
+from django_q.tasks import async_task
+from adminpanel.common_imports import save_data
 
 
 
@@ -201,66 +204,71 @@ def analyze_sentiment(text):
         text = translated.text
     
     sentiment = TextBlob(text).sentiment
-
-    # Clean polarity value
+    subjectivity = sentiment.subjectivity  # Confidence estimate (0 to 1)
+    confidence_level = (1 - subjectivity) * 100  # Higher objectivity = higher confidence
     polarity = clean_polarity(sentiment.polarity)
-
     # Convert polarity (-1 to 1) into a percentage (0 to 100)
     sentiment_score = (polarity + 1) * 50  
 
     return {
         "polarity": polarity,  # -1 (negative) to 1 (positive)
         "subjectivity": sentiment.subjectivity,  # 0 (objective) to 1 (subjective),
-        "sentiment_score": round(sentiment_score, 2)  # 0 to 100% dynamically
+        "sentiment_score": round(sentiment_score, 2),  # 0 to 100% dynamically
+        "confidence_level": round(confidence_level, 2),
     }
 
-def calculate_confidence_level(audio_path):
-    try:
-        y, sr = librosa.load(audio_path, sr=16000)  # Load audio
-        rms = librosa.feature.rms(y=y)  # Root Mean Square Energy (Loudness)
-        speech_rate = librosa.beat.tempo(y, sr=sr)[0]  # Estimate speed
-        silence = np.mean(y == 0)  # Check for silent parts
+@csrf_exempt
+def interview_add_video_path(request):
+    if request.method == 'POST':
+        data = request.POST
+        video_path = data.get('video_path')
+        # audio_path = data.get('audio_path')
+        question_id = data.get('question_id')
+        zoho_lead_id = data.get('zoho_lead_id')
+        last_question_id=data.get('last_question_id')
 
-        # Compute confidence score based on voice properties
-        confidence_score = 10  # Start with max score
+        try:
+            zoho_lead_id = base64.b64decode(zoho_lead_id).decode("utf-8")
+            question_id = base64.b64decode(question_id).decode("utf-8")
+            data_to_save = {
+                'video_path': video_path,
+                'question_id': question_id,
+                'zoho_lead_id': zoho_lead_id,
+            }
+            
+            result = save_data(StudentInterviewAnswers, data_to_save)
 
-        if np.mean(rms) < 0.02:  # Too soft
-            confidence_score -= 3  
-        elif np.mean(rms) > 0.08:  # Too loud
-            confidence_score -= 1  
+            # print(r'result:', result)
 
-        if speech_rate < 90:  # Too slow = Hesitation
-            confidence_score -= 2
-        elif speech_rate > 160:  # Too fast = Nervousness
-            confidence_score -= 1  
+            if result['status']:
+                return JsonResponse({"status": True, "message": "Student updated successfully!"}, status=200)
+            else:
+                return JsonResponse({"status": False, "error": result.get('error', "Failed to update the student.")}, status=400)
 
-        if silence > 0.2:  # Too many pauses
-            confidence_score -= 2
+        except Exception as e:
+            return JsonResponse({"status": False, "error": str(e)}, status=500)
 
-        confidence_score = max(1, min(10, confidence_score))  # Keep score between 1-10
+    return JsonResponse({"status": False, "error": "Invalid request method"}, status=405)
 
-        feedback = "Very confident" if confidence_score >= 8 else \
-                   "Moderate confidence" if confidence_score >= 5 else \
-                   "Needs improvement"
-
-        return {"confidence_score": confidence_score, "feedback": feedback}
-
-    except Exception as e:
-        return {"confidence_score": None, "feedback": f"Error analyzing confidence: {str(e)}"}
-# ✅ Django View (API Endpoint)
 @csrf_exempt
 def analyze_video(request):
     if request.method == 'POST':
         data = request.POST
         video_path = data.get('video_path')
-        audio_path = data.get('audio_path')
+        # audio_path = data.get('audio_path')
         question_id = data.get('question_id')
         zoho_lead_id = data.get('zoho_lead_id')
+        last_question_id=data.get('last_question_id')
         print("data",data)
-        
+        student_questions = {}  # Dictionary to store last question per student
+
         try:
             question_id = base64.b64decode(question_id).decode("utf-8")
             zoho_lead_id = base64.b64decode(zoho_lead_id).decode("utf-8")
+            student_questions[zoho_lead_id] = question_id
+            # Get the last question for the student
+            last_question_id = student_questions.get(zoho_lead_id)
+            print("Last Question ID:", last_question_id)
         except Exception as e:
             return JsonResponse({"error": f"Failed to decode Base64: {str(e)}"}, status=400)
         # Extract audio
@@ -272,7 +280,15 @@ def analyze_video(request):
             transcribed_text = transcribe_audio(extracted_audio)
             sentiment_analysis = analyze_sentiment(transcribed_text)
             grammar_results = check_grammar(transcribed_text)
-            confidence_level = calculate_confidence_level(extracted_audio)
+
+            # confidence_level = calculate_confidence_level(extracted_audio)
+            print(question_id)
+            print(last_question_id)
+            if last_question_id == question_id :
+                # async_task("studentpanel.views.interview_process.merge_videos",zoho_lead_id)
+                # async_task("studentpanel.views.interview_process.check_answers",zoho_lead_id)
+                async_task(check_answers(zoho_lead_id))
+                async_task(merge_videos(zoho_lead_id))
 
             return JsonResponse({
                 "transcription": transcribed_text,
@@ -281,13 +297,121 @@ def analyze_video(request):
                 "status": "success",
                 "question_id": question_id,
                 "zoho_lead_id": zoho_lead_id,
-                "confidence_level": confidence_level,
+                # "confidence_level": confidence_level,
             })
+            
         except Exception as e:
             return JsonResponse({"error": "Processing failed", "details": str(e)}, status=500)
 
     return JsonResponse({"error": "Invalid request"}, status=400)
+# @csrf_exempt
+# def student_interview_answers(request):
+#     # if request.method == 'POST':
+#     #     data = request.POST
+#     #     student_id = data.get('student_id')
+#     #     if not student_id:
+#     #         return JsonResponse({"error": "student id does not exists"}, status=500)
+#     # try:
+#     #     decoded_bytes = base64.b64decode(student_id)
+#     #     student_id = decoded_bytes.decode("utf-8")  # Convert bytes to string
+#     #     student = StudentInterviewAnswers.objects.get(zoho_lead_id=student_id)
+#     #     student_data = [
+#     #         {
+#     #             'first_name': student.first_name,
+#     #             'last_name': student.last_name,
+#     #             'email_id': student.email,
+#     #             'zoho_lead_id': student.zoho_lead_id,
+#     #             'mobile_no':student.phone
+#     #         }
+#     #     ]
 
+#     if request.method == "GET":
+#         # zoho_lead_id = request.POST.get('zoho_lead_id')
+#         # question_id = request.POST.get('question_id')
+#         # answer_text = request.POST.get('answer_text')
+#         # sentiment_score = request.POST.get('sentiment_score')
+#         # sent_subj = request.POST.get('sent_subj')
+#         # confidence_level = request.POST.get('confidence_level')
+#         # grammar_accuracy = request.POST.get('grammar_accuracy')
+
+#         try:
+#             zoho_lead_id = base64.b64decode(zoho_lead_id).decode("utf-8")
+#             question_id = base64.b64decode(question_id).decode("utf-8")
+#             data_to_save = {
+#                 'zoho_lead_id': zoho_lead_id,
+#                 'question_id': question_id,
+#                 'answer_text': answer_text,
+#                 'sentiment_score': sentiment_score,
+#                 'sent_subj':sent_subj,
+#                 'grammar_accuracy': grammar_accuracy,
+#                 'confidence_level': confidence_level,
+#                 'zoho_lead_id': zoho_lead_id
+#             }
+            
+
+#             result = save_data(StudentInterviewAnswers, data_to_save,where={'zoho_lead_id': zoho_lead_id,'question_id': question_id})
+#             # print(r'result:', result)
+
+#             if result['status']:
+#                 return JsonResponse({"status": True, "message": "Student updated successfully!"}, status=200)
+#             else:
+#                 return JsonResponse({"status": False, "error": result.get('error', "Failed to update the student.")}, status=400)
+
+#         except Exception as e:
+#             return JsonResponse({"status": False, "error": str(e)}, status=500)
+
+#     return JsonResponse({"status": False, "error": "Invalid request method"}, status=405)
+# def analyze_video(zoho_lead_id):
+#     # if request.method == 'POST':
+#         # data = request.POST
+#         # video_path = data.get('video_path')
+#         # # audio_path = data.get('audio_path')
+#         # question_id = data.get('question_id')
+#         # zoho_lead_id = data.get('zoho_lead_id')
+#         # last_question_id=data.get('last_question_id')
+#         # print("data",data)
+#         # student_questions = {}  # Dictionary to store last question per student
+#         print(zoho_lead_id)
+        
+#         try:
+#             student_answers = StudentInterviewAnswers.objects.filter(zoho_lead_id=zoho_lead_id)
+
+#             for student_answer in student_answers:
+#                 zoho_lead_id = student_answer.zoho_lead_id
+#                 video_path = student_answer.student_id
+#                 question_id = student_answer.question_id
+
+#             # Extract audio from video
+#             extracted_audio = extract_audio(video_path)
+#             if not extracted_audio:
+#                 return JsonResponse({"error": "Audio extraction failed"}, status=500)
+
+#             # Perform analysis
+#             transcribed_text = transcribe_audio(extracted_audio)
+#             sentiment_analysis = analyze_sentiment(transcribed_text)
+#             grammar_results = check_grammar(transcribed_text)
+
+#             # Check if the question is the last one
+#             # if student_answers.exists():
+#             #     last_question_id = student_answers.last().question_id  # Assuming `last_question_id` means the last stored question
+
+#             #     if last_question_id == question_id:
+#             #         async_task("studentpanel.views.interview_process.check_answers", zoho_lead_id)
+#             #         async_task("studentpanel.views.interview_process.merge_videos", zoho_lead_id)
+#             # student_interview_answers(student_id=123,zoho_lead_id,transcribed_text,sentiment_analysis.sentiment_score)
+#             return JsonResponse({
+#                 "transcription": transcribed_text,
+#                 "sentiment": sentiment_analysis,
+#                 "grammar_results": grammar_results,
+#                 "status": "success",
+#                 "question_id": question_id,
+#                 "zoho_lead_id": zoho_lead_id,
+#             })
+
+#         except Exception as e:
+#             return JsonResponse({"error": "Processing failed", "details": str(e)}, status=500)
+
+#     # return JsonResponse({"error": "Invalid request"}, status=400)
 
 # Load BERT model and tokenizer
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -300,86 +424,258 @@ def get_sentence_embedding(sentence):
     # Use the [CLS] token embedding
     return outputs.last_hidden_state[:, 0, :].numpy()
 @csrf_exempt
-def check_answers(request):
-    start_time = time.time()  # Start timing
-    data = request.POST
-    answer = data.get("answer", "").strip()
-    question_id = data.get("question_id")  # Assuming question ID contains the actual question
-    zoho_lead_id = data.get("zoho_lead_id") # Get the logged-in student's ID
+def check_answers(zoho_lead_id):
+    # start_time = time.time()  # Start timing
+    # data = request.POST
+    # answer = data.get("answer", "").strip()
+    # question_id = data.get("question_id")  # Assuming question ID contains the actual question
+    # student_id = data.get("student_id") # Get the logged-in student's ID
 
-    if not question_id or not answer or not zoho_lead_id:
-        return JsonResponse({"error": "Question and answer and students are required."}, status=400)
+    # if not question_id or not answer or not student_id:
+    #     return JsonResponse({"error": "Question and answer and students are required."}, status=400)
 
 
-    question_data = CommonQuestion.objects.get(id=question_id)
+    # question_data = CommonQuestion.objects.get(id=question_id)
 
-    # enrolled_courses = get_student_details(zoho_lead_id)
-    # print(enrolled_courses)
-    # if not enrolled_courses:
-    #     return JsonResponse({"error": "No enrolled courses found for the student."}, status=400)
-    # 🔥 Enhanced prompt with logical consistency check
-    prompt = f"""
-    You are an AI evaluator for university applications.  
-    Your task is to **evaluate answers based on meaning, not just grammar.**  
+    # # enrolled_courses = get_student_details(student_id)
+    # # print(enrolled_courses)
+    # # if not enrolled_courses:
+    # #     return JsonResponse({"error": "No enrolled courses found for the student."}, status=400)
+    # # 🔥 Enhanced prompt with logical consistency check
+    # prompt = f"""
+    # You are an AI evaluator for university applications.  
+    # Your task is to **evaluate answers based on meaning, not just grammar.**  
 
-    **Evaluation Criteria:**
-    1️⃣ **Relevance to the question** (Is the answer actually about the program?)  
-    2️⃣ **Logical correctness** (Does the explanation make sense?)  
-    3️⃣ **Grammar & clarity** (Is the sentence well-structured?)  
+    # **Evaluation Criteria:**
+    # 1️⃣ **Relevance to the question** (Is the answer actually about the program?)  
+    # 2️⃣ **Logical correctness** (Does the explanation make sense?)  
+    # 3️⃣ **Grammar & clarity** (Is the sentence well-structured?)  
 
-    **Scoring Rules:**  
-    - **1-2/10** → Completely incorrect or unrelated (e.g., AI research for a Psychology degree).  
-    - **3-5/10** → Somewhat related but logically weak.  
-    - **6-8/10** → Relevant but lacks details.  
-    - **9-10/10** → Strong, detailed, and logical answer.  
+    # **Scoring Rules:**  
+    # - **1-2/10** → Completely incorrect or unrelated (e.g., AI research for a Psychology degree).  
+    # - **3-5/10** → Somewhat related but logically weak.  
+    # - **6-8/10** → Relevant but lacks details.  
+    # - **9-10/10** → Strong, detailed, and logical answer.  
 
-    **Example of a bad answer (Wrong Logic):**
-    Question: "Why do you want to study Psychology?"  
-    Answer: "I want to study Psychology because I love coding and want to build AI systems."  
-    **Score: 1/10 (Completely incorrect - AI is not related to Psychology).**
+    # **Example of a bad answer (Wrong Logic):**
+    # Question: "Why do you want to study Psychology?"  
+    # Answer: "I want to study Psychology because I love coding and want to build AI systems."  
+    # **Score: 1/10 (Completely incorrect - AI is not related to Psychology).**
 
-    **Example of a good answer (Correct Logic):**
-    Question: "Why do you want to study Psychology?"  
-    Answer: "I am fascinated by human behavior and want to specialize in Cognitive Psychology to understand how people think."  
-    **Score: 9/10 (Relevant, clear, and logical).**
+    # **Example of a good answer (Correct Logic):**
+    # Question: "Why do you want to study Psychology?"  
+    # Answer: "I am fascinated by human behavior and want to specialize in Cognitive Psychology to understand how people think."  
+    # **Score: 9/10 (Relevant, clear, and logical).**
 
-    Now, evaluate the following answer:  
-    **Question:** {question_data.question}  
-    **Answer:** {answer}  
+    # Now, evaluate the following answer:  
+    # **Question:** {question_data.question}  
+    # **Answer:** {answer}  
 
-    Provide a score out of 10 and feedback in this format:  
-    **Score: X/10**  
-    **Feedback: [Your analysis]**  
-    """
+    # Provide a score out of 10 and feedback in this format:  
+    # **Score: X/10**  
+    # **Feedback: [Your analysis]**  
+    # """
 
-    try:
-        model_path = r"C:\Users\angel\Ascencia_Interviews\ascencia_interviews\studentpanel\models\mistral-7b-instruct-v0.2.Q2_K.gguf"
+    # try:
+    #     model_path = r"C:\Users\angel\Ascencia_Interviews\ascencia_interviews\studentpanel\models\mistral-7b-instruct-v0.2.Q2_K.gguf"
         
-        print("Loading model...")  # Debugging
-        model = GPT4All(model_path)
-        print("Model loaded successfully!")  # Debugging
+    #     print("Loading model...")  # Debugging
+    #     model = GPT4All(model_path)
+    #     print("Model loaded successfully!")  # Debugging
 
-        response = model.generate(prompt)
-        print("AI Response:", response)  # Debugging
+    #     response = model.generate(prompt)
+    #     print("AI Response:", response)  # Debugging
 
-        # Improved regex to extract score
-        match = re.search(r"Score:\s*(\d{1,2})\/10", response)
-        score = int(match.group(1)) if match else None
+    #     # Improved regex to extract score
+    #     match = re.search(r"Score:\s*(\d{1,2})\/10", response)
+    #     score = int(match.group(1)) if match else None
 
         
-        end_time = time.time()  # End timing
-        response_time = round(end_time - start_time, 2)  # Calculate response time
+    #     end_time = time.time()  # End timing
+    #     response_time = round(end_time - start_time, 2)  # Calculate response time
 
-        return JsonResponse({"score": score, "feedback": response, "response_time": f"{response_time} sec"})
+    #     return JsonResponse({"score": score, "feedback": response, "response_time": f"{response_time} sec"})
 
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
-    # return enrolled_courses
+    # except Exception as e:
+    #     return JsonResponse({"error": str(e)}, status=500)
+    # # return enrolled_courses
+    # student_answers = StudentInterviewAnswers.objects.all()
+    # student_answers = student_answers.filter(zoho_lead_id=zoho_lead_id)
+    # if not student_answers.exists():
+    #     return JsonResponse({"error": "No student records found."}, status=404)
+    # # Process each student's answers
+    # for student_answer in student_answers:
+    #     # Get the corresponding question
+    #     question_id = student_answer.question_id
+    #     question = question_map.get(question_id)
+    #     if not question:
+    #         continue
+        print(zoho_lead_id)
+        student_answers = StudentInterviewAnswers.objects.filter(zoho_lead_id=zoho_lead_id)
+
+
+        if not student_answers.exists():
+            logger.info("No student records found.")
+            return
+
+        model_path = "C:/Users/angel/Ascencia_Interviews/ascencia_interviews/studentpanel/models/mistral-7b-instruct-v0.2.Q2_K.gguf"
+        
+        # ✅ Check if the AI model file exists
+        if not os.path.exists(model_path):
+            logger.error("AI model path does not exist.")
+            return
+
+        final_results = []
+        
+        try:
+            logger.info("Loading AI Model...")
+            model = GPT4All(model_path)
+            logger.info("Model loaded successfully!")
+
+            # Dictionaries for storing scores
+            student_scores = defaultdict(int)
+            student_question_count = defaultdict(int)
+            student_sentiment = defaultdict(int)
+            student_grammar = defaultdict(int)
+
+            # Fetch all questions in a single query
+            question_map = {q.id: q for q in CommonQuestion.objects.all()}
+
+            for student_answer in student_answers:
+                zoho_lead_id = student_answer.zoho_lead_id
+                question_id = student_answer.question_id
+                answer = student_answer.answer_text.strip()
+
+                if not zoho_lead_id or not question_id or not answer:
+                    continue
+
+                student_question_count[zoho_lead_id] += 1  
+
+                if question_id not in question_map:
+                    logger.warning(f"Question ID {question_id} not found in database.")
+                    continue
+
+                question_data = question_map[question_id]
+
+                # 🔹 Check Student Name for Question ID 1
+                if question_id == 1:
+                    possible_names = re.findall(r'\b[A-Z][a-z]*\b', answer)
+                    student_data = Students.objects.filter(zoho_lead_id=zoho_lead_id).values("first_name").first()
+                    if student_data:
+                        actual_first_name = student_data["first_name"]
+                        if actual_first_name not in possible_names:
+                            final_results.append({
+                                "zoho_lead_id": zoho_lead_id,
+                                "question_id": question_id,
+                                "total_questions": student_question_count[zoho_lead_id],
+                                "overall_score": student_scores[zoho_lead_id],
+                                "status": "No matching name found",
+                            })
+                            continue  
+
+                # 🔹 Check Program Name for Question ID 2
+                if question_id == 2:
+                    student_program = Students.objects.filter(zoho_lead_id=zoho_lead_id).values("program").first()
+                    if student_program:
+                        program_name = student_program["program"].strip()
+                        if not re.search(rf"\b{re.escape(program_name)}\b", answer, re.IGNORECASE):
+                            final_results.append({
+                                "zoho_lead_id": zoho_lead_id,
+                                "question_id": question_id,
+                                "total_questions": student_question_count[zoho_lead_id],
+                                "overall_score": student_scores[zoho_lead_id],
+                                "status": "Program name mismatch",
+                            })
+                            continue
+
+                # ✅ AI Evaluation Prompt
+                prompt = f"""
+                You are an AI evaluator for university applications.  
+                Your task is to **evaluate answers based on meaning, not just grammar.**  
+
+                **Evaluation Criteria:**
+                1️⃣ **Relevance to the question**  
+                2️⃣ **Logical correctness**  
+                3️⃣ **Grammar & clarity**  
+
+                **Scoring Rules:**  
+                - **1-2/10** → Completely incorrect or unrelated.  
+                - **3-5/10** → Somewhat related but logically weak.  
+                - **6-8/10** → Relevant but lacks details.  
+                - **9-10/10** → Strong, detailed, and logical answer.  
+
+                Now, evaluate the following answer:  
+                **Question:** {question_data.question}  
+                **Answer:** {answer}  
+
+                Provide a score out of 10 and feedback in this format:  
+                **Score: X/10**  
+                **Feedback: [Your analysis]**  
+                """
+
+                try:
+                    start_time = time.time()
+                    response = model.generate(prompt)
+                    end_time = time.time()
+                    response_time = round(end_time - start_time, 2)
+
+                    # 🔹 Extract score safely
+                    match = re.search(r"Score:\s*(\d+)/10", response)
+                    score = int(match.group(1)) if match else 0
+
+                    # Store scores
+                    student_scores[zoho_lead_id] += score  
+                    student_sentiment[zoho_lead_id] += student_answer.sentiment_score  
+                    student_grammar[zoho_lead_id] += student_answer.grammar_accuracy  
+                    print(student_answer.sentiment_score)
+                except Exception as ai_error:
+                    logger.error(f"AI model evaluation error: {ai_error}")
+                    continue
+
+            # ✅ Prepare final results
+            for zoho_lead_id in student_scores.keys():
+                total_questions = student_question_count[zoho_lead_id]
+                total_score = student_scores[zoho_lead_id]
+                answer_score_percentage= (100 * total_score) / (total_questions * 10) if total_questions else 0
+                print(student_sentiment[zoho_lead_id])
+                print(100 * student_sentiment[zoho_lead_id])
+                print(student_grammar[zoho_lead_id])
+                print(100 * student_grammar[zoho_lead_id])
+
+
+                sentiment_score_percentage= (100 * student_sentiment[zoho_lead_id]) / (total_questions * 10) if total_questions else 0
+                grammar_accuracy_percentage= (100 * student_grammar[zoho_lead_id]) / (total_questions * 10) if total_questions else 0
+                final_results.append({
+                    "zoho_lead_id": zoho_lead_id,
+                    "total_score": total_score,  
+                    "total_questions": total_questions,
+                    "answer_score_percentage": (100 * total_score) / (total_questions * 10) if total_questions else 0,
+                    "sentiment_score_percentage": (100 * student_sentiment[zoho_lead_id]) / (total_questions * 10) if total_questions else 0,
+                    "grammar_accuracy_percentage": (100 * student_grammar[zoho_lead_id]) / (total_questions * 10) if total_questions else 0
+                })
+                overall_score = "45"
+
+                data_to_save = {
+                    'total_answer_score': answer_score_percentage,
+                    'total_sentiment_score': sentiment_score_percentage,
+                    'total_grammer_scores': grammar_accuracy_percentage,
+                    'overall_score': overall_score
+                }
+
+            result = save_data(StudentInterviewAnswers, data_to_save,where={'zoho_lead_id': zoho_lead_id})
+
+            logger.info(f"Final Results: {final_results}")
+            logger.info(f"Final Results: {result}")
+
+            result
+
+        except Exception as e:
+            logger.error(f"Error in AI evaluation: {e}")
 
 
 
 
-
+# print(async_task(check_answers("5204268000112707003")))
 
 
 
@@ -476,11 +772,11 @@ def convert_video(input_path, output_path, target_format):
 def get_uploads_folder():
     """Returns the absolute path to the 'uploads' folder in the project root."""
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))  # Go two levels up
-    uploads_folder = os.path.join(project_root, "uploads")  # Point to the correct uploads folder
+    uploads_folder = os.path.join(project_root, "uploads/interview_videos")  # Point to the correct uploads folder
     return uploads_folder.replace("\\", "/")  # Normalize path
 
 
-def merge_videos(zoho_lead_id, base_uploads_folder="C:/xampp/htdocs/ascencia_interviews/uploads/Interview Videos"):
+def merge_videos(zoho_lead_id, base_uploads_folder="C:/xampp/htdocs/ascencia_interviews/uploads/interview_videos"):
     """ Merges all videos in the lead's folder into a single file of the detected format. """
     # uploads_folder = os.path.join(base_uploads_folder, zoho_lead_id).replace("\\", "/")
 
@@ -543,7 +839,7 @@ def merge_videos(zoho_lead_id, base_uploads_folder="C:/xampp/htdocs/ascencia_int
         student.bunny_stream_video_id = video_id
         student.save()
         
-        url = 'http://192.168.1.16:8000/adminpanel/student/5204268000112707003/'
+        url = 'http://192.168.1.63:8000/adminpanel/student/5204268000112707003/'
         # student manager
         send_email(
             subject="Interview Process Completed",
@@ -567,10 +863,6 @@ def merge_videos(zoho_lead_id, base_uploads_folder="C:/xampp/htdocs/ascencia_int
 # Example usage
 # zoho_lead_id = "5204268000112707003"
 # print(merge_videos(zoho_lead_id))
-
-
-
-
 
 def delete_video(request, zoho_lead_id):
     # BUNNY_STREAM_API_KEY = "e31364b4-b2f4-4221-aac3bd5d34e5-6769-4f29"  # Replace with your actual Library Key
