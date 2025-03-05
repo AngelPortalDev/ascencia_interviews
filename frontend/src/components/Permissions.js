@@ -31,10 +31,15 @@ const Permissions = () => {
   const {acceptAudioVideo}  = usePermission();
   // const { encoded_zoho_lead_id } = useParams();
   const handleAudioPermission = async () => {
+    if(audioPermission){
+      setAudioPermission(false);
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       console.log(stream,"stream is available");
       setAudioPermission(true);
+      setErrorMessage("");
       stream.getTracks().forEach((track) => track.stop());
     } catch (err) {
       setAudioPermission(false);
@@ -48,6 +53,10 @@ const Permissions = () => {
   };
 
   const handleVideoPermission = async () => {
+    if(recordVideoPermission){
+      setRecordVideoPermission(false)
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       setRecordVideoPermission(true);
@@ -120,7 +129,7 @@ const Permissions = () => {
                     </DialogTitle>
                     <div className="space-y-4">
                       <ul className="list-disc pl-5">
-                        <li className="text-gray-700">
+                        <li className="text-gray-700 text-justify">
                           Please check the box to grant permission for audio
                           access, allowing the application to use your
                           microphone for audio-related features. An error
@@ -128,20 +137,20 @@ const Permissions = () => {
                         </li>
                       </ul>
                       <ul className="list-disc pl-5">
-                        <li className="text-gray-700">
+                        <li className="text-gray-700 text-justify">
                           Check the box to allow video recording, enabling the
                           use of your camera for video-related functions. An
                           error message will appear if not accepted.
                         </li>
                       </ul>
                       <ul className="list-disc pl-5">
-                        <li className="text-gray-700">
+                        <li className="text-gray-700 text-justify">
                           After granting the necessary permissions, click the
                           Submit button to save your selections.
                         </li>
                       </ul>
                       <ul className="list-disc pl-5">
-                        <li className="text-gray-700">
+                        <li className="text-gray-700 text-justify">
                           Ensure both audio and video permissions are granted to
                           use the required features. Adjust your choices before
                           submitting.
@@ -160,12 +169,12 @@ const Permissions = () => {
                         />
                         <label
                           htmlFor="audioPermission"
-                          className="ml-3 text-sm text-gray-700"
+                          className="ml-3 text-sm text-gray-700 font-semibold"
                         >
                           Please accept audio
                         </label>
                       </div>
-                      <p className="text-sm text-red-500 mt-3">
+                      <p className="text-sm text-red-500 mt-2 text-justify">
                         {!audioPermission ? errorMessage : ""}
                       </p>
 
@@ -179,12 +188,12 @@ const Permissions = () => {
                         />
                         <label
                           htmlFor="videoPermission"
-                          className="ml-3 text-sm text-gray-700"
+                          className="ml-3 text-sm text-gray-700 font-semibold text-justify"
                         >
                           Please accept video recording
                         </label>
                       </div>
-                      <p className="text-sm text-red-500 mt-3">
+                      <p className="text-sm text-red-500 mt-2 text-justify">
                         {!recordVideoPermission
                           ? errorMessageVideoPermission
                           : ""}

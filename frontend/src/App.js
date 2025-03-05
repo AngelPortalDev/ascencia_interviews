@@ -13,6 +13,7 @@ import Questions from "./components/Questions.js";
 import ProtectedRoute from './components/ProtectedRoute.js'
 import NotFound from "./components/NotFound.js";
 import {usePermission} from "./context/PermissionContext.js";
+import ExpiredPage from "./components/ExpiredPage.js";
 import  InterviewSubmitted from "./components/InterviewSubmitted.js";
 import { ToastContainer } from "react-toastify";
 
@@ -46,6 +47,7 @@ function App() {
          {/* Add Question Router Here */}
           <Route path="*" element={<NotFound />} />
           <Route path="/interviewsubmitted" element={<InterviewSubmitted/>}/>
+          <Route path="/expired"  element={<ExpiredPage/>}/>
         </Routes>
       </Router>
  
