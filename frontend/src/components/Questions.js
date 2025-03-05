@@ -47,6 +47,8 @@ const Questions = () => {
     usePageReloadSubmit(videoRef, mediaRecorderRef, audioRecorderRef, recordedChunksRef, recordedAudioChunksRef);
   const navigate = useNavigate();
   const { submitExam } = usePermission();
+  const last_question_id = getQuestions.length > 0 ? getQuestions[getQuestions.length - 1].encoded_id : null;
+  console.log("LastQuestion id", last_question_id);
 
   // ***********  Fetch QUestions ***********
   const fetchQuestions = async () => {
@@ -202,6 +204,7 @@ const Questions = () => {
       onTranscription={setTranscribedText} 
       zoho_lead_id={zoho_lead_id} 
       question_id={activeQuestionId}
+      last_question_id={last_question_id}
     />    
   ), [activeQuestionId,zoho_lead_id]);
 
@@ -248,7 +251,7 @@ const Questions = () => {
     // console.log(student_id, 'student data');
 
     const formData = new FormData();
-    formData.append("zoho_lead_id", zoho_lead_id);
+    formData.append("zoho_lead_id", btoa(zoho_lead_id));
 
     try {
         const res = await Axios.post(

@@ -15,11 +15,13 @@ class StudentInterviewAnswers(models.Model):
     sentiment_score = models.TextField(blank=False, null=True)
     sent_subj = models.TextField(blank=False, null=True)
     grammar_accuracy=models.TextField(blank=False, null=True)
+    confidence_level=models.TextField(blank=False, null=True)
     interview_end_at = models.DateTimeField(auto_now=False, blank=False, null=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(default=now)  # Instead of auto_now_add=True
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
+    video_path = models.TextField(blank=False, null=True)
 
     class Meta:
         indexes = [

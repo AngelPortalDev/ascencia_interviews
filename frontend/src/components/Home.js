@@ -1,10 +1,12 @@
 import { useState,useEffect } from "react";
 // import { Dialog, DialogPanel } from "@headlessui/react";
 // import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import { NavLink,useParams } from "react-router-dom";
+import { NavLink,useParams,useNavigate} from "react-router-dom";
+
 import axios from "axios";
 
 const Home = () => {
+  const navigate =useNavigate();
 //   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
 //   const navigation = [
@@ -27,8 +29,35 @@ const Home = () => {
 //   }, []);
   
   const { encoded_zoho_lead_id,encoded_interview_link_send_count } = useParams(); // Get encoded student_id from URL
+  console.log("encoded_zoho_lead_id for Home page: " + encoded_zoho_lead_id);
 
-  // console.log("encoded_zoho_lead_id for Home page: " + encoded_zoho_lead_id);
+  const InterviewLinkStatus = async (encoded_zoho_lead_id) => {
+    if (!encoded_zoho_lead_id) {
+        console.error("No encoded_zoho_lead_id provided.");
+        return;
+    }
+    const formData = new FormData();
+    formData.append("zoho_lead_id", encoded_zoho_lead_id);
+    try {
+        const response = await axios.post(
+            `${process.env.REACT_APP_API_BASE_URL}interveiw-section/interview-attend-status/`,
+            formData
+        );
+        if (response.status === 200) {
+            console.log("Starting exam...");
+        } else {
+            console.log("Response for Video:", response);
+        }
+    } catch (error) {
+      console.log("Response for Video:");
+    }
+  }
+
+  useEffect(() => {
+      InterviewLinkStatus(encoded_zoho_lead_id);
+  }, [encoded_zoho_lead_id]); // Runs when `encoded_zoho_lead_id` changes
+
+    
   // console.log("encoded_interview_link_send_count: " + encoded_interview_link_send_count);
 
   return (

@@ -36,7 +36,7 @@ export const uploadFile = async (blob, filename,zoho_lead_id,question_id) => {
       console.log("Video uploaded successfully. File Path:", videoFilePath);
 
       // Call analyzeVideo function after upload is complete
-      await analyzeVideo(videoFilePath, audioFilePath,null, zoho_lead_id, question_id);
+      await interviewAddVideoPath(videoFilePath, audioFilePath, zoho_lead_id, question_id,null);
     } else {
       console.warn("⚠️ File path is missing in response.");
     }
@@ -62,7 +62,7 @@ export const downloadFile = (blob, filename) => {
 
 // Analyze Video
 let isAnalyzing = false; 
-export const analyzeVideo = async (videoFilePath, audioFilePath,onTranscription,zoho_lead_id,question_id) => {
+export const interviewAddVideoPath = async (videoFilePath, audioFilePath,zoho_lead_id,question_id,last_question_id) => {
   // if (!videoFilePath || !audioFilePath) {
   //   throw new Error("Video or audio path is missing.");
   if (isAnalyzing) {
@@ -74,13 +74,13 @@ export const analyzeVideo = async (videoFilePath, audioFilePath,onTranscription,
   console.log(question_id,"test question");
   const formData = new FormData();
   formData.append("video_path", videoFilePath);
-  formData.append("audio_path", audioFilePath); 
+  // formData.append("audio_path", audioFilePath); 
   formData.append("zoho_lead_id", btoa(zoho_lead_id));
   formData.append("question_id", btoa(question_id));
-
+  formData.append("last_question_id", btoa(last_question_id));
   try {
     const response = await axios.post(
-      `${process.env.REACT_APP_API_BASE_URL}interveiw-section/analyze-video/`,
+      `${process.env.REACT_APP_API_BASE_URL}interveiw-section/interview-add-video-path/`,
       formData,
       {
         headers: {
@@ -93,37 +93,39 @@ export const analyzeVideo = async (videoFilePath, audioFilePath,onTranscription,
 
 
 
-    if (response.data && response.data.transcription) {
-      console.log("New Transcription Data:", response.data);
-      // console.log("✅ Transcription Data:", response.data.sentiment);
+    // if (response.data && response.data.transcription) {
+    //   console.log("New Transcription Data:", response.data);
+    //   console.log("✅ Transcription Data:", response.data.sentiment);
+    //   console.log("✅ Transcription Data:", response.data.grammar_results);
 
 
-      // Check if onTranscription is being called correctly
-      // onTranscription(response.data.transcription);
-      const formData = new FormData();
-      formData.append("student_id", "123");
-      formData.append("zoho_lead_id", btoa(zoho_lead_id));
-      formData.append("question_id", btoa(question_id));
-      formData.append("answer_text", response.data.transcription);
-      formData.append("sentiment_score",response.data.sentiment.sentiment_score);
-      // formData.append("sentiment_score", "90");
-      // formData.append("sent_subj", "90");
-      formData.append("grammar_accuracy", response.data.grammar_results.grammar_accuracy);
+
+    //   // Check if onTranscription is being called correctly
+    //   // onTranscription(response.data.transcription);
+    //   const formData = new FormData();
+    //   // formData.append("student_id", "123");
+    //   formData.append("zoho_lead_id", btoa(zoho_lead_id));
+    //   formData.append("question_id", btoa(question_id));
+    //   formData.append("answer_text", response.data.transcription);
+    //   formData.append("sentiment_score",response.data.sentiment.sentiment_score);
+    //   formData.append("confidence_level",response.data.sentiment.confidence_level);
+    //   formData.append("sent_subj",response.data.sentiment.subjectivity);
+    //   formData.append("grammar_accuracy", response.data.grammar_results.grammar_accuracy);
 
 
-        const responseVideoStore  = await axios.post(
-          `${process.env.REACT_APP_API_BASE_URL}interveiw-section/student-interview-answers/`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
+    //     const responseVideoStore  = await axios.post(
+    //       `${process.env.REACT_APP_API_BASE_URL}interveiw-section/student-interview-answers/`,
+    //       formData,
+    //       {
+    //         headers: {
+    //           "Content-Type": "multipart/form-data",
+    //         },
+    //       }
+    //     );
 
-      console.log("📩 onTranscription Called with:", responseVideoStore);
-    } 
-    // console.log("Video analysis started successfully:", response.data);
+    //   console.log("📩 onTranscription Called with:", responseVideoStore);
+    // } 
+    console.log("Video analysis started successfully:", response.data);
   } catch (error) {
     console.error("Error analyzing video:", error);
   }finally {
