@@ -304,63 +304,64 @@ def analyze_video(request):
             return JsonResponse({"error": "Processing failed", "details": str(e)}, status=500)
 
     return JsonResponse({"error": "Invalid request"}, status=400)
-# @csrf_exempt
-# def student_interview_answers(request):
-#     # if request.method == 'POST':
-#     #     data = request.POST
-#     #     student_id = data.get('student_id')
-#     #     if not student_id:
-#     #         return JsonResponse({"error": "student id does not exists"}, status=500)
-#     # try:
-#     #     decoded_bytes = base64.b64decode(student_id)
-#     #     student_id = decoded_bytes.decode("utf-8")  # Convert bytes to string
-#     #     student = StudentInterviewAnswers.objects.get(zoho_lead_id=student_id)
-#     #     student_data = [
-#     #         {
-#     #             'first_name': student.first_name,
-#     #             'last_name': student.last_name,
-#     #             'email_id': student.email,
-#     #             'zoho_lead_id': student.zoho_lead_id,
-#     #             'mobile_no':student.phone
-#     #         }
-#     #     ]
 
-#     if request.method == "GET":
-#         # zoho_lead_id = request.POST.get('zoho_lead_id')
-#         # question_id = request.POST.get('question_id')
-#         # answer_text = request.POST.get('answer_text')
-#         # sentiment_score = request.POST.get('sentiment_score')
-#         # sent_subj = request.POST.get('sent_subj')
-#         # confidence_level = request.POST.get('confidence_level')
-#         # grammar_accuracy = request.POST.get('grammar_accuracy')
+@csrf_exempt
+def student_interview_answers(request):
+    # if request.method == 'POST':
+    #     data = request.POST
+    #     student_id = data.get('student_id')
+    #     if not student_id:
+    #         return JsonResponse({"error": "student id does not exists"}, status=500)
+    # try:
+    #     decoded_bytes = base64.b64decode(student_id)
+    #     student_id = decoded_bytes.decode("utf-8")  # Convert bytes to string
+    #     student = StudentInterviewAnswers.objects.get(zoho_lead_id=student_id)
+    #     student_data = [
+    #         {
+    #             'first_name': student.first_name,
+    #             'last_name': student.last_name,
+    #             'email_id': student.email,
+    #             'zoho_lead_id': student.zoho_lead_id,
+    #             'mobile_no':student.phone
+    #         }
+    #     ]
 
-#         try:
-#             zoho_lead_id = base64.b64decode(zoho_lead_id).decode("utf-8")
-#             question_id = base64.b64decode(question_id).decode("utf-8")
-#             data_to_save = {
-#                 'zoho_lead_id': zoho_lead_id,
-#                 'question_id': question_id,
-#                 'answer_text': answer_text,
-#                 'sentiment_score': sentiment_score,
-#                 'sent_subj':sent_subj,
-#                 'grammar_accuracy': grammar_accuracy,
-#                 'confidence_level': confidence_level,
-#                 'zoho_lead_id': zoho_lead_id
-#             }
+    if request.method == "GET":
+        zoho_lead_id = request.POST.get('zoho_lead_id')
+        question_id = request.POST.get('question_id')
+        answer_text = request.POST.get('answer_text')
+        sentiment_score = request.POST.get('sentiment_score')
+        sent_subj = request.POST.get('sent_subj')
+        confidence_level = request.POST.get('confidence_level')
+        grammar_accuracy = request.POST.get('grammar_accuracy')
+
+        try:
+            zoho_lead_id = base64.b64decode(zoho_lead_id).decode("utf-8")
+            question_id = base64.b64decode(question_id).decode("utf-8")
+            data_to_save = {
+                'zoho_lead_id': zoho_lead_id,
+                'question_id': question_id,
+                'answer_text': answer_text,
+                'sentiment_score': sentiment_score,
+                'sent_subj':sent_subj,
+                'grammar_accuracy': grammar_accuracy,
+                'confidence_level': confidence_level,
+                'zoho_lead_id': zoho_lead_id
+            }
             
 
-#             result = save_data(StudentInterviewAnswers, data_to_save,where={'zoho_lead_id': zoho_lead_id,'question_id': question_id})
-#             # print(r'result:', result)
+            result = save_data(StudentInterviewAnswers, data_to_save,where={'zoho_lead_id': zoho_lead_id,'question_id': question_id})
+            # print(r'result:', result)
 
-#             if result['status']:
-#                 return JsonResponse({"status": True, "message": "Student updated successfully!"}, status=200)
-#             else:
-#                 return JsonResponse({"status": False, "error": result.get('error', "Failed to update the student.")}, status=400)
+            if result['status']:
+                return JsonResponse({"status": True, "message": "Student updated successfully!"}, status=200)
+            else:
+                return JsonResponse({"status": False, "error": result.get('error', "Failed to update the student.")}, status=400)
 
-#         except Exception as e:
-#             return JsonResponse({"status": False, "error": str(e)}, status=500)
+        except Exception as e:
+            return JsonResponse({"status": False, "error": str(e)}, status=500)
 
-#     return JsonResponse({"status": False, "error": "Invalid request method"}, status=405)
+    return JsonResponse({"status": False, "error": "Invalid request method"}, status=405)
 # def analyze_video(zoho_lead_id):
 #     # if request.method == 'POST':
 #         # data = request.POST
