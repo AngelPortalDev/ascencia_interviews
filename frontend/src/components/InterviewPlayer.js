@@ -21,7 +21,6 @@ const InterviewPlayer = ({ onTranscription,zoho_lead_id,question_id,last_questio
   const navigate = useNavigate();
 
 
-  console.log("Inyterview Player",last_question_id)
 
   // useEffect(() => {
   //   const startNewRecording = () => {
@@ -109,12 +108,11 @@ const InterviewPlayer = ({ onTranscription,zoho_lead_id,question_id,last_questio
 
   useEffect(() => {
     if (videoFilePath && audioFilePath) {
-      // console.log(zoho_lead_id,"zoho_lead_id Interview Player");
-      // console.log(question_id,"question_id Interview player");
+      console.log("video path get Interview player",last_question_id);
 
       interviewAddVideoPath(videoFilePath, audioFilePath,zoho_lead_id,question_id,last_question_id);
     }
-  }, [videoFilePath, audioFilePath]);
+  }, [videoFilePath, audioFilePath,last_question_id]);
 
   useEffect(() => {
 
@@ -122,6 +120,7 @@ const InterviewPlayer = ({ onTranscription,zoho_lead_id,question_id,last_questio
       console.error('question_id is not defined');
       return;
     }
+  console.log("Inyterview Player start recording",last_question_id);
 
 
     const startNewRecording = () => {
@@ -135,13 +134,17 @@ const InterviewPlayer = ({ onTranscription,zoho_lead_id,question_id,last_questio
         setVideoFilePath,
         setAudioFilePath,
         zoho_lead_id,
-        question_id
+        question_id,
+        last_question_id
       );
     };
   
     startNewRecording();
 
     const stopTimeout = setTimeout(() => {
+
+        console.log("Inyterview Player stop recording",last_question_id);
+      
       stopRecording(
         videoRef,
         mediaRecorderRef,
@@ -152,12 +155,13 @@ const InterviewPlayer = ({ onTranscription,zoho_lead_id,question_id,last_questio
         setAudioFilePath,
         zoho_lead_id,
         question_id,
-        startNewRecording 
+        startNewRecording,
+        last_question_id
       );
     }, 60000); // 10 seconds per question
   
     return () => clearTimeout(stopTimeout);
-  }, [question_id]); 
+  }, [question_id,last_question_id]); 
   
 
   const handleCloseModal = () => {

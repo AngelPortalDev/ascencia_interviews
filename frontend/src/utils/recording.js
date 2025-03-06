@@ -1,7 +1,7 @@
 // utils/recording.js
 import {uploadFile,downloadFile} from './fileUpload.js';
 
-export const startRecording = async (videoRef, mediaRecorderRef, audioRecorderRef, recordedChunksRef, recordedAudioChunksRef, setIsRecording, setVideoFilePath, setAudioFilePath,zoho_lead_id,question_id) => {
+export const startRecording = async (videoRef, mediaRecorderRef, audioRecorderRef, recordedChunksRef, recordedAudioChunksRef, setIsRecording, setVideoFilePath, setAudioFilePath,zoho_lead_id,question_id,last_question_id) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
@@ -39,7 +39,7 @@ export const startRecording = async (videoRef, mediaRecorderRef, audioRecorderRe
     }
   };
   
-  export const stopRecording = (videoRef, mediaRecorderRef, audioRecorderRef, recordedChunksRef, recordedAudioChunksRef, setVideoFilePath, setAudioFilePath,zoho_lead_id,question_id,onRecordingComplete ) => {
+  export const stopRecording = (videoRef, mediaRecorderRef, audioRecorderRef, recordedChunksRef, recordedAudioChunksRef, setVideoFilePath, setAudioFilePath,zoho_lead_id,question_id,onRecordingComplete,last_question_id ) => {
     // Stop video and audio recording, process the files, and upload them
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
@@ -47,7 +47,10 @@ export const startRecording = async (videoRef, mediaRecorderRef, audioRecorderRe
         const videoBlob = new Blob(recordedChunksRef.current, { type: "video/webm" });
         const fileNameVideo = `interview_video_${zoho_lead_id}_${question_id}_${new Date().toISOString().replace(/:/g, "-").split(".")[0]}.webm`;
         downloadFile(videoBlob, fileNameVideo);
-        uploadFile(videoBlob, fileNameVideo,zoho_lead_id,question_id).then(setVideoFilePath);
+
+        console.log("stopRecording",last_question_id);
+
+        uploadFile(videoBlob, fileNameVideo,zoho_lead_id,question_id,last_question_id).then(setVideoFilePath);
         recordedChunksRef.current = [];
         };
     }
@@ -69,21 +72,21 @@ export const startRecording = async (videoRef, mediaRecorderRef, audioRecorderRe
     // videoRef.current.srcObject = null;
 
 // ✅ Stop all media tracks before starting new recording
-if (videoRef.current && videoRef.current.srcObject) {
-  const tracks = videoRef.current.srcObject.getTracks();
-    tracks.forEach((track) => {
-      track.stop();
-    });
-    videoRef.current.srcObject = null;
-}
-    setTimeout(() => {
-      // onRecordingComplete(); 
-      if (typeof onRecordingComplete === 'function') {
-        onRecordingComplete();
-      } else {
-        console.warn("onRecordingComplete is not a function.");
-      }
-    }, 500);
+    if (videoRef.current && videoRef.current.srcObject) {
+      const tracks = videoRef.current.srcObject.getTracks();
+        tracks.forEach((track) => {
+          track.stop();
+        });
+        videoRef.current.srcObject = null;
+    }
+        setTimeout(() => {
+          // onRecordingComplete(); 
+          if (typeof onRecordingComplete === 'function') {
+            onRecordingComplete();
+          } else {
+            console.warn("onRecordingComplete is not a function.");
+          }
+        }, 500);
   };
 
 

@@ -7,16 +7,16 @@ import axios from "axios";
 
 let isUploading = false;
 
-export const uploadFile = async (blob, filename,zoho_lead_id,question_id) => {
-
+export const uploadFile = async (blob, filename,zoho_lead_id,question_id,last_question_id) => {
+  console.log("last_question_id test upload file" ,last_question_id);
   if (isUploading) return;  //  Duplicate Execution
   isUploading = true;
 
   const formData = new FormData();
   formData.append("file", blob, filename);
   formData.append("zoho_lead_id",btoa(zoho_lead_id));
-  console.log("Uplaod File Student Id",zoho_lead_id); 
-  console.log("Uplaod File question_id",question_id); 
+  // console.log("Uplaod File Student Id",zoho_lead_id); 
+  // console.log("Uplaod File question_id",question_id); 
 
   try {
     const response = await axios.post(
@@ -36,7 +36,7 @@ export const uploadFile = async (blob, filename,zoho_lead_id,question_id) => {
       console.log("Video uploaded successfully. File Path:", videoFilePath);
 
       // Call analyzeVideo function after upload is complete
-      await interviewAddVideoPath(videoFilePath, audioFilePath, zoho_lead_id, question_id,null);
+      await interviewAddVideoPath(videoFilePath, audioFilePath, zoho_lead_id, question_id,last_question_id);
     } else {
       console.warn("⚠️ File path is missing in response.");
     }
@@ -89,6 +89,7 @@ export const interviewAddVideoPath = async (videoFilePath, audioFilePath,zoho_le
       }
     );
 
+     console.log("Video path upload started successfully:", response.data);
 
 
 

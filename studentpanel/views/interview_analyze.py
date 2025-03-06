@@ -63,6 +63,7 @@ FFMPEG_PATH = r"C:\ffmpeg-2025-02-20-git-bc1a3bfd2c-full_build\bin\ffmpeg.exe"
 
 # ✅ Extract & Enhance Audio
 def extract_audio(video_path):
+    print(video_path)
     base_name = os.path.splitext(video_path)[0]
     audio_path = f"{base_name}.wav"
     enhanced_audio_path = f"{base_name}_enhanced.wav"
@@ -230,6 +231,7 @@ def interview_add_video_path(request):
         try:
             zoho_lead_id = base64.b64decode(zoho_lead_id).decode("utf-8")
             question_id = base64.b64decode(question_id).decode("utf-8")
+            last_question_id = base64.b64decode(last_question_id).decode("utf-8")
             data_to_save = {
                 'video_path': video_path,
                 'question_id': question_id,
@@ -237,7 +239,7 @@ def interview_add_video_path(request):
             }
             
             result = save_data(StudentInterviewAnswers, data_to_save)
-
+            async_task(analyze_video(video_path,question_id,zoho_lead_id,last_question_id))
             # print(r'result:', result)
 
             if result['status']:
@@ -250,118 +252,38 @@ def interview_add_video_path(request):
 
     return JsonResponse({"status": False, "error": "Invalid request method"}, status=405)
 
-@csrf_exempt
-def analyze_video(request):
-    if request.method == 'POST':
-        data = request.POST
-        video_path = data.get('video_path')
-        # audio_path = data.get('audio_path')
-        question_id = data.get('question_id')
-        zoho_lead_id = data.get('zoho_lead_id')
-        last_question_id=data.get('last_question_id')
-        print("data",data)
-        student_questions = {}  # Dictionary to store last question per student
 
-        try:
-            question_id = base64.b64decode(question_id).decode("utf-8")
-            zoho_lead_id = base64.b64decode(zoho_lead_id).decode("utf-8")
-            student_questions[zoho_lead_id] = question_id
-            # Get the last question for the student
-            last_question_id = student_questions.get(zoho_lead_id)
-            print("Last Question ID:", last_question_id)
-        except Exception as e:
-            return JsonResponse({"error": f"Failed to decode Base64: {str(e)}"}, status=400)
-        # Extract audio
-        extracted_audio = extract_audio(video_path)
-        if not extracted_audio:
-            return JsonResponse({"error": "Audio extraction failed"}, status=500)
+def student_interview_answers(zoho_lead_id, question_id, answer_text, sentiment_score, sent_subj, confidence_level, grammar_accuracy, last_question_id):
+    try:
+        data_to_save = {
+            "zoho_lead_id": zoho_lead_id,
+            "question_id": question_id,
+            "answer_text": answer_text,
+            "sentiment_score": sentiment_score,
+            "sent_subj": sent_subj,
+            "grammar_accuracy": grammar_accuracy,
+            "confidence_level": confidence_level,
+        }
 
-        try:
-            transcribed_text = transcribe_audio(extracted_audio)
-            sentiment_analysis = analyze_sentiment(transcribed_text)
-            grammar_results = check_grammar(transcribed_text)
+        print("Saving data:", data_to_save)
 
-            # confidence_level = calculate_confidence_level(extracted_audio)
-            print(question_id)
-            print(last_question_id)
-            if last_question_id == question_id :
-                # async_task("studentpanel.views.interview_process.merge_videos",zoho_lead_id)
-                # async_task("studentpanel.views.interview_process.check_answers",zoho_lead_id)
-                async_task(check_answers(zoho_lead_id))
-                async_task(merge_videos(zoho_lead_id))
+        result = save_data(
+            StudentInterviewAnswers,
+            data_to_save,
+            where={"zoho_lead_id": zoho_lead_id, "question_id": question_id},
+        )
 
-            return JsonResponse({
-                "transcription": transcribed_text,
-                "sentiment": sentiment_analysis,
-                "grammar_results": grammar_results,
-                "status": "success",
-                "question_id": question_id,
-                "zoho_lead_id": zoho_lead_id,
-                # "confidence_level": confidence_level,
-            })
-            
-        except Exception as e:
-            return JsonResponse({"error": "Processing failed", "details": str(e)}, status=500)
+        if result["status"]:
+            return {"status": True, "message": "Student updated successfully!"}
+        else:
+            return {"status": False, "error": result.get("error", "Failed to update the student.")}
 
-    return JsonResponse({"error": "Invalid request"}, status=400)
+    except Exception as e:
+        return {"status": False, "error": str(e)}
 
-@csrf_exempt
-def student_interview_answers(request):
-    # if request.method == 'POST':
-    #     data = request.POST
-    #     student_id = data.get('student_id')
-    #     if not student_id:
-    #         return JsonResponse({"error": "student id does not exists"}, status=500)
-    # try:
-    #     decoded_bytes = base64.b64decode(student_id)
-    #     student_id = decoded_bytes.decode("utf-8")  # Convert bytes to string
-    #     student = StudentInterviewAnswers.objects.get(zoho_lead_id=student_id)
-    #     student_data = [
-    #         {
-    #             'first_name': student.first_name,
-    #             'last_name': student.last_name,
-    #             'email_id': student.email,
-    #             'zoho_lead_id': student.zoho_lead_id,
-    #             'mobile_no':student.phone
-    #         }
-    #     ]
 
-    if request.method == "GET":
-        zoho_lead_id = request.POST.get('zoho_lead_id')
-        question_id = request.POST.get('question_id')
-        answer_text = request.POST.get('answer_text')
-        sentiment_score = request.POST.get('sentiment_score')
-        sent_subj = request.POST.get('sent_subj')
-        confidence_level = request.POST.get('confidence_level')
-        grammar_accuracy = request.POST.get('grammar_accuracy')
-
-        try:
-            zoho_lead_id = base64.b64decode(zoho_lead_id).decode("utf-8")
-            question_id = base64.b64decode(question_id).decode("utf-8")
-            data_to_save = {
-                'zoho_lead_id': zoho_lead_id,
-                'question_id': question_id,
-                'answer_text': answer_text,
-                'sentiment_score': sentiment_score,
-                'sent_subj':sent_subj,
-                'grammar_accuracy': grammar_accuracy,
-                'confidence_level': confidence_level,
-                'zoho_lead_id': zoho_lead_id
-            }
-            
-
-            result = save_data(StudentInterviewAnswers, data_to_save,where={'zoho_lead_id': zoho_lead_id,'question_id': question_id})
-            # print(r'result:', result)
-
-            if result['status']:
-                return JsonResponse({"status": True, "message": "Student updated successfully!"}, status=200)
-            else:
-                return JsonResponse({"status": False, "error": result.get('error', "Failed to update the student.")}, status=400)
-
-        except Exception as e:
-            return JsonResponse({"status": False, "error": str(e)}, status=500)
-
-    return JsonResponse({"status": False, "error": "Invalid request method"}, status=405)
+# print(async_task(analyze_video("C:\\Users\\angel\\Ascencia_Interviews\\ascencia_interviews\\uploads\\interview_videos\\5204268000112707003\\interview_video_5204268000112707003_3_2025-03-05T07-29-27.webm", '1', '5204268000112707003', '5')))
+    # return JsonResponse({"status": False, "error": "Invalid request method"}, status=405)
 # def analyze_video(zoho_lead_id):
 #     # if request.method == 'POST':
 #         # data = request.POST
@@ -424,7 +346,7 @@ def get_sentence_embedding(sentence):
         outputs = model(**inputs)
     # Use the [CLS] token embedding
     return outputs.last_hidden_state[:, 0, :].numpy()
-@csrf_exempt
+# @csrf_exempt
 def check_answers(zoho_lead_id):
     # start_time = time.time()  # Start timing
     # data = request.POST
@@ -546,6 +468,14 @@ def check_answers(zoho_lead_id):
                 zoho_lead_id = student_answer.zoho_lead_id
                 question_id = student_answer.question_id
                 answer = student_answer.answer_text.strip()
+
+
+                if answer:
+                    answer = answer.strip()
+                    # Proceed with processing the answer
+                else:
+                    logger.warning(f"Answer text is None or empty for zoho_lead_id: {zoho_lead_id}, question_id: {question_id}")
+                    continue  # Skip processing this answer
 
                 if not zoho_lead_id or not question_id or not answer:
                     continue
@@ -892,3 +822,102 @@ def delete_video(request, zoho_lead_id):
         except Students.DoesNotExist:
             return JsonResponse({"success": False, "message": "Student not found!"})
     return JsonResponse({"success": False, "message": "Invalid request!"})
+
+
+@csrf_exempt
+def analyze_video(video_path,question_id,zoho_lead_id,last_question_id):
+    # if request.method == 'GET':
+    #     data = request.POST
+    #     video_path = data.get('video_path')
+    #     # audio_path = data.get('audio_path')
+    #     question_id = data.get('question_id')
+    #     zoho_lead_id = data.get('zoho_lead_id')
+    #     last_question_id=data.get('last_question_id')
+    #     print("data",data)
+        student_questions = {}  # Dictionary to store last question per student
+        # print("testdsfsd")
+        # try:
+        #     # question_id = base64.b64decode(question_id).decode("utf-8")
+        #     # zoho_lead_id = base64.b64decode(zoho_lead_id).decode("utf-8")
+        #     # last_question_id = base64.b64decode(last_question_id).decode("utf-8")
+
+        #     # print(question_id)
+        #     # print(video_path)
+
+        # except Exception as e:
+        #     return JsonResponse({"error": f"Failed to decode Base64: {str(e)}"}, status=400)
+        # Extract audio
+        extracted_audio = extract_audio(video_path)
+        if not extracted_audio:
+            return JsonResponse({"error": "Audio extraction failed"}, status=500)
+
+        try:
+            transcribed_text = transcribe_audio(extracted_audio)
+            sentiment_analysis = analyze_sentiment(transcribed_text)
+            grammar_results = check_grammar(transcribed_text)
+
+            # print(grammar_results)
+            # print(sentiment_analysis)
+            # subjectivity = sentiment_analysis["subjectivity"]
+            # print(subjectivity)
+            # print(zoho_lead_id)
+            # print(question_id)
+            # print(transcribed_text)
+            # print(sentiment_analysis['sentiment_score'])
+            # print(sentiment_analysis['subjectivity'])
+            # print(sentiment_analysis['confidence_level'])
+            # print(grammar_results['grammar_accuracy'])
+            # print(last_question_id)
+
+            try:
+                check_answer_add = student_interview_answers(
+                    zoho_lead_id,
+                    question_id,
+                    transcribed_text,
+                    sentiment_analysis['sentiment_score'],
+                    sentiment_analysis['subjectivity'],
+                    sentiment_analysis['confidence_level'],
+                    grammar_results['grammar_accuracy'],
+                    last_question_id
+                )
+                print("Function executed successfully:", check_answer_add)
+            except Exception as e:
+                print("Error in function:", str(e))
+
+            # async_task(check_answers("5204268000112707003"))
+            print(r"test sdfdsfs:",last_question_id)
+            print(r"test sdfdsfs asd:",zoho_lead_id)
+            print(r"test sdfdsfs asd:",question_id)
+
+           
+            if int(last_question_id) == int(question_id):
+                async_task(merge_videos(zoho_lead_id))
+                async_task(check_answers(zoho_lead_id))
+                # async_task("studentpanel.views.interview_process.merge_videos",zoho_lead_id)
+                # async_task("studentpanel.views.interview_analyze.check_answers",zoho_lead_id)
+                # print(async_task(check_answers("5204268000112707003")))
+                # # async_task("studentpanel.views.interview_analyze.check_answers", zoho_lead_id)
+                # # async_task("studentpanel.views.interview_analyze.merge_videos", "")
+                # async_task("studentpanel.views.interview_analyze.check_answers", zoho_lead_id, sync=True)
+            else:
+
+                print("not asynk")
+
+
+                    #
+            return JsonResponse({
+                "transcription": transcribed_text,
+                "sentiment": sentiment_analysis,
+                "grammar_results": grammar_results,
+                "status": "success",
+                "question_id": question_id,
+                "zoho_lead_id": zoho_lead_id,
+                # "confidence_level": confidence_level,
+            })
+            
+        except Exception as e:
+            return JsonResponse({"error": "Processing failed", "details": str(e)}, status=500)
+
+    # return JsonResponse({"error": "Invalid request"}, status=400)
+
+

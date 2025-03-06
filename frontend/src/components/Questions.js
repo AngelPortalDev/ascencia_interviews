@@ -48,7 +48,7 @@ const Questions = () => {
   const navigate = useNavigate();
   const { submitExam } = usePermission();
   const last_question_id = getQuestions.length > 0 ? getQuestions[getQuestions.length - 1].encoded_id : null;
-  console.log("LastQuestion id", last_question_id);
+  // console.log("LastQuestion id", last_question_id);
 
   // ***********  Fetch QUestions ***********
   const fetchQuestions = async () => {
@@ -81,6 +81,9 @@ const Questions = () => {
       const firstQuestion = getQuestions[0];
       setActiveQuestionId(firstQuestion.encoded_id); 
       setIsFirstQuestionSet(true); 
+
+      console.log("Question start rrecordign LastQuestion id use effect", last_question_id);
+
       
       // Start the recording for the first question
       startRecording(
@@ -94,10 +97,11 @@ const Questions = () => {
         setAudioFilePath,
         // student_id,
         zoho_lead_id,
-        firstQuestion.encoded_id 
+        firstQuestion.encoded_id,
+        last_question_id
       );
     }
-  }, [getQuestions, isFirstQuestionSet]);
+  }, [getQuestions, isFirstQuestionSet,last_question_id]);
 
    // ************* Handle Countdown *************
   useEffect(() => {
@@ -109,7 +113,7 @@ const Questions = () => {
       return () => clearInterval(timer);
     }else{
       // setIsNagigationEnabled(true);
-      if(currentQuestionIndex < getQuestions.length-1){
+      if(currentQuestionIndex  < getQuestions.length-1){
         setCurrentQuestionIndex((prev)=>prev+1);
         setActiveQuestionId(getQuestions[currentQuestionIndex + 1]?.encoded_id); 
         setCountdown(60);
@@ -118,7 +122,7 @@ const Questions = () => {
         handleSubmit();
       }
     }
-  }, [countdown,getQuestions, currentQuestionIndex]);
+  }, [countdown,getQuestions, currentQuestionIndex,last_question_id]);
 
   const formatTime = (time) => {
     const minutes = Math.floor(time / 60);
@@ -136,7 +140,7 @@ const Questions = () => {
 
   // ************ User Spent More Than 30 seconds then navigation enabled ****************
   useEffect(() => {
-    if (timeSpent >= 30) {
+    if (timeSpent >= 10) {
       setIsNavigationEnabled(true);
     } else {
       setIsNavigationEnabled(false);
@@ -156,7 +160,7 @@ const Questions = () => {
       setActiveQuestionId(newQuestionId);
     }
     
- 
+    console.log("last_question_id handle question chnage",last_question_id);
   
     // ************* Stop current recording and start a new one ************
     stopRecording(
@@ -169,7 +173,7 @@ const Questions = () => {
       setAudioFilePath,
       // student_id,
       zoho_lead_id,
-      activeQuestionId, 
+      activeQuestionId,
       () => {
 
         try{
@@ -184,29 +188,34 @@ const Questions = () => {
             setAudioFilePath,
             // student_id,
             zoho_lead_id,
-            newQuestionId
+            newQuestionId,
+            last_question_id
           );
         }catch(err){
           console.error("Failed to start recording:", err);
         }
 
        
-      }
+      },
+      last_question_id
     );
        // ******** On click Arrow icon Reset countdown ************
        setCountdown(60); 
-  }, [activeQuestionId, getQuestions,zoho_lead_id]);
+  }, [activeQuestionId, getQuestions,zoho_lead_id,last_question_id]);
   
 
   // Prevent unnecessary re-renders of InterviewPlayer
   const interviewPlayerMemo = useMemo(() => (
+
       <InterviewPlayer 
       onTranscription={setTranscribedText} 
       zoho_lead_id={zoho_lead_id} 
       question_id={activeQuestionId}
       last_question_id={last_question_id}
     />    
-  ), [activeQuestionId,zoho_lead_id]);
+    
+  ), [activeQuestionId,zoho_lead_id,last_question_id]);
+  console.log("Question interview player LastQuestion id", last_question_id);
 
   const handleTimeSpent = () => {
     // Increment time spent on current question
@@ -234,17 +243,63 @@ const Questions = () => {
   };
 
   // ************ Interview Submit Go to Home Page ****************************
-  const handleSubmit = () => {
+  const handleSubmit = useCallback((swiper) => {
     // e.preventDefault();
     // Stop media before navigating
-    stopMediaStream()
+
+    const newQuestionId = getQuestions[swiper.activeIndex]?.encoded_id;
+    if (newQuestionId !== activeQuestionId) {
+      setActiveQuestionId(newQuestionId);
+    }
+    
+ 
+    console.log("Question submit player LastQuestion id", last_question_id);
+    // ************* Stop current recording and start a new one ************
+    stopRecording(
+      videoRef,
+      mediaRecorderRef,
+      audioRecorderRef,
+      recordedChunksRef,
+      recordedAudioChunksRef,
+      setVideoFilePath,
+      setAudioFilePath,
+      // student_id,
+      zoho_lead_id,
+      activeQuestionId, 
+      () => {
+
+        try{
+          startRecording(
+            videoRef,
+            mediaRecorderRef,
+            audioRecorderRef,
+            recordedChunksRef,
+            recordedAudioChunksRef,
+            setIsRecording,
+            setVideoFilePath,
+            setAudioFilePath,
+            // student_id,
+            zoho_lead_id,
+            newQuestionId,
+            last_question_id,
+          );
+        }catch(err){
+          console.error("Failed to start recording:", err);
+        }
+
+       
+      },
+      last_question_id
+    );
+
+    // stopMediaStream()
     submitExam(); 
     toast.success("Interview Submitted...", {
       onClose: () => navigate("/"),
       autoClose: 1500,
       hideProgressBar: true,
     });
-  };
+  });
 
 
   const fetchStudentData = async (zoho_lead_id) => {
