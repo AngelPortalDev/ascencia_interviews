@@ -1,6 +1,19 @@
-import React from 'react'
+import React, { useEffect,useRef } from 'react'
 
 const NotFound = () => {
+  const videoRef = useRef(null);
+
+  const stopMediaStream = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const tracks = videoRef.current.srcObject.getTracks();
+      tracks.forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
+      console.log("🎤📷 Media stream stopped immediately.");
+    }
+  };
+  useEffect(()=>{
+    stopMediaStream();
+  },[])
   return (
     <div className="not-found-container">
       <div className="not-found-content">

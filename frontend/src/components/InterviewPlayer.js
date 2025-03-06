@@ -112,15 +112,15 @@ const InterviewPlayer = ({ onTranscription,zoho_lead_id,question_id,last_questio
 
       interviewAddVideoPath(videoFilePath, audioFilePath,zoho_lead_id,question_id,last_question_id);
     }
-  }, [videoFilePath, audioFilePath,last_question_id]);
+  }, [videoFilePath, audioFilePath,last_question_id,zoho_lead_id,question_id]);
 
   useEffect(() => {
 
-    if (!question_id) {
-      console.error('question_id is not defined');
-      return;
-    }
-  console.log("Inyterview Player start recording",last_question_id);
+  //   if (!question_id) {
+  //     console.error('question_id is not defined');
+  //     return;
+  //   }
+  // console.log("Inyterview Player start recording",last_question_id);
 
 
     const startNewRecording = () => {
@@ -143,7 +143,7 @@ const InterviewPlayer = ({ onTranscription,zoho_lead_id,question_id,last_questio
 
     const stopTimeout = setTimeout(() => {
 
-        console.log("Inyterview Player stop recording",last_question_id);
+        // console.log("Inyterview Player stop recording",last_question_id);
       
       stopRecording(
         videoRef,
@@ -161,7 +161,7 @@ const InterviewPlayer = ({ onTranscription,zoho_lead_id,question_id,last_questio
     }, 60000); // 10 seconds per question
   
     return () => clearTimeout(stopTimeout);
-  }, [question_id,last_question_id]); 
+  }, [question_id,last_question_id,zoho_lead_id]); 
   
 
   const handleCloseModal = () => {

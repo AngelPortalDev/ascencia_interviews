@@ -2,6 +2,7 @@ import { useState,useEffect } from "react";
 // import { Dialog, DialogPanel } from "@headlessui/react";
 // import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { NavLink,useParams,useNavigate} from "react-router-dom";
+import Interview from '../assest/Interview.png';
 
 import axios from "axios";
 
@@ -29,27 +30,66 @@ const Home = () => {
 //   }, []);
   
   const { encoded_zoho_lead_id,encoded_interview_link_send_count } = useParams(); // Get encoded student_id from URL
-  console.log("encoded_zoho_lead_id for Home page: " + encoded_zoho_lead_id);
+  // console.log("encoded_zoho_lead_id for Home page: " + encoded_zoho_lead_id);
+
+  // const InterviewLinkStatus = async (encoded_zoho_lead_id) => {
+  //   if (!encoded_zoho_lead_id) {
+  //       // console.error("No encoded_zoho_lead_id provided.",encoded_zoho_lead_id);
+  //       return;
+  //   }
+  //   const formData = new FormData();
+  //   formData.append("zoho_lead_id", encoded_zoho_lead_id);
+  //   // console.log("Append zoh leader",encoded_zoho_lead_id)
+  //   try {
+  //       const response = await axios.post(
+  //           `${process.env.REACT_APP_API_BASE_URL}interveiw-section/interview-attend-status/`,
+  //           formData
+  //       );
+  //       console.log("Response ",response)
+  //       if (response.data.status === true) {
+  //         console.log("Starting exam...");
+  //         // Optionally, navigate to the exam page here
+  //         navigate('/exam-page');
+  //     } else {
+  //         console.log("Response for Video:", response);
+  //     }
+  //   } catch (error) {
+  //     if (error.response && error.response.status === 410) {
+  //       console.log("error.response.status",error.response.status);
+  //       console.log("Interview link has expired. Please contact the administrator.");
+  //       // navigate("/expired");
+  //   } else {
+  //       console.log("An error occurred:", error);
+  //       alert("An error occurred while checking the interview link status.");
+  //   }
+  //   }
+  // }
 
   const InterviewLinkStatus = async (encoded_zoho_lead_id) => {
     if (!encoded_zoho_lead_id) {
-        console.error("No encoded_zoho_lead_id provided.");
+        // console.error("No encoded_zoho_lead_id provided.",encoded_zoho_lead_id);
         return;
     }
     const formData = new FormData();
     formData.append("zoho_lead_id", encoded_zoho_lead_id);
+    // console.log("Append zoh leader",encoded_zoho_lead_id)
     try {
         const response = await axios.post(
             `${process.env.REACT_APP_API_BASE_URL}interveiw-section/interview-attend-status/`,
             formData
         );
         if (response.status === 200) {
-            console.log("Starting exam...");
-        } else {
-            console.log("Response for Video:", response);
-        }
+          console.log("Starting exam...");
+        } 
     } catch (error) {
-      console.log("Response for Video:");
+      if (error.response && error.response.status === 410) {
+        console.log("error.response.status",error.response.status);
+        console.log("Interview link has expired. Please contact the administrator.");
+        navigate("/expired");
+    } else {
+        console.log("An error occurred:", error);
+        alert("An error occurred while checking the interview link status.");
+    }
     }
   }
 
@@ -170,15 +210,9 @@ const Home = () => {
             className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"
           />
         </div>
-        <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
+        <div className="mx-auto max-w-2xl">
+        <img src={Interview} alt=""/>
           <div className="hidden sm:mb-8 sm:flex sm:justify-center">
-            <div className="relative rounded-full px-3 py-1 text-sm/6 text-gray-600 ring-1 ring-gray-900/10 hover:ring-gray-900/20">
-            New features are coming soon to help you ace your job interviews.{" "}
-              <a href="#" className="font-semibold text-indigo-600">
-                <span aria-hidden="true" className="absolute inset-0" />
-                Read more <span aria-hidden="true">&rarr;</span>
-              </a>
-            </div>
           </div>
           <div className="text-center">
             <h1 className="text-balance text-5xl font-semibold tracking-tight text-gray-900 sm:text-7xl">
@@ -197,9 +231,9 @@ const Home = () => {
               >
                 Get started
               </NavLink>
-              <a href="#" className="text-sm/6 font-semibold text-gray-900">
+              {/* <a href="#" className="text-sm/6 font-semibold text-gray-900">
                 Learn more <span aria-hidden="true">→</span>
-              </a>
+              </a> */}
             </div>
           </div>
         </div>

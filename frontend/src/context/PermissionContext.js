@@ -19,7 +19,7 @@ export const PermissionProvider = ({children}) =>{
     )
 
     const[isExamSubmitted,setIsExamSubmitted] = useState(
-        localStorage.getItem("InterviewSubitted") === "true");
+        localStorage.getItem("interviewSubmitted") === "true");
 
 
     const acceptTerms = (zoho_lead_id)=>{
@@ -34,7 +34,7 @@ export const PermissionProvider = ({children}) =>{
 
     const submitExam  = ()=>{
         setIsExamSubmitted(true);
-        localStorage.setItem("InterviewSubitted", "true");
+        localStorage.setItem("interviewSubmitted", "true");
         sessionStorage.setItem("isReload", "true");
     }
 
