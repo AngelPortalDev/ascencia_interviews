@@ -17,10 +17,10 @@ class StudentInterviewLink(models.Model):
     expires_at = models.DateTimeField(default=default_expiry, help_text="Expiration timestamp (48 hours after creation)")
     interview_attend = models.BooleanField(default=False, help_text="Indicates if the student attended the interview")
     is_expired = models.BooleanField(default=False, help_text="Marks whether the link is expired")
-    total_sentiment_score = models.TextField(null=True)
-    total_answer_scores = models.TextField(null=True)
-    total_grammer_scores = models.TextField(null=True)
-    overall_score=models.TextField(null=True)
+    total_sentiment_score = models.DecimalField(max_digits=10, decimal_places=5, null=True, blank=True)
+    total_answer_scores = models.DecimalField(max_digits=10, decimal_places=5, null=True, blank=True)
+    total_grammar_scores = models.DecimalField(max_digits=10, decimal_places=5, null=True, blank=True)
+    overall_score = models.DecimalField(max_digits=10, decimal_places=5, null=True, blank=True)
     interview_status = models.CharField(
         max_length=10, 
         choices=[(tag.value, tag.value) for tag in InterviewResult], 

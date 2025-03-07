@@ -483,14 +483,14 @@ def check_answers(zoho_lead_id):
                 continue
 
           
-        # ✅ Prepare final results
+        # # ✅ Prepare final results
         for zoho_lead_id in student_scores.keys():
             total_questions = student_question_count[zoho_lead_id]
             total_score = student_scores[zoho_lead_id]
 
-            answer_score_percentage = (100 * total_score) / (total_questions * 10) if total_questions else 0
-            sentiment_score_percentage = (100 * student_sentiment[zoho_lead_id]) / (total_questions * 100) if total_questions else 0
-            grammar_accuracy_percentage = (100 * student_grammar[zoho_lead_id]) / (total_questions * 100) if total_questions else 0
+            answer_score_percentage = 100 * (total_score) / (total_questions * 10) if total_questions else 0
+            sentiment_score_percentage = 100 * (student_sentiment[zoho_lead_id]) / (total_questions * 100) if total_questions else 0
+            grammar_accuracy_percentage = 100 * (student_grammar[zoho_lead_id]) / (total_questions * 100) if total_questions else 0
 
             final_results.append({
                 "zoho_lead_id": zoho_lead_id,
@@ -501,23 +501,27 @@ def check_answers(zoho_lead_id):
                 "grammar_accuracy_percentage": grammar_accuracy_percentage
             })
 
-            overall_score = (answer_score_percentage+sentiment_score_percentage+grammar_accuracy_percentage * 100) / 300
-
+            overall_score = (answer_score_percentage+sentiment_score_percentage+grammar_accuracy_percentage) * 100 / 300
             if grammar_accuracy_percentage > 20:
                 status = "Pass" if overall_score >= 35 else "Fail"
             else:
                 status = "Fail"  # Default Fail if grammar score <= 20
 
             data_to_save = {
-                # 'total_answer_score': Decimal(answer_score_percentage),
-                # 'total_sentiment_score': Decimal(sentiment_score_percentage),
-                # 'total_grammer_scores': Decimal(grammar_accuracy_percentage),
-                'overall_score': Decimal(overall_score),
-                'interview_status':status
+                "overall_score": Decimal(overall_score),  # Ensure correct type
+                "total_answer_scores":Decimal(answer_score_percentage),
+                "total_grammar_scores":Decimal(grammar_accuracy_percentage),
+                "total_sentiment_score":Decimal(sentiment_score_percentage),
+                "interview_status":status
             }
             updated_count = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).update(**data_to_save)
-            if(updated_count > 1):
-                 return {"status": True, "message": "Student updated successfully!"}
+
+            # print(data_to_save)
+            # updated_count = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).update(**data_to_save)
+            # updated_count = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).update(**data_to_save)
+            # print(updated_count)
+            if(updated_count == 1):
+                 return {"status": True, "message": "Student Interview Answer updated successfully!"}
             logger.info(f"Final Results: {final_results}")
             # logger.info(f"Saved Data: {result}")
 
