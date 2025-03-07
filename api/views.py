@@ -5,7 +5,7 @@ import requests
 import tempfile
 import base64
 import mimetypes
-import pytesseract
+# import pytesseract
 import cv2
 import re
 import numpy as np
@@ -107,22 +107,22 @@ def preprocess_image(image):
     return threshold
 
 # Extract text using optimized OCR settings
-def extract_text_from_image(image):
-    processed_image = preprocess_image(image)
-    text = pytesseract.image_to_string(processed_image, config='--psm 6 --oem 3')
-    return text.strip()
+# def extract_text_from_image(image):
+#     processed_image = preprocess_image(image)
+#     text = pytesseract.image_to_string(processed_image, config='--psm 6 --oem 3')
+#     return text.strip()
 
-# Convert PDF pages to images & extract text in parallel
-def extract_text_from_pdf(pdf_path):
-    images = convert_from_path(pdf_path, dpi=300)
-    extracted_text = ""
+# # Convert PDF pages to images & extract text in parallel
+# def extract_text_from_pdf(pdf_path):
+#     images = convert_from_path(pdf_path, dpi=300)
+#     extracted_text = ""
 
-    # Use ThreadPoolExecutor for parallel processing
-    with ThreadPoolExecutor() as executor:
-        texts = list(executor.map(extract_text_from_image, images))
-        extracted_text = " ".join(texts).strip()
+#     # Use ThreadPoolExecutor for parallel processing
+#     with ThreadPoolExecutor() as executor:
+#         texts = list(executor.map(extract_text_from_image, images))
+#         extracted_text = " ".join(texts).strip()
 
-    return extracted_text if extracted_text else ""
+#     return extracted_text if extracted_text else ""
 
 # Extract text from an image file (PNG, JPG, JPEG)
 def extract_text_from_image_file(image_path):
