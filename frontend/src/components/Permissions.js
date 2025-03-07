@@ -208,7 +208,7 @@ const Permissions = () => {
                   onClick={handleSubmit}
                   className="inline-flex w-full justify-center rounded-md bg-pink-600 px-4 py-2 text-sm font-semibold text-white shadow-md hover:bg-pink-500 sm:ml-3 sm:w-auto"
                 >
-                  Submit
+                  Next
                 </button>
               </div>
             </DialogPanel>

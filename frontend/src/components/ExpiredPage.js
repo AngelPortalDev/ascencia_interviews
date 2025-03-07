@@ -11,9 +11,9 @@ const ExpiredPage = () => {
           {/* <a href="/" className="go-home-btn">
             Go Back to Home
           </a> */}
-        <a href="/" className="bg-[rgb(219,39,131)] text-white rounded-md text-sm px-4 py-2 md:text-lg md:px-6 md:py-3">
+        {/* <a href="/" className="bg-[rgb(219,39,131)] text-white rounded-md text-sm px-4 py-2 md:text-lg md:px-6 md:py-3">
                 Go Back to Home
-        </a>
+        </a> */}
 
         </div>
       </div>

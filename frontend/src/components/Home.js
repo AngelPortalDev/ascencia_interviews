@@ -210,12 +210,12 @@ const Home = () => {
             className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"
           />
         </div>
-        <div className="mx-auto max-w-2xl">
-        <img src={Interview} alt=""/>
+        <div className="mx-auto max-w-2xl py-12">
+        <img src={Interview} alt="intervew Img" className="intrviewImg h-auto max-w-full"/>
           <div className="hidden sm:mb-8 sm:flex sm:justify-center">
           </div>
           <div className="text-center">
-            <h1 className="text-balance text-5xl font-semibold tracking-tight text-gray-900 sm:text-7xl">
+            <h1 className="text-balance text-4xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
                 AI-powered Interview Assistant
             </h1>
             <p className="mt-8 text-pretty text-lg font-medium text-gray-500 sm:text-xl/8">

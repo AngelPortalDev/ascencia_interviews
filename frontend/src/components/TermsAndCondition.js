@@ -55,9 +55,9 @@ const TermsAndCondition = () => {
               className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"
             />
           </div>
-          <div className="mx-auto max-w-4xl py-12 sm:py-16 lg:py-24">
+          <div className="mx-auto max-w-4xl py-12 sm:py-16 lg:py-16">
             <div className="text-center mb-8">
-              <h1 className="text-5xl font-bold text-gray-900 sm:text-4xl leading-tight">
+              <h1 className="text-4xl font-bold text-gray-900 sm:text-3xl leading-tight">
                 Terms and Conditions
               </h1>
               <p className="mt-4 text-lg text-gray-500">
@@ -111,70 +111,7 @@ const TermsAndCondition = () => {
                   according to our Privacy Policy.
                 </p>
               </section>
-              <section>
-                <p className="text-xl font-semibold text-blue-600">
-                  5. AI Processing
-                </p>
-                <p>
-                  The platform uses AI models for sentiment analysis, facial
-                  recognition, and text evaluation. These models may not be 100%
-                  accurate.
-                </p>
-              </section>
-              <section>
-                <p className="text-xl font-semibold text-blue-600">
-                  6. Privacy & Security
-                </p>
-                <p>
-                  We take reasonable steps to protect your data, but cannot
-                  guarantee complete security. By using the platform, you accept
-                  the risks associated with online data transmission.
-                </p>
-              </section>
-              <section>
-                <p className="text-xl font-semibold text-blue-600">
-                  7. Account Responsibility
-                </p>
-                <p>
-                  You are responsible for maintaining the confidentiality of
-                  your account details and password. Any activity under your
-                  account is your responsibility.
-                </p>
-              </section>
-              <section>
-                <p className="text-xl font-semibold text-blue-600">
-                  8. Prohibited Activities
-                </p>
-                <ul className="list-disc pl-5">
-                  <li>
-                    You may not use the platform for any unlawful or malicious
-                    purposes.
-                  </li>
-                  <li>
-                    You may not attempt to interfere with the platform’s
-                    services or disrupt its operation.
-                  </li>
-                </ul>
-              </section>
-              <section>
-                <p className="text-xl font-semibold text-blue-600">
-                  9. Limitation of Liability
-                </p>
-                <p>
-                  The platform is provided as is. We are not responsible for any
-                  damages arising from the use of the platform or its services.
-                </p>
-              </section>
-              <section>
-                <p className="text-xl font-semibold text-blue-600">
-                  10. Changes to Terms
-                </p>
-                <p>
-                  We may update these Terms at any time. Changes will be posted
-                  here, and continued use of the platform means you accept the
-                  updated Terms.
-                </p>
-              </section>
+            
             </div>
 
             <div className="mt-10 flex items-center justify-start gap-x-6">
@@ -202,7 +139,7 @@ const TermsAndCondition = () => {
                   onClick={handleSubmit}
                   className="rounded-md bg-pink-600 px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-pink-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
                 >
-                  Submit
+                  Continue
                 </button>
             </div>
           </div>
