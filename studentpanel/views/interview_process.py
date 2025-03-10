@@ -132,7 +132,7 @@ def interview_attend(request):
                     data = {
                       'interview_attend': True,  # Boolean value (not string)
                       'is_expired': True         # Boolean value (not string)
-                    }
+                    } 
 
                     result = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).update(**data)
                     if result == 1:
