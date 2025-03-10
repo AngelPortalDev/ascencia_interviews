@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+import pymysql
+
+pymysql.install_as_MySQLdb()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -94,16 +97,16 @@ WSGI_APPLICATION = 'ascencia_interviews.wsgi.application'
 #     }
 # }
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'ascencia-interviews',
-        'USER': 'postgres',
-        'PASSWORD': 'root',
-        'HOST': 'localhost',  # or the server IP/hostname
-        'PORT': '5432',     # default PostgreSQL port
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'ascencia-interviews',
+#         'USER': 'postgres',
+#         'PASSWORD': 'root',
+#         'HOST': 'localhost',  # or the server IP/hostname
+#         'PORT': '5432',     # default PostgreSQL port
+#     }
+# }
 
 # abdulla database
 # DATABASES = {
@@ -117,6 +120,18 @@ DATABASES = {
 #     }
 # }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'ascencia-interviews',
+#         'USER': 'root',
+#         'PASSWORD': '',
+#         'HOST': '127.0.0.1',  # Or your MySQL server address
+#         'PORT': '3306',       # Default MySQL port
+#     }
+# }
+
+
 # ashish database
 # DATABASES = {
 #     'default': {
@@ -128,6 +143,19 @@ DATABASES = {
 #         'PORT': '5432',     # default PostgreSQL port
 #     }
 # }
+
+# live
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'ascenciamalta_ascencia_interviews_dev',
+        'USER': 'ascenciamalta_ascencia_interview',
+        'PASSWORD': 'qV{XtqpQg(Lg',
+        'HOST': '127.0.0.1',  # Or your MySQL server address
+        'PORT': '3306',       # Default MySQL port
+    }
+}
+
 
 
 # Password validation
@@ -177,24 +205,24 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = '/login/'
 
-CORS_ALLOW_ALL_ORIGINS = True
-CSRF_COOKIE_SECURE = False
-SECURE_SSL_REDIRECT = True  # Redirect all HTTP requests to HTTPS
-SESSION_COOKIE_SECURE = True  # Ensure cookies are sent over HTTPS
-CSRF_COOKIE_SECURE = True  # Ensure CSRF cookies are sent over HTTPS
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-CORS_ALLOWED_ORIGINS = [
-    'https://192.168.1.63:3000',  # React app URL
-]
+# CORS_ALLOW_ALL_ORIGINS = True
+# CSRF_COOKIE_SECURE = False
+# SECURE_SSL_REDIRECT = True  # Redirect all HTTP requests to HTTPS
+# SESSION_COOKIE_SECURE = True  # Ensure cookies are sent over HTTPS
+# CSRF_COOKIE_SECURE = True  # Ensure CSRF cookies are sent over HTTPS
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# CORS_ALLOWED_ORIGINS = [
+#     'https://192.168.1.63:3000',  # React app URL
+# ]
 
-# HTTP Strict Transport Security (HSTS) settings
-SECURE_HSTS_SECONDS = 31536000         # Enforce HTTPS for 1 year
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True    # Apply to all subdomains
-SECURE_HSTS_PRELOAD = True               # Allow your domain to be included in browsers’ HSTS preload list
+# # HTTP Strict Transport Security (HSTS) settings
+# SECURE_HSTS_SECONDS = 31536000         # Enforce HTTPS for 1 year
+# SECURE_HSTS_INCLUDE_SUBDOMAINS = True    # Apply to all subdomains
+# SECURE_HSTS_PRELOAD = True               # Allow your domain to be included in browsers’ HSTS preload list
 
-# Additional security settings (optional but recommended)
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
+# # Additional security settings (optional but recommended)
+# SECURE_BROWSER_XSS_FILTER = True
+# SECURE_CONTENT_TYPE_NOSNIFF = True
 
 # TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
