@@ -19,7 +19,7 @@ from transformers import BertTokenizer, BertModel
 import torch
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
-from gpt4all import GPT4All
+# from gpt4all import GPT4All
 import cv2
 import numpy as np
 import subprocess
