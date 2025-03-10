@@ -6,3 +6,4 @@
 .env
 manage.py
 /uploads/
+/venv
