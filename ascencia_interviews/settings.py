@@ -256,3 +256,7 @@ Q_CLUSTER = {
     "bulk": 10,  # Number of tasks processed at once
     "orm": "default",  # Use Django ORM for task management
 }
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://interview.ascenciamalta.mt",
+]
