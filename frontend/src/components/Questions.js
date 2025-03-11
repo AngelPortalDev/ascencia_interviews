@@ -87,6 +87,13 @@ const Questions = () => {
     fetchQuestions();
   }, []);
 
+  useEffect(()=>{
+    if(encoded_zoho_lead_id == null){
+      window.location.reload()
+    setTimeout(()=>navigate("/expired"),0) ;
+    }
+  },[encoded_zoho_lead_id,navigate])
+
   // ************* Get First Question id *********
 
   useEffect(() => {

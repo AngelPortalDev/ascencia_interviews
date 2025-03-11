@@ -699,10 +699,87 @@ def merge_videos(zoho_lead_id, base_uploads_folder="C:/xampp/htdocs/ascencia_int
             subject="Interview Process Completed",
             message=f"""
                     <html>
+                     <head>
+                                <style>
+                                    body {{
+                                        font-family: Arial, sans-serif;
+                                        background-color: #f4f4f4;
+                                        padding: 20px;
+                                        text-align: left;
+                                    }}
+                                    .email-container {{
+                                       max-width: 600px;
+                                        margin: auto;
+                                        background: #ffffff;
+                                        padding: 20px;
+                                        border-radius: 8px;
+                                        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                                    }}
+                                     .header {{
+                                        text-align: center;
+                                        padding-bottom: 20px;
+                                        border-bottom: 1px solid #ddd; 
+                                     }}
+                                    .header img {{
+                                        max-width: 150px;
+                                        }}
+                                    h2 {{
+                                        color: #2c3e50;
+                                    }}
+                                    p {{
+                                        color: #555555;
+                                        font-size: 16px;
+                                        line-height: 1.6;
+                                    }}
+                                    .btn {{
+                                        display: inline-block;
+                                        background: #db2777;
+                                        color: #ffffff;
+                                        text-decoration: none;
+                                        padding: 10px 20px;
+                                        border-radius: 5px;
+                                        font-weight: bold;
+                                        margin-top: 10px;
+                                    }}
+                                    .btn:hover {{
+                                        background: #0056b3;
+                                    }}
+                                    .email-logo {{
+                                        max-width:300px;
+                                        height:auto;
+                                        width:100%;
+                                        margin-bottom: 20px;
+                                        display:flex;
+                                        justify-content:center;
+                                        margin:0 auto;
+                                    }}
+                                 
+                                </style>
+                            </head>
                     <body>
-                        <p>Lead update was successful.</p>
-                        <p>The interview process is completed. Please review the video here:</p>
-                        <p><a href='{url}'>Check Interview Video</a></p>
+                         <table role="presentation" cellspacing="0" cellpadding="0" width="100%">
+                            <tr>
+                                <td align="center">
+                                    <div class="email-container">
+                                        <!-- Logo Header -->
+                                        <div class="header">
+                                            <img src="One.png" alt="Company Logo">
+                                        </div>
+                                         <img src="{{ STATIC_URL }}img/email_template_icon/doc_verified.png" alt="Document Verified" class="email-logo"/>
+                                        <!-- Main Content -->
+                                        <h2>Interview Process Completed</h2>
+                                        <p>Dear User,</p>
+                                        <p>The interview process has been successfully completed.</p>
+                                        <p>Please review the interview video using the button below:</p>
+                                        <!-- CTA Button -->
+                                        <div class="btn-container">
+                                            <a href="{{ url }}" class="btn">Check Interview Video</a>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                        
                     </body>
                     </html>
                 """,
