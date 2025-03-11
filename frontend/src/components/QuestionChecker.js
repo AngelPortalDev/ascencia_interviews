@@ -9,10 +9,10 @@ const QuestionChecker = ({ transcribedText, questionId }) => {
       formData.append("question_id", questionId);
       formData.append("answer", transcribedText);
 
-      console.log("📤 Sending FormData:", formData);
+      // console.log("📤 Sending FormData:", formData);
 
       const res = await axios.post(
-        "https://192.168.1.63:5000/interveiw-section/check-answers/",
+        `${process.env.REACT_APP_API_BASE_URL}interveiw-section/check-answers/`,
         formData
       );
 

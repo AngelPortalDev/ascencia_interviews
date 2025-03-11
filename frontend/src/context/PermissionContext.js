@@ -1,12 +1,11 @@
-import { createContext, useContext,useState} from "react";
+import { createContext, useContext,useState,useEffect} from "react";
+import { useParams } from "react-router-dom";
 
 const PermissionContext = createContext();
 
 export const usePermission = () => useContext(PermissionContext);
 
 export const PermissionProvider = ({children}) =>{
-
-
 
 
 
@@ -22,6 +21,14 @@ export const PermissionProvider = ({children}) =>{
         localStorage.getItem("interviewSubmitted") === "true");
 
 
+
+        useEffect(() => {
+            if (isExamSubmitted && !sessionStorage.getItem("hasPageReloaded")) {
+              sessionStorage.setItem("hasPageReloaded", "true");
+              window.location.reload();
+            }
+          }, [isExamSubmitted]);
+
     const acceptTerms = (zoho_lead_id)=>{
         setTermsAccept(true);
         localStorage.setItem("termsAccepted", "true");
@@ -36,6 +43,8 @@ export const PermissionProvider = ({children}) =>{
         setIsExamSubmitted(true);
         localStorage.setItem("interviewSubmitted", "true");
         sessionStorage.setItem("isReload", "true");
+        setIsExamSubmitted(true); 
+        setTimeout(() => setIsExamSubmitted(localStorage.getItem("interviewSubmitted") === "true"), 100);
     }
 
 

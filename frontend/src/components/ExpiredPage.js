@@ -1,21 +1,13 @@
 import React from "react";
+import timeExpired from '../assest/icons/time-expired.svg'
 
 const ExpiredPage = () => {
   return (
-    <div>
-      <div className="expired-container">
-        <div className="expired-content">
-          <h1 className="expired-title">⏳</h1>
-          <p className="expired-message">Session Expired</p>
-          <p className="expired-subtext">Redirecting you shortly...</p>
-          {/* <a href="/" className="go-home-btn">
-            Go Back to Home
-          </a> */}
-        {/* <a href="/" className="bg-[rgb(219,39,131)] text-white rounded-md text-sm px-4 py-2 md:text-lg md:px-6 md:py-3">
-                Go Back to Home
-        </a> */}
-
-        </div>
+    <div className="expired-container">
+      <div className="expired-content">
+        <h1 className="expired-title"><img src={timeExpired} alt="expired title link"/></h1>
+        <p className="expired-message">The given link has expired.</p>
+        <p className="expired-subtext">Please contact the administrator for further assistance.</p>
       </div>
     </div>
   );

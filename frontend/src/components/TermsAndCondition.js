@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate,useParams,useLocation } from "react-router-dom";
 import PropTypes from "prop-types";
 import { usePermission } from "../context/PermissionContext.js";
@@ -15,18 +15,12 @@ const TermsAndCondition = () => {
   const encoded_interview_link_send_count = location.state?.encoded_interview_link_send_count || null;
 
 
-  // console.log("encoded_zoho_lead_id",encoded_zoho_lead_id)
-  // console.log("encoded_interview_link_send_count",encoded_interview_link_send_count)
-
-
   const handleCheckboxChange = () => {
     setIsAgreed(!isAgreed);
     if (errorMessage) {
       setErrorMessage("");
     }
   };
-
-  // const { encoded_zoho_lead_id } = useParams();
 
   const handleSubmit = () => {
     if (!isAgreed) {
@@ -38,11 +32,17 @@ const TermsAndCondition = () => {
       navigate("/permissions", { state: { encoded_zoho_lead_id,encoded_interview_link_send_count } }); 
     }
   };
+  useEffect(()=>{
+    if(encoded_zoho_lead_id == null){
+    setTimeout(()=>navigate("/expired"),0) ;
+    }
+  },[encoded_zoho_lead_id,navigate])
+ 
 
   return (
     <>
       <div className="bg-white min-h-screen">
-        <div className="relative isolate px-6 pt-14 lg:px-8">
+        <div className="relative isolate px-6 pt-8 lg:px-8">
           <div
             aria-hidden="true"
             className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
@@ -57,7 +57,7 @@ const TermsAndCondition = () => {
           </div>
           <div className="mx-auto max-w-4xl py-12 sm:py-16 lg:py-16">
             <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-gray-900 sm:text-3xl leading-tight">
+              <h1 className="text-3xl font-bold text-gray-900 sm:text-3xl leading-tight">
                 Terms and Conditions
               </h1>
               <p className="mt-4 text-lg text-gray-500">

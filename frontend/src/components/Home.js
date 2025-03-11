@@ -1,36 +1,13 @@
-import { useState,useEffect } from "react";
-// import { Dialog, DialogPanel } from "@headlessui/react";
-// import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import { NavLink,useParams,useNavigate} from "react-router-dom";
+import { NavLink,useParams} from "react-router-dom";
 import Interview from '../assest/Interview.png';
+import useInterviewLinkStatus  from '../hooks/useInterviewLinkStatus.js';
 
-import axios from "axios";
 
 const Home = () => {
-  const navigate =useNavigate();
-//   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-//   const navigation = [
-//     { name: 'Product', href: '#' },
-//     { name: 'Features', href: '#' },
-//     { name: 'Marketplace', href: '#' },
-//     { name: 'Company', href: '#' },
-//   ]
-
-//   const [message, setMessage] = useState('');
-
-//   useEffect(() => {
-//     axios.get('http://127.0.0.1:8000/')
-//       .then(response => {
-//         setMessage(response.data.message);
-//       })
-//       .catch(error => {
-//         console.log(error);
-//       });
-//   }, []);
-  
   const { encoded_zoho_lead_id,encoded_interview_link_send_count } = useParams(); // Get encoded student_id from URL
-  // console.log("encoded_zoho_lead_id for Home page: " + encoded_zoho_lead_id);
+  console.log("encoded_zoho_lead_id",encoded_zoho_lead_id)
+  useInterviewLinkStatus(encoded_zoho_lead_id);
 
   // const InterviewLinkStatus = async (encoded_zoho_lead_id) => {
   //   if (!encoded_zoho_lead_id) {
@@ -45,19 +22,14 @@ const Home = () => {
   //           `${process.env.REACT_APP_API_BASE_URL}interveiw-section/interview-attend-status/`,
   //           formData
   //       );
-  //       console.log("Response ",response)
-  //       if (response.data.status === true) {
+  //       if (response.status === 200) {
   //         console.log("Starting exam...");
-  //         // Optionally, navigate to the exam page here
-  //         navigate('/exam-page');
-  //     } else {
-  //         console.log("Response for Video:", response);
-  //     }
+  //       } 
   //   } catch (error) {
   //     if (error.response && error.response.status === 410) {
   //       console.log("error.response.status",error.response.status);
   //       console.log("Interview link has expired. Please contact the administrator.");
-  //       // navigate("/expired");
+  //       navigate("/expired");
   //   } else {
   //       console.log("An error occurred:", error);
   //       alert("An error occurred while checking the interview link status.");
@@ -65,139 +37,17 @@ const Home = () => {
   //   }
   // }
 
-  const InterviewLinkStatus = async (encoded_zoho_lead_id) => {
-    if (!encoded_zoho_lead_id) {
-        // console.error("No encoded_zoho_lead_id provided.",encoded_zoho_lead_id);
-        return;
-    }
-    const formData = new FormData();
-    formData.append("zoho_lead_id", encoded_zoho_lead_id);
-    // console.log("Append zoh leader",encoded_zoho_lead_id)
-    try {
-        const response = await axios.post(
-            `${process.env.REACT_APP_API_BASE_URL}interveiw-section/interview-attend-status/`,
-            formData
-        );
-        if (response.status === 200) {
-          console.log("Starting exam...");
-        } 
-    } catch (error) {
-      if (error.response && error.response.status === 410) {
-        console.log("error.response.status",error.response.status);
-        console.log("Interview link has expired. Please contact the administrator.");
-        navigate("/expired");
-    } else {
-        console.log("An error occurred:", error);
-        alert("An error occurred while checking the interview link status.");
-    }
-    }
-  }
-
-  useEffect(() => {
-      InterviewLinkStatus(encoded_zoho_lead_id);
-  }, [encoded_zoho_lead_id]); // Runs when `encoded_zoho_lead_id` changes
+  // useEffect(() => {
+  //     InterviewLinkStatus(encoded_zoho_lead_id);
+  // }, [encoded_zoho_lead_id]); // Runs when `encoded_zoho_lead_id` changes
 
     
   // console.log("encoded_interview_link_send_count: " + encoded_interview_link_send_count);
 
   return (
     <div className="bg-white">
-      {/* <header className="absolute inset-x-0 top-0 z-50">
-        <nav
-          aria-label="Global"
-          className="flex items-center justify-between p-6 lg:px-8"
-        >
-          <div className="flex lg:flex-1">
-            <NavLink to="/" className="-m-1.5 p-1.5">
-              <span className="sr-only">Eascencia</span>
-              <img
-                alt=""
-                src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=600"
-                className="h-8 w-auto"
-              />
-            </NavLink>
-          </div>
-          <div className="flex lg:hidden">
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(true)}
-              className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700"
-            >
-              <span className="sr-only">Open main menu</span>
-              <Bars3Icon aria-hidden="true" className="size-6" />
-            </button>
-          </div>
-          <div className="hidden lg:flex lg:gap-x-12">
-            {navigation.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="text-sm/6 font-semibold text-gray-900"
-              >
-                {item.name}
-              </a>
-            ))}
-          </div>
-          <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-            <a href="#" className="text-sm/6 font-semibold text-gray-900">
-              Log in <span aria-hidden="true">&rarr;</span>
-            </a>
-          </div>
-        </nav>
-       <h3>{message}</h3>
-        <Dialog
-          open={mobileMenuOpen}
-          onClose={setMobileMenuOpen}
-          className="lg:hidden"
-        >
-          <div className="fixed inset-0 z-50" />
-          <DialogPanel className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
-            <div className="flex items-center justify-between">
-              <a href="#" className="-m-1.5 p-1.5">
-                <span className="sr-only">Your Company</span>
-                <img
-                  alt=""
-                  src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=600"
-                  className="h-8 w-auto"
-                />
-              </a>
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(false)}
-                className="-m-2.5 rounded-md p-2.5 text-gray-700"
-              >
-                <span className="sr-only">Close menu</span>
-                <XMarkIcon aria-hidden="true" className="size-6" />
-              </button>
-            </div>
-            <div className="mt-6 flow-root">
-              <div className="-my-6 divide-y divide-gray-500/10">
-                <div className="space-y-2 py-6">
-                  {navigation.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.href}
-                      className="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
-                <div className="py-6">
-                  <a
-                    href="#"
-                    className="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
-                  >
-                    Log in
-                  </a>
-                </div>
-              </div>
-            </div>
-          </DialogPanel>
-        </Dialog>
-      </header> */}
 
-      <div className="relative isolate px-6 pt-14 lg:px-8">
+      <div className="relative isolate px-6 pt-8 lg:px-8">
         <div
           aria-hidden="true"
           className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"

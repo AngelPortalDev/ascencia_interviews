@@ -6,12 +6,6 @@ const InterviewSubmitted = () => {
  const videoRef = useRef(null);
   useEffect(() => {
 
-    if (videoRef?.current && videoRef.current.srcObject) {
-      const tracks = videoRef.current.srcObject.getTracks();
-      tracks.forEach(track => track.stop());
-      videoRef.current.srcObject = null;
-      console.log("🎤📷 Media stream stopped immediately on Interview Submitted Page.");
-    }
 
     // Disable back button
     const blockBackNavigation = () => {
@@ -26,6 +20,16 @@ const InterviewSubmitted = () => {
     };
   }, [navigate,videoRef]);
 
+  useEffect(() => {
+    // Check if the page has already reloaded once
+    if (!sessionStorage.getItem("hasPageReloadedOnce")) {
+      sessionStorage.setItem("hasPageReloadedOnce", "true"); 
+      setTimeout(() => {
+        window.location.reload(); 
+      }, 0); 
+    }
+  }, []);
+
 
   return (
     <div className="submitted-container">
@@ -33,9 +37,9 @@ const InterviewSubmitted = () => {
         <h1 className="submitted-title">✔</h1>
         <p className="submitted-message">Thank you for your submission!</p>
         <p className="submitted-subtext">Redirecting you shortly...</p>
-        <a href="/" className="bg-[rgb(219,39,131)] text-white rounded-md text-sm px-4 py-2 md:text-lg md:px-6 md:py-3">
+        {/* <a href="/" className="bg-[rgb(219,39,131)] text-white rounded-md text-sm px-4 py-2 md:text-lg md:px-6 md:py-3">
                 Go Back to Home
-        </a>
+        </a> */}
       </div>
   </div>
   );

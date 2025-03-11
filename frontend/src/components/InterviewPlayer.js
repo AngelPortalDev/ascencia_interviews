@@ -7,17 +7,17 @@ import { interviewAddVideoPath } from "../utils/fileUpload.js";
 import useVisibilityWarning from "../hooks/useVisibilityWarning.js";
 
 
-const InterviewPlayer = ({ onTranscription,zoho_lead_id,question_id,last_question_id}) => {
+const InterviewPlayer = ({onTranscription,zoho_lead_id,question_id,last_question_id,videoRef,mediaRecorderRef,audioRecorderRef,recordedChunksRef,recordedAudioChunksRef}) => {
   const [isRecording, setIsRecording] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [answerScore, setAnswerScore] = useState(null);
   const [videoFilePath, setVideoFilePath] = useState(null);
   const [audioFilePath, setAudioFilePath] = useState(null);
-  const videoRef = useRef(null);
-  const mediaRecorderRef = useRef(null);
-  const recordedChunksRef = useRef([]);
-  const audioRecorderRef = useRef(null);
-  const recordedAudioChunksRef = useRef([]);
+  // const videoRef = useRef(null);
+  // const mediaRecorderRef = useRef(null);
+  // const recordedChunksRef = useRef([]);
+  // const audioRecorderRef = useRef(null);
+  // const recordedAudioChunksRef = useRef([]);
   const navigate = useNavigate();
 
 
@@ -122,7 +122,6 @@ const InterviewPlayer = ({ onTranscription,zoho_lead_id,question_id,last_questio
   //   }
   // console.log("Inyterview Player start recording",last_question_id);
 
-
     const startNewRecording = () => {
       startRecording(
         videoRef,
@@ -161,7 +160,7 @@ const InterviewPlayer = ({ onTranscription,zoho_lead_id,question_id,last_questio
     }, 60000); // 10 seconds per question
   
     return () => clearTimeout(stopTimeout);
-  }, [question_id,last_question_id,zoho_lead_id]); 
+  }, [videoRef,question_id,last_question_id,zoho_lead_id,audioRecorderRef,mediaRecorderRef,recordedAudioChunksRef,recordedChunksRef]); 
   
 
   const handleCloseModal = () => {
@@ -181,6 +180,7 @@ const InterviewPlayer = ({ onTranscription,zoho_lead_id,question_id,last_questio
         ref={videoRef}
         autoPlay
         playsInline
+        muted
         style={{ width: "100%", borderRadius: "10px" }}
       ></video>
 

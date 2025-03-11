@@ -219,10 +219,16 @@ code {
 }
 
 .expired-title {
-  font-size: 80px;
   font-weight: bold;
   color: rgb(239, 68, 68); /* Red color for expired session */
-  animation: bounce 2s infinite;
+  animation: bounce 3s infinite;
+  width: 100px;
+  height: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+  margin-bottom: 1rem;
 }
 
 .expired-message {
@@ -287,11 +293,35 @@ code {
   content: 'prev';
 }
 
+.intrviewImg{
+  max-width: 400px !important;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+@media (min-width: 767px) {
+  .intrviewImg{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin: 0 auto;
+  }
+}
+
 
 @media (max-width: 767px) {
   .swiper-button-next, .swiper-button-prev {
     width: 30px !important; /* Adjust width for mobile */
     height: 30px !important; /* Adjust height for mobile */
     background-size: 15px; /* Adjust icon size */
+  }
+  .interviewPlayer{
+    order: 1;
+    margin-bottom: 10px;
+  }
+  .studentInfo{
+    order: 2;
   }
 }
