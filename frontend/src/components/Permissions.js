@@ -104,6 +104,12 @@ const Permissions = () => {
     }
   }, [navigate]);
 
+  useEffect(()=>{
+    if(encoded_zoho_lead_id == null){
+    setTimeout(()=>navigate("/expired"),0) ;
+    }
+  },[encoded_zoho_lead_id,navigate])
+
   return (
     <div>
       <Dialog open={open} onClose={() => {}} className="relative z-10">
@@ -128,7 +134,7 @@ const Permissions = () => {
                       Instructions
                     </DialogTitle>
                     <div className="space-y-4">
-                      <ul className="list-disc pl-5">
+                      {/* <ul className="list-disc pl-5">
                         <li className="text-gray-700 text-justify">
                           Please check the box to grant permission for audio
                           access, allowing the application to use your
@@ -151,11 +157,67 @@ const Permissions = () => {
                       </ul>
                       <ul className="list-disc pl-5">
                         <li className="text-gray-700 text-justify">
-                          Ensure both audio and video permissions are granted to
-                          use the required features. Adjust your choices before
-                          submitting.
+                        Avoid noisy locations, background conversations,
+                        or moving out of the computer frame.
+                        If detected, the test will be automatically cancelled.
                         </li>
                       </ul>
+                      <ul className="list-disc pl-5">
+                        <li className="text-gray-700 text-justify">
+                        Ensure you have good lighting, so your face is clearly visible,
+                        and test your microphone for clear audio before starting.
+                        </li>
+                      </ul>
+                      <ul className="list-disc pl-5">
+                        <li className="text-gray-700 text-justify">
+                        Keep your front camera activated throughout 
+                        the interview to ensure proper assessment.
+                        </li>
+                      </ul> */}
+                      <div className="flex items-start gap-3">
+                          <span className="text-green-600">✓</span>
+                          <p className="text-gray-700 text-justify leading-5">
+                          Please check the box to grant permission for audio access, allowing the application to use your microphone for audio-related features. An error message will appear if not accepted.
+                          </p>
+                      </div>
+                      <div className="flex items-start gap-3">
+                          <span className="text-green-600">✓</span>
+                          <p className="text-gray-700 text-justify leading-5">
+                          Check the box to allow video recording, enabling the
+                          use of your camera for video-related functions. An
+                          error message will appear if not accepted.
+                          </p>
+                      </div>
+                      <div className="flex items-start gap-3">
+                          <span className="text-green-600">✓</span>
+                          <p className="text-gray-700 text-justify leading-5">
+                          After granting the necessary permissions, click the
+                          Submit button to save your selections.
+                          </p>
+                    </div>
+                  
+                    <div className="flex items-start gap-3">
+                          <span className="text-green-600">✓</span>
+                          <p className="text-gray-700 text-justify leading-5">
+                          Avoid noisy locations, background conversations,
+                        or moving out of the computer frame.
+                        If detected, the test will be automatically cancelled.
+                          </p>
+                    </div>
+                    <div className="flex items-start gap-3">
+                          <span className="text-green-600">✓</span>
+                          <p className="text-gray-700 text-justify leading-5">
+                          Ensure you have good lighting, so your face is clearly visible,
+                          and test your microphone for clear audio before starting.
+                          </p>
+                    </div>
+                    <div className="flex items-start gap-3">
+                          <span className="text-green-600">✓</span>
+                          <p className="text-gray-700 text-justify leading-5">
+                          Keep your front camera activated throughout 
+                          the interview to ensure proper assessment.
+                          </p>
+                    </div>
                     </div>
 
                     <div className="mt-6 space-y-4">

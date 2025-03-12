@@ -516,11 +516,80 @@ def process_document(request):
                         subject="Zoho Lead Update Notification",
                         message=f"""
                                 <html>
-                                <body>
-                                    <p>Lead update was successful.</p>
-                                    <p>Click the link below to proceed:</p>
-                                    <p><a href='{interview_url}'>Go to Interview</a></p>
-                                </body>
+                                    <head>
+                                        <style>
+                                            body{{
+                                                background-color: #f4f4f4;
+                                                padding: 20px;
+                                                text-align: left;
+                                            }}
+                                             .email-container {{
+                                                max-width: 600px;
+                                                background: #ffffff;
+                                                padding: 20px;
+                                                border-radius: 8px;
+                                                box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); 
+                                             }}
+                                            .header {{
+                                                text-align: center;
+                                                padding-bottom: 20px;
+                                                border-bottom: 1px solid #ddd; 
+                                            }}
+                                            .header img {{
+                                                max-width: 150px;
+                                            }}
+                                             h2 {{
+                                               color: #2c3e50;  
+                                             }}
+                                             p {{
+                                                color: #555555;
+                                                font-size: 16px;
+                                                line-height: 1.6;
+                                             }}
+                                             .btn {{
+                                                display: inline-block;
+                                                background: #db2777;
+                                                color: #ffffff;
+                                                text-decoration: none;
+                                                padding: 10px 15px;
+                                                border-radius: 5px;
+                                                font-weight: bold;
+                                                margin-top: 10px; 
+                                             }}
+                                             .btn:hover {{
+                                                 background: #0056b3;
+                                             }}
+                                            .email-logo {{
+                                                max-width:300px;
+                                                height:auto;
+                                                width:100%;
+                                                margin-bottom: 20px;
+                                                display:flex;
+                                                justify-content:center;
+                                                margin:0 auto;
+                                            }}
+                                        </style>
+                                        <body>
+                                            <table role="presentation" cellspacing="0" cellpadding="0">
+                                                <tr>
+                                                    <td align="left">
+                                                        <div class="email-container">
+                                                        <div class="header">
+                                                            <img src="One.png" alt="Company Logo">
+                                                        </div>
+                                                         <img src="{{ STATIC_URL }}img/email_template_icon/notification.png" alt="Zoho Lead Update" class="email-logo"/>
+                                                            <h2>Zoho Lead Update Notification</h2>
+                                                            <p>Dear User,</p>
+                                                            <p>The lead update was successful.</p>
+                                                            <p>Click the button below to proceed:</p>
+                                                            <a href="{ interview_url }" class="btn">Go to Interview</a>
+                                                            <p>If you have any questions, please contact support.</p>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                    </body>
+                                    </head>
                                 </html>
                             """,
                         recipient=["abdullah@angel-portal.com"],
@@ -538,16 +607,24 @@ def process_document(request):
                                         font-family: Arial, sans-serif;
                                         background-color: #f4f4f4;
                                         padding: 20px;
-                                        text-align: center;
+                                        text-align: left;
                                     }}
                                     .email-container {{
-                                        max-width: 600px;
+                                       max-width: 600px;
                                         margin: auto;
                                         background: #ffffff;
                                         padding: 20px;
                                         border-radius: 8px;
                                         box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
                                     }}
+                                     .header {{
+                                        text-align: center;
+                                        padding-bottom: 20px;
+                                        border-bottom: 1px solid #ddd; 
+                                     }}
+                                    .header img {{
+                                        max-width: 150px;
+                                        }}
                                     h2 {{
                                         color: #2c3e50;
                                     }}
@@ -558,7 +635,7 @@ def process_document(request):
                                     }}
                                     .btn {{
                                         display: inline-block;
-                                        background: #007bff;
+                                        background: #db2777;
                                         color: #ffffff;
                                         text-decoration: none;
                                         padding: 10px 20px;
@@ -569,16 +646,36 @@ def process_document(request):
                                     .btn:hover {{
                                         background: #0056b3;
                                     }}
+                                    .email-logo {{
+                                        max-width:300px;
+                                        height:auto;
+                                        width:100%;
+                                        margin-bottom: 20px;
+                                        display:flex;
+                                        justify-content:center;
+                                        margin:0 auto;
+                                    }}
+                                 
                                 </style>
                             </head>
                             <body>
-                                <div class="email-container">
-                                    <h2>Document Verification Completed</h2>
-                                    <p>Dear Student Manager,</p>
-                                    <p>The document verification process for <strong>{zoho_full_name}</strong> has been successfully completed.</p>
-                                    <p>Click the button below to review the details:</p>
-                                    <a href='http://127.0.0.1:8000/verification' class="btn">View Verification Details</a>
-                                </div>
+                              <table role="presentation" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td>
+                                        <div class="email-container">
+                                            <div class="header">
+                                                <img src="One.png" alt="Company Logo">
+                                            </div>
+                                            <img src="{{ STATIC_URL }}img/email_template_icon/doc_verified.png" alt="Document Verified" class="email-logo"/>
+                                            <h2>Document Verification Completed</h2>
+                                            <p>Dear Student Manager,</p>
+                                            <p>The document verification process for <strong>John Doe</strong> has been successfully completed.</p>
+                                            <p>Click the button below to review the verification details:</p>
+                                            <a href="http://127.0.0.1:8000/verification" class="btn">View Verification Details</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
                             </body>
                             </html>
                         """,

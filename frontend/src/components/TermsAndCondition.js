@@ -68,17 +68,15 @@ const TermsAndCondition = () => {
 
             <div className="space-y-8 text-gray-700">
               <section>
-                <p className="text-xl font-semibold text-blue-600">
+                <p className="text-lg font-semibold text-blue-600 termsheading">
                   1. Introduction
                 </p>
                 <p>
-                  By using Eascencia Business School, you agree to these Terms
-                  and Conditions. If you don’t agree, please do not use our
-                  platform.
+                By clicking on 'I agree,' you accept EAscencia Business School’s Terms and Conditions.
                 </p>
               </section>
               <section>
-                <p className="text-xl font-semibold text-blue-600">
+                <p className="text-lg font-semibold text-blue-600 termsheading">
                   2. Use of the Platform
                 </p>
                 <p>
@@ -89,7 +87,7 @@ const TermsAndCondition = () => {
                 </p>
               </section>
               <section>
-                <p className="text-xl font-semibold text-blue-600">
+                <p className="text-lg font-semibold text-blue-600">
                   3. User Responsibilities
                 </p>
                 <ul className="list-disc pl-5">
@@ -102,7 +100,7 @@ const TermsAndCondition = () => {
                 </ul>
               </section>
               <section>
-                <p className="text-xl font-semibold text-blue-600">
+                <p className="text-lg font-semibold text-blue-600">
                   4. Data Collection
                 </p>
                 <p>
@@ -137,7 +135,7 @@ const TermsAndCondition = () => {
             <div className="mt-10 flex items-center justify-center">
                 <button
                   onClick={handleSubmit}
-                  className="rounded-md bg-pink-600 px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-pink-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                  className="rounded-md bg-pink-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-pink-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                 >
                   Continue
                 </button>
