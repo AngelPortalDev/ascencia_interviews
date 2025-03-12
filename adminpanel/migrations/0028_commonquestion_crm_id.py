@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('adminpanel', '0027_alter_question_unique_together'),
+        ('adminpanel', '0026_remove_question_answer_alter_question_question'),
     ]
 
     operations = [
