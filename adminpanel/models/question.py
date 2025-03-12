@@ -24,7 +24,6 @@ class Question(models.Model):
         ]
         verbose_name = "Question"
         verbose_name_plural = "Questions"
-        unique_together = (('course_id',),)
 
     def soft_delete(self):
         """Soft delete the question by setting the deleted_at field."""
