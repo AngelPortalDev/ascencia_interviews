@@ -11,7 +11,7 @@ class ActiveManager(models.Manager):
 
 
 class CommonQuestion(models.Model):
-    question = models.TextField(unique=True, null=True)
+    question = models.TextField(null=True)
     crm_id = models.ForeignKey(
         Institute, 
         on_delete=models.CASCADE, 

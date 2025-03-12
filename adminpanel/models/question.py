@@ -11,7 +11,7 @@ class ActiveManager(models.Manager):
 
 
 class Question(models.Model):
-    question = models.TextField(unique=True, null=True)
+    question = models.TextField(null=True)
     course_id = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='questions')
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

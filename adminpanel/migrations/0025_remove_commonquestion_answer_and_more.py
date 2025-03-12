@@ -17,6 +17,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='commonquestion',
             name='question',
-            field=models.TextField(null=True, unique=True),
+            field=models.TextField(),
         ),
     ]
