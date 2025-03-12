@@ -19,7 +19,7 @@ import { usePermission } from "../context/PermissionContext.js";
 import QuestionChecker from "./QuestionChecker.js";
 import { startRecording, stopRecording,setupMediaStream } from "../utils/recording.js";
 import usePageReloadSubmit from "../hooks/usePageReloadSubmit.js";
-import useBackSubmitHandler from '../hooks/useBackSubmitHandler.js';
+// import useBackSubmitHandler from '../hooks/useBackSubmitHandler.js';
 
 const Questions = () => {
   const [countdown, setCountdown] = useState(60);
@@ -98,29 +98,49 @@ const Questions = () => {
 
   // When click back button tehn go to expired page
 
+  // useEffect(() => {
+  //   // Function to block back navigation and redirect to expired page
+  //   const blockBackNavigation = () => {
+  //     navigate("/expired")
+  //   };
+
+  //   // Block back navigation initially
+  //   window.history.pushState(null, "", window.location.href);
+
+  //   // Listen for back/forward button clicks and redirect to expired page
+  //   window.addEventListener("popstate", blockBackNavigation);
+
+  //   // Cleanup the event listener when the component unmounts
+  //   return () => {
+  //     window.removeEventListener("popstate", blockBackNavigation);
+  //   };
+  // }, []);
   useEffect(() => {
-    // Function to block back navigation and redirect to expired page
-    const blockBackNavigation = () => {
-      navigate("/expired")
+    const handlePopState = (event) => {
+      window.history.pushState(null, '', window.location.pathname);
+      alert('Back navigation is disabled on this page.');
     };
 
-    // Block back navigation initially
-    window.history.pushState(null, "", window.location.href);
-
-    // Listen for back/forward button clicks and redirect to expired page
-    window.addEventListener("popstate", blockBackNavigation);
-
-    // Cleanup the event listener when the component unmounts
+    window.history.pushState(null, '', window.location.pathname);
+    window.addEventListener('popstate', handlePopState);
     return () => {
-      window.removeEventListener("popstate", blockBackNavigation);
+      window.removeEventListener('popstate', handlePopState);
     };
   }, []);
+  // useEffect(()=>{
+  //   function DisableBackButton() {
+  //     window.history.forward()
+  //     }
+  //     DisableBackButton();
+  //     window.onload = DisableBackButton;
+  //     window.onpageshow = function(evt) { if (evt.persisted) DisableBackButton() }
+  //     window.onunload = function() { void (0) }
+  // },[])
 
 
   useEffect(()=>{
     if(encoded_zoho_lead_id == null){
-      window.location.reload()
-    setTimeout(()=>navigate("/expired"),0) ;
+     setTimeout(()=>navigate("/expired"),0) ;
     }
   },[encoded_zoho_lead_id,navigate])
 
