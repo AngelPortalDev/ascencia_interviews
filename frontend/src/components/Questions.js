@@ -48,6 +48,7 @@ const Questions = () => {
   const recordedAudioChunksRef = useRef([]);
   const [isRecording, setIsRecording] = useState(false);
   const [isFirstQuestionSet, setIsFirstQuestionSet] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Hoocks for go back to previous page
   usePageReloadSubmit(
@@ -173,65 +174,59 @@ const Questions = () => {
   }, [getQuestions, isFirstQuestionSet, last_question_id, zoho_lead_id]);
 
 
-  const handleSubmit = useCallback(() => {
-    // Use currentQuestionIndex directly instead of relying on swiper
+  const handleSubmit = useCallback(async () => { 
+    setLoading(true);
     const newQuestionId = getQuestions[currentQuestionIndex]?.encoded_id;
     if (!newQuestionId) {
       console.error("Error: newQuestionId is undefined or invalid.");
       return;
     }
-
-    // Only update activeQuestionId if it has changed
+  
     if (newQuestionId !== activeQuestionId) {
-      setActiveQuestionId(newQuestionId); 
+      setActiveQuestionId(newQuestionId);
     }
-
-    // Stop current recording and start new recording for the new question
-    stopRecording(
-      videoRef,
-      mediaRecorderRef,
-      audioRecorderRef,
-      recordedChunksRef,
-      recordedAudioChunksRef,
-      setVideoFilePath,
-      setAudioFilePath,
-      zoho_lead_id,
-      activeQuestionId,
-      () => {
-        try {
-          startRecording(
-            videoRef,
-            mediaRecorderRef,
-            audioRecorderRef,
-            recordedChunksRef,
-            recordedAudioChunksRef,
-            setIsRecording,
-            setVideoFilePath,
-            setAudioFilePath,
-            zoho_lead_id,
-            newQuestionId,
-            last_question_id
-          );
-        } catch (err) {
-          console.error("Failed to start recording:", err);
-        }
-      },
-      last_question_id
-    );
-
-    // stopAllStreams(videoRef);
-    // **Set submission flag before navigating**
-   localStorage.setItem("interviewSubmitted", "true");
-    // Submit the exam 
-    submitExam();
-
-    // Show success toast and navigate to home page
-    // toast.success("Interview Submitted...", {
-    //   onClose: () => ,
-    //   autoClose: 2000,
-    //   hideProgressBar: true,
-    // }); 
-    navigate("/interviewsubmitted")
+  
+    try {
+      await stopRecording( 
+        videoRef,
+        mediaRecorderRef,
+        audioRecorderRef,
+        recordedChunksRef,
+        recordedAudioChunksRef,
+        setVideoFilePath,
+        setAudioFilePath,
+        zoho_lead_id,
+        activeQuestionId,
+        () => {
+          try {
+            startRecording(
+              videoRef,
+              mediaRecorderRef,
+              audioRecorderRef,
+              recordedChunksRef,
+              recordedAudioChunksRef,
+              setIsRecording,
+              setVideoFilePath,
+              setAudioFilePath,
+              zoho_lead_id,
+              newQuestionId,
+              last_question_id
+            );
+          } catch (err) {
+            console.error("Failed to start recording:", err);
+          }
+        },
+        last_question_id
+      );
+  
+      localStorage.setItem("interviewSubmitted", "true");
+      submitExam();
+      navigate("/interviewsubmitted");
+    } catch (error) {
+      console.error("Error in handleSubmit:", error);
+    } finally {
+      setLoading(false);
+    }
   }, [
     activeQuestionId,
     getQuestions,
@@ -476,9 +471,23 @@ const Questions = () => {
   
   
   
+  if (loading) {
+    return <div>
+      <section class="dots-container">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </section>  
+    </div>;
+  }
 
   return (
+  
+    
     <div className="relative min-h-screen bg-gradient-to-r text-white">
+    
       {/* Background Effect */}
       <div
         aria-hidden="true"
@@ -545,6 +554,7 @@ const Questions = () => {
                 {index === getQuestions.length - 1 && (
                   <button
                     onClick={handleSubmit}
+                    disabled={loading}
                     className="
                     bg-gradient-to-r from-[#ff80b5] to-[#9089fc] text-white font-semibold 
                     text-xs md:text-sm 
