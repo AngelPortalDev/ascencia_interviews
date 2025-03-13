@@ -11,7 +11,7 @@ from django.core.files.storage import default_storage
 from textblob import TextBlob
 # import wave
 import speech_recognition as sr
-from langdetect import detect
+from langdetect import detect,detect_langs
 from googletrans import Translator
 from adminpanel.common_imports import CommonQuestion
 import re
@@ -38,9 +38,7 @@ from decimal import Decimal
 logger = logging.getLogger(__name__)
 from django_q.tasks import async_task
 from adminpanel.common_imports import save_data
-
-
-
+from difflib import SequenceMatcher
 # ✅ Paths (Update as per your system)
 FFMPEG_PATH = r"C:\ffmpeg-2025-02-20-git-bc1a3bfd2c-full_build\bin\ffmpeg.exe"
 # VOSK_MODEL_PATH = r"C:\Users\angel\Downloads\vosk-model-small-en-us-0.15\vosk-model-small-en-us-0.15"
@@ -107,33 +105,84 @@ def extract_audio(video_path):
 #             return "Error with speech recognition service"
 
 def check_grammar(text):
-    detected_language = detect(text)
-    if detected_language != 'en':
-        return {
-            "original_text": text,
-            "corrected_text": text,  # No correction for non-English text
-            "grammar_accuracy": 0
-        }
+    # Detect the language of the text
+    result = {
+        "original_text": text,
+        "corrected_text": "",
+        "grammar_accuracy": 0.0,
+        "is_english": False,
+        "language_confidence": 0.0,
+        "status": ""
+    }
 
-    # Grammar check for English
+    unclear_audio_keywords = [
+        "could not understand audio",
+        "couldn't understand audio",
+        "unable to hear",
+        "audio unclear",
+        "couldn't hear",
+        "audio not clear",
+        "audio issue",
+        "audio problem",
+        "not audible",
+        "unclear audio"
+    ]
+
+    # Check for unclear audio phrases
+    if any(keyword in text.lower() for keyword in unclear_audio_keywords):
+        result['status'] = "Unclear audio detected"
+        return result
+
+    translator = Translator()
+
+    try:
+        # Detect language and confidence
+        detected_langs = detect_langs(text)
+        for lang in detected_langs:
+            if lang.lang == 'en':
+                result['is_english'] = True
+                result['language_confidence'] = round(lang.prob, 2)
+                break
+    except Exception as e:
+        result['status'] = f"Language detection error: {e}"
+        return result
+
+    # Translate if not English
+    if not result['is_english']:
+        try:
+            detected_language = detect(text)
+            translated = translator.translate(text, src=detected_language, dest='en')
+            text = translated.text
+            result['status'] = "Translated to English"
+        except Exception as e:
+            result['status'] = f"Translation error: {e}"
+            return result
+    else:
+        result['status'] = "Detected as English"
+
+    # Grammar correction
     blob = TextBlob(text)
     corrected_text = str(blob.correct())
-    
+    result["corrected_text"] = corrected_text
+
+    # Check if the text is proper English using similarity and word count
+    similarity_ratio = SequenceMatcher(None, text.lower(), corrected_text.lower()).ratio()
+    if similarity_ratio < 0.8 or len(text.strip().split()) < 3:
+        result["status"] = "Improper English text"
+        return result
+
+    # Calculate grammar accuracy
     original_words = text.split()
     corrected_words = corrected_text.split()
-
     correct_count = sum(1 for orig, corr in zip(original_words, corrected_words) if orig == corr)
     total_words = len(original_words)
     raw_accuracy = (correct_count / total_words) * 100 if total_words > 0 else 0
-
-    # Scale grammar accuracy between 10 and 100
     grammar_accuracy = max(10, min(100, raw_accuracy))
 
-    return {
-        "original_text": text,
-        "corrected_text": corrected_text,
-        "grammar_accuracy": round(grammar_accuracy, 2)
-    }
+    result["grammar_accuracy"] = round(grammar_accuracy, 2)
+    result["status"] = "Proper English text"
+
+    return result
 # ✅ Speech-to-Text (First 2 Minutes)
 # def transcribe_audio(audio_path):
 #     recognizer = KaldiRecognizer(vosk_model, 16000)  # 16kHz sample rate
@@ -198,27 +247,53 @@ def clean_polarity(value):
         return 0.0  # Default to neutral if conversion fails
     
 def analyze_sentiment(text):
-    detected_language = detect(text)
-    
-    # If the language is not English, translate it
-    if detected_language != 'en':
-        translator = Translator()
-        translated = translator.translate(text, src=detected_language, dest='en')
-        text = translated.text
-    
-    sentiment = TextBlob(text).sentiment
-    subjectivity = sentiment.subjectivity  # Confidence estimate (0 to 1)
-    confidence_level = (1 - subjectivity) * 100  # Higher objectivity = higher confidence
-    polarity = clean_polarity(sentiment.polarity)
-    # Convert polarity (-1 to 1) into a percentage (0 to 100)
-    sentiment_score = (polarity + 1) * 50  
+    result = {}
+    translator = Translator()
 
-    return {
-        "polarity": polarity,  # -1 (negative) to 1 (positive)
-        "subjectivity": sentiment.subjectivity,  # 0 (objective) to 1 (subjective),
-        "sentiment_score": round(sentiment_score, 2),  # 0 to 100% dynamically
-        "confidence_level": round(confidence_level, 2),
-    }
+    # Language detection
+    try:
+        detected_langs = detect_langs(text)
+        is_english = any(lang.lang == 'en' and lang.prob > 0.5 for lang in detected_langs)
+        result['is_english'] = is_english
+        result['language_confidence'] = max(lang.prob for lang in detected_langs if lang.lang == 'en') if is_english else 0
+    except Exception as e:
+        result['is_english'] = False
+        result['language_confidence'] = 0
+        print(f"Language detection error: {e}")
+
+
+    if not result['is_english']:
+        try:
+            detected_language = detect(text)
+            translated = translator.translate(text, src=detected_language, dest='en')
+            text = translated.text
+        except Exception as e:
+            print(f"Translation error: {e}")
+            text = ""  # Set to empty if translation fails
+    
+    if text:
+        sentiment = TextBlob(text).sentiment
+        polarity = clean_polarity(sentiment.polarity)
+        subjectivity = sentiment.subjectivity
+
+        # Confidence calculation
+        confidence_level = 0.0 if polarity == 0 else (1 - subjectivity) * 100
+        sentiment_score = 0.0 if polarity == 0 else (polarity + 1) * 50
+
+        result.update({
+            "polarity": polarity,  # -1 (negative) to 1 (positive)
+            "subjectivity": subjectivity,  # 0 (objective) to 1 (subjective)
+            "sentiment_score": round(sentiment_score, 2),  # 0 to 100%
+            "confidence_level": round(confidence_level, 2),
+        })
+    else:
+        result.update({
+            "polarity": 0.0,
+            "subjectivity": 0.0,
+            "sentiment_score": 0.0,
+            "confidence_level": 0.0,
+        })
+    return result
 
 @csrf_exempt
 def interview_add_video_path(request):
@@ -284,7 +359,6 @@ def student_interview_answers(zoho_lead_id, question_id, answer_text, sentiment_
         return {"status": False, "error": str(e)}
 
 
-# print(async_task(analyze_video("C:\\Users\\angel\\Ascencia_Interviews\\ascencia_interviews\\uploads\\interview_videos\\5204268000112707003\\interview_video_5204268000112707003_3_2025-03-05T07-29-27.webm", '1', '5204268000112707003', '5')))
     # return JsonResponse({"status": False, "error": "Invalid request method"}, status=405)
 # def analyze_video(zoho_lead_id):
 #     # if request.method == 'POST':
@@ -699,63 +773,6 @@ def merge_videos(zoho_lead_id, base_uploads_folder="C:/xampp/htdocs/ascencia_int
             subject="Interview Process Completed",
             message=f"""
                     <html>
-                     <head>
-                                <style>
-                                    body {{
-                                        font-family: Arial, sans-serif;
-                                        background-color: #f4f4f4;
-                                        padding: 20px;
-                                        text-align: left;
-                                    }}
-                                    .email-container {{
-                                       max-width: 600px;
-                                        margin: auto;
-                                        background: #ffffff;
-                                        padding: 20px;
-                                        border-radius: 8px;
-                                        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-                                    }}
-                                     .header {{
-                                        text-align: center;
-                                        padding-bottom: 20px;
-                                        border-bottom: 1px solid #ddd; 
-                                     }}
-                                    .header img {{
-                                        max-width: 150px;
-                                        }}
-                                    h2 {{
-                                        color: #2c3e50;
-                                    }}
-                                    p {{
-                                        color: #555555;
-                                        font-size: 16px;
-                                        line-height: 1.6;
-                                    }}
-                                    .btn {{
-                                        display: inline-block;
-                                        background: #db2777;
-                                        color: #ffffff;
-                                        text-decoration: none;
-                                        padding: 10px 20px;
-                                        border-radius: 5px;
-                                        font-weight: bold;
-                                        margin-top: 10px;
-                                    }}
-                                    .btn:hover {{
-                                        background: #0056b3;
-                                    }}
-                                    .email-logo {{
-                                        max-width:300px;
-                                        height:auto;
-                                        width:100%;
-                                        margin-bottom: 20px;
-                                        display:flex;
-                                        justify-content:center;
-                                        margin:0 auto;
-                                    }}
-                                 
-                                </style>
-                            </head>
                     <body>
                          <table role="presentation" cellspacing="0" cellpadding="0" width="100%">
                             <tr>
@@ -824,7 +841,7 @@ def delete_video(request, zoho_lead_id):
     return JsonResponse({"success": False, "message": "Invalid request!"})
 
 
-@csrf_exempt
+# @csrf_exempt
 def analyze_video(video_path,question_id,zoho_lead_id,last_question_id):
     # if request.method == 'GET':
     #     data = request.POST
@@ -853,8 +870,11 @@ def analyze_video(video_path,question_id,zoho_lead_id,last_question_id):
 
         try:
             transcribed_text = transcribe_audio(extracted_audio)
+            print(transcribed_text)
             sentiment_analysis = analyze_sentiment(transcribed_text)
+            print(sentiment_analysis)
             grammar_results = check_grammar(transcribed_text)
+            print(grammar_results)
 
             # print(grammar_results)
             # print(sentiment_analysis)
@@ -890,7 +910,7 @@ def analyze_video(video_path,question_id,zoho_lead_id,last_question_id):
             print(r"test sdfdsfs asd:",question_id)
 
            
-            if int(last_question_id) == int(question_id):
+            if int(last_question_id) == int(question_id) and grammar_results.get('grammar_accuracy', 0.0) > 0.0:
                 async_task(merge_videos(zoho_lead_id))
                 async_task(check_answers(zoho_lead_id))
                 # async_task("studentpanel.views.interview_process.merge_videos",zoho_lead_id)
@@ -922,4 +942,4 @@ def analyze_video(video_path,question_id,zoho_lead_id,last_question_id):
 
 
 # print(async_task(check_answers('5204268000112707003')))
-
+# 

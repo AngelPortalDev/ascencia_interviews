@@ -56,7 +56,7 @@ class Student_Interview(models.Model):
         if self.deleted_at and 'update_fields' in kwargs and 'deleted_at' not in kwargs['update_fields']:
             raise ValueError("Cannot modify a soft-deleted record without updating 'deleted_at'.")
 
-        domain = getattr(settings, "SITE_DOMAIN", "https://192.168.1.49:7000")
+        domain = getattr(settings, "SITE_DOMAIN", f"{settings.ADMIN_BASE_URL}")
         self.interview_link = f"{domain}/interview/{self.interview_id}"
 
         super().save(*args, **kwargs)
