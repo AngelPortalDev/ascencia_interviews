@@ -579,7 +579,7 @@ def process_document(request):
                                                         </div>
                                                          <img src="{{ STATIC_URL }}img/email_template_icon/notification.png" alt="Zoho Lead Update" class="email-logo"/>
                                                             <h2>Zoho Lead Update Notification</h2>
-                                                            <p>Dear User,</p>
+                                                            <p>Dear { zoho_full_name },</p>
                                                             <p>The lead update was successful.</p>
                                                             <p>Click the button below to proceed:</p>
                                                             <a href="{ interview_url }" class="btn">Go to Interview</a>
@@ -669,7 +669,7 @@ def process_document(request):
                                             <img src="{{ STATIC_URL }}img/email_template_icon/doc_verified.png" alt="Document Verified" class="email-logo"/>
                                             <h2>Document Verification Completed</h2>
                                             <p>Dear Student Manager,</p>
-                                            <p>The document verification process for <strong>John Doe</strong> has been successfully completed.</p>
+                                            <p>The document verification process for <strong>{ zoho_full_name }</strong> has been successfully completed.</p>
                                             <p>Click the button below to review the verification details:</p>
                                             <a href="http://127.0.0.1:8000/verification" class="btn">View Verification Details</a>
                                         </div>
