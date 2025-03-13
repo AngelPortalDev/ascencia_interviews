@@ -7,4 +7,4 @@
 manage.py
 /uploads/
 /venv
-/ascencia_interviews/setting.py
+/ascencia_interviews/settings.py
