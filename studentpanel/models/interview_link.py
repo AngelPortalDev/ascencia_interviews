@@ -34,6 +34,7 @@ class StudentInterviewLink(models.Model):
             self.is_expired = True
         if self.overall_score is not None:
             self.interview_status = InterviewResult.PASS.value if self.overall_score >= 35 else InterviewResult.FAIL.value
+        super().save(*args, **kwargs)
 
     def get_result(self):
         return InterviewResult.PASS if self.interview_status == "Pass" else InterviewResult.FAIL

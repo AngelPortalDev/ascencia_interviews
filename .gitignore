@@ -8,3 +8,4 @@ manage.py
 /uploads/
 /venv
 /ascencia_interviews/settings.py
+debug.log
