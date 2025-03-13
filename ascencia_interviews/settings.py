@@ -226,7 +226,9 @@ LOGIN_URL = '/login/'
 
 # TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
-ADMIN_BASE_URL = "http://192.168.1.63:5000"
+# ADMIN_BASE_URL = "http://192.168.1.63:5000"
+
+ADMIN_BASE_URL = "https://interview.ascenciamalta.mt/"
 
 BUNNY_STREAM_API_KEY = "e31364b4-b2f4-4221-aac3bd5d34e5-6769-4f29"  # Replace with your actual Library Key
 BUNNY_STREAM_LIBRARY_ID = "390607"
@@ -247,16 +249,28 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
 
+# Q_CLUSTER = {
+#     "name": "DjangoQCluster",
+#     "workers": 8,  # Number of worker processes
+#     "timeout": 90,  # Task timeout in seconds
+#     "retry": 120,  # Retry failed tasks after 2 minutes
+#     "queue_limit": 150,  # Maximum number of queued tasks
+#     "bulk": 4,  # Number of tasks processed at once
+#     "orm": "default",  # Use Django ORM for task management
+# }
+
 Q_CLUSTER = {
     "name": "DjangoQCluster",
-    "workers": 4,  # Number of worker processes
-    "timeout": 90,  # Task timeout in seconds
-    "retry": 120,  # Retry failed tasks after 2 minutes
-    "queue_limit": 50,  # Maximum number of queued tasks
-    "bulk": 10,  # Number of tasks processed at once
+    "workers": 6,  # Slightly fewer workers to avoid overwhelming the system
+    "timeout": 180,  # Adjusted timeout to 3 minutes (matches your task duration)
+    "retry": 300,  # Retry failed tasks after 5 minutes (gives time to resolve issues)
+    "queue_limit": 200,  # Increased queue size to handle more tasks
+    "bulk": 3,  # Processes 3 tasks at a time for balanced load
     "orm": "default",  # Use Django ORM for task management
 }
 
+
 CSRF_TRUSTED_ORIGINS = [
-    "http://interview.ascenciamalta.mt",
+    "https://interview.ascenciamalta.mt",
+    "http://interview.ascenciamalta.mt:8080",
 ]

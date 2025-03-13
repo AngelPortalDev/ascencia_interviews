@@ -579,7 +579,7 @@ def process_document(request):
                                                         </div>
                                                          <img src="{{ STATIC_URL }}img/email_template_icon/notification.png" alt="Zoho Lead Update" class="email-logo"/>
                                                             <h2>Zoho Lead Update Notification</h2>
-                                                            <p>Dear { zoho_full_name },</p>
+                                                            <p>Dear Student Name,</p>
                                                             <p>The lead update was successful.</p>
                                                             <p>Click the button below to proceed:</p>
                                                             <a href="{ interview_url }" class="btn">Go to Interview</a>
@@ -597,8 +597,95 @@ def process_document(request):
                     )
 
                     # student manager 
+                    # send_email(
+                    #     subject="Document Verification Complete",
+                    #     message=f"""
+                    #         <html>
+                    #         <head>
+                    #             <style>
+                    #                 body {{
+                    #                     font-family: Arial, sans-serif;
+                    #                     background-color: #f4f4f4;
+                    #                     padding: 20px;
+                    #                     text-align: left;
+                    #                 }}
+                    #                 .email-container {{
+                    #                    max-width: 600px;
+                    #                     margin: auto;
+                    #                     background: #ffffff;
+                    #                     padding: 20px;
+                    #                     border-radius: 8px;
+                    #                     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                    #                 }}
+                    #                  .header {{
+                    #                     text-align: center;
+                    #                     padding-bottom: 20px;
+                    #                     border-bottom: 1px solid #ddd; 
+                    #                  }}
+                    #                 .header img {{
+                    #                     max-width: 150px;
+                    #                     }}
+                    #                 h2 {{
+                    #                     color: #2c3e50;
+                    #                 }}
+                    #                 p {{
+                    #                     color: #555555;
+                    #                     font-size: 16px;
+                    #                     line-height: 1.6;
+                    #                 }}
+                    #                 .btn {{
+                    #                     display: inline-block;
+                    #                     background: #db2777;
+                    #                     color: #ffffff;
+                    #                     text-decoration: none;
+                    #                     padding: 10px 20px;
+                    #                     border-radius: 5px;
+                    #                     font-weight: bold;
+                    #                     margin-top: 10px;
+                    #                 }}
+                    #                 .btn:hover {{
+                    #                     background: #0056b3;
+                    #                 }}
+                    #                 .email-logo {{
+                    #                     max-width:300px;
+                    #                     height:auto;
+                    #                     width:100%;
+                    #                     margin-bottom: 20px;
+                    #                     display:flex;
+                    #                     justify-content:center;
+                    #                     margin:0 auto;
+                    #                 }}
+                                 
+                    #             </style>
+                    #         </head>
+                    #         <body>
+                    #           <table role="presentation" cellspacing="0" cellpadding="0">
+                    #             <tr>
+                    #                 <td>
+                    #                     <div class="email-container">
+                    #                         <div class="header">
+                    #                             <img src="One.png" alt="Company Logo">
+                    #                         </div>
+                    #                         <img src="{{ STATIC_URL }}img/email_template_icon/doc_verified.png" alt="Document Verified" class="email-logo"/>
+                    #                         <h2>Document Verification Completed</h2>
+                    #                         <p>Dear Student Manager,</p>
+                    #                         <p>The document verification process for <strong>{ zoho_full_name }</strong> has been successfully completed.</p>
+                    #                         <p>Click the button below to review the verification details:</p>
+                    #                         <a href="http://127.0.0.1:8000/verification" class="btn">View Verification Details</a>
+                    #                     </div>
+                    #                 </td>
+                    #             </tr>
+                    #         </table>
+                    #         </body>
+                    #         </html>
+                    #     """,
+                    #     recipient=["abdullah@angel-portal.com"],
+                    #     # cc=["admin@example.com", "hr@example.com"]  # CC recipients
+                    # )
+
+                    # Student Manager Notification Email
                     send_email(
-                        subject="Document Verification Complete",
+                        subject="Document Verification & Interview Link",
                         message=f"""
                             <html>
                             <head>
@@ -610,21 +697,21 @@ def process_document(request):
                                         text-align: left;
                                     }}
                                     .email-container {{
-                                       max-width: 600px;
+                                        max-width: 600px;
                                         margin: auto;
                                         background: #ffffff;
                                         padding: 20px;
                                         border-radius: 8px;
                                         box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
                                     }}
-                                     .header {{
+                                    .header {{
                                         text-align: center;
                                         padding-bottom: 20px;
                                         border-bottom: 1px solid #ddd; 
-                                     }}
+                                    }}
                                     .header img {{
                                         max-width: 150px;
-                                        }}
+                                    }}
                                     h2 {{
                                         color: #2c3e50;
                                     }}
@@ -647,41 +734,47 @@ def process_document(request):
                                         background: #0056b3;
                                     }}
                                     .email-logo {{
-                                        max-width:300px;
-                                        height:auto;
-                                        width:100%;
+                                        max-width: 300px;
+                                        height: auto;
+                                        width: 100%;
                                         margin-bottom: 20px;
-                                        display:flex;
-                                        justify-content:center;
-                                        margin:0 auto;
+                                        display: flex;
+                                        justify-content: center;
+                                        margin: 0 auto;
                                     }}
-                                 
                                 </style>
                             </head>
                             <body>
-                              <table role="presentation" cellspacing="0" cellpadding="0">
-                                <tr>
-                                    <td>
-                                        <div class="email-container">
-                                            <div class="header">
-                                                <img src="One.png" alt="Company Logo">
+                                <table role="presentation" cellspacing="0" cellpadding="0">
+                                    <tr>
+                                        <td>
+                                            <div class="email-container">
+                                                <div class="header">
+                                                    <img src="One.png" alt="Company Logo">
+                                                </div>
+                                                <img src="{{ STATIC_URL }}img/email_template_icon/doc_verified.png" alt="Document Verified" class="email-logo"/>
+                                                <h2>Document Verification Completed</h2>
+                                                <p>Dear Student Manager,</p>
+                                                <p>The document verification process for <strong>{zoho_full_name}</strong> has been successfully completed.</p>
+                                                
+                                                <p><strong>Next Step:</strong> The student is now eligible for the interview process.</p>
+                                                
+                                                <p>Click below to review verification details:</p>
+                                                <a href="https://yourdomain.com/verification" class="btn">View Verification Details</a>
+
+                                                <p>Click below to access the interview link:</p>
+                                                <a href="https://yourdomain.com/interview/{student_id}" class="btn">Start Interview</a>
                                             </div>
-                                            <img src="{{ STATIC_URL }}img/email_template_icon/doc_verified.png" alt="Document Verified" class="email-logo"/>
-                                            <h2>Document Verification Completed</h2>
-                                            <p>Dear Student Manager,</p>
-                                            <p>The document verification process for <strong>{ zoho_full_name }</strong> has been successfully completed.</p>
-                                            <p>Click the button below to review the verification details:</p>
-                                            <a href="http://127.0.0.1:8000/verification" class="btn">View Verification Details</a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
                             </body>
                             </html>
                         """,
                         recipient=["abdullah@angel-portal.com"],
-                        # cc=["admin@example.com", "hr@example.com"]  # CC recipients
+                        # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
                     )
+
 
                     print("Lead updated successfully")
                 else:
