@@ -45,9 +45,9 @@ urlpatterns = [
         ),
     ),
     path("delete-video/<int:student_id>/", delete_video, name="delete_video"),
-    path('merge-videos/', merge_videos, name='merge_videos')
-    # path('interview_panel/<str:student_id>/', TemplateView.as_view(template_name='index.html')),
-    # path('terms-and-conditions/', TemplateView.as_view(template_name='index.html')),
-    # path('permissions/', TemplateView.as_view(template_name='index.html')),
-    # path('interview-player/<str:student_id>/', TemplateView.as_view(template_name='index.html')),    
+    path('merge-videos/', merge_videos, name='merge_videos'),
+    path('interview_panel/<str:student_id>/', TemplateView.as_view(template_name='index.html')),
+    path('terms-and-conditions/', TemplateView.as_view(template_name='index.html')),
+    path('permissions/', TemplateView.as_view(template_name='index.html')),
+    path('interview-player/<str:student_id>/', TemplateView.as_view(template_name='index.html')),    
 ]
