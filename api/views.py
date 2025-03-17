@@ -577,7 +577,7 @@ def process_document(request):
                                                         <div class="header">
                                                             <img src="One.png" alt="Company Logo">
                                                         </div>
-                                                         <img src="{{ STATIC_URL }}img/email_template_icon/notification.png" alt="Zoho Lead Update" class="email-logo"/>
+                                                         <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/notification.png" alt="Zoho Lead Update" class="email-logo"/>
                                                             <h2>Zoho Lead Update Notification</h2>
                                                             <p>Dear Student Name,</p>
                                                             <p>The lead update was successful.</p>
@@ -752,7 +752,7 @@ def process_document(request):
                                                 <div class="header">
                                                     <img src="One.png" alt="Company Logo">
                                                 </div>
-                                                <img src="{{ STATIC_URL }}img/email_template_icon/doc_verified.png" alt="Document Verified" class="email-logo"/>
+                                                <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/doc_verified.png" alt="Document Verified" class="email-logo"/>
                                                 <h2>Document Verification Completed</h2>
                                                 <p>Dear Student Manager,</p>
                                                 <p>The document verification process for <strong>{zoho_full_name}</strong> has been successfully completed.</p>
@@ -811,7 +811,7 @@ def fetch_interview_questions(request, crm_id):
             common_questions = []
 
         # Fetch 3 random questions from questions
-        # customized_questions = list(Question.objects.order_by('id')[:3])
+        # customized_questions = list(Question.objects.order_by('id')[:3])  
 
         # Combine questions
         # questions_list = common_questions + customized_questions
