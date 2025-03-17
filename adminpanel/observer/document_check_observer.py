@@ -63,7 +63,7 @@ class APIDataFetcher:
                 # process_queue.put((file_url, publisher, API_TOKEN))
                 # process_documents()
                 # if zoho_lead_id in ['5204268000112707003', '5204268000116210079']:
-                publisher.mindee_verification_status != 'Inprogress':
+                if publisher.mindee_verification_status != 'Inprogress':
                     publisher.mindee_verification_status = 'Inprogress'
                     publisher.save(update_fields=['mindee_verification_status']) 
                     async_task("adminpanel.observer.document_check_observer.process_documents_task", file_url, publisher, API_TOKEN)
