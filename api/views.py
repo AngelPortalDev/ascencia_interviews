@@ -44,7 +44,7 @@ mindee_client = Client(api_key="4951866b395bb3fefdb1e4753c6bbd8e")
 # Add endpoint configuration
 my_endpoint = mindee_client.create_endpoint(
     account_name="ANKITAGAVAS",
-    endpoint_name="eductional_cert_v5",
+    endpoint_name="eductional_cert_v4",
     version="1"
 )
 
