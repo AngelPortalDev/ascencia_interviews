@@ -9,3 +9,10 @@ manage.py
 /venv
 /ascencia_interviews/settings.py
 debug.log
+
+
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd

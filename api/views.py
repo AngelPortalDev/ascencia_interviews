@@ -579,7 +579,7 @@ def process_document(request):
                                                         </div>
                                                          <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/notification.png" alt="Zoho Lead Update" class="email-logo"/>
                                                             <h2>Zoho Lead Update Notification</h2>
-                                                            <p>Dear Student Name,</p>
+                                                            <p>Dear {zoho_full_name},</p>
                                                             <p>The lead update was successful.</p>
                                                             <p>Click the button below to proceed:</p>
                                                             <a href="{ interview_url }" class="btn">Go to Interview</a>
@@ -760,10 +760,7 @@ def process_document(request):
                                                 <p><strong>Next Step:</strong> The student is now eligible for the interview process.</p>
                                                 
                                                 <p>Click below to review verification details:</p>
-                                                <a href="https://yourdomain.com/verification" class="btn">View Verification Details</a>
-
-                                                <p>Click below to access the interview link:</p>
-                                                <a href="https://yourdomain.com/interview/{student_id}" class="btn">Start Interview</a>
+                                                <a href="https://interview.ascenciamalta.mt/verification" class="btn">View Verification Details</a>
                                             </div>
                                         </td>
                                     </tr>
