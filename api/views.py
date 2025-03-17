@@ -466,6 +466,7 @@ def process_document(request):
                 update_data = {"Interview_Process": "First Round Interview Hold"}
                 
                 student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+                student.mindee_verification_status = "Completed"
                 student.edu_doc_verification_status = "rejected"
                 student.save()
                 if update_zoho_lead(crm_id, zoho_lead_id, update_data):
@@ -479,6 +480,7 @@ def process_document(request):
                 update_data = {"Interview_Process": "First Round Interview Hold"}
                 
                 student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+                student.mindee_verification_status = "Completed"
                 student.edu_doc_verification_status = "rejected"
                 student.save()
                 if update_zoho_lead(crm_id, zoho_lead_id, update_data):
@@ -496,6 +498,7 @@ def process_document(request):
 
                 if update_zoho_lead(crm_id, zoho_lead_id, update_data):
                     student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+                    student.mindee_verification_status = "Completed"
                     student.edu_doc_verification_status = "approved"
                     student.is_interview_link_sent = True
                     student.interview_link_send_count += 1
@@ -780,6 +783,7 @@ def process_document(request):
                 update_data = {"Interview_Process": "First Round Interview Hold"}
                 
                 student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+                student.mindee_verification_status = "Completed"
                 student.edu_doc_verification_status = "rejected"
                 student.save()
                 if update_zoho_lead(crm_id, zoho_lead_id, update_data):

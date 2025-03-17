@@ -36,6 +36,11 @@ class Students(models.Model):
         choices=STATUS_CHOICES, 
         default='Unverified'
     )
+    mindee_verification_status = models.CharField(
+        max_length=20, 
+        choices=STATUS_CHOICES, 
+        default=''
+    )
     is_interview_link_sent = models.BooleanField(default=False)
     interview_link_send_count = models.IntegerField(default=0)
     bunny_stream_video_id = models.CharField(max_length=255, null=True, blank=True)
