@@ -729,9 +729,9 @@ def process_document(request):
             return JsonResponse({"error": f"Mindee API processing failed: {str(e)}"}, status=500)
 
     except Exception as e:
-            student = Students.objects.get(zoho_lead_id=zoho_lead_id)
-            student.verification_failed_reason = "unexpected error occurred"
-            student.save()
+        student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        student.verification_failed_reason = "unexpected error occurred"
+        student.save()
         return JsonResponse({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
 
     
