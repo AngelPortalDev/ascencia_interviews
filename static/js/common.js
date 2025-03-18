@@ -14,6 +14,38 @@ function confirmDelete(id, routeUrl) {
     });
 }
 
+// Track refresh count in localStorage
+if (!localStorage.getItem("refreshData")) {
+    localStorage.setItem("refreshData", JSON.stringify({ count: 0, lastTime: Date.now() }));
+}
+
+function preventExcessiveRefresh() {
+    let refreshData = JSON.parse(localStorage.getItem("refreshData")) || { count: 0, lastTime: 0 };
+    let now = Date.now();
+
+    // If the last refresh was within 1 second, increase count
+    if (now - refreshData.lastTime < 1000) {
+        refreshData.count++;
+    } else {
+        refreshData.count = 1; // Reset count if more than 1 sec passed
+    }
+
+    refreshData.lastTime = now;
+
+    // Block page reload if exceeded 2 refreshes within 1 second
+    if (refreshData.count > 2) {
+        history.pushState(null, "", location.href); // Prevent browser refresh
+        return false;
+    }
+
+    // Store updated data
+    localStorage.setItem("refreshData", JSON.stringify(refreshData));
+}
+
+// Call function on page load
+preventExcessiveRefresh();
+
+
 
 
 // document.addEventListener("DOMContentLoaded", function () {
