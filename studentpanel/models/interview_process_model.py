@@ -38,8 +38,9 @@ class Students(models.Model):
     )
     mindee_verification_status = models.CharField(
         max_length=20, 
-        choices=STATUS_CHOICES, 
-        default=''
+        default='',
+        blank=True, 
+        null=True
     )
     verification_failed_reason = models.TextField(null=True, blank=True)
     is_interview_link_sent = models.BooleanField(default=False)
