@@ -391,6 +391,7 @@ def process_document(request):
         if not uploaded_file:
             student = Students.objects.get(zoho_lead_id=zoho_lead_id)
             student.verification_failed_reason = "No document uploaded"
+            student.mindee_verification_status = "Completed"
             student.save()
             return JsonResponse({"error": "No document uploaded"}, status=400)
 
@@ -406,6 +407,7 @@ def process_document(request):
         if is_restricted_filename(filename):
             student = Students.objects.get(zoho_lead_id=zoho_lead_id)
             student.verification_failed_reason = "Invalid file. Passport, CV, and Resume files are not allowed."
+            student.mindee_verification_status = "Completed"
             student.save()
             return JsonResponse({"error": "Invalid file. Passport, CV, and Resume files are not allowed."}, status=400)
 
@@ -424,6 +426,7 @@ def process_document(request):
         if response.status_code != 200:
             student = Students.objects.get(zoho_lead_id=zoho_lead_id)
             student.verification_failed_reason = "Failed to download file"
+            student.mindee_verification_status = "Completed"
             student.save()
             return JsonResponse({"error": f"Failed to download file, Status Code: {response.status_code}"}, status=400)
 
@@ -439,6 +442,7 @@ def process_document(request):
         if mime_type not in ["application/pdf", "image/png", "image/jpeg", "image/jpg"]:
             student = Students.objects.get(zoho_lead_id=zoho_lead_id)
             student.verification_failed_reason = "Invalid file type. Only PDF, PNG, JPG, and JPEG files are supported."
+            student.mindee_verification_status = "Completed"
             student.save()
             return JsonResponse({"error": "Invalid file type. Only PDF, PNG, JPG, and JPEG files are supported."}, status=400)
 
@@ -459,6 +463,7 @@ def process_document(request):
         if not is_certificate_filename(filename):
             student = Students.objects.get(zoho_lead_id=zoho_lead_id)
             student.verification_failed_reason = "Error"
+            student.mindee_verification_status = "Completed"
             student.save()
             return JsonResponse({"message": "Error", "is_education_certificate": False}, status=200)
 
@@ -725,12 +730,14 @@ def process_document(request):
         except Exception as e:
             student = Students.objects.get(zoho_lead_id=zoho_lead_id)
             student.verification_failed_reason = "Mindee API processing failed"
+            student.mindee_verification_status = "Completed"
             student.save()
             return JsonResponse({"error": f"Mindee API processing failed: {str(e)}"}, status=500)
 
     except Exception as e:
         student = Students.objects.get(zoho_lead_id=zoho_lead_id)
         student.verification_failed_reason = "unexpected error occurred"
+        student.mindee_verification_status = "Completed"
         student.save()
         return JsonResponse({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
 
