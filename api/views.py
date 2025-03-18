@@ -389,6 +389,9 @@ def process_document(request):
         print(f"Received first_name: {zoho_first_name}, last_name: {zoho_last_name}, program: {program}")
 
         if not uploaded_file:
+            student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+            student.verification_failed_reason = "No document uploaded"
+            student.save()
             return JsonResponse({"error": "No document uploaded"}, status=400)
 
         # Validate file name
@@ -401,6 +404,9 @@ def process_document(request):
         print(f"Processed filename: {filename}")
 
         if is_restricted_filename(filename):
+            student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+            student.verification_failed_reason = "Invalid file. Passport, CV, and Resume files are not allowed."
+            student.save()
             return JsonResponse({"error": "Invalid file. Passport, CV, and Resume files are not allowed."}, status=400)
 
         # Construct URL
@@ -416,6 +422,9 @@ def process_document(request):
         response = requests.get(file_url, headers=headers, allow_redirects=True)
 
         if response.status_code != 200:
+            student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+            student.verification_failed_reason = "Failed to download file"
+            student.save()
             return JsonResponse({"error": f"Failed to download file, Status Code: {response.status_code}"}, status=400)
 
         # Save the downloaded file temporarily
@@ -428,6 +437,9 @@ def process_document(request):
         # Validate MIME type
         mime_type = uploaded_file.content_type
         if mime_type not in ["application/pdf", "image/png", "image/jpeg", "image/jpg"]:
+            student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+            student.verification_failed_reason = "Invalid file type. Only PDF, PNG, JPG, and JPEG files are supported."
+            student.save()
             return JsonResponse({"error": "Invalid file type. Only PDF, PNG, JPG, and JPEG files are supported."}, status=400)
 
         # Extract text
@@ -445,6 +457,9 @@ def process_document(request):
 
 
         if not is_certificate_filename(filename):
+            student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+            student.verification_failed_reason = "Error"
+            student.save()
             return JsonResponse({"message": "Error", "is_education_certificate": False}, status=200)
 
         # Process document with Mindee
@@ -599,93 +614,6 @@ def process_document(request):
                         # cc=["admin@example.com", "hr@example.com"]  # CC recipients
                     )
 
-                    # student manager 
-                    # send_email(
-                    #     subject="Document Verification Complete",
-                    #     message=f"""
-                    #         <html>
-                    #         <head>
-                    #             <style>
-                    #                 body {{
-                    #                     font-family: Arial, sans-serif;
-                    #                     background-color: #f4f4f4;
-                    #                     padding: 20px;
-                    #                     text-align: left;
-                    #                 }}
-                    #                 .email-container {{
-                    #                    max-width: 600px;
-                    #                     margin: auto;
-                    #                     background: #ffffff;
-                    #                     padding: 20px;
-                    #                     border-radius: 8px;
-                    #                     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-                    #                 }}
-                    #                  .header {{
-                    #                     text-align: center;
-                    #                     padding-bottom: 20px;
-                    #                     border-bottom: 1px solid #ddd; 
-                    #                  }}
-                    #                 .header img {{
-                    #                     max-width: 150px;
-                    #                     }}
-                    #                 h2 {{
-                    #                     color: #2c3e50;
-                    #                 }}
-                    #                 p {{
-                    #                     color: #555555;
-                    #                     font-size: 16px;
-                    #                     line-height: 1.6;
-                    #                 }}
-                    #                 .btn {{
-                    #                     display: inline-block;
-                    #                     background: #db2777;
-                    #                     color: #ffffff;
-                    #                     text-decoration: none;
-                    #                     padding: 10px 20px;
-                    #                     border-radius: 5px;
-                    #                     font-weight: bold;
-                    #                     margin-top: 10px;
-                    #                 }}
-                    #                 .btn:hover {{
-                    #                     background: #0056b3;
-                    #                 }}
-                    #                 .email-logo {{
-                    #                     max-width:300px;
-                    #                     height:auto;
-                    #                     width:100%;
-                    #                     margin-bottom: 20px;
-                    #                     display:flex;
-                    #                     justify-content:center;
-                    #                     margin:0 auto;
-                    #                 }}
-                                 
-                    #             </style>
-                    #         </head>
-                    #         <body>
-                    #           <table role="presentation" cellspacing="0" cellpadding="0">
-                    #             <tr>
-                    #                 <td>
-                    #                     <div class="email-container">
-                    #                         <div class="header">
-                    #                             <img src="One.png" alt="Company Logo">
-                    #                         </div>
-                    #                         <img src="{{ STATIC_URL }}img/email_template_icon/doc_verified.png" alt="Document Verified" class="email-logo"/>
-                    #                         <h2>Document Verification Completed</h2>
-                    #                         <p>Dear Student Manager,</p>
-                    #                         <p>The document verification process for <strong>{ zoho_full_name }</strong> has been successfully completed.</p>
-                    #                         <p>Click the button below to review the verification details:</p>
-                    #                         <a href="http://127.0.0.1:8000/verification" class="btn">View Verification Details</a>
-                    #                     </div>
-                    #                 </td>
-                    #             </tr>
-                    #         </table>
-                    #         </body>
-                    #         </html>
-                    #     """,
-                    #     recipient=["abdullah@angel-portal.com"],
-                    #     # cc=["admin@example.com", "hr@example.com"]  # CC recipients
-                    # )
-
                     # Student Manager Notification Email
                     send_email(
                         subject="Document Verification & Interview Link",
@@ -795,9 +723,15 @@ def process_document(request):
 
 
         except Exception as e:
+            student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+            student.verification_failed_reason = "Mindee API processing failed"
+            student.save()
             return JsonResponse({"error": f"Mindee API processing failed: {str(e)}"}, status=500)
 
     except Exception as e:
+            student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+            student.verification_failed_reason = "unexpected error occurred"
+            student.save()
         return JsonResponse({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
 
     
