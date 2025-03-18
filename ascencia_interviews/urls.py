@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.http import HttpResponseRedirect
-from django.urls import path, include
+from django.urls import path,re_path, include
 from adminpanel.views.auth_view import login_view, register_view, logout_view, index
 from adminpanel.views.dashboard_view import admindashboard, custom_404_view
 from adminpanel.views.institute_view import institute_list, institute_add, institute_update, institute_delete, student_managers_by_institute
@@ -20,20 +20,23 @@ handler404 = custom_404_view
 
 
 def redirect_to_dashboard(request):
+    
     return redirect('/adminpanel/dashboard')
 
 urlpatterns = [
-    path('', redirect_to_dashboard),
-    path("index/", index),
+    # ✅ Backend URLs (Handled by Django)
     path("admin/", admin.site.urls),
     path("api/", include('api.urls')),
-    path("", include('adminpanel.urls')),
-    path("", include('studentpanel.urls')),
-    path("", include('studentmanagerpanel.urls')),
     path("login/", login_view, name="login"),
     path("register/", register_view, name="register"),
     path("logout/", logout_view, name="logout"),
-    path('students_leads_api/', students_leads_api, name='students_leads_api'),
+    path("", include('adminpanel.urls')),
+    path("", include('studentpanel.urls')),
+    path("", include('studentmanagerpanel.urls')),
+
+    # ✅ Serve React frontend only for non-backend paths
+    re_path(r'^(?!api/|admin/|login/|logout/|register/).*$', index),  
+ 
 
     # Interview Section URLS
 
