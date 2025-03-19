@@ -44,7 +44,7 @@ mindee_client = Client(api_key="4951866b395bb3fefdb1e4753c6bbd8e")
 # Add endpoint configuration
 my_endpoint = mindee_client.create_endpoint(
     account_name="ANKITAGAVAS",
-    endpoint_name="eductional_cert_v6",
+    endpoint_name="eductional_cert_v4",
     version="1"
 )
 
@@ -385,6 +385,9 @@ def process_document(request):
         crm_id = request.POST.get("crm_id", "").strip()
         API_TOKEN = request.POST.get("API_TOKEN", "")
 
+        student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        student.mindee_verification_status = "Inprogress"
+        student.save()
 
         print(f"Received first_name: {zoho_first_name}, last_name: {zoho_last_name}, program: {program}")
 
@@ -399,17 +402,17 @@ def process_document(request):
         # filename = re.search(r"&name=([^&]+)", uploaded_file.name.lower())
         # filename = unquote(filename.group(1)) if filename else "unknown.pdf"
 
-        filename_match = re.search(r"&name=([^&]+)", uploaded_file.name.lower())
-        filename = unquote(filename_match.group(1)) if filename_match else "unknown.pdf"
+        # filename_match = re.search(r"&name=([^&]+)", uploaded_file.name.lower())
+        # filename = unquote(filename_match.group(1)) if filename_match else "unknown.pdf"
 
-        print(f"Processed filename: {filename}")
+        # print(f"Processed filename: {filename}")
 
-        if is_restricted_filename(filename):
-            student = Students.objects.get(zoho_lead_id=zoho_lead_id)
-            student.verification_failed_reason = "Invalid file. Passport, CV, and Resume files are not allowed."
-            student.mindee_verification_status = "Completed"
-            student.save()
-            return JsonResponse({"error": "Invalid file. Passport, CV, and Resume files are not allowed."}, status=400)
+        # if is_restricted_filename(filename):
+        #     student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        #     student.verification_failed_reason = "Invalid file. Passport, CV, and Resume files are not allowed."
+        #     student.mindee_verification_status = "Completed"
+        #     student.save()
+        #     return JsonResponse({"error": "Invalid file. Passport, CV, and Resume files are not allowed."}, status=400)
 
         # Construct URL
         url = f"https://crm.zoho.com/crm/org771809603/{uploaded_file}"
@@ -460,12 +463,12 @@ def process_document(request):
         #     return JsonResponse({"message": "Error", "is_education_certificate": False}, status=200)
 
 
-        if not is_certificate_filename(filename):
-            student = Students.objects.get(zoho_lead_id=zoho_lead_id)
-            student.verification_failed_reason = "Invalid document name. Please upload a file with a recognizable education certificate title."
-            student.mindee_verification_status = "Completed"
-            student.save()
-            return JsonResponse({"message": "Error", "is_education_certificate": False}, status=200)
+        # if not is_certificate_filename(filename):
+        #     student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        #     student.verification_failed_reason = "Invalid document name. Please upload a file with a recognizable education certificate title."
+        #     student.mindee_verification_status = "Completed"
+        #     student.save()
+        #     return JsonResponse({"message": "Error", "is_education_certificate": False}, status=200)
 
         # Process document with Mindee
         try:
@@ -488,6 +491,7 @@ def process_document(request):
                 student = Students.objects.get(zoho_lead_id=zoho_lead_id)
                 student.mindee_verification_status = "Completed"
                 student.edu_doc_verification_status = "rejected"
+                student.verification_failed_reason = "Name Not Matched"
                 student.save()
                 if update_zoho_lead(crm_id, zoho_lead_id, update_data):
                     print("Lead updated successfully")
@@ -502,6 +506,7 @@ def process_document(request):
                 student = Students.objects.get(zoho_lead_id=zoho_lead_id)
                 student.mindee_verification_status = "Completed"
                 student.edu_doc_verification_status = "rejected"
+                student.verification_failed_reason = "Criteria not matched"
                 student.save()
                 if update_zoho_lead(crm_id, zoho_lead_id, update_data):
                     print("Lead updated successfully")
