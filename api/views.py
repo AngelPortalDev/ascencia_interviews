@@ -485,7 +485,7 @@ def process_document(request):
             mindee_last_name = data["prediction"]["fields"]["fields"].get("last_name", "").strip().lower()
             zoho_full_name, mindee_full_name = f"{zoho_first_name} {zoho_last_name}".lower(), f"{mindee_first_name} {mindee_last_name}".lower()
 
-            if name_match_ratio(zoho_full_name, mindee_full_name) < 0.75:
+            if name_match_ratio(zoho_full_name, mindee_full_name) < 0.70:
                 update_data = {"Interview_Process": "First Round Interview Hold"}
                 
                 student = Students.objects.get(zoho_lead_id=zoho_lead_id)
