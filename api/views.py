@@ -369,8 +369,8 @@ def update_zoho_lead(crm_id, lead_id, update_data):
 
 
 
-@csrf_exempt
-def process_document(request):
+# @csrf_exempt
+# def process_document(request):
 
     if request.method != "POST":
         return JsonResponse({"error": "Only POST requests are allowed"}, status=405)
@@ -743,6 +743,288 @@ def process_document(request):
         return JsonResponse({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
 
     
+
+
+
+
+def get_student(zoho_lead_id):
+    try:
+        return Students.objects.get(zoho_lead_id=zoho_lead_id)
+    except Students.DoesNotExist:
+        return None
+
+def update_student(student, status, reason=""):
+    student.mindee_verification_status = "Completed"
+    student.edu_doc_verification_status = status
+    student.verification_failed_reason = reason
+    student.save()
+
+def process_document(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Only POST requests are allowed"}, status=405)
+    
+    try:
+        uploaded_file = request.FILES.get("document")
+        zoho_lead_id = request.POST.get("zoho_lead_id", "").strip()
+        crm_id = request.POST.get("crm_id", "").strip()
+        API_TOKEN = request.POST.get("API_TOKEN", "")
+        program = request.POST.get("program", "").strip()
+        
+        student = get_student(zoho_lead_id)
+        if not student:
+            return JsonResponse({"error": "Student not found"}, status=404)
+        
+        if not uploaded_file:
+            update_student(student, "rejected", "No document uploaded")
+            return JsonResponse({"error": "No document uploaded"}, status=400)
+        
+        filename_match = re.search(r"&name=([^&]+)", uploaded_file.name.lower())
+        filename = unquote(filename_match.group(1)) if filename_match else "unknown.pdf"
+        
+        if is_restricted_filename(filename):
+            update_student(student, "rejected", "Invalid file. Passport, CV, and Resume files are not allowed.")
+            return JsonResponse({"error": "Invalid file type"}, status=400)
+        
+        mime_type = uploaded_file.content_type
+        if mime_type not in ["application/pdf", "image/png", "image/jpeg", "image/jpg"]:
+            update_student(student, "rejected", "Invalid file type. Only PDF, PNG, JPG, and JPEG are allowed.")
+            return JsonResponse({"error": "Invalid file type"}, status=400)
+        
+        if not is_certificate_filename(filename):
+            update_student(student, "rejected", "Invalid document name.")
+            return JsonResponse({"message": "Error", "is_education_certificate": False}, status=200)
+        
+        # Process with Mindee API (Assuming this part is correct and necessary)
+        try:
+            input_doc = mindee_client.source_from_path(temp_file_path)
+            result = mindee_client.enqueue_and_parse(product.GeneratedV1, input_doc, endpoint=my_endpoint)
+            prediction = result.document.inference.prediction
+            data = {"prediction": {"fields": vars(prediction)}, "program": program}
+            
+            # Compare names and update records accordingly
+            mindee_first_name = data["prediction"]["fields"]["fields"].get("first_name", "").strip().lower()
+            mindee_last_name = data["prediction"]["fields"]["fields"].get("last_name", "").strip().lower()
+            
+            if name_match_ratio(f"{zoho_first_name} {zoho_last_name}", f"{mindee_first_name} {mindee_last_name}") < 0.75:
+                update_student(student, "rejected", "Name not matched")
+                update_zoho_lead(crm_id, zoho_lead_id, {"Interview_Process": "First Round Interview Hold"})
+                return JsonResponse({"message": "Success", "result": False}, status=200)
+            
+            # Final eligibility check
+            if check_eligibility(data):
+                update_student(student, "approved", "")
+                update_zoho_lead(crm_id, zoho_lead_id, {"Interview_Process": "First Round Interview"})
+                student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+                student.mindee_verification_status = "Completed"
+                student.edu_doc_verification_status = "approved"
+                student.verification_failed_reason = ""
+                student.is_interview_link_sent = True
+                student.interview_link_send_count += 1
+                student.save()
+
+                encoded_zoho_lead_id = encode_base64(zoho_lead_id)
+                encoded_interview_link_send_count = encode_base64(student.interview_link_send_count)
+                interview_url = f'http://127.0.0.1:8000/interview_panel/{encoded_zoho_lead_id}/{encoded_interview_link_send_count}'
+                interview_link = StudentInterviewLink.objects.create(
+                    zoho_lead_id=zoho_lead_id,
+                    interview_link=interview_url,
+                    expires_at=now() + timedelta(hours=72)
+                )
+                # send_email(interview_url, zoho_full_name, 'student@manager.com')
+                
+                # student
+                send_email(
+                    subject="Zoho Lead Update Notification",
+                    message=f"""
+                            <html>
+                                <head>
+                                    <style>
+                                        body{{
+                                            background-color: #f4f4f4;
+                                            padding: 20px;
+                                            text-align: left;
+                                        }}
+                                            .email-container {{
+                                            max-width: 600px;
+                                            background: #ffffff;
+                                            padding: 20px;
+                                            border-radius: 8px;
+                                            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); 
+                                            }}
+                                        .header {{
+                                            text-align: center;
+                                            padding-bottom: 20px;
+                                            border-bottom: 1px solid #ddd; 
+                                        }}
+                                        .header img {{
+                                            max-width: 150px;
+                                        }}
+                                            h2 {{
+                                            color: #2c3e50;  
+                                            }}
+                                            p {{
+                                            color: #555555;
+                                            font-size: 16px;
+                                            line-height: 1.6;
+                                            }}
+                                            .btn {{
+                                            display: inline-block;
+                                            background: #db2777;
+                                            color: #ffffff;
+                                            text-decoration: none;
+                                            padding: 10px 15px;
+                                            border-radius: 5px;
+                                            font-weight: bold;
+                                            margin-top: 10px; 
+                                            }}
+                                            .btn:hover {{
+                                                background: #0056b3;
+                                            }}
+                                        .email-logo {{
+                                            max-width:300px;
+                                            height:auto;
+                                            width:100%;
+                                            margin-bottom: 20px;
+                                            display:flex;
+                                            justify-content:center;
+                                            margin:0 auto;
+                                        }}
+                                    </style>
+                                    <body>
+                                        <table role="presentation" cellspacing="0" cellpadding="0">
+                                            <tr>
+                                                <td align="left">
+                                                    <div class="email-container">
+                                                    <div class="header">
+                                                        <img src="One.png" alt="Company Logo">
+                                                    </div>
+                                                        <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/notification.png" alt="Zoho Lead Update" class="email-logo"/>
+                                                        <h2>Zoho Lead Update Notification</h2>
+                                                        <p>Dear {zoho_full_name},</p>
+                                                        <p>The lead update was successful.</p>
+                                                        <p>Click the button below to proceed:</p>
+                                                        <a href="{ interview_url }" class="btn">Go to Interview</a>
+                                                        <p>If you have any questions, please contact support.</p>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                </body>
+                                </head>
+                            </html>
+                        """,
+                    recipient=["abdullah@angel-portal.com"],
+                    # cc=["admin@example.com", "hr@example.com"]  # CC recipients
+                )
+
+                # Student Manager Notification Email
+                send_email(
+                    subject="Document Verification & Interview Link",
+                    message=f"""
+                        <html>
+                        <head>
+                            <style>
+                                body {{
+                                    font-family: Arial, sans-serif;
+                                    background-color: #f4f4f4;
+                                    padding: 20px;
+                                    text-align: left;
+                                }}
+                                .email-container {{
+                                    max-width: 600px;
+                                    margin: auto;
+                                    background: #ffffff;
+                                    padding: 20px;
+                                    border-radius: 8px;
+                                    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                                }}
+                                .header {{
+                                    text-align: center;
+                                    padding-bottom: 20px;
+                                    border-bottom: 1px solid #ddd; 
+                                }}
+                                .header img {{
+                                    max-width: 150px;
+                                }}
+                                h2 {{
+                                    color: #2c3e50;
+                                }}
+                                p {{
+                                    color: #555555;
+                                    font-size: 16px;
+                                    line-height: 1.6;
+                                }}
+                                .btn {{
+                                    display: inline-block;
+                                    background: #db2777;
+                                    color: #ffffff;
+                                    text-decoration: none;
+                                    padding: 10px 20px;
+                                    border-radius: 5px;
+                                    font-weight: bold;
+                                    margin-top: 10px;
+                                }}
+                                .btn:hover {{
+                                    background: #0056b3;
+                                }}
+                                .email-logo {{
+                                    max-width: 300px;
+                                    height: auto;
+                                    width: 100%;
+                                    margin-bottom: 20px;
+                                    display: flex;
+                                    justify-content: center;
+                                    margin: 0 auto;
+                                }}
+                            </style>
+                        </head>
+                        <body>
+                            <table role="presentation" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td>
+                                        <div class="email-container">
+                                            <div class="header">
+                                                <img src="One.png" alt="Company Logo">
+                                            </div>
+                                            <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/doc_verified.png" alt="Document Verified" class="email-logo"/>
+                                            <h2>Document Verification Completed</h2>
+                                            <p>Dear Student Manager,</p>
+                                            <p>The document verification process for <strong>{zoho_full_name}</strong> has been successfully completed.</p>
+                                            
+                                            <p><strong>Next Step:</strong> The student is now eligible for the interview process.</p>
+                                            
+                                            <p>Click below to review verification details:</p>
+                                            <a href="https://interview.ascenciamalta.mt/verification" class="btn">View Verification Details</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </body>
+                        </html>
+                    """,
+                    recipient=["abdullah@angel-portal.com"],
+                    # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
+                )
+
+
+                
+                return JsonResponse({"message": "Success", "result": True}, status=200)
+            else:
+                update_student(student, "rejected", "Eligibility criteria not matched")
+                update_zoho_lead(crm_id, zoho_lead_id, {"Interview_Process": "First Round Interview Hold"})
+                return JsonResponse({"message": "Success", "result": False}, status=200)
+        
+        except Exception as e:
+            update_student(student, "rejected", "Mindee API processing failed")
+            return JsonResponse({"error": f"Mindee API processing failed: {str(e)}"}, status=500)
+    
+    except Exception as e:
+        return JsonResponse({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
+
+
+
+
+
 
 
 def fetch_interview_questions(request, crm_id):
