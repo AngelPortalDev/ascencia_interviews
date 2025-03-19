@@ -92,6 +92,15 @@
                    class="form-control" readonly>
           </div>
         </div>
+        <!-- verification failed reason -->
+        <div class="row g-6 mt-3">
+          <div class="col-md-6">
+            <label class="form-label" for="verification_failed_reason">Verification Failed Reason</label>
+            <input type="text" id="verification_failed_reason" name="verification_failed_reason" 
+                   value="{% if student.verification_failed_reason %}Yes{% else %}No{% endif %}" 
+                   class="form-control" readonly>
+          </div>
+        </div>
         <hr>
         <div class="row g-6 mt-3">
             {% if student.bunny_stream_video_id %}
