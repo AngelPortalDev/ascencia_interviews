@@ -97,7 +97,7 @@
           <div class="col-md-6">
             <label class="form-label" for="verification_failed_reason">Verification Failed Reason</label>
             <input type="text" id="verification_failed_reason" name="verification_failed_reason" 
-                   value="{% if student.verification_failed_reason %}Yes{% else %}No{% endif %}" 
+                   value="{{ student.verification_failed_reason|default:''|capfirst }}" 
                    class="form-control" readonly>
           </div>
         </div>
