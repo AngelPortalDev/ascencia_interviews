@@ -462,7 +462,7 @@ def process_document(request):
 
         if not is_certificate_filename(filename):
             student = Students.objects.get(zoho_lead_id=zoho_lead_id)
-            student.verification_failed_reason = "Error"
+            student.verification_failed_reason = "Invalid document name. Please upload a file with a recognizable education certificate title."
             student.mindee_verification_status = "Completed"
             student.save()
             return JsonResponse({"message": "Error", "is_education_certificate": False}, status=200)
@@ -520,6 +520,7 @@ def process_document(request):
                     student = Students.objects.get(zoho_lead_id=zoho_lead_id)
                     student.mindee_verification_status = "Completed"
                     student.edu_doc_verification_status = "approved"
+                    student.verification_failed_reason = ""
                     student.is_interview_link_sent = True
                     student.interview_link_send_count += 1
                     student.save()
