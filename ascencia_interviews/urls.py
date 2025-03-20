@@ -29,15 +29,15 @@ urlpatterns = [
     path("index/", index),
     path("admin/", admin.site.urls),
     path("api/", include('api.urls')),
-    path("login/", login_view, name="login"),
-    path("register/", register_view, name="register"),
+    path("login", login_view, name="login"),
+    path("register", register_view, name="register"),
     path("logout/", logout_view, name="logout"),
     path("", include('adminpanel.urls')),
     path("", include('studentpanel.urls')),
     path("", include('studentmanagerpanel.urls')),
 
     # ✅ Serve React frontend only for non-backend paths
-    re_path(r'^(?!api/|admin/|login/|logout/|register/).*$', index),  
+    re_path(r'^(?!api/|admin/|login|logout|register).*$', index),  
  
 
     # Interview Section URLS

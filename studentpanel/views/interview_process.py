@@ -100,7 +100,8 @@ def interview_attend(request):
             student_data = StudentInterviewLink.objects.get(zoho_lead_id=zoho_lead_id)
             data = {
                 'is_expired': student_data.is_expired,
-                'expires_at' : student_data.expires_at
+                'expires_at' : student_data.expires_at,
+                'interview_attend':student_data.interview_attend,
             }
             
             expires_at = data['expires_at']
@@ -119,11 +120,10 @@ def interview_attend(request):
                 }, status=410)
             else:
                 # Update interview attendance and expiration status
-                is_expired = data['is_expired']
+                interview_attend = data['interview_attend']
                 # Check if interview link is expired
-                if is_expired is True:
-                    print("test")
-                    expired_date = data['expires_at']
+                if interview_attend == 1:
+                    expired_date = data['interview_attend']
                     return JsonResponse({
                         "status": True,
                         "message": "Interview link has expired.",
@@ -131,7 +131,7 @@ def interview_attend(request):
                 else: 
                     data = {
                       'interview_attend': True,  # Boolean value (not string)
-                      'is_expired': True         # Boolean value (not string)
+                      'is_expired': True        # Boolean value (not string)
                     } 
 
                     result = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).update(**data)
