@@ -23,7 +23,8 @@ def redirect_to_dashboard(request):
     return redirect('/adminpanel/dashboard')
 
 urlpatterns = [
-    path('', redirect_to_dashboard),
+    # path('', redirect_to_dashboard),
+    path("", login_view, name="login"),
     path("index/", index),
     path("admin/", admin.site.urls),
     path("api/", include('api.urls')),
