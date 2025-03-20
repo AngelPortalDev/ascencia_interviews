@@ -37,8 +37,7 @@ urlpatterns = [
     path("", include('studentmanagerpanel.urls')),
 
     # ✅ Serve React frontend only for non-backend paths
-    re_path(r'^(?!api/|admin/|login|logout|register).*$', index),  
-    
+    re_path(r'^(?!api/|admin/|login|logout|register).*$', index),
  
 
     # Interview Section URLS
