@@ -19,7 +19,7 @@ from transformers import BertTokenizer, BertModel
 import torch
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
-# from gpt4all import GPT4All
+from gpt4all import GPT4All
 import cv2
 import numpy as np
 import subprocess
@@ -39,6 +39,9 @@ logger = logging.getLogger(__name__)
 from django_q.tasks import async_task
 from adminpanel.common_imports import save_data
 from difflib import SequenceMatcher
+from fuzzywuzzy import fuzz
+from datetime import datetime
+
 # ✅ Paths (Update as per your system)
 FFMPEG_PATH = r"C:\ffmpeg-2025-02-20-git-bc1a3bfd2c-full_build\bin\ffmpeg.exe"
 # VOSK_MODEL_PATH = r"C:\Users\angel\Downloads\vosk-model-small-en-us-0.15\vosk-model-small-en-us-0.15"
@@ -62,14 +65,22 @@ FFMPEG_PATH = r"C:\ffmpeg-2025-02-20-git-bc1a3bfd2c-full_build\bin\ffmpeg.exe"
 #     return file_path
 
 # ✅ Extract & Enhance Audio
-def extract_audio(video_path):
+def extract_audio(video_path,zoho_lead_id,question_id):
     print(video_path)
     base_name = os.path.splitext(video_path)[0]
     audio_path = f"{base_name}.wav"
     enhanced_audio_path = f"{base_name}_enhanced.wav"
+    upload_dir = os.path.join(settings.STUDENT_UPLOAD, 'uploads', 'processed_audio', zoho_lead_id)
+    os.makedirs(upload_dir, exist_ok=True)  # Ensure the folder exists
 
     try:
         # Extract audio using FFmpeg
+        current_datetime = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        # Construct the audio file path
+        audio_path = os.path.join(upload_dir, f"extracted_audio_{zoho_lead_id}_{question_id}_{current_datetime}.wav")
+        enhanced_audio_path = os.path.join(upload_dir, f"enhanced_audio_{zoho_lead_id}_{question_id}_{current_datetime}.wav")
+
         extract_cmd = [FFMPEG_PATH, "-i", video_path, "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1", audio_path]
         subprocess.run(extract_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
 
@@ -273,12 +284,25 @@ def analyze_sentiment(text):
     
     if text:
         sentiment = TextBlob(text).sentiment
-        polarity = clean_polarity(sentiment.polarity)
-        subjectivity = sentiment.subjectivity
+        polarity = round(sentiment.polarity, 4)  # More precise polarity
+        subjectivity = round(sentiment.subjectivity, 4)
 
-        # Confidence calculation
-        confidence_level = 0.0 if polarity == 0 else (1 - subjectivity) * 100
-        sentiment_score = 0.0 if polarity == 0 else (polarity + 1) * 50
+        words = text.split()
+        word_polarities = [TextBlob(word).sentiment.polarity for word in words]
+        
+        # Adjusted polarity is the average of all word polarities
+        if word_polarities:
+            adjusted_polarity = sum(word_polarities) / len(word_polarities)
+        else:
+            adjusted_polarity = polarity
+
+        adjusted_polarity = round(adjusted_polarity, 4)
+        
+        # Sentiment Score (0-100)
+        sentiment_score = round((adjusted_polarity + 1) * 50, 2)  # Convert -1 to 1 into 0 to 100
+
+        # Confidence Level (Lower if high subjectivity)
+        confidence_level = max(0.0, (1 - subjectivity) * 100)
 
         result.update({
             "polarity": polarity,  # -1 (negative) to 1 (positive)
@@ -424,35 +448,32 @@ def get_sentence_embedding(sentence):
     return outputs.last_hidden_state[:, 0, :].numpy()
 # @csrf_exempt
 def check_answers(zoho_lead_id):
-    print(f"Processing lead ID: {zoho_lead_id}")  # Debugging
+    print(f"Processing lead ID: {zoho_lead_id}")
 
     student_answers = StudentInterviewAnswers.objects.filter(zoho_lead_id=zoho_lead_id)
 
     if not student_answers.exists():
-        logger.info("No student records found.")
+        print("No student records found.")
         return
 
     model_path = "C:/Users/angel/Ascencia_Interviews/ascencia_interviews/studentpanel/models/mistral-7b-instruct-v0.2.Q2_K.gguf"
 
-    # ✅ Check if AI model file exists
     if not os.path.exists(model_path):
-        logger.error("AI model path does not exist.")
+        print("AI model path does not exist.")
         return
 
     final_results = []
 
     try:
-        logger.info("Loading AI Model...")
+        print("Loading AI Model...")
         model = GPT4All(model_path)
-        logger.info("Model loaded successfully!")
+        print("Model loaded successfully!")
 
-        # Dictionaries for storing scores
         student_scores = defaultdict(int)
         student_question_count = defaultdict(int)
         student_sentiment = defaultdict(float)
         student_grammar = defaultdict(float)
 
-        # Fetch all questions in a single query
         question_map = {q.id: q for q in CommonQuestion.objects.all()}
 
         for student_answer in student_answers:
@@ -462,17 +483,14 @@ def check_answers(zoho_lead_id):
             sentiment_score = float(student_answer.sentiment_score) if student_answer.sentiment_score else 0.0
             grammar_accuracy = float(student_answer.grammar_accuracy) if student_answer.grammar_accuracy else 0.0
 
-            # Debugging: Print Sentiment Score
-            print(f"Processing {zoho_lead_id} - Q{question_id} - Sentiment: {sentiment_score}, Grammar: {grammar_accuracy}")
-
             if not zoho_lead_id or not question_id or not answer:
-                logger.warning(f"Skipping: Missing data for Lead {zoho_lead_id}, Q{question_id}")
+                print(f"Skipping: Missing data for Lead {zoho_lead_id}, Q{question_id}")
                 continue
 
-            student_question_count[zoho_lead_id] += 1  
+            student_question_count[zoho_lead_id] += 1
 
             if question_id not in question_map:
-                logger.warning(f"Question ID {question_id} not found in database.")
+                print(f"Question ID {question_id} not found in database.")
                 continue
 
             question_data = question_map[question_id]
@@ -480,10 +498,6 @@ def check_answers(zoho_lead_id):
             student_sentiment[zoho_lead_id] += sentiment_score
             student_grammar[zoho_lead_id] += grammar_accuracy
 
-            print(f"Updated Scores - Lead {zoho_lead_id}: Sentiment={student_sentiment[zoho_lead_id]}, Grammar={student_grammar[zoho_lead_id]}")
-
-
-            # 🔹 Check Student Name for Question ID 1
             if question_id == 1:
                 possible_names = re.findall(r'\b[A-Z][a-z]*\b', answer)
                 student_data = Students.objects.filter(zoho_lead_id=zoho_lead_id).values("first_name").first()
@@ -497,14 +511,14 @@ def check_answers(zoho_lead_id):
                             "overall_score": student_scores[zoho_lead_id],
                             "status": "No matching name found",
                         })
-                        continue  
+                        continue
 
-            # 🔹 Check Program Name for Question ID 2
             if question_id == 2:
                 student_program = Students.objects.filter(zoho_lead_id=zoho_lead_id).values("program").first()
                 if student_program:
-                    program_name = student_program["program"].strip()
-                    if not re.search(rf"\b{re.escape(program_name)}\b", answer, re.IGNORECASE):
+                    answer_lower = answer.lower()
+                    # Check similarity (40% threshold)
+                    if fuzz.partial_ratio(student_program, answer_lower) < 40:  
                         final_results.append({
                             "zoho_lead_id": zoho_lead_id,
                             "question_id": question_id,
@@ -514,29 +528,28 @@ def check_answers(zoho_lead_id):
                         })
                         continue
 
-            # ✅ AI Evaluation Prompt
             prompt = f"""
-            You are an AI evaluator for university applications.  
-            Your task is to **evaluate answers based on meaning, not just grammar.**  
+            You are an AI evaluator for university applications.
+            Your task is to **evaluate answers based on meaning, not just grammar.**
 
             **Evaluation Criteria:**
-            1️⃣ **Relevance to the question**  
-            2️⃣ **Logical correctness**  
-            3️⃣ **Grammar & clarity**  
+            1️⃣ **Relevance to the question**
+            2️⃣ **Logical correctness**
+            3️⃣ **Grammar & clarity**
 
-            **Scoring Rules:**  
-            - **1-2/10** → Completely incorrect or unrelated.  
-            - **3-5/10** → Somewhat related but logically weak.  
-            - **6-8/10** → Relevant but lacks details.  
-            - **9-10/10** → Strong, detailed, and logical answer.  
+            **Scoring Rules:**
+            - **1-2/10** → Completely incorrect or unrelated.
+            - **3-5/10** → Somewhat related but logically weak.
+            - **6-8/10** → Relevant but lacks details.
+            - **9-10/10** → Strong, detailed, and logical answer.
 
-            Now, evaluate the following answer:  
-            **Question:** {question_data.question}  
-            **Answer:** {answer}  
+            Now, evaluate the following answer:
+            **Question:** {question_data.question}
+            **Answer:** {answer}
 
-            Provide a score out of 10 and feedback in this format:  
-            **Score: X/10**  
-            **Feedback: [Your analysis]**  
+            Provide a score out of 10 and feedback in this format:
+            **Score: X/10**
+            **Feedback: [Your analysis]**
             """
 
             try:
@@ -545,19 +558,17 @@ def check_answers(zoho_lead_id):
                 end_time = time.time()
                 response_time = round(end_time - start_time, 2)
 
-                # 🔹 Extract score safely
                 match = re.search(r"Score:\s*(\d+)/10", response)
                 score = int(match.group(1)) if match else 0
 
-                # Store scores
-                student_scores[zoho_lead_id] += score  
-            
+                student_scores[zoho_lead_id] += score
+
+                print(f"Lead {zoho_lead_id} - Question {question_id} - Score: {score}/10 - Response Time: {response_time}s")
+
             except Exception as ai_error:
-                logger.error(f"AI model evaluation error: {ai_error}")
+                print(f"AI model evaluation error: {ai_error}")
                 continue
 
-          
-        # # ✅ Prepare final results
         for zoho_lead_id in student_scores.keys():
             total_questions = student_question_count[zoho_lead_id]
             total_score = student_scores[zoho_lead_id]
@@ -568,36 +579,29 @@ def check_answers(zoho_lead_id):
 
             final_results.append({
                 "zoho_lead_id": zoho_lead_id,
-                "total_score": total_score,  
+                "total_score": total_score,
                 "total_questions": total_questions,
                 "answer_score_percentage": answer_score_percentage,
                 "sentiment_score_percentage": sentiment_score_percentage,
                 "grammar_accuracy_percentage": grammar_accuracy_percentage
             })
 
-            overall_score = (answer_score_percentage+sentiment_score_percentage+grammar_accuracy_percentage) * 100 / 300
-            if grammar_accuracy_percentage > 20:
-                status = "Pass" if overall_score >= 35 else "Fail"
-            else:
-                status = "Fail"  # Default Fail if grammar score <= 20
+            overall_score = (answer_score_percentage + sentiment_score_percentage + grammar_accuracy_percentage) / 3
+            status = "Pass" if overall_score >= 35 and grammar_accuracy_percentage > 20 else "Fail"
 
             data_to_save = {
-                "overall_score": Decimal(overall_score),  # Ensure correct type
-                "total_answer_scores":Decimal(answer_score_percentage),
-                "total_grammar_scores":Decimal(grammar_accuracy_percentage),
-                "total_sentiment_score":Decimal(sentiment_score_percentage),
-                "interview_status":status
+                "overall_score": Decimal(overall_score),
+                "total_answer_scores": Decimal(answer_score_percentage),
+                "total_grammar_scores": Decimal(grammar_accuracy_percentage),
+                "total_sentiment_score": Decimal(sentiment_score_percentage),
+                "interview_status": status
             }
             updated_count = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).update(**data_to_save)
 
-            # print(data_to_save)
-            # updated_count = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).update(**data_to_save)
-            # updated_count = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).update(**data_to_save)
-            # print(updated_count)
-            if(updated_count == 1):
-                 return {"status": True, "message": "Student Interview Answer updated successfully!"}
-            logger.info(f"Final Results: {final_results}")
-            # logger.info(f"Saved Data: {result}")
+            if updated_count == 1:
+                print(f"Student Interview Answer updated successfully for Lead {zoho_lead_id}!")
+
+        print(f"Final Results: {final_results}")
 
     except Exception as e:
         logger.error(f"Error in AI evaluation: {e}")
@@ -864,7 +868,7 @@ def analyze_video(video_path,question_id,zoho_lead_id,last_question_id):
         # except Exception as e:
         #     return JsonResponse({"error": f"Failed to decode Base64: {str(e)}"}, status=400)
         # Extract audio
-        extracted_audio = extract_audio(video_path)
+        extracted_audio = extract_audio(video_path,zoho_lead_id,question_id)
         if not extracted_audio:
             return JsonResponse({"error": "Audio extraction failed"}, status=500)
 
@@ -920,8 +924,21 @@ def analyze_video(video_path,question_id,zoho_lead_id,last_question_id):
                 # # async_task("studentpanel.views.interview_analyze.merge_videos", "")
                 # async_task("studentpanel.views.interview_analyze.check_answers", zoho_lead_id, sync=True)
             else:
+                data_to_save = {
+                    "overall_score": "0.0",
+                    "total_answer_scores": "0.0",
+                    "total_grammar_scores": "0.0",
+                    "total_sentiment_score": "0.0",
+                    "interview_status": "Fail"
+                }
+                updated_count = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).update(**data_to_save)
 
-                print("not asynk")
+                # print(data_to_save)
+                # updated_count = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).update(**data_to_save)
+                # updated_count = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).update(**data_to_save)
+                # print(updated_count)
+                if(updated_count == 1):
+                    return {"status": True, "message": "Student Interview Answer updated successfully!"}
 
 
                     #
@@ -941,5 +958,10 @@ def analyze_video(video_path,question_id,zoho_lead_id,last_question_id):
     # return JsonResponse({"error": "Invalid request"}, status=400)
 
 
-# print(async_task(check_answers('5204268000112707003')))
-# 
+# print(async_task(check_answers('5204268000112707003'))) 
+# print(async_task(analyze_video(
+#         r"C:\Users\angel\Ascencia_Interviews\ascencia_interviews\uploads\interview_videos\5204268000112707003\interview_video_5204268000112707003_2_2025-03-19T12-35-51.webm",
+#         '1',
+#         '5204268000112707003',
+#         '5'
+#     )))
