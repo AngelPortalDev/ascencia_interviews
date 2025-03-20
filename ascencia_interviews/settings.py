@@ -233,7 +233,7 @@ SESSION_COOKIE_SECURE = True  # Ensure cookies are sent over HTTPS
 CSRF_COOKIE_SECURE = True  # Ensure CSRF cookies are sent over HTTPS
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 CORS_ALLOWED_ORIGINS = [
-    'https://interview.ascenciamalta.mt/',  # React app URL
+    'https://interview.ascenciamalta.mt',  # React app URL
 ]
 
 # HTTP Strict Transport Security (HSTS) settings
