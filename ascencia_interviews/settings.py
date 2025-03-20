@@ -249,7 +249,7 @@ TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 ADMIN_BASE_URL = "http://192.168.1.15:3000"
 
-# ADMIN_BASE_URL = "https://interview.ascenciamalta.mt/"
+ADMIN_BASE_URL = "http://interview.ascenciamalta.mt:8080/"
 
 BUNNY_STREAM_API_KEY = "e31364b4-b2f4-4221-aac3bd5d34e5-6769-4f29"  # Replace with your actual Library Key
 BUNNY_STREAM_LIBRARY_ID = "390607"

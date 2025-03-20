@@ -21,7 +21,9 @@ lock = threading.Lock()
 class APIDataFetcher:
     def notify(self, publisher):
 
-        API_URL = f"https://www.zohoapis.com/crm/v2/Leads/{publisher.zoho_lead_id}/Attachments"
+        # API_URL = f"https://www.zohoapis.com/crm/v2/Leads/{publisher.zoho_lead_id}/Attachments"
+
+        API_URL = f"https://www.zohoapis.com/crm/v2/Leads/{publisher.zoho_lead_id}"
 
         # API_TOKEN = ZohoAuth.get_access_token()
         # print(r'API_TOKEN:', API_TOKEN)
@@ -46,27 +48,38 @@ class APIDataFetcher:
             response = requests.get(API_URL, headers=headers)
             response.raise_for_status()
             data = response.json()
-            count = len(data['data'])
+            # count = len(data['data'])
+            
+            if data.get('data') and len(data['data']) > 0:
+                highest_education_doc = data['data'][0].get('Highest_Education_Doc', [])
 
-            for item in data['data']:
-                file_id = item['$file_id']
-                parent_id = item['Parent_Id']['id']
-                file_name = item['File_Name']
-                encoded_file_name = quote(file_name)
+                if highest_education_doc: 
+                    attachment_Id = data['data'][0]['Highest_Education_Doc'][0]['attachment_Id']
+                    file_Id = data['data'][0]['Highest_Education_Doc'][0]['file_Id']
+                    file_Name = data['data'][0]['Highest_Education_Doc'][0]['file_Name']
 
-                file_url = (
-                    f"https://crm.zoho.com/crm/org771809603/ViewAttachment?"
-                    f"fileId={file_id}&module=Leads&parentId={parent_id}&id={item['id']}"
-                    f"&name={encoded_file_name}&downLoadMode=pdfViewPlugin"
-                )
+                    # for item in data['data']:
+                        # file_id = item['$file_id']
+                        # parent_id = item['Parent_Id']['id']
+                        # file_name = item['File_Name']
 
-                # process_queue.put((file_url, publisher, API_TOKEN))
-                # process_documents()
-                # if zoho_lead_id in ['5204268000112707003', '5204268000116210079']:
-                if publisher.mindee_verification_status != 'Inprogress':
-                    publisher.mindee_verification_status = 'Inprogress'
-                    publisher.save(update_fields=['mindee_verification_status']) 
-                    async_task("adminpanel.observer.document_check_observer.process_documents_task", file_url, publisher, API_TOKEN)
+                    encoded_file_name = quote(file_Name)
+
+                    file_url = (
+                        f"https://crm.zoho.com/crm/org771809603/ViewAttachment?"
+                        f"fileId={file_Id}&module=Leads&parentId={publisher.zoho_lead_id}&id={attachment_Id}"
+                        f"&name={encoded_file_name}&downLoadMode=pdfViewPlugin"
+                    )
+
+                    print(r'file_url:', file_url)
+
+                    # process_queue.put((file_url, publisher, API_TOKEN))
+                    # process_documents()
+                    # if zoho_lead_id in ['5204268000112707003', '5204268000116210079']:
+                    if publisher.mindee_verification_status != 'Inprogress':
+                        # publisher.mindee_verification_status = 'Inprogress'
+                        # publisher.save(update_fields=['mindee_verification_status']) 
+                        async_task("adminpanel.observer.document_check_observer.process_documents_task", file_url, publisher, API_TOKEN)
 
 
         except requests.RequestException as e:
@@ -150,6 +163,6 @@ def student_created_observer(sender, instance, created, **kwargs):
     api_observer = APIDataFetcher()
 
     if instance.edu_doc_verification_status == 'Unverified' or (
-        instance.edu_doc_verification_status == 'rejected' and instance.interview_link_send_count < 2
+        instance.edu_doc_verification_status == 'rejected' and instance.interview_link_send_count < 2 and instance.mindee_verification_status != 'Completed'
     ):
         api_observer.notify(instance) 
