@@ -233,7 +233,7 @@ SESSION_COOKIE_SECURE = True  # Ensure cookies are sent over HTTPS
 CSRF_COOKIE_SECURE = True  # Ensure CSRF cookies are sent over HTTPS
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 CORS_ALLOWED_ORIGINS = [
-    'https://192.168.1.15:3000',  # React app URL
+    'https://interview.ascenciamalta.mt/',  # React app URL
 ]
 
 # HTTP Strict Transport Security (HSTS) settings
@@ -247,9 +247,10 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 
 TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
-ADMIN_BASE_URL = "http://192.168.1.15:3000"
+# ADMIN_BASE_URL = "http://192.168.1.15:3000"
 
-# ADMIN_BASE_URL = "https://interview.ascenciamalta.mt/"
+# ADMIN_BASE_URL = "http://interview.ascenciamalta.mt:8080/"
+ADMIN_BASE_URL = "https://interview.ascenciamalta.mt/"
 
 BUNNY_STREAM_API_KEY = "e31364b4-b2f4-4221-aac3bd5d34e5-6769-4f29"  # Replace with your actual Library Key
 BUNNY_STREAM_LIBRARY_ID = "390607"
@@ -291,7 +292,7 @@ Q_CLUSTER = {
 }
 
 
-# CSRF_TRUSTED_ORIGINS = [
-#     "https://interview.ascenciamalta.mt",
-#     "http://interview.ascenciamalta.mt:8080",
-# ]
+CSRF_TRUSTED_ORIGINS = [
+    "https://interview.ascenciamalta.mt",
+    "http://interview.ascenciamalta.mt:8080",
+]

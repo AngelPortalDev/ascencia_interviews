@@ -70,7 +70,7 @@
             <input type="text" id="zoho_lead_id" name="zoho_lead_id" value="{{ student.zoho_lead_id|default:'' }}" class="form-control" readonly>
           </div>
           <div class="col-md-6">
-            <label class="form-label" for="edu_doc_verification_status">Status</label>
+            <label class="form-label" for="edu_doc_verification_status">Verification Status</label>
             <input type="text" id="edu_doc_verification_status" name="edu_doc_verification_status" 
                    value="{{ student.edu_doc_verification_status|default:''|capfirst }}" 
                    class="form-control" readonly>
@@ -89,6 +89,15 @@
             <label class="form-label" for="interview_link_sent_count">Interview Link Sent Count</label>
             <input type="text" id="interview_link_sent_count" name="interview_link_sent_count" 
                    value="{{ student.interview_link_sent_count|default:0 }}" 
+                   class="form-control" readonly>
+          </div>
+        </div>
+        <!-- verification failed reason -->
+        <div class="row g-6 mt-3">
+          <div class="col-md-12">
+            <label class="form-label" for="verification_failed_reason">Verification Failed Reason</label>
+            <input type="text" id="verification_failed_reason" name="verification_failed_reason" 
+                   value="{{ student.verification_failed_reason|default:''|capfirst }}" 
                    class="form-control" readonly>
           </div>
         </div>

@@ -270,6 +270,7 @@ def student_list_by_manager(request, id):
                 'email': getattr(student, 'email', '') or '',
                 'phone': getattr(student, 'phone', '') or '',
                 'program': getattr(student, 'program', '') or '',
+                'edu_doc_verification_status': getattr(student, 'edu_doc_verification_status', '') or '',
                 'intake_year': getattr(student, 'intake_year', '') or '',
                 'intake_month': getattr(student, 'intake_month', '') or '',
                 'zoho_lead_id': getattr(student, 'zoho_lead_id', '') or '',

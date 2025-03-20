@@ -44,7 +44,7 @@ mindee_client = Client(api_key="4951866b395bb3fefdb1e4753c6bbd8e")
 # Add endpoint configuration
 my_endpoint = mindee_client.create_endpoint(
     account_name="ANKITAGAVAS",
-    endpoint_name="eductional_cert_v6",
+    endpoint_name="eductional_cert_v4",
     version="1"
 )
 
@@ -321,7 +321,7 @@ def update_zoho_lead(crm_id, lead_id, update_data):
 #         <body>
 #             <div class="email-container">
 #                 <h2>Document Verification Completed</h2>
-#                 <p>Dear Student Manager,</p>
+#                 <p>Dear {student_manager_name},</p>
 #                 <p>The document verification process for <strong>{student_name}</strong> has been successfully completed.</p>
 #                 <p>Click the button below to review the details:</p>
 #                 <a href='http://127.0.0.1:8000/verification' class="btn">View Verification Details</a>
@@ -385,6 +385,16 @@ def process_document(request):
         crm_id = request.POST.get("crm_id", "").strip()
         API_TOKEN = request.POST.get("API_TOKEN", "")
 
+        student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        student.mindee_verification_status = "Inprogress"
+        student.save()
+
+        email = student.student_manager_email.strip().lower()
+        student_manager = User.objects.filter(email__iexact=email).first()
+        student_manager_name = ''
+        if student_manager:  
+            student_manager_name = f"{student_manager.first_name} {student_manager.last_name}".strip()
+            print(f"student_manager_name: {student_manager_name}")
 
         print(f"Received first_name: {zoho_first_name}, last_name: {zoho_last_name}, program: {program}")
 
@@ -399,17 +409,17 @@ def process_document(request):
         # filename = re.search(r"&name=([^&]+)", uploaded_file.name.lower())
         # filename = unquote(filename.group(1)) if filename else "unknown.pdf"
 
-        filename_match = re.search(r"&name=([^&]+)", uploaded_file.name.lower())
-        filename = unquote(filename_match.group(1)) if filename_match else "unknown.pdf"
+        # filename_match = re.search(r"&name=([^&]+)", uploaded_file.name.lower())
+        # filename = unquote(filename_match.group(1)) if filename_match else "unknown.pdf"
 
-        print(f"Processed filename: {filename}")
+        # print(f"Processed filename: {filename}")
 
-        if is_restricted_filename(filename):
-            student = Students.objects.get(zoho_lead_id=zoho_lead_id)
-            student.verification_failed_reason = "Invalid file. Passport, CV, and Resume files are not allowed."
-            student.mindee_verification_status = "Completed"
-            student.save()
-            return JsonResponse({"error": "Invalid file. Passport, CV, and Resume files are not allowed."}, status=400)
+        # if is_restricted_filename(filename):
+        #     student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        #     student.verification_failed_reason = "Invalid file. Passport, CV, and Resume files are not allowed."
+        #     student.mindee_verification_status = "Completed"
+        #     student.save()
+        #     return JsonResponse({"error": "Invalid file. Passport, CV, and Resume files are not allowed."}, status=400)
 
         # Construct URL
         url = f"https://crm.zoho.com/crm/org771809603/{uploaded_file}"
@@ -460,12 +470,12 @@ def process_document(request):
         #     return JsonResponse({"message": "Error", "is_education_certificate": False}, status=200)
 
 
-        if not is_certificate_filename(filename):
-            student = Students.objects.get(zoho_lead_id=zoho_lead_id)
-            student.verification_failed_reason = "Error"
-            student.mindee_verification_status = "Completed"
-            student.save()
-            return JsonResponse({"message": "Error", "is_education_certificate": False}, status=200)
+        # if not is_certificate_filename(filename):
+        #     student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        #     student.verification_failed_reason = "Invalid document name. Please upload a file with a recognizable education certificate title."
+        #     student.mindee_verification_status = "Completed"
+        #     student.save()
+        #     return JsonResponse({"message": "Error", "is_education_certificate": False}, status=200)
 
         # Process document with Mindee
         try:
@@ -482,17 +492,108 @@ def process_document(request):
             mindee_last_name = data["prediction"]["fields"]["fields"].get("last_name", "").strip().lower()
             zoho_full_name, mindee_full_name = f"{zoho_first_name} {zoho_last_name}".lower(), f"{mindee_first_name} {mindee_last_name}".lower()
 
-            if name_match_ratio(zoho_full_name, mindee_full_name) < 0.75:
+            if name_match_ratio(zoho_full_name, mindee_full_name) < 0.70:
                 update_data = {"Interview_Process": "First Round Interview Hold"}
                 
                 student = Students.objects.get(zoho_lead_id=zoho_lead_id)
                 student.mindee_verification_status = "Completed"
                 student.edu_doc_verification_status = "rejected"
+                student.verification_failed_reason = "Name Not Matched"
                 student.save()
                 if update_zoho_lead(crm_id, zoho_lead_id, update_data):
                     print("Lead updated successfully")
                 else:
                     print("Lead update failed")
+                
+                # Student Manager Notification Email (Document Rejected)
+                send_email(
+                    subject="Document Verification Rejected",
+                    message=f"""
+                        <html>
+                        <head>
+                            <style>
+                                body {{
+                                    font-family: Arial, sans-serif;
+                                    background-color: #f4f4f4;
+                                    padding: 20px;
+                                    text-align: left;
+                                }}
+                                .email-container {{
+                                    max-width: 600px;
+                                    margin: auto;
+                                    background: #ffffff;
+                                    padding: 20px;
+                                    border-radius: 8px;
+                                    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                                }}
+                                .header {{
+                                    text-align: center;
+                                    padding-bottom: 20px;
+                                    border-bottom: 1px solid #ddd;
+                                }}
+                                .header img {{
+                                    max-width: 150px;
+                                }}
+                                h2 {{
+                                    color: #c0392b;  /* Red color for rejection */
+                                }}
+                                p {{
+                                    color: #555555;
+                                    font-size: 16px;
+                                    line-height: 1.6;
+                                }}
+                                .btn {{
+                                    display: inline-block;
+                                    background: #c0392b;  /* Red button */
+                                    color: #ffffff;
+                                    text-decoration: none;
+                                    padding: 10px 20px;
+                                    border-radius: 5px;
+                                    font-weight: bold;
+                                    margin-top: 10px;
+                                }}
+                                .btn:hover {{
+                                    background: #a93226;
+                                }}
+                                .email-logo {{
+                                    max-width: 300px;
+                                    height: auto;
+                                    width: 100%;
+                                    margin-bottom: 20px;
+                                    display: flex;
+                                    justify-content: center;
+                                    margin: 0 auto;
+                                }}
+                            </style>
+                        </head>
+                        <body>
+                            <table role="presentation" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td>
+                                        <div class="email-container">
+                                            <div class="header">
+                                                <img src="One.png" alt="Company Logo">
+                                            </div>
+                                            <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/doc_rejected.png" 
+                                                alt="Document Rejected" class="email-logo"/>
+                                            <h2>Document Verification Rejected</h2>
+                                            <p>Dear {student_manager_name},</p>
+                                            <p>The document verification process for <strong>{zoho_full_name}</strong> has been <strong>rejected</strong>.</p>
+                                            
+                                            <p><strong>Next Steps:</strong> Please review the reason for rejection and ask the student to re-upload the correct documents.</p>
+                                            
+                                            <p>Click below to review rejection details:</p>
+                                            <a href="https://interview.ascenciamalta.mt/studentmanagerpanel/student/{zoho_lead_id}" class="btn">View Rejection Details</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </body>
+                        </html>
+                    """,
+                    recipient=["abdullah@angel-portal.com"],
+                    # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
+                )
                 return JsonResponse({"message": "Success", "result": False}, status=200)
 
             # Completion check
@@ -502,11 +603,103 @@ def process_document(request):
                 student = Students.objects.get(zoho_lead_id=zoho_lead_id)
                 student.mindee_verification_status = "Completed"
                 student.edu_doc_verification_status = "rejected"
+                student.verification_failed_reason = "Criteria not matched"
                 student.save()
                 if update_zoho_lead(crm_id, zoho_lead_id, update_data):
                     print("Lead updated successfully")
                 else:
                     print("Lead update failed")
+
+
+                # Student Manager Notification Email (Document Rejected)
+                send_email(
+                    subject="Document Verification Rejected",
+                    message=f"""
+                        <html>
+                        <head>
+                            <style>
+                                body {{
+                                    font-family: Arial, sans-serif;
+                                    background-color: #f4f4f4;
+                                    padding: 20px;
+                                    text-align: left;
+                                }}
+                                .email-container {{
+                                    max-width: 600px;
+                                    margin: auto;
+                                    background: #ffffff;
+                                    padding: 20px;
+                                    border-radius: 8px;
+                                    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                                }}
+                                .header {{
+                                    text-align: center;
+                                    padding-bottom: 20px;
+                                    border-bottom: 1px solid #ddd;
+                                }}
+                                .header img {{
+                                    max-width: 150px;
+                                }}
+                                h2 {{
+                                    color: #c0392b;  /* Red color for rejection */
+                                }}
+                                p {{
+                                    color: #555555;
+                                    font-size: 16px;
+                                    line-height: 1.6;
+                                }}
+                                .btn {{
+                                    display: inline-block;
+                                    background: #c0392b;  /* Red button */
+                                    color: #ffffff;
+                                    text-decoration: none;
+                                    padding: 10px 20px;
+                                    border-radius: 5px;
+                                    font-weight: bold;
+                                    margin-top: 10px;
+                                }}
+                                .btn:hover {{
+                                    background: #a93226;
+                                }}
+                                .email-logo {{
+                                    max-width: 300px;
+                                    height: auto;
+                                    width: 100%;
+                                    margin-bottom: 20px;
+                                    display: flex;
+                                    justify-content: center;
+                                    margin: 0 auto;
+                                }}
+                            </style>
+                        </head>
+                        <body>
+                            <table role="presentation" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td>
+                                        <div class="email-container">
+                                            <div class="header">
+                                                <img src="One.png" alt="Company Logo">
+                                            </div>
+                                            <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/doc_rejected.png" 
+                                                alt="Document Rejected" class="email-logo"/>
+                                            <h2>Document Verification Rejected</h2>
+                                            <p>Dear {student_manager_name},</p>
+                                            <p>The document verification process for <strong>{zoho_full_name}</strong> has been <strong>rejected</strong>.</p>
+                                            
+                                            <p><strong>Next Steps:</strong> Please review the reason for rejection and ask the student to re-upload the correct documents.</p>
+                                            
+                                            <p>Click below to review rejection details:</p>
+                                            <a href="https://interview.ascenciamalta.mt/studentmanagerpanel/student/{zoho_lead_id}" class="btn">View Rejection Details</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </body>
+                        </html>
+                    """,
+                    recipient=["abdullah@angel-portal.com"],
+                    # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
+                )
 
                 return JsonResponse({"message": "Success", "result": False}, status=200)
 
@@ -520,6 +713,7 @@ def process_document(request):
                     student = Students.objects.get(zoho_lead_id=zoho_lead_id)
                     student.mindee_verification_status = "Completed"
                     student.edu_doc_verification_status = "approved"
+                    student.verification_failed_reason = ""
                     student.is_interview_link_sent = True
                     student.interview_link_send_count += 1
                     student.save()
@@ -690,13 +884,13 @@ def process_document(request):
                                                 </div>
                                                 <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/doc_verified.png" alt="Document Verified" class="email-logo"/>
                                                 <h2>Document Verification Completed</h2>
-                                                <p>Dear Student Manager,</p>
+                                                <p>Dear {student_manager_name},</p>
                                                 <p>The document verification process for <strong>{zoho_full_name}</strong> has been successfully completed.</p>
                                                 
                                                 <p><strong>Next Step:</strong> The student is now eligible for the interview process.</p>
                                                 
                                                 <p>Click below to review verification details:</p>
-                                                <a href="https://interview.ascenciamalta.mt/verification" class="btn">View Verification Details</a>
+                                                <a href="https://interview.ascenciamalta.mt/studentmanagerpanel/student/{zoho_lead_id}" class="btn">View Verification Details</a>
                                             </div>
                                         </td>
                                     </tr>
@@ -707,8 +901,7 @@ def process_document(request):
                         recipient=["abdullah@angel-portal.com"],
                         # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
                     )
-
-
+                    
                     print("Lead updated successfully")
                 else:
                     print("Lead update failed")
@@ -724,6 +917,93 @@ def process_document(request):
                 else:
                     print("Lead update failed")
 
+            # Student Manager Notification Email (Document Rejected)
+            send_email(
+                subject="Document Verification Rejected",
+                message=f"""
+                    <html>
+                    <head>
+                        <style>
+                            body {{
+                                font-family: Arial, sans-serif;
+                                background-color: #f4f4f4;
+                                padding: 20px;
+                                text-align: left;
+                            }}
+                            .email-container {{
+                                max-width: 600px;
+                                margin: auto;
+                                background: #ffffff;
+                                padding: 20px;
+                                border-radius: 8px;
+                                box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                            }}
+                            .header {{
+                                text-align: center;
+                                padding-bottom: 20px;
+                                border-bottom: 1px solid #ddd;
+                            }}
+                            .header img {{
+                                max-width: 150px;
+                            }}
+                            h2 {{
+                                color: #c0392b;  /* Red color for rejection */
+                            }}
+                            p {{
+                                color: #555555;
+                                font-size: 16px;
+                                line-height: 1.6;
+                            }}
+                            .btn {{
+                                display: inline-block;
+                                background: #c0392b;  /* Red button */
+                                color: #ffffff;
+                                text-decoration: none;
+                                padding: 10px 20px;
+                                border-radius: 5px;
+                                font-weight: bold;
+                                margin-top: 10px;
+                            }}
+                            .btn:hover {{
+                                background: #a93226;
+                            }}
+                            .email-logo {{
+                                max-width: 300px;
+                                height: auto;
+                                width: 100%;
+                                margin-bottom: 20px;
+                                display: flex;
+                                justify-content: center;
+                                margin: 0 auto;
+                            }}
+                        </style>
+                    </head>
+                    <body>
+                        <table role="presentation" cellspacing="0" cellpadding="0">
+                            <tr>
+                                <td>
+                                    <div class="email-container">
+                                        <div class="header">
+                                            <img src="One.png" alt="Company Logo">
+                                        </div>
+                                        <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/doc_rejected.png" 
+                                            alt="Document Rejected" class="email-logo"/>
+                                        <h2>Document Verification Rejected</h2>
+                                        <p>Dear {student_manager_name},</p>
+                                        <p>The document verification process for <strong>{zoho_full_name}</strong> has been <strong>rejected</strong>.</p>
+                                        
+                                        <p>Click below to review rejection details:</p>
+                                        <a href="https://interview.ascenciamalta.mt/studentmanagerpanel/student/{zoho_lead_id}" class="btn">View Rejection Details</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </body>
+                    </html>
+                """,
+                recipient=["abdullah@angel-portal.com"],
+                # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
+            )
             return JsonResponse({"message": "Success", "result": result}, status=200)
 
 
@@ -742,6 +1022,9 @@ def process_document(request):
         return JsonResponse({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
 
     
+
+
+
 
 
 def fetch_interview_questions(request, crm_id):
