@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.http import HttpResponseRedirect
 from django.urls import path, include
-from adminpanel.views.auth_view import login_view, register_view, logout_view, index, root_view
+from adminpanel.views.auth_view import login_view, register_view, logout_view, index
 from adminpanel.views.dashboard_view import admindashboard, custom_404_view
 from adminpanel.views.institute_view import institute_list, institute_add, institute_update, institute_delete, student_managers_by_institute
 from adminpanel.views.course_view import courses, course_add, course_update, course_delete
@@ -24,9 +24,7 @@ def redirect_to_dashboard(request):
 
 urlpatterns = [
     # path('', redirect_to_dashboard),
-    # path("", login_view, name="login"),
-    
-    path("", root_view, name="root"),
+    path("", login_view, name="login"),
     path("index/", index),
     path("admin/", admin.site.urls),
     path("api/", include('api.urls')),
