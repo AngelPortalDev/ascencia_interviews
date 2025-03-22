@@ -42,7 +42,7 @@ export const PermissionProvider = ({children}) =>{
     const submitExam  = ()=>{
         setIsExamSubmitted(true);
         localStorage.setItem("interviewSubmitted", "true");
-        sessionStorage.setItem("isReload", "true");
+        // sessionStorage.setItem("isReload", "true");
         setIsExamSubmitted(true); 
         setTimeout(() => setIsExamSubmitted(localStorage.getItem("interviewSubmitted") === "true"), 100);
     }

@@ -9,7 +9,7 @@ function confirmDelete(id, routeUrl) {
         cancelButtonText: 'No, keep it'
     }).then((result) => {
         if (result.isConfirmed) {
-            window.location.href = routeUrl + id; // Redirect to the passed URL with the id
+            window.location.href = routeUrl + id + '/'; // Redirect to the passed URL with the id
         }
     });
 }

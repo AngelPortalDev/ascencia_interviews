@@ -6,8 +6,20 @@ import useInterviewLinkStatus  from '../hooks/useInterviewLinkStatus.js';
 const Home = () => {
 
   const { encoded_zoho_lead_id,encoded_interview_link_send_count } = useParams(); // Get encoded student_id from URL
-  console.log("encoded_zoho_lead_id",encoded_zoho_lead_id)
-  useInterviewLinkStatus(encoded_zoho_lead_id);
+  // console.log("encoded_zoho_lead_id",encoded_zoho_lead_id)
+  const isLoading = useInterviewLinkStatus(encoded_zoho_lead_id);
+
+  if (isLoading) {
+    return <div>
+      <section class="dots-container">
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+</section>
+    </div>; // Show a loader while checking the status
+  }
 
   // const InterviewLinkStatus = async (encoded_zoho_lead_id) => {
   //   if (!encoded_zoho_lead_id) {

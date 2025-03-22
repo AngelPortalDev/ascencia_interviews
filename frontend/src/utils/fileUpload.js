@@ -15,8 +15,7 @@ export const uploadFile = async (blob, filename,zoho_lead_id,question_id,last_qu
   const formData = new FormData();
   formData.append("file", blob, filename);
   formData.append("zoho_lead_id",btoa(zoho_lead_id));
-  // console.log("Uplaod File Student Id",zoho_lead_id); 
-  // console.log("Uplaod File question_id",question_id); 
+  formData.append("last_question_id",last_question_id);
 
   try {
     const response = await axios.post(
@@ -26,9 +25,15 @@ export const uploadFile = async (blob, filename,zoho_lead_id,question_id,last_qu
         headers: {
           "Content-Type": "multipart/form-data",
         },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          console.log(`Upload progress: ${percentCompleted}%`);
+        }
       }
     );
-    console.log("Respnse for Video",response);
+    // console.log("Respnse for Video",response);
     if (response.data.file_path) {
       const videoFilePath = response.data.file_path;
       const audioFilePath = response.data.audio_path || videoFilePath; // If no separate audio, use video path

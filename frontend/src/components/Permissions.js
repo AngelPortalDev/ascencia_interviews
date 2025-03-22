@@ -109,6 +109,8 @@ const Permissions = () => {
     setTimeout(()=>navigate("/expired"),0) ;
     }
   },[encoded_zoho_lead_id,navigate])
+  if (encoded_zoho_lead_id == null) return null;
+
 
   return (
     <div>

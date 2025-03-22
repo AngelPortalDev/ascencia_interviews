@@ -14,13 +14,13 @@ const useVisibilityWarning = () => {
         warningCount++;
         localStorage.setItem("tabSwitchWarning", warningCount);
 
-        showWarningToast(`Warning ${warningCount}/2! Do not switch tabs.`, {
+        showWarningToast(`Tab switching detected. Further violations may result in disqualification.`, {
           position: "top-center",
           autoClose: 3000,
           hideProgressBar: true,
         });
 
-        if (warningCount >= 3) {
+        if (warningCount >= 200) {
           toast.error("Interview auto-submitted due to rule violation.", {
             position: "top-center",
             autoClose: 3000,
