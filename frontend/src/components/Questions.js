@@ -11,14 +11,18 @@ import "swiper/css/pagination";
 import "swiper/css/navigation";
 import Axios from "axios";
 import { Pagination, Navigation, Autoplay } from "swiper/modules";
-import ChatIcon from "../assest/icons/one.svg";
 import InterviewPlayer from "./InterviewPlayer.js";
 import { toast } from "react-toastify";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { usePermission } from "../context/PermissionContext.js";
 import QuestionChecker from "./QuestionChecker.js";
-import { startRecording, stopRecording,setupMediaStream } from "../utils/recording.js";
+import {
+  startRecording,
+  stopRecording,
+  setupMediaStream,
+} from "../utils/recording.js";
 import usePageReloadSubmit from "../hooks/usePageReloadSubmit.js";
+import AI_LOGO from "../assest/AI_LOGO.png";
 // import useBackSubmitHandler from '../hooks/useBackSubmitHandler.js';
 
 const Questions = () => {
@@ -32,7 +36,9 @@ const Questions = () => {
   const [transcribedText, setTranscribedText] = useState(""); // To hold transcribed text
   const [activeQuestionId, setActiveQuestionId] = useState(null); // Track active question
   const [student, setStudent] = useState(null);
-  
+
+  const [backButtonClicked, setBackButtonClicked] = useState(false);
+
   // const { student_id } = useParams(); // Get encoded student_id from URL
   const location = useLocation();
   const encoded_zoho_lead_id = location.state?.encoded_zoho_lead_id || null;
@@ -50,21 +56,14 @@ const Questions = () => {
   const [isFirstQuestionSet, setIsFirstQuestionSet] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Hoocks for go back to previous page
-  usePageReloadSubmit(
-    videoRef,
-    mediaRecorderRef,
-    audioRecorderRef,
-    recordedChunksRef,
-    recordedAudioChunksRef
-  );
-  // useBackSubmitHandler(
+  // usePageReloadSubmit(
   //   videoRef,
   //   mediaRecorderRef,
   //   audioRecorderRef,
   //   recordedChunksRef,
   //   recordedAudioChunksRef
   // );
+
   const navigate = useNavigate();
   const { submitExam } = usePermission();
   const last_question_id =
@@ -99,35 +98,12 @@ const Questions = () => {
 
   // When click back button tehn go to expired page
 
-  // useEffect(() => {
-  //   // Function to block back navigation and redirect to expired page
-  //   const blockBackNavigation = () => {
-  //     navigate("/expired")
-  //   };
-
-  //   // Block back navigation initially
-  //   window.history.pushState(null, "", window.location.href);
-
-  //   // Listen for back/forward button clicks and redirect to expired page
-  //   window.addEventListener("popstate", blockBackNavigation);
-
-  //   // Cleanup the event listener when the component unmounts
+  //   window.history.pushState(null, '', window.location.pathname);
+  //   window.addEventListener('popstate', handlePopState);
   //   return () => {
-  //     window.removeEventListener("popstate", blockBackNavigation);
+  //     window.removeEventListener('popstate', handlePopState);
   //   };
   // }, []);
-  useEffect(() => {
-    const handlePopState = (event) => {
-      window.history.pushState(null, '', window.location.pathname);
-      alert('Back navigation is disabled on this page.');
-    };
-
-    window.history.pushState(null, '', window.location.pathname);
-    window.addEventListener('popstate', handlePopState);
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, []);
   // useEffect(()=>{
   //   function DisableBackButton() {
   //     window.history.forward()
@@ -137,13 +113,6 @@ const Questions = () => {
   //     window.onpageshow = function(evt) { if (evt.persisted) DisableBackButton() }
   //     window.onunload = function() { void (0) }
   // },[])
-
-
-  useEffect(()=>{
-    if(encoded_zoho_lead_id == null){
-     setTimeout(()=>navigate("/expired"),0) ;
-    }
-  },[encoded_zoho_lead_id,navigate])
 
   // ************* Get First Question id *********
 
@@ -174,20 +143,20 @@ const Questions = () => {
   }, [getQuestions, isFirstQuestionSet, last_question_id, zoho_lead_id]);
 
 
-  const handleSubmit = useCallback(async () => { 
+  const handleSubmit = useCallback(async () => {
     setLoading(true);
     const newQuestionId = getQuestions[currentQuestionIndex]?.encoded_id;
     if (!newQuestionId) {
       console.error("Error: newQuestionId is undefined or invalid.");
       return;
     }
-  
+
     if (newQuestionId !== activeQuestionId) {
       setActiveQuestionId(newQuestionId);
     }
-  
+
     try {
-      await stopRecording( 
+      await stopRecording(
         videoRef,
         mediaRecorderRef,
         audioRecorderRef,
@@ -218,7 +187,7 @@ const Questions = () => {
         },
         last_question_id
       );
-  
+
       localStorage.setItem("interviewSubmitted", "true");
       submitExam();
       navigate("/interviewsubmitted");
@@ -236,6 +205,24 @@ const Questions = () => {
     zoho_lead_id,
     navigate,
   ]);
+
+  // useEffect to trigger handleSubmit when the page is reloaded
+// useEffect(() => {
+//   const handleBeforeUnload = (event) => {
+//     // Check if the interview has already been submitted to prevent unnecessary calls
+//     if (!localStorage.getItem("interviewSubmitted")) {
+//       event.preventDefault();
+//       handleSubmit();  
+//     }
+//   };
+
+//   window.addEventListener('beforeunload', handleBeforeUnload);
+
+//   // Cleanup the event listener when the component unmounts
+//   return () => {
+//     window.removeEventListener('beforeunload', handleBeforeUnload);
+//   };
+// }, [handleSubmit]);
 
   // ************* Handle Countdown *************
   useEffect(() => {
@@ -390,24 +377,6 @@ const Questions = () => {
     return () => clearInterval(timeTracker);
   }, []);
 
-  // console.log("mediaRecorderRef",mediaRecorderRef);
-  // const stopMediaStream = () => {
-  //   if (videoRef.current && videoRef.current.srcObject) {
-  //     console.log("videoRef.current.srcObject",videoRef.current.srcObject)
-  //     console.log("videoRef.current",videoRef.current);
-  //     const stream = videoRef.current.srcObject;
-  //     const tracks = stream.getTracks();
-  
-  //     tracks.forEach((track) => {
-  //       console.log("Stopping track:", track);
-  //       track.stop(); // Stops video/audio tracks
-  //     });
-  
-  //     videoRef.current.srcObject = null; // Clear the video reference
-  //     console.log("✅ Camera & microphone stream stopped.");
-  //   }
-  // };
-
   // ************ Interview Submit Go to Home Page ****************************
   // Here downlaod & recoding work after button click
 
@@ -436,58 +405,54 @@ const Questions = () => {
     }
   }, [zoho_lead_id]);
 
-  // useEffect(() => {
-  //   if (location.pathname === "/interviewsubmitted") {
-  //     setupMediaStream(); // Stop if user lands on the home page
-  //   }
-  
-  //   return () => {
-  //     // stopMediaStream(); // Stop when leaving the interview page
-  //   };
-  // }, [location.pathname]);
+  useEffect(() => {
+    // Prevent going back by pushing a new state into history
+    window.history.pushState(null, "", window.location.href);
 
-  // Mobile View Back Button
-  // useEffect(() => {
-  //   const handleBackButton = async (event) => {
-  //     event.preventDefault(); // Prevent the default back behavior
-  //     try {
-  //       await handleSubmit(); 
-  //       navigate("/interviewsubmitted"); 
-  //     } catch (error) {
-  //       console.error("Error during submission:", error);
-  //     }
-  //   };
-  
-  //   window.history.pushState(null, "", window.location.href);
-  
-  //   window.addEventListener("popstate", handleBackButton);
-  
-  //   return () => {
-  //     window.removeEventListener("popstate", handleBackButton);
-  //   };
-  // }, [handleSubmit, navigate]);
-  
-  
-  
-  
-  
+    // Event listener for the back button
+    const handlePopState = (event) => {
+      if (!backButtonClicked) {
+        // Show the alert when back button is clicked the first time
+        const isConfirmed = window.confirm(
+          "Are you sure you want to submit the interview?"
+        );
+        if (isConfirmed) {
+          localStorage.setItem("interviewSubmitted", "true");
+          submitExam();
+          navigate("/interviewsubmitted");
+          setBackButtonClicked(true);
+          window.history.pushState(null, "", window.location.href);
+        }
+      } else {
+        localStorage.setItem("interviewSubmitted", "true");
+        submitExam();
+        navigate("/interviewsubmitted");
+      }
+    };
+
+    window.onpopstate = handlePopState;
+
+    return () => {
+      window.onpopstate = null; 
+    };
+  }, [backButtonClicked, navigate, submitExam]);
+
   if (loading) {
-    return <div>
-      <section class="dots-container">
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-      </section>  
-    </div>;
+    return (
+      <div>
+        <section class="dots-container">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </section>
+      </div>
+    );
   }
 
   return (
-  
-    
     <div className="relative min-h-screen bg-gradient-to-r text-white">
-    
       {/* Background Effect */}
       <div
         aria-hidden="true"
@@ -503,17 +468,19 @@ const Questions = () => {
       </div>
 
       {/* Countdown Timer */}
-      <div className="flex justify-between flex-col sm:flex-row px-8 pt-12 lg:px-16 items-center">
+      <div className="flex justify-between flex-col sm:flex-row px-8 pt-8 sm:pt-4  lg:px-16 items-center">
         <div>
-          <h3 className="text-black text-xl sm:text-2xl mb-2">Interview</h3>
+          <h3 className="text-black text-xl sm:text-2xl mb-2">
+            <img src={AI_LOGO} alt="AI Software" className="h-16" />
+          </h3>
           {/* <img src={Logo} alt="Not found" style={{width:'200px'}}/> */}
         </div>
         <div
-          className={` px-4 py-2 rounded-full text-lg sm:text-2xl font-extrabold transition-all tracking-wider
+          className={` px-4 py-2 rounded-2xl text-lg sm:text-2xl font-extrabold transition-all tracking-wider
         ${
           countdown < 30
             ? "text-red-500 animate-blink"
-            : "bg-gradient-to-r from-[#ff80b5] to-[#9089fc]"
+            : "bg-gradient-to-r from-[#ff80b5] to-[#9089fc] sm:mt-2.5"
         }`}
         >
           {formatTime(countdown)}
@@ -560,7 +527,8 @@ const Questions = () => {
                     text-xs md:text-sm 
                     py-1 px-3 md:py-2 md:px-4 
                     rounded-xl shadow-lg 
-                    hover:bg-gradient-to-l transition-all"
+                    hover:bg-gradient-to-l transition-all
+                    w-auto"
                     style={{
                       position: "absolute",
                       right: "20px",
@@ -576,83 +544,15 @@ const Questions = () => {
         </Swiper>
 
         {/* Grid Layout for User Info and Video */}
-        <div className="grid grid-cols-12 gap-0 mt-12 h-full sm:gap-8">
-           {/* User Info (8 columns) */}
-  <div className="col-span-12 lg:col-span-9 flex flex-col justify-end bg-white p-6 rounded-xl shadow-lg text-black border border-gray-200 studentInfo">
-    <h3 className=" font-semibold mb-6 text-center text-sm sm:text-xl">
-      {student ? `${student.first_name} ${student.last_name}` : "Not found"}
-    </h3>
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
-      {/* Mobile No */}
-      <div className="chat-notification shadow-md p-3 flex items-center rounded-md">
-        <div className="chat-notification-logo-wrapper">
-          <img
-            className="chat-notification-logo rounded-md"
-            src={ChatIcon}
-            alt="ChitChat Logo"
-            style={{ height: "40px" }}
-          />
-        </div>
-        <div className="chat-notification-content ms-3">
-          <div className="chat-notification-title text-sm sm:text-lg font-medium text-black">
-            Mobile No
+        <div className="grid grid-cols-12 gap-0  h-full sm:gap-8">
+          <div
+            className="col-span-12 md:col-span-9 bg-white p-2 rounded-xl  text-black  mt-2 sm:mt-0 "
+            style={{ display: "hidden" }}
+          ></div>
+          <div className="col-span-12 md:col-span-3 bg-white p-2 rounded-xl  text-black interviewPlayer">
+            {interviewPlayerMemo}
           </div>
-          <p className="chat-notification-message text-sm sm:text-base">
-            {student ? student.mobile_no : ""}
-          </p>
         </div>
-      </div>
-
-      {/* Email */}
-      <div className="chat-notification shadow-md p-3 flex items-center rounded-md">
-        <div className="chat-notification-logo-wrapper">
-          <img
-            className="chat-notification-logo rounded-md"
-            src={ChatIcon}
-            alt="ChitChat Logo"
-            style={{ height: "40px" }}
-          />
-        </div>
-        <div className="chat-notification-content ms-3">
-          <div className="chat-notification-title text-sm sm:text-lg font-medium text-black">
-            Email id
-          </div>
-          <p className="chat-notification-message text-sm sm:text-base">
-            {student ? student.email_id : ""}
-          </p>
-        </div>
-      </div>
-
-      {/* Job Id */}
-      <div className="chat-notification shadow-md p-3 flex items-center rounded-md">
-        <div className="chat-notification-logo-wrapper">
-          <img
-            className="chat-notification-logo rounded-md"
-            src={ChatIcon}
-            alt="ChitChat Logo"
-            style={{ height: "40px" }}
-          />
-        </div>
-        <div className="chat-notification-content ms-3">
-          <div className="chat-notification-title text-sm sm:text-lg font-medium text-black">
-            Job Id
-          </div>
-          <p className="chat-notification-message text-sm sm:text-base">
-            {student ? student.zoho_lead_id : ""}
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-  {/* Video Player (4 columns) */}
-  <div className="col-span-12 lg:col-span-3 bg-white p-6 rounded-xl shadow-lg text-black border border-gray-200 mt-2 sm:mt-0 interviewPlayer">
-    {/* Video Player */}
-    {interviewPlayerMemo}
-  </div>
-
- 
-</div>
-
       </div>
 
       {/* Blinking effect for countdown */}

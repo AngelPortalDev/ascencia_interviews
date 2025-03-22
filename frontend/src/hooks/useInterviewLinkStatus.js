@@ -1,9 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const useInterviewLinkStatus = (encoded_zoho_lead_id) => {
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkInterviewStatus = async () => {
@@ -28,11 +29,15 @@ const useInterviewLinkStatus = (encoded_zoho_lead_id) => {
         } else {
           console.error("An error occurred while checking the interview link status:", error);
         }
+      } finally {
+        setIsLoading(false); // Finish loading
       }
     };
 
     checkInterviewStatus();
   }, [encoded_zoho_lead_id, navigate]);
+
+  return isLoading; // Return loading state
 };
 
 export default useInterviewLinkStatus;

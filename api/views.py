@@ -500,10 +500,10 @@ def process_document(request):
                 student.edu_doc_verification_status = "rejected"
                 student.verification_failed_reason = "Name Not Matched"
                 student.save()
-                if update_zoho_lead(crm_id, zoho_lead_id, update_data):
-                    print("Lead updated successfully")
-                else:
-                    print("Lead update failed")
+                # if update_zoho_lead(crm_id, zoho_lead_id, update_data):
+                #     print("Lead updated successfully")
+                # else:
+                #     print("Lead update failed")
                 
                 # Student Manager Notification Email (Document Rejected)
                 send_email(
@@ -513,7 +513,7 @@ def process_document(request):
                         <head>
                             <style>
                                 body {{
-                                    font-family: Arial, sans-serif;
+                                    font-family: Tahoma !important;
                                     background-color: #f4f4f4;
                                     padding: 20px;
                                     text-align: left;
@@ -525,6 +525,7 @@ def process_document(request):
                                     padding: 20px;
                                     border-radius: 8px;
                                     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                                    border: 1px solid #ddd;
                                 }}
                                 .header {{
                                     text-align: center;
@@ -533,6 +534,8 @@ def process_document(request):
                                 }}
                                 .header img {{
                                     max-width: 150px;
+                                    display:flex;
+                                    margin:0 auto;
                                 }}
                                 h2 {{
                                     color: #c0392b;  /* Red color for rejection */
@@ -545,7 +548,7 @@ def process_document(request):
                                 .btn {{
                                     display: inline-block;
                                     background: #c0392b;  /* Red button */
-                                    color: #ffffff;
+                                    color: #FFFFFF;
                                     text-decoration: none;
                                     padding: 10px 20px;
                                     border-radius: 5px;
@@ -554,6 +557,7 @@ def process_document(request):
                                 }}
                                 .btn:hover {{
                                     background: #a93226;
+                                    color: #FFFFFF;
                                 }}
                                 .email-logo {{
                                     max-width: 300px;
@@ -564,6 +568,15 @@ def process_document(request):
                                     justify-content: center;
                                     margin: 0 auto;
                                 }}
+                                .logo_style{{
+                                    height:40px;
+                                    width:auto;
+                                }}
+                                @media only screen and (max-width: 600px) {{
+                                                .email_logo_lead {{
+                                                    width: 100% !important;
+                                                }}
+                                        }}
                             </style>
                         </head>
                         <body>
@@ -572,10 +585,10 @@ def process_document(request):
                                     <td>
                                         <div class="email-container">
                                             <div class="header">
-                                                <img src="One.png" alt="Company Logo">
+                                                <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style">
                                             </div>
                                             <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/doc_rejected.png" 
-                                                alt="Document Rejected" class="email-logo"/>
+                                                alt="Document Rejected" class="email_logo_lead" style="width:60%;"/>
                                             <h2>Document Verification Rejected</h2>
                                             <p>Dear {student_manager_name},</p>
                                             <p>The document verification process for <strong>{zoho_full_name}</strong> has been <strong>rejected</strong>.</p>
@@ -619,7 +632,7 @@ def process_document(request):
                         <head>
                             <style>
                                 body {{
-                                    font-family: Arial, sans-serif;
+                                    font-family: Tahoma !important;
                                     background-color: #f4f4f4;
                                     padding: 20px;
                                     text-align: left;
@@ -631,6 +644,7 @@ def process_document(request):
                                     padding: 20px;
                                     border-radius: 8px;
                                     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                                    border: 1px solid #ddd;
                                 }}
                                 .header {{
                                     text-align: center;
@@ -639,6 +653,8 @@ def process_document(request):
                                 }}
                                 .header img {{
                                     max-width: 150px;
+                                    display:flex;
+                                    margin:0 auto;
                                 }}
                                 h2 {{
                                     color: #c0392b;  /* Red color for rejection */
@@ -661,6 +677,10 @@ def process_document(request):
                                 .btn:hover {{
                                     background: #a93226;
                                 }}
+                                .logo_style{{
+                                    height:40px;
+                                    width:auto;
+                                }}
                                 .email-logo {{
                                     max-width: 300px;
                                     height: auto;
@@ -670,6 +690,11 @@ def process_document(request):
                                     justify-content: center;
                                     margin: 0 auto;
                                 }}
+                                @media only screen and (max-width: 600px) {{
+                                                .email_logo_lead {{
+                                                    width: 100% !important;
+                                                }}
+                                        }}
                             </style>
                         </head>
                         <body>
@@ -678,10 +703,10 @@ def process_document(request):
                                     <td>
                                         <div class="email-container">
                                             <div class="header">
-                                                <img src="One.png" alt="Company Logo">
+                                                <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style">
                                             </div>
                                             <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/doc_rejected.png" 
-                                                alt="Document Rejected" class="email-logo"/>
+                                                alt="Document Rejected" class="email_logo_lead" style="width:60%;"/>
                                             <h2>Document Verification Rejected</h2>
                                             <p>Dear {student_manager_name},</p>
                                             <p>The document verification process for <strong>{zoho_full_name}</strong> has been <strong>rejected</strong>.</p>
@@ -721,11 +746,21 @@ def process_document(request):
                     encoded_zoho_lead_id = encode_base64(zoho_lead_id)
                     encoded_interview_link_send_count = encode_base64(student.interview_link_send_count)
                     interview_url = f'http://127.0.0.1:8000/interview_panel/{encoded_zoho_lead_id}/{encoded_interview_link_send_count}'
-                    interview_link = StudentInterviewLink.objects.create(
+                    
+                    interview_link, created = StudentInterviewLink.objects.update_or_create(
                         zoho_lead_id=zoho_lead_id,
-                        interview_link=interview_url,
-                        expires_at=now() + timedelta(hours=72)
+                        defaults={
+                            "interview_link": interview_url,
+                            "expires_at": now() + timedelta(hours=72),
+                        }
                     )
+
+                    # interview_link = StudentInterviewLink.objects.create(
+                    #     zoho_lead_id=zoho_lead_id,
+                    #     interview_link=interview_url,
+                    #     expires_at=now() + timedelta(hours=72)
+                    # )
+                    
                     # send_email(interview_url, zoho_full_name, 'student@manager.com')
                     
                     # student
@@ -738,14 +773,16 @@ def process_document(request):
                                             body{{
                                                 background-color: #f4f4f4;
                                                 padding: 20px;
-                                                text-align: left;
+                                                font-family: Tahoma !important;
                                             }}
                                              .email-container {{
                                                 max-width: 600px;
+                                                margin: auto;
                                                 background: #ffffff;
                                                 padding: 20px;
                                                 border-radius: 8px;
-                                                box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); 
+                                                box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                                                border: 1px solid #ddd;
                                              }}
                                             .header {{
                                                 text-align: center;
@@ -754,6 +791,8 @@ def process_document(request):
                                             }}
                                             .header img {{
                                                 max-width: 150px;
+                                                display:flex;
+                                                margin:0 auto;
                                             }}
                                              h2 {{
                                                color: #2c3e50;  
@@ -766,7 +805,7 @@ def process_document(request):
                                              .btn {{
                                                 display: inline-block;
                                                 background: #db2777;
-                                                color: #ffffff;
+                                                color: #FFFFFF;
                                                 text-decoration: none;
                                                 padding: 10px 15px;
                                                 border-radius: 5px;
@@ -775,6 +814,7 @@ def process_document(request):
                                              }}
                                              .btn:hover {{
                                                  background: #0056b3;
+                                                 color: #FFFFFF;
                                              }}
                                             .email-logo {{
                                                 max-width:300px;
@@ -785,6 +825,16 @@ def process_document(request):
                                                 justify-content:center;
                                                 margin:0 auto;
                                             }}
+                                            .logo_style{{
+                                                height:40px;
+                                                width:auto;
+                                            }}
+                                            
+                                            @media only screen and (max-width: 600px) {{
+                                                .email_logo_lead {{
+                                                    width: 100% !important;
+                                                }}
+                                        }}
                                         </style>
                                         <body>
                                             <table role="presentation" cellspacing="0" cellpadding="0">
@@ -792,9 +842,9 @@ def process_document(request):
                                                     <td align="left">
                                                         <div class="email-container">
                                                         <div class="header">
-                                                            <img src="One.png" alt="Company Logo">
+                                                            <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style"/>
                                                         </div>
-                                                         <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/notification.png" alt="Zoho Lead Update" class="email-logo"/>
+                                                         <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/notification.png" alt="Zoho Lead Update" class="email_logo_lead" style="width:60%;"/>
                                                             <h2>Zoho Lead Update Notification</h2>
                                                             <p>Dear {zoho_full_name},</p>
                                                             <p>The lead update was successful.</p>
@@ -821,7 +871,7 @@ def process_document(request):
                             <head>
                                 <style>
                                     body {{
-                                        font-family: Arial, sans-serif;
+                                        font-family: Tahoma !important;
                                         background-color: #f4f4f4;
                                         padding: 20px;
                                         text-align: left;
@@ -853,7 +903,7 @@ def process_document(request):
                                     .btn {{
                                         display: inline-block;
                                         background: #db2777;
-                                        color: #ffffff;
+                                        color: #FFFFFF;
                                         text-decoration: none;
                                         padding: 10px 20px;
                                         border-radius: 5px;
@@ -862,6 +912,7 @@ def process_document(request):
                                     }}
                                     .btn:hover {{
                                         background: #0056b3;
+                                        color: #FFFFFF;
                                     }}
                                     .email-logo {{
                                         max-width: 300px;
@@ -872,6 +923,15 @@ def process_document(request):
                                         justify-content: center;
                                         margin: 0 auto;
                                     }}
+                                    .logo_style{{
+                                        height:40px;
+                                        width:auto;
+                                    }}
+                                    @media only screen and (max-width: 600px) {{
+                                                .email_logo_lead {{
+                                                    width: 100% !important;
+                                                }}
+                                        }}
                                 </style>
                             </head>
                             <body>
@@ -880,9 +940,9 @@ def process_document(request):
                                         <td>
                                             <div class="email-container">
                                                 <div class="header">
-                                                    <img src="One.png" alt="Company Logo">
+                                                    <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/ascencia_logo.svg" alt="Company Logo" class="logo_style">
                                                 </div>
-                                                <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/doc_verified.png" alt="Document Verified" class="email-logo"/>
+                                                <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/doc_verified.png" alt="Document Verified" class="email-logo" class="email_logo_lead" style="width:60%;"/>
                                                 <h2>Document Verification Completed</h2>
                                                 <p>Dear {student_manager_name},</p>
                                                 <p>The document verification process for <strong>{zoho_full_name}</strong> has been successfully completed.</p>
@@ -911,6 +971,7 @@ def process_document(request):
                 student = Students.objects.get(zoho_lead_id=zoho_lead_id)
                 student.mindee_verification_status = "Completed"
                 student.edu_doc_verification_status = "rejected"
+                student.verification_failed_reason = "Criteria not matched"
                 student.save()
                 if update_zoho_lead(crm_id, zoho_lead_id, update_data):
                     print("Lead updated successfully")
@@ -925,18 +986,19 @@ def process_document(request):
                     <head>
                         <style>
                             body {{
-                                font-family: Arial, sans-serif;
+                                font-family: Tahoma !important;
                                 background-color: #f4f4f4;
                                 padding: 20px;
                                 text-align: left;
                             }}
-                            .email-container {{
+                            .email-container {{ 
                                 max-width: 600px;
                                 margin: auto;
                                 background: #ffffff;
                                 padding: 20px;
                                 border-radius: 8px;
                                 box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                                border: 1px solid #ddd;
                             }}
                             .header {{
                                 text-align: center;
@@ -945,6 +1007,8 @@ def process_document(request):
                             }}
                             .header img {{
                                 max-width: 150px;
+                                display:flex;
+                                margin:0 auto;
                             }}
                             h2 {{
                                 color: #c0392b;  /* Red color for rejection */
@@ -957,7 +1021,7 @@ def process_document(request):
                             .btn {{
                                 display: inline-block;
                                 background: #c0392b;  /* Red button */
-                                color: #ffffff;
+                                color: #FFFFFF;
                                 text-decoration: none;
                                 padding: 10px 20px;
                                 border-radius: 5px;
@@ -966,6 +1030,7 @@ def process_document(request):
                             }}
                             .btn:hover {{
                                 background: #a93226;
+                                color: #FFFFFF;
                             }}
                             .email-logo {{
                                 max-width: 300px;
@@ -976,6 +1041,15 @@ def process_document(request):
                                 justify-content: center;
                                 margin: 0 auto;
                             }}
+                            .logo_style{{
+                                height:40px;
+                                width:auto;
+                            }}
+                            @media only screen and (max-width: 600px) {{
+                                                .email_logo_lead {{
+                                                    width: 100% !important;
+                                                }}
+                                        }}
                         </style>
                     </head>
                     <body>
@@ -984,10 +1058,10 @@ def process_document(request):
                                 <td>
                                     <div class="email-container">
                                         <div class="header">
-                                            <img src="One.png" alt="Company Logo">
+                                            <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style">
                                         </div>
                                         <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/doc_rejected.png" 
-                                            alt="Document Rejected" class="email-logo"/>
+                                            alt="Document Rejected" class="email_logo_lead" style="width:60%;"/>
                                         <h2>Document Verification Rejected</h2>
                                         <p>Dear {student_manager_name},</p>
                                         <p>The document verification process for <strong>{zoho_full_name}</strong> has been <strong>rejected</strong>.</p>
@@ -1022,11 +1096,6 @@ def process_document(request):
         return JsonResponse({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
 
     
-
-
-
-
-
 def fetch_interview_questions(request, crm_id):
     try:
         # Fetch 2 random questions from commonquestions

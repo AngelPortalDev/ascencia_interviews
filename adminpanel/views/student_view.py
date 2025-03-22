@@ -4,6 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from adminpanel.common_imports import *
 from studentpanel.models.interview_process_model import Students
 from datetime import datetime
+import calendar
 
 
 
@@ -59,33 +60,31 @@ def students_leads_api(request):
     return JsonResponse({"status": False, "error": "Invalid request method"}, status=405)
 
 
-# def students_list(request):
-#     try:
-#         students = Students.objects.filter(deleted_at__isnull=True)
-#         student_data = [
-#             {
-#                 'id': student.student_id,
-#                 'first_name': student.first_name,
-#                 'last_name': student.last_name,
-#                 'email': student.email,
-#                 'phone': student.phone,
-#                 'program': student.program,
-#                 'zoho_lead_id': student.zoho_lead_id,
-
-#             }
-#             for student in students
-#         ]
-#         return render(request, 'student/student.html', {'students': student_data})
-
-#     except Exception as e:
-#         messages.error(request, f"An error occurred while fetching the students: {e}")
-#         return redirect('admindashboard')
 
 def students_list(request):
     try:
+
         students = Students.objects.order_by('-id').filter(deleted_at__isnull=True)
         verified_students = students.filter(edu_doc_verification_status="approved")
         rejected_students = students.filter(edu_doc_verification_status="rejected")
+        unverified_students = students.filter(edu_doc_verification_status="Unverified")
+
+        intake_month = request.GET.get('intake_month', '')
+        intake_year = request.GET.get('intake_year', '')
+        
+        # Apply filters if selected
+        if intake_month and intake_year.isdigit():
+            students = students.filter(intake_month=intake_month, intake_year=int(intake_year))
+
+        # if intake_month:
+        #     students = students.filter(intake_month=intake_month)
+            
+        # if intake_year.isdigit():
+        #     intake_year = int(intake_year)
+
+        def get_student_manager_name(email):
+            user = User.objects.filter(email=email).first()
+            return f"{user.first_name} {user.last_name}" if user else "N/A"
 
         def format_student_data(queryset):
             return [
@@ -100,10 +99,15 @@ def students_list(request):
                     'intake_year': getattr(student, 'intake_year', '') or '',
                     'intake_month': getattr(student, 'intake_month', '') or '',
                     'zoho_lead_id': getattr(student, 'zoho_lead_id', '') or '',
+                    'crm_id': getattr(student, 'crm_id', '') or '',
+                    'student_manager_name': get_student_manager_name(student.student_manager_email),
                 }
                 for student in queryset
             ]
-            
+         
+        months = list(calendar.month_name)[1:]
+        years = list(range(2022, 2041))   
+
         breadcrumb_items = [
             {"name": "Dashboard", "url": reverse('admindashboard')},
             {"name": "Students", "url": ""},
@@ -113,6 +117,11 @@ def students_list(request):
             'all_students': format_student_data(students),
             'verified_students': format_student_data(verified_students),
             'rejected_students': format_student_data(rejected_students),
+            'unverified_students': format_student_data(unverified_students),
+            "intake_months": months,
+            "intake_years": years,
+            "selected_intake_month": intake_month,
+            "selected_intake_year": intake_year,
             "show_breadcrumb": True,
             "breadcrumb_items": breadcrumb_items,
         }

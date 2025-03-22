@@ -181,7 +181,7 @@ const InterviewPlayer = ({onTranscription,zoho_lead_id,question_id,last_question
         autoPlay
         playsInline
         muted
-        style={{ width: "100%", borderRadius: "10px" }}
+        style={{borderRadius: "10%", height:'250px', width:'250px',objectFit:'cover', display:'flex', justifyItems:'center',margin:'0 auto' }}
       ></video>
 
       {/* Scrolling Questions */}
