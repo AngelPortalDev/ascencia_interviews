@@ -205,6 +205,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = '/login/'
 
+
 # CORS_ALLOW_ALL_ORIGINS = True
 # CSRF_COOKIE_SECURE = False
 # SECURE_SSL_REDIRECT = True  # Redirect all HTTP requests to HTTPS
