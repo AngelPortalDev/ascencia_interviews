@@ -1,6 +1,6 @@
 {% load static %}
 <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
-          <div class="app-brand demo">
+          {% comment %} <div class="app-brand demo">
             <a href="{% if request.user.profile.role == 0 %}{% url 'admindashboard' %}{% else %}{% url 'studentmanagerdashboard' %}{% endif %}" class="app-brand-link">
               <span class="app-brand-logo demo">
                 <svg
@@ -63,15 +63,21 @@
             <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
               <i class="bx bx-chevron-left bx-sm align-middle"></i>
             </a>
-          </div>
+          </div> {% endcomment %}
 
+          <div class="app-brand d-flex flex-column align-items-center py-3">
+            <a href="{% url 'admindashboard' %}" class="app-brand-link">
+                <img src="{% static 'img/logo/Ascencia-Malta-Logo.svg' %}" alt="AI Interview" class="img-fluid" style="max-width: 80%; height: auto;"/>
+            </a>
+          </div>
+        
           <div class="menu-inner-shadow"></div>
 
           
             {% if request.user.profile.role == 0 %}
               <ul class="menu-inner py-1">
                 <!-- Dashboard -->
-                <li class="menu-item  {% if '/admindashboard' in request.path %}active{% endif %}">
+                <li class="menu-item  {% if '/adminpanel/dashboard/' in request.path %}active{% endif %}">
                   <a href="{% url 'admindashboard' %}" class="menu-link">
                     <i class="menu-icon tf-icons bx bx-home-circle"></i>
                     <div data-i18n="Analytics">Dashboard</div>
@@ -81,21 +87,21 @@
                 <li class="menu-item {% if '/institute' in request.path %}active{% endif %}">
                   <a href="{% url 'institute_list' %}" class="menu-link">
                     <i class="menu-icon tf-icons bx bx-building"></i>
-                    <div data-i18n="Basic">Institute</div>
+                    <div data-i18n="Basic">Institutes</div>
                   </a>
                 </li>
                 <!-- Course -->
                 <li class="menu-item {% if '/course' in request.path %}active{% endif %}">
                   <a href="{% url 'courses' %}" class="menu-link">
                     <i class="menu-icon bx bx-book" aria-hidden="true"></i>
-                    <div data-i18n="Basic">Course</div>
+                    <div data-i18n="Basic">Courses</div>
                   </a>
                 </li>
                 <!-- Student -->
                 <li class="menu-item {% if request.resolver_match.url_name == 'students_list' %}active{% endif %}">
                   <a href="{% url 'students_list' %}" class="menu-link">
-                    <i class="menu-icon bx bx-book" aria-hidden="true"></i>
-                    <div data-i18n="Basic">Student</div>
+                    <i class="menu-icon bx bx-user" aria-hidden="true"></i>
+                    <div data-i18n="Basic">Students</div>
                   </a>
                 </li>
                 <!-- Question -->
@@ -120,8 +126,8 @@
                 <!-- Student Manager -->
                 <li class="menu-item {% if '/student_manager' in request.path %}active{% endif %}">
                   <a href="{% url 'student_managers' %}" class="menu-link">
-                    <i class="menu-icon bx bx-book" aria-hidden="true"></i>
-                    <div data-i18n="Basic">Student Manager</div>
+                    <i class="menu-icon bx bx-id-card" aria-hidden="true"></i>
+                    <div data-i18n="Basic">Student Managers</div>
                   </a>
                 </li>
               </ul>
@@ -139,8 +145,8 @@
                 <!-- Students -->
                 <li class="menu-item {% if request.resolver_match.url_name == 'studentmanager_students_list' %}active{% endif %}">
                   <a href="{% url 'studentmanager_students_list' %}" class="menu-link">
-                    <i class="menu-icon bx bx-book" aria-hidden="true"></i>
-                    <div data-i18n="Basic">Student</div>
+                    <i class="menu-icon bx bx-user" aria-hidden="true"></i>
+                    <div data-i18n="Basic">Students</div>
                   </a>
                 </li>
               </ul>

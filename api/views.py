@@ -721,11 +721,21 @@ def process_document(request):
                     encoded_zoho_lead_id = encode_base64(zoho_lead_id)
                     encoded_interview_link_send_count = encode_base64(student.interview_link_send_count)
                     interview_url = f'http://127.0.0.1:8000/interview_panel/{encoded_zoho_lead_id}/{encoded_interview_link_send_count}'
-                    interview_link = StudentInterviewLink.objects.create(
+                    
+                    interview_link, created = StudentInterviewLink.objects.update_or_create(
                         zoho_lead_id=zoho_lead_id,
-                        interview_link=interview_url,
-                        expires_at=now() + timedelta(hours=72)
+                        defaults={
+                            "interview_link": interview_url,
+                            "expires_at": now() + timedelta(hours=72),
+                        }
                     )
+
+                    # interview_link = StudentInterviewLink.objects.create(
+                    #     zoho_lead_id=zoho_lead_id,
+                    #     interview_link=interview_url,
+                    #     expires_at=now() + timedelta(hours=72)
+                    # )
+                    
                     # send_email(interview_url, zoho_full_name, 'student@manager.com')
                     
                     # student
@@ -911,6 +921,7 @@ def process_document(request):
                 student = Students.objects.get(zoho_lead_id=zoho_lead_id)
                 student.mindee_verification_status = "Completed"
                 student.edu_doc_verification_status = "rejected"
+                student.verification_failed_reason = "Criteria not matched"
                 student.save()
                 if update_zoho_lead(crm_id, zoho_lead_id, update_data):
                     print("Lead updated successfully")
@@ -1022,11 +1033,6 @@ def process_document(request):
         return JsonResponse({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
 
     
-
-
-
-
-
 def fetch_interview_questions(request, crm_id):
     try:
         # Fetch 2 random questions from commonquestions

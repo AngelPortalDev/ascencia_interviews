@@ -66,7 +66,7 @@ class APIDataFetcher:
                     encoded_file_name = quote(file_Name)
 
                     file_url = (
-                        f"https://crm.zoho.com/crm/org771809603/ViewAttachment?"
+                        f"https://crm.zoho.com/crm/org{publisher.crm_id}/ViewAttachment?"
                         f"fileId={file_Id}&module=Leads&parentId={publisher.zoho_lead_id}&id={attachment_Id}"
                         f"&name={encoded_file_name}&downLoadMode=pdfViewPlugin"
                     )

@@ -60,8 +60,8 @@ def student_manager_add(request):
         # Validation
         if not first_name:
             errors['first_name'] = "First Name is required."
-        if not last_name:
-            errors['last_name'] = "Last Name is required."
+        # if not last_name:
+        #     errors['last_name'] = "Last Name is required."
         if not email:
             errors['email'] = "Email is required."
         if not institute_id:
@@ -153,8 +153,8 @@ def student_manager_update(request, id):
         # Validation
         if not first_name:
             errors['first_name'] = "First Name is required."
-        if not last_name:
-            errors['last_name'] = "Last Name is required."
+        # if not last_name:
+        #     errors['last_nasme'] = "Last Name is required."
         if not email:
             errors['email'] = "Email is required."
         if not institute_id:
@@ -260,7 +260,12 @@ def student_list_by_manager(request, id):
     students = Students.objects.filter(student_manager_email=student_manager.email)
     verified_students = students.filter(edu_doc_verification_status="approved")
     rejected_students = students.filter(edu_doc_verification_status="rejected")
+    unverified_students = students.filter(edu_doc_verification_status="Unverified")
     
+    def get_student_manager_name(email):
+        user = User.objects.filter(email=email).first()
+        return f"{user.first_name} {user.last_name}" if user else "N/A"
+
     def format_student_data(queryset):
         return [
             {
@@ -274,6 +279,8 @@ def student_list_by_manager(request, id):
                 'intake_year': getattr(student, 'intake_year', '') or '',
                 'intake_month': getattr(student, 'intake_month', '') or '',
                 'zoho_lead_id': getattr(student, 'zoho_lead_id', '') or '',
+                'crm_id': getattr(student, 'crm_id', '') or '',
+                'student_manager_name': get_student_manager_name(student.student_manager_email),
             }
             for student in queryset
         ]
@@ -292,6 +299,7 @@ def student_list_by_manager(request, id):
         'all_students': format_student_data(students),
         'verified_students': format_student_data(verified_students),
         'rejected_students': format_student_data(rejected_students),
+        'unverified_students': format_student_data(unverified_students),
         "show_breadcrumb": True,
         "breadcrumb_items": breadcrumb_items,
     })

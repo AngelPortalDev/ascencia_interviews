@@ -21,6 +21,10 @@
                 <span class="dt-column-title" role="button">Phone No.</span><span class="dt-column-order"></span>
             </th>
             <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc w-auto"
+                aria-label="Student Manager.: Activate to sort" tabindex="0">
+                <span class="dt-column-title" role="button">Student Manager</span><span class="dt-column-order"></span>
+            </th>
+            <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc w-auto"
                 aria-label="Program: Activate to sort" tabindex="0">
                 <span class="dt-column-title" role="button">Course Applied</span><span class="dt-column-order"></span>
             </th>
@@ -52,8 +56,16 @@
             <td>{{ student.first_name }} {{ student.last_name }}</td>
             <td>{{ student.email }}</td>
             <td>{{ student.phone }}</td>
+            <td>{{ student.student_manager_name }}</td>
             <td>{{ student.program }}</td>
-            <td>{{ student.edu_doc_verification_status }}</td>
+            {% comment %} <td>{{ student.edu_doc_verification_status }}</td> {% endcomment %}
+            <td>
+                {% if student.edu_doc_verification_status == 'approved' %}
+                  Verified
+                {% else %}
+                    {{ student.edu_doc_verification_status|title }}
+                {% endif %}
+            </td>
             <td>{{ student.intake_year }}</td>
             <td>{{ student.intake_month }}</td>
             <td class="d-flex align-items-center">
@@ -61,7 +73,7 @@
                 class="btn btn-sm btn-light border me-2">
                     <i class="bx bx-show"></i>
                 </a>
-                <a href="https://crm.zoho.com/crm/org771809603/tab/Leads/{{ student.zoho_lead_id }}" 
+                <a href="https://crm.zoho.com/crm/org{{student.crm_id}}/tab/Leads/{{ student.zoho_lead_id }}" 
                     target="_blank" 
                     class="btn btn-sm btn-primary">
                     Zoho

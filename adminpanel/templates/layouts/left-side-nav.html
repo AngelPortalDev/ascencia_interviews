@@ -79,21 +79,21 @@
             <li class="menu-item {% if '/institute' in request.path %}active{% endif %}">
               <a href="{% url 'institute_list' %}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-building"></i>
-                <div data-i18n="Basic">Institute</div>
+                <div data-i18n="Basic">Institutes</div>
               </a>
             </li>
             <!-- Course -->
             <li class="menu-item {% if '/course' in request.path %}active{% endif %}">
               <a href="{% url 'courses' %}" class="menu-link">
                 <i class="menu-icon bx bx-book" aria-hidden="true"></i>
-                <div data-i18n="Basic">Course</div>
+                <div data-i18n="Basic">Courses</div>
               </a>
             </li>
             <!-- Student -->
             <li class="menu-item {% if '/student' in request.path %}active{% endif %}">
               <a href="{% url 'students_list' %}" class="menu-link">
-                <i class="menu-icon bx bx-book" aria-hidden="true"></i>
-                <div data-i18n="Basic">Student</div>
+                <i class="menu-icon bx bx-user" aria-hidden="true"></i>
+                <div data-i18n="Basic">Students</div>
               </a>
             </li>
             <!-- Question -->
@@ -118,7 +118,7 @@
             <!-- Student Manager -->
             <li class="menu-item {% if '/student_manager' in request.path %}active{% endif %}">
               <a href="{% url 'student_managers' %}" class="menu-link">
-                <i class="menu-icon bx bx-book" aria-hidden="true"></i>
+                <i class="menu-icon bx bx-id-card" aria-hidden="true"></i>
                 <div data-i18n="Basic">Student Manager</div>
               </a>
             </li>
