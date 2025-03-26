@@ -105,3 +105,20 @@
   text-align: center;
   margin-top: 1rem;
 }
+
+
+@media (max-width: 767.98px) {
+    .layout-navbar .navbar-nav .nav-item.dropdown .dropdown-menu {
+        position: absolute;
+        min-width: auto;
+        left: auto;
+    }
+}
+
+
+.layout-navbar .navbar-nav .nav-item.dropdown .dropdown-menu {
+  position: absolute;
+  min-width: auto;
+  left: auto;
+}
+

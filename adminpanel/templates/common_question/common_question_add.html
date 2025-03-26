@@ -26,7 +26,7 @@
                       <small class="text-danger">{{ errors.crm_id }}</small>
                   {% endif %}
               </div>
-                <div class="col-md-6">
+                <div class="col-md-6 mt-2 mt-md-0">
                   <label class="form-label" for="question">Question</label>
                   <input type="text" id="question" name="question" class="form-control" placeholder="Question" value="{{ request.POST.question|default:'' }}">
                   {% if errors.question %}
