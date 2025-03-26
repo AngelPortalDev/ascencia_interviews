@@ -16,11 +16,13 @@ import { toast } from "react-toastify";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { usePermission } from "../context/PermissionContext.js";
 import QuestionChecker from "./QuestionChecker.js";
+import Swal from "sweetalert2";
 import {
   startRecording,
   stopRecording,
   setupMediaStream,
 } from "../utils/recording.js";
+import {interviewAddVideoPath} from '../utils/fileUpload.js';
 import usePageReloadSubmit from "../hooks/usePageReloadSubmit.js";
 import AI_LOGO from "../assest/AI_LOGO.png";
 // import useBackSubmitHandler from '../hooks/useBackSubmitHandler.js';
@@ -150,11 +152,11 @@ const Questions = () => {
       console.error("Error: newQuestionId is undefined or invalid.");
       return;
     }
-
+  
     if (newQuestionId !== activeQuestionId) {
       setActiveQuestionId(newQuestionId);
     }
-
+  
     try {
       await stopRecording(
         videoRef,
@@ -187,7 +189,7 @@ const Questions = () => {
         },
         last_question_id
       );
-
+  
       localStorage.setItem("interviewSubmitted", "true");
       submitExam();
       navigate("/interviewsubmitted");
@@ -206,6 +208,87 @@ const Questions = () => {
     navigate,
   ]);
 
+
+  const handleSubmitNew = useCallback(async () => {
+    setLoading(true);
+    const newQuestionId = getQuestions[currentQuestionIndex]?.encoded_id;
+    if (!newQuestionId) {
+      console.error("Error: newQuestionId is undefined or invalid.");
+      return;
+    }
+  
+    if (newQuestionId !== activeQuestionId) {
+      setActiveQuestionId(newQuestionId);
+    }
+
+    const response = await interviewAddVideoPath(videoFilePath, audioFilePath,zoho_lead_id,newQuestionId,last_question_id);
+    console.log("response studnet",response.status);
+    if(response.status === true && newQuestionId === last_question_id){
+      navigate("/interviewsubmitted");
+    }
+    try {
+      await stopRecording(
+        videoRef,
+        mediaRecorderRef,
+        audioRecorderRef,
+        recordedChunksRef,
+        recordedAudioChunksRef,
+        setVideoFilePath,
+        setAudioFilePath,
+        zoho_lead_id,
+        activeQuestionId,
+        () => {
+          try {
+            startRecording(
+              videoRef,
+              mediaRecorderRef,
+              audioRecorderRef,
+              recordedChunksRef,
+              recordedAudioChunksRef,
+              setIsRecording,
+              setVideoFilePath,
+              setAudioFilePath,
+              zoho_lead_id,
+              newQuestionId,
+              last_question_id
+            );
+          } catch (err) {
+            console.error("Failed to start recording:", err);
+          }
+        },
+        last_question_id
+      );
+      
+      localStorage.setItem("interviewSubmitted", "true");
+      submitExam();
+      navigate("/interviewsubmitted");
+    } catch (error) {
+      console.error("Error in handleSubmit:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    activeQuestionId,
+    getQuestions,
+    currentQuestionIndex,
+    last_question_id,
+    submitExam,
+    zoho_lead_id,
+    videoFilePath,
+    audioFilePath,
+    navigate,
+  ]);
+
+
+  //   usePageReloadSubmit(
+  //   videoRef,
+  //   mediaRecorderRef,
+  //   audioRecorderRef,
+  //   recordedChunksRef,
+  //   recordedAudioChunksRef,
+  // );
+
+  
   // useEffect to trigger handleSubmit when the page is reloaded
 // useEffect(() => {
 //   const handleBeforeUnload = (event) => {
@@ -244,10 +327,10 @@ const Questions = () => {
       } else {
         // Last question reached, stop media and submit the exam
         // stopMediaStream();
-        handleSubmit();
+        handleSubmitNew();
       }
     }
-  }, [countdown, currentQuestionIndex, getQuestions, handleSubmit]);
+  }, [countdown, currentQuestionIndex, getQuestions, handleSubmitNew]);
 
   // useEffect(() => {
   //   console.log("Countdown:", countdown);
@@ -406,37 +489,39 @@ const Questions = () => {
   }, [zoho_lead_id]);
 
   useEffect(() => {
-    // Prevent going back by pushing a new state into history
-    window.history.pushState(null, "", window.location.href);
-
-    // Event listener for the back button
-    const handlePopState = (event) => {
+    const handlePopState = () => {
       if (!backButtonClicked) {
-        // Show the alert when back button is clicked the first time
-        const isConfirmed = window.confirm(
-          "Are you sure you want to submit the interview?"
-        );
-        if (isConfirmed) {
-          localStorage.setItem("interviewSubmitted", "true");
-          submitExam();
-          navigate("/interviewsubmitted");
-          setBackButtonClicked(true);
-          window.history.pushState(null, "", window.location.href);
-        }
+        Swal.fire({
+          title: "Submit Interview?",
+          text: "Are you sure you want to submit the interview?",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonText: "Yes, submit",
+          cancelButtonText: "No, stay",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            handleSubmit();
+            setBackButtonClicked(true);
+            window.history.pushState(null, "", window.location.href); // Push again after confirmation
+          } else {
+            window.history.pushState(null, "", window.location.href); // Prevent actual navigation
+          }
+        });
       } else {
-        localStorage.setItem("interviewSubmitted", "true");
-        submitExam();
-        navigate("/interviewsubmitted");
+        console.log("HandleSubmit Calling...");
+        handleSubmit();
       }
     };
-
-    window.onpopstate = handlePopState;
-
+  
+    // Add popstate event listener
+    window.addEventListener("popstate", handlePopState);
+    window.history.pushState(null, "", window.location.href); // Ensures the back button triggers popstate
+  
     return () => {
-      window.onpopstate = null; 
+      window.removeEventListener("popstate", handlePopState);
     };
-  }, [backButtonClicked, navigate, submitExam]);
-
+  }, [backButtonClicked, handleSubmit]);
+  
   if (loading) {
     return (
       <div>

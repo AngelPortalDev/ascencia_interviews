@@ -79,7 +79,7 @@ export const interviewAddVideoPath = async (videoFilePath, audioFilePath,zoho_le
   console.log(question_id,"test question");
   const formData = new FormData();
   formData.append("video_path", videoFilePath);
-  // formData.append("audio_path", audioFilePath); 
+  formData.append("audio_path", audioFilePath); 
   formData.append("zoho_lead_id", btoa(zoho_lead_id));
   formData.append("question_id", btoa(question_id));
   formData.append("last_question_id", btoa(last_question_id));
@@ -132,6 +132,7 @@ export const interviewAddVideoPath = async (videoFilePath, audioFilePath,zoho_le
     //   console.log("📩 onTranscription Called with:", responseVideoStore);
     // } 
     console.log("Video analysis started successfully:", response.data);
+    return response.data
   } catch (error) {
     console.error("Error analyzing video:", error);
   }finally {

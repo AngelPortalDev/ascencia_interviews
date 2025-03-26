@@ -61,63 +61,69 @@ export const stopRecording = (
   setAudioFilePath,
   zoho_lead_id,
   question_id,
-  onRecordingComplete,
   last_question_id
 ) => {
-  return new Promise((resolve) => { 
+  return new Promise((resolve, reject) => { 
     let videoUploaded = false;
     let audioUploaded = false;
+    let videoPath = null;
+    let audioPath = null;
 
     const checkCompletion = () => {
       if (videoUploaded && audioUploaded) {
-        resolve(); 
+        // console.log("✅ Both video and audio uploaded successfully.");
+        resolve({ videoPath, audioPath });  // ✅ Now resolves properly
       }
     };
 
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.onstop = () => {
-        const videoBlob = new Blob(recordedChunksRef.current, {
-          type: "video/webm",
-        });
-        const fileNameVideo = `interview_video_${zoho_lead_id}_${question_id}_${new Date()
-          .toISOString()
-          .replace(/:/g, "-")
-          .split(".")[0]}.webm`;
-        // downloadFile(videoBlob,fileNameVideo)
-        uploadFile(videoBlob, fileNameVideo, zoho_lead_id, question_id, last_question_id)
-          .then(setVideoFilePath)
-          .then(() => {
-            videoUploaded = true;
-            checkCompletion();
-          });
+      mediaRecorderRef.current.onstop = async () => {
+        // console.log("🎥 Stopping video recording...");
+        const videoBlob = new Blob(recordedChunksRef.current, { type: "video/webm" });
+        const fileNameVideo = `interview_video_${zoho_lead_id}_${question_id}_${new Date().toISOString().replace(/:/g, "-").split(".")[0]}.webm`;
+
+        try {
+          videoPath = await uploadFile(videoBlob, fileNameVideo, zoho_lead_id, question_id, last_question_id);
+          // console.log("📤 Video uploaded. Path:", videoPath);
+          setVideoFilePath(videoPath);
+          videoUploaded = true;
+          checkCompletion();
+        } catch (error) {
+          console.error("❌ Video upload failed:", error);
+          reject(error);
+        }
+
         recordedChunksRef.current = [];
       };
     } else {
       videoUploaded = true; 
+      checkCompletion();
     }
 
     if (audioRecorderRef.current) {
       audioRecorderRef.current.stop();
-      audioRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(recordedAudioChunksRef.current, {
-          type: "audio/mp3",
-        });
-        const fileNameAudio = `interview_audio_${zoho_lead_id}_${question_id}_${new Date()
-          .toISOString()
-          .replace(/:/g, "-")
-          .split(".")[0]}.mp3`;
-        // downloadFile(audioBlob,fileNameAudio)
-        uploadFile(audioBlob, fileNameAudio, zoho_lead_id, question_id, last_question_id)
-          .then(setAudioFilePath)
-          .then(() => {
-            audioUploaded = true;
-            checkCompletion();
-          });
+      audioRecorderRef.current.onstop = async () => {
+        // console.log("🎤 Stopping audio recording...");
+        const audioBlob = new Blob(recordedAudioChunksRef.current, { type: "audio/webm" });
+        const fileNameAudio = `interview_audio_${zoho_lead_id}_${question_id}_${new Date().toISOString().replace(/:/g, "-").split(".")[0]}.webm`;
+
+        try {
+          audioPath = await uploadFile(audioBlob, fileNameAudio, zoho_lead_id, question_id, last_question_id);
+          // console.log("📤 Audio uploaded. Path:", audioPath);
+          setAudioFilePath(audioPath);
+          audioUploaded = true;
+          checkCompletion();
+        } catch (error) {
+          console.error("❌ Audio upload failed:", error);
+          reject(error);
+        }
+
         recordedAudioChunksRef.current = [];
       };
     } else {
       audioUploaded = true; 
+      checkCompletion();
     }
   });
 };
