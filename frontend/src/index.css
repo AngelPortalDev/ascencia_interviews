@@ -32,7 +32,7 @@ code {
   display: flex !important;
   justify-content: center;
   align-items: center;
-  padding: 4rem !important;
+  padding: 2rem 3rem !important;
   box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.2);
   border-radius: 0px;
   /* border: 1px solid rgb(199, 198, 198) !important; */
@@ -53,6 +53,14 @@ code {
 }
 .chat-notification{
   --tw-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(190 0 0 / 61%);
+}
+
+.swiper-horizontal{
+  border-radius: 10px;
+}
+
+.swiper-pagination-horizontal{
+  display: none;
 }
 
 
@@ -324,4 +332,82 @@ code {
   .studentInfo{
     order: 2;
   }
+}
+
+
+/* ******************* Loader ****************** */
+
+/* From Uiverse.io by adamgiebl */ 
+/* .dots-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+} */
+
+.dots-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh; 
+  width: 100%;  
+  position: absolute; 
+  top: 0;
+  left: 0;
+  z-index: 1000; 
+}
+
+.dot {
+  height: 20px;
+  width: 20px;
+  margin-right: 10px;
+  border-radius: 10px;
+  background-color: #b3d4fc;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.dot:last-child {
+  margin-right: 0;
+}
+
+.dot:nth-child(1) {
+  animation-delay: -0.3s;
+}
+
+.dot:nth-child(2) {
+  animation-delay: -0.1s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.1s;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.8);
+    background-color: #b3d4fc;
+    box-shadow: 0 0 0 0 rgba(178, 212, 252, 0.7);
+  }
+
+  50% {
+    transform: scale(1.2);
+    background-color: #6793fb;
+    box-shadow: 0 0 0 10px rgba(178, 212, 252, 0);
+  }
+
+  100% {
+    transform: scale(0.8);
+    background-color: #b3d4fc;
+    box-shadow: 0 0 0 0 rgba(178, 212, 252, 0.7);
+  }
+}
+
+@media screen and (max-width: 600px) {
+.swiper-button-next:after{
+  font-size: 24px !important;
+}
+.swiper-button-prev:after{
+  font-size: 24px !important;
+}
 }
