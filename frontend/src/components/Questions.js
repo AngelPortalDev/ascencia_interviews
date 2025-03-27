@@ -80,7 +80,7 @@ const Questions = () => {
       const res = await Axios.get(
         `${process.env.REACT_APP_API_BASE_URL}interveiw-section/interview-questions/`
       );
-
+ 
       if (res.data && res.data.questions && res.data.questions.length > 0) {
         setQuestions(res.data.questions);
         setActiveQuestionId(res.data.questions[0].encoded_id);
@@ -156,7 +156,7 @@ const Questions = () => {
     if (newQuestionId !== activeQuestionId) {
       setActiveQuestionId(newQuestionId);
     }
-  
+
     try {
       await stopRecording(
         videoRef,
@@ -168,6 +168,7 @@ const Questions = () => {
         setAudioFilePath,
         zoho_lead_id,
         activeQuestionId,
+        last_question_id,
         () => {
           try {
             startRecording(
@@ -186,10 +187,10 @@ const Questions = () => {
           } catch (err) {
             console.error("Failed to start recording:", err);
           }
-        },
-        last_question_id
+        }
+        
       );
-  
+      console.log("last_question_id",last_question_id);
       localStorage.setItem("interviewSubmitted", "true");
       submitExam();
       navigate("/interviewsubmitted");
@@ -237,6 +238,7 @@ const Questions = () => {
         setAudioFilePath,
         zoho_lead_id,
         activeQuestionId,
+        last_question_id,
         () => {
           try {
             startRecording(
@@ -256,9 +258,7 @@ const Questions = () => {
             console.error("Failed to start recording:", err);
           }
         },
-        last_question_id
       );
-      
       localStorage.setItem("interviewSubmitted", "true");
       submitExam();
       navigate("/interviewsubmitted");
@@ -385,6 +385,8 @@ const Questions = () => {
       if (newQuestionId !== activeQuestionId) {
         setActiveQuestionId(newQuestionId); // Update active question ID
       }
+      console.log("🚀 Checking last_question_id before calling stopRecording:", last_question_id);
+      console.log("🚀 Type of last_question_id:", typeof last_question_id);
 
       // Stop current recording and start new recording for the new question
       stopRecording(
@@ -397,6 +399,7 @@ const Questions = () => {
         setAudioFilePath,
         zoho_lead_id,
         activeQuestionId,
+        last_question_id ,
         () => {
           try {
             startRecording(
@@ -416,9 +419,8 @@ const Questions = () => {
             console.error("Failed to start recording:", err);
           }
         },
-        last_question_id
       );
-      // console.log("videoRef",videoRef)
+      console.log("last_question_id below",last_question_id)
       // console.log("srcObject Video",videoRef.current.srcObject
 
       // Reset countdown
