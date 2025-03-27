@@ -16,7 +16,6 @@ import { toast } from "react-toastify";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { usePermission } from "../context/PermissionContext.js";
 import QuestionChecker from "./QuestionChecker.js";
-import Swal from "sweetalert2";
 import {
   startRecording,
   stopRecording,
@@ -38,9 +37,6 @@ const Questions = () => {
   const [transcribedText, setTranscribedText] = useState(""); // To hold transcribed text
   const [activeQuestionId, setActiveQuestionId] = useState(null); // Track active question
   const [student, setStudent] = useState(null);
-
-  const [backButtonClicked, setBackButtonClicked] = useState(false);
-
   // const { student_id } = useParams(); // Get encoded student_id from URL
   const location = useLocation();
   const encoded_zoho_lead_id = location.state?.encoded_zoho_lead_id || null;
@@ -95,26 +91,41 @@ const Questions = () => {
 
   useEffect(() => {
     fetchQuestions();
+     
+    // For Page reload confirmation
+     const handleBeforeUnload = (event) => {
+      // Store that the page is being unloaded, so we can show a confirmation on reload
+      sessionStorage.setItem('isPageRefreshing', 'true');
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Check if the page is being reloaded when the page is loaded
+    const handlePageLoad = () => {
+      if (sessionStorage.getItem('isPageRefreshing') === 'true') {
+        // Show a custom confirmation dialog
+        const userConfirmed = window.confirm("Are you sure you want to leave this page? Your interview process will not be saved...");
+
+        if (userConfirmed) {
+          // If the user confirms, redirect to the interview submitted page
+          window.location.href = '/interviewsubmitted';
+        } else {
+          // If the user cancels, clear the flag and allow the countdown to proceed
+          sessionStorage.removeItem('isPageRefreshing');
+          // Do not stop countdown, it continues here
+        }
+      }
+    };
+
+    window.addEventListener('load', handlePageLoad);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('load', handlePageLoad);
+    }
   }, []);
 
 
-  // When click back button tehn go to expired page
-
-  //   window.history.pushState(null, '', window.location.pathname);
-  //   window.addEventListener('popstate', handlePopState);
-  //   return () => {
-  //     window.removeEventListener('popstate', handlePopState);
-  //   };
-  // }, []);
-  // useEffect(()=>{
-  //   function DisableBackButton() {
-  //     window.history.forward()
-  //     }
-  //     DisableBackButton();
-  //     window.onload = DisableBackButton;
-  //     window.onpageshow = function(evt) { if (evt.persisted) DisableBackButton() }
-  //     window.onunload = function() { void (0) }
-  // },[])
 
   // ************* Get First Question id *********
 
@@ -191,9 +202,12 @@ const Questions = () => {
         
       );
       console.log("last_question_id",last_question_id);
-      localStorage.setItem("interviewSubmitted", "true");
+      // localStorage.setItem("interviewSubmitted", "true");
       submitExam();
-      navigate("/interviewsubmitted");
+      setTimeout(()=>{
+        navigate("/interviewsubmitted");
+      },10000)
+      
     } catch (error) {
       console.error("Error in handleSubmit:", error);
     } finally {
@@ -222,11 +236,16 @@ const Questions = () => {
       setActiveQuestionId(newQuestionId);
     }
 
-    const response = await interviewAddVideoPath(videoFilePath, audioFilePath,zoho_lead_id,newQuestionId,last_question_id);
-    console.log("response studnet",response.status);
-    if(response.status === true && newQuestionId === last_question_id){
+    // const response = await interviewAddVideoPath(videoFilePath, audioFilePath,zoho_lead_id,newQuestionId,last_question_id);
+    // console.log("response studnet",response.status);
+    // if(response.status === true && newQuestionId === last_question_id){
+    //   navigate("/interviewsubmitted");
+    // }
+    setTimeout(() => {
+      console.log("✅ Navigating to interviewsubmitted after 10 seconds...");
       navigate("/interviewsubmitted");
-    }
+    }, 10000);
+
     try {
       await stopRecording(
         videoRef,
@@ -490,39 +509,27 @@ const Questions = () => {
     }
   }, [zoho_lead_id]);
 
-  useEffect(() => {
-    const handlePopState = () => {
-      if (!backButtonClicked) {
-        Swal.fire({
-          title: "Submit Interview?",
-          text: "Are you sure you want to submit the interview?",
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonText: "Yes, submit",
-          cancelButtonText: "No, stay",
-        }).then((result) => {
-          if (result.isConfirmed) {
-            handleSubmit();
-            setBackButtonClicked(true);
-            window.history.pushState(null, "", window.location.href); // Push again after confirmation
-          } else {
-            window.history.pushState(null, "", window.location.href); // Prevent actual navigation
-          }
-        });
-      } else {
-        console.log("HandleSubmit Calling...");
-        handleSubmit();
-      }
-    };
+
+  // Go back button via back button browser
+
+  window.history.pushState(null, null, window.location.href);
+
+  window.onpopstate = function () {
+    // Show the confirmation dialog
+    const userConfirmed = window.confirm(
+      "Are you sure you want to leave this page? Your interview process will not be saved..."
+    );
   
-    // Add popstate event listener
-    window.addEventListener("popstate", handlePopState);
-    window.history.pushState(null, "", window.location.href); // Ensures the back button triggers popstate
+    if (!userConfirmed) {
+      // If user cancels, push the current state again to block navigation
+      window.history.pushState(null, null, window.location.href);
+    } else {
+      // If user confirms, allow navigation (or handle as needed)
+      window.location.href = "/interviewsubmitted";
+    }
+  };
   
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-    };
-  }, [backButtonClicked, handleSubmit]);
+
   
   if (loading) {
     return (
