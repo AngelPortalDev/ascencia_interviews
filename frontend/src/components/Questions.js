@@ -24,6 +24,8 @@ import {
 import {interviewAddVideoPath} from '../utils/fileUpload.js';
 import usePageReloadSubmit from "../hooks/usePageReloadSubmit.js";
 import AI_LOGO from "../assest/AI_LOGO.png";
+import Logo from "../assest/Logo.svg";
+import usePageUnloadHandler from '../hooks/usePageUnloadHandler.js';
 // import useBackSubmitHandler from '../hooks/useBackSubmitHandler.js';
 
 const Questions = () => {
@@ -62,6 +64,7 @@ const Questions = () => {
   //   recordedAudioChunksRef
   // );
 
+  usePageUnloadHandler();
   const navigate = useNavigate();
   const { submitExam } = usePermission();
   const last_question_id =
@@ -89,40 +92,47 @@ const Questions = () => {
     }
   };
 
+  // Store countdown in the sessionstorage for resuem resume
+  useEffect(() => {
+    // Retrieve countdown value from sessionStorage on load
+    const storedCountdown = sessionStorage.getItem("countdown");
+    if (storedCountdown !== null) {
+      setCountdown(parseInt(storedCountdown, 10)); // Restore countdown
+    }
+  
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev > 0) {
+          sessionStorage.setItem("countdown", prev - 1); // Save countdown progress
+          return prev - 1;
+        } else {
+          clearInterval(timer);
+          return 0;
+        }
+      });
+    }, 1000);
+  
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    // Store time spent and question index
+    sessionStorage.setItem("timeSpent", timeSpent);
+    sessionStorage.setItem("currentQuestionIndex", currentQuestionIndex);
+  }, [timeSpent, currentQuestionIndex]);
+  
+  useEffect(() => {
+    // Restore time spent and question index on reload
+    const storedTimeSpent = sessionStorage.getItem("timeSpent");
+    const storedQuestionIndex = sessionStorage.getItem("currentQuestionIndex");
+  
+    if (storedTimeSpent) setTimeSpent(parseInt(storedTimeSpent, 10));
+    if (storedQuestionIndex) setCurrentQuestionIndex(parseInt(storedQuestionIndex, 10));
+  }, []);
+  
+
   useEffect(() => {
     fetchQuestions();
-     
-    // For Page reload confirmation
-     const handleBeforeUnload = (event) => {
-      // Store that the page is being unloaded, so we can show a confirmation on reload
-      sessionStorage.setItem('isPageRefreshing', 'true');
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    // Check if the page is being reloaded when the page is loaded
-    const handlePageLoad = () => {
-      if (sessionStorage.getItem('isPageRefreshing') === 'true') {
-        // Show a custom confirmation dialog
-        const userConfirmed = window.confirm("Are you sure you want to leave this page? Your interview process will not be saved...");
-
-        if (userConfirmed) {
-          // If the user confirms, redirect to the interview submitted page
-          window.location.href = '/interviewsubmitted';
-        } else {
-          // If the user cancels, clear the flag and allow the countdown to proceed
-          sessionStorage.removeItem('isPageRefreshing');
-          // Do not stop countdown, it continues here
-        }
-      }
-    };
-
-    window.addEventListener('load', handlePageLoad);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('load', handlePageLoad);
-    }
   }, []);
 
 
@@ -134,8 +144,6 @@ const Questions = () => {
       const firstQuestion = getQuestions[0];
       setActiveQuestionId(firstQuestion.encoded_id);
       setIsFirstQuestionSet(true);
-
-      // console.log("Question start rrecordign LastQuestion id use effect", last_question_id);
 
       // Start the recording for the first question
       startRecording(
@@ -299,32 +307,6 @@ const Questions = () => {
   ]);
 
 
-  //   usePageReloadSubmit(
-  //   videoRef,
-  //   mediaRecorderRef,
-  //   audioRecorderRef,
-  //   recordedChunksRef,
-  //   recordedAudioChunksRef,
-  // );
-
-  
-  // useEffect to trigger handleSubmit when the page is reloaded
-// useEffect(() => {
-//   const handleBeforeUnload = (event) => {
-//     // Check if the interview has already been submitted to prevent unnecessary calls
-//     if (!localStorage.getItem("interviewSubmitted")) {
-//       event.preventDefault();
-//       handleSubmit();  
-//     }
-//   };
-
-//   window.addEventListener('beforeunload', handleBeforeUnload);
-
-//   // Cleanup the event listener when the component unmounts
-//   return () => {
-//     window.removeEventListener('beforeunload', handleBeforeUnload);
-//   };
-// }, [handleSubmit]);
 
   // ************* Handle Countdown *************
   useEffect(() => {
@@ -333,7 +315,7 @@ const Questions = () => {
       const timer = setInterval(() => {
         setCountdown((prev) => prev - 1);
       }, 1000);
-      return () => clearInterval(timer); // Clean up the timer when countdown reaches 0
+      return () => clearInterval(timer); 
     } else {
       // When countdown reaches zero, handle transition to next question
       if (currentQuestionIndex < getQuestions.length - 1) {
@@ -351,10 +333,6 @@ const Questions = () => {
     }
   }, [countdown, currentQuestionIndex, getQuestions, handleSubmitNew]);
 
-  // useEffect(() => {
-  //   console.log("Countdown:", countdown);
-  //   console.log("Current Question Index:", currentQuestionIndex);
-  // }, [countdown, currentQuestionIndex]);
 
   const formatTime = (time) => {
     const minutes = Math.floor(time / 60);
@@ -404,8 +382,6 @@ const Questions = () => {
       if (newQuestionId !== activeQuestionId) {
         setActiveQuestionId(newQuestionId); // Update active question ID
       }
-      console.log("🚀 Checking last_question_id before calling stopRecording:", last_question_id);
-      console.log("🚀 Type of last_question_id:", typeof last_question_id);
 
       // Stop current recording and start new recording for the new question
       stopRecording(
@@ -465,7 +441,7 @@ const Questions = () => {
     ),
     [activeQuestionId, zoho_lead_id, last_question_id]
   );
-  // console.log("Question interview player LastQuestion id", last_question_id);
+ 
 
   const handleTimeSpent = () => {
     // Increment time spent on current question
@@ -565,7 +541,7 @@ const Questions = () => {
       <div className="flex justify-between flex-col sm:flex-row px-8 pt-8 sm:pt-4  lg:px-16 items-center">
         <div>
           <h3 className="text-black text-xl sm:text-2xl mb-2">
-            <img src={AI_LOGO} alt="AI Software" className="h-16" />
+            <img src={Logo} alt="AI Software" className="h-16" />
           </h3>
           {/* <img src={Logo} alt="Not found" style={{width:'200px'}}/> */}
         </div>
