@@ -1,29 +1,48 @@
 import { useEffect } from "react";
+import {usePermission } from '../context/PermissionContext.js';
 
 const usePageUnloadHandler = () => {
+
+  const { submitExam } = usePermission();
+
   useEffect(() => {
+
+
     const handleBeforeUnload = (event) => {
+      // Set a flag indicating the page is about to refresh or navigate
       sessionStorage.setItem("isPageRefreshing", "true");
+      // console.log("beforeunload triggered");
+      submitExam();
       event.preventDefault();
-      event.returnValue = ""; // This triggers the default browser confirmation
+      event.returnValue = ""; 
     };
 
     const handlePageLoad = () => {
       if (sessionStorage.getItem("isPageRefreshing") === "true") {
         sessionStorage.removeItem("isPageRefreshing");
-        const userConfirmed = window.confirm(
-          "Are you sure you want to leave this page? Your interview process will not be saved.."
-        );
-
-        if (userConfirmed) {
-          window.location.href = "/interviewsubmitted";
-        }
+        submitExam();
+        // sessionStorage.setItem("isInterviewSubmitted", "true");
+        window.location.href = "/interviewsubmitted";
       }
     };
 
+    if (sessionStorage.getItem("isPageRefreshing") === "true") {
+      sessionStorage.removeItem("isPageRefreshing");
+      // sessionStorage.setItem("isInterviewSubmitted", "true");
+      submitExam();
+      window.location.href = "/interviewsubmitted";
+    }
+
+    // if (window.location.pathname === "/interviewsubmitted") {
+    //   sessionStorage.setItem("isInterviewSubmitted", "true");
+    // }
+    console.log("current path",window.location.pathname);
+
+    // Add event listeners
     window.addEventListener("beforeunload", handleBeforeUnload);
     window.addEventListener("load", handlePageLoad);
 
+    // Cleanup listeners on component unmount
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
       window.removeEventListener("load", handlePageLoad);

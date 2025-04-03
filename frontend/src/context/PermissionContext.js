@@ -17,8 +17,19 @@ export const PermissionProvider = ({children}) =>{
         localStorage.getItem("hasPermissions") === "true"
     )
 
-    const[isExamSubmitted,setIsExamSubmitted] = useState(
-        localStorage.getItem("interviewSubmitted") === "true");
+
+    const [isExamSubmitted, setIsExamSubmitted] = useState(() => {
+        const stored = localStorage.getItem("interviewSubmitted");
+        return stored === "true";
+      });
+      
+
+      useEffect(() => {
+        const stored = localStorage.getItem("interviewSubmitted");
+        if (stored === null) {
+          localStorage.setItem("interviewSubmitted", "false");
+        }
+      }, []);
 
 
 
@@ -43,8 +54,8 @@ export const PermissionProvider = ({children}) =>{
         setIsExamSubmitted(true);
         localStorage.setItem("interviewSubmitted", "true");
         // sessionStorage.setItem("isReload", "true");
-        setIsExamSubmitted(true); 
-        setTimeout(() => setIsExamSubmitted(localStorage.getItem("interviewSubmitted") === "true"), 100);
+        // setIsExamSubmitted(true); 
+        // setTimeout(() => setIsExamSubmitted(localStorage.getItem("interviewSubmitted") === "true"), 1000);
     }
 
 
