@@ -2,17 +2,50 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.utils.timezone import now  # Import Django's timezone utility
+from adminpanel.models.institute import Institute  
 
 
 
 class Students(models.Model):
-    student_id = models.CharField(max_length=100, null=True, unique=True)
+
+    STATUS_CHOICES = [
+        ('unverified', 'Unverified'),
+        ('verified', 'Verified'),
+        ('rejected', 'Rejected'),
+    ]
+
+    student_id = models.CharField(max_length=100, null=True, blank=True)
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=225)
     email = models.EmailField(max_length=225, unique=True, blank=False)
+    student_manager_email = models.EmailField(max_length=225, null=True, blank=False)
     phone = models.CharField(max_length=20, null=True)  # Use CharField to handle leading zeros
     dob = models.DateField(null=True)  # Date of Birth field 
-    zoho_crm_id = models.CharField(max_length=100, unique=True, null=False)
+    program = models.CharField(max_length=100, null=True, blank=True)
+    intake_year = models.CharField(max_length=100, null=True, blank=True)
+    intake_month = models.CharField(max_length=100, null=True, blank=True)
+    zoho_lead_id = models.CharField(max_length=100, unique=True, null=False)
+    crm_id = models.CharField(max_length=225, null=True, blank=False)
+    # institute_id = models.ForeignKey(
+    #     Institute, 
+    #     on_delete=models.CASCADE, 
+    #     related_name='students', null=True, blank=True
+    # )
+    edu_doc_verification_status = models.CharField(
+        max_length=20, 
+        choices=STATUS_CHOICES, 
+        default='Unverified'
+    )
+    mindee_verification_status = models.CharField(
+        max_length=20, 
+        default='',
+        blank=True, 
+        null=True
+    )
+    verification_failed_reason = models.TextField(null=True, blank=True)
+    is_interview_link_sent = models.BooleanField(default=False)
+    interview_link_send_count = models.IntegerField(default=0)
+    bunny_stream_video_id = models.CharField(max_length=255, null=True, blank=True)
     student_consent = models.IntegerField(blank=False, null=True)  # You might want to validate this with choices
     interview_start_at = models.DateTimeField(auto_now=False, blank=False, null=True)
     answers_scores = models.IntegerField(blank=False, null=True)

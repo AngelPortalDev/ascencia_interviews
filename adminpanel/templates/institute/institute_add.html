@@ -1,29 +1,37 @@
 {% extends "layouts/master.html" %} 
 {% block content %} 
 {% load static %}
+{% include 'layouts/breadcrumb.html' %}
   <!-- Content wrapper -->
   <div class="content-wrapper">
     <!-- Content -->
     <div class="container-xxl flex-grow-1 container-p-y">
       <div class="card mb-6">
-        <h5 class="card-header">Institute Add</h5>
+        <div class="d-flex justify-content-between me-4">
+          <div>
+            <h5 class="card-header">Institute Add</h5>
+          </div>
+          <div class="d-flex align-items-center">
+            <a href="javascript: history.go(-1)" class="btn btn-outline-primary">back</a>
+          </div>
+        </div>
         <hr>
         <form class="card-body" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="row g-6">
+                <div class="col-md-6">
+                  <label class="form-label" for="crm_id">CRM Id</label>
+                  <input type="number" id="crm_id" name="crm_id" class="form-control" value="{{ request.POST.crm_id|default:'' }}" placeholder="CRM Id">
+                  {% if errors.crm_id %}
+                    <small class="text-danger">{{ errors.crm_id }}</small>
+                  {% endif %}
+                </div>
                 <div class="col-md-6">
                     <label class="form-label" for="institute_name">Institute Name</label>
                     <input type="text" id="institute_name" name="institute_name" class="form-control" value="{{ request.POST.institute_name|default:'' }}" placeholder="Institute Name">
                     {% if errors.institute_name %}
                       <small class="text-danger">{{ errors.institute_name }}</small>
                     {% endif %}
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label" for="institute_id">Institute Id</label>
-                  <input type="text" id="institute_id" name="institute_id" class="form-control" value="{{ request.POST.institute_id|default:'' }}" placeholder="Institute Id">
-                  {% if errors.institute_id %}
-                    <small class="text-danger">{{ errors.institute_id }}</small>
-                  {% endif %}
                 </div>
             </div>
             <div class="pt-6">

@@ -1,0 +1,81 @@
+{% extends "layouts/master.html" %} 
+{% block content %} 
+{% load static %}
+{% include 'layouts/breadcrumb.html' %}
+  <!-- Content wrapper -->
+  <div class="content-wrapper">
+    <!-- Content -->
+    <div class="container-xxl flex-grow-1 container-p-y">
+      <!-- DataTable with Buttons -->
+      <div class="card">
+        <div class="card-datatable text-nowrap">
+          <div id="DataTables_Table_0_wrapper" class="dt-container dt-bootstrap5 dt-empty-footer">
+            <div class="row card-header flex-column flex-md-row pb-0">
+              <div class="d-md-flex justify-content-between align-items-center dt-layout-start col-md-auto me-auto mt-0">
+                <h5 class="card-title mb-0 text-md-start text-center">
+                  Student Manager Table
+                </h5>
+              </div>
+              <div class="d-md-flex justify-content-between align-items-center dt-layout-end col-md-auto ms-auto mt-0">
+                <div class="dt-buttons btn-group flex-wrap mb-0">
+                </div>
+              </div>
+            </div>
+            <hr>
+            <div class="justify-content-between dt-layout-table p-3">
+              <div class="d-md-flex justify-content-between align-items-center col-12 dt-layout-full col-md">
+                <table class="datatables-basic table table-bordered table-responsive dataTable dtr-column display nowrap"
+                  id="DataTables_Table_0" aria-describedby="DataTables_Table_0_info" style="width: 100%">
+                  <thead class="table-light">
+                    <tr>
+                      <th>
+                        <input class="form-check-input" type="checkbox" aria-label="Select all rows" />
+                      </th>
+                      <th>First Name</th>
+                      <th>Last Name</th>
+                      <th>Email</th>
+                      {% comment %} <th>Institute Name</th> {% endcomment %}
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for student_manager in student_managers %}
+                    <tr>
+                      <td><input class="form-check-input" type="checkbox" aria-label="Select row" /></td>
+                      <td class="text-start">{{ student_manager.first_name }}</td>
+                      <td class="text-start">{{ student_manager.last_name }}</td>
+                      <td class="text-start">{{ student_manager.email }}</td>
+                      {% comment %} <td class="text-start">{{ student_manager.institute_id }}</td> {% endcomment %}
+                      <td>
+                        <!-- Update Link -->
+                        <a href="{% url 'student_manager_update' id=student_manager.encoded_id %}" class="btn btn-warning btn-sm text-white">
+                          <i class="bx bx-edit"></i> Update
+                        </a>
+                        <!-- Delete Link with Confirmation -->
+                        <a href="javascript:void(0);" 
+                           onclick="confirmDelete('{{ student_manager.encoded_id }}', '/adminpanel/student_manager/delete/')" 
+                           class="btn btn-danger btn-sm text-white">
+                          <i class="bx bx-trash"></i> Delete
+                        </a>
+                        <!-- Student List Link -->
+                        <a href="{% url 'student_list_by_manager' id=student_manager.encoded_id %}" 
+                          class="btn btn-info btn-sm text-white">
+                          <i class="bx bx-group"></i> Students
+                        </a>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                  <tfoot></tfoot>
+                </table>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+      <!--/ DataTable with Buttons -->
+
+    </div>
+
+{% endblock %}

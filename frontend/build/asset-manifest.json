@@ -1,0 +1,18 @@
+{
+  "files": {
+    "main.css": "/static/css/main.6e642060.css",
+    "main.js": "/static/js/main.00e55849.js",
+    "static/js/488.e75445ad.chunk.js": "/static/js/488.e75445ad.chunk.js",
+    "static/media/Interview.png": "/static/media/Interview.e5b08ad20e4306d5a90f.png",
+    "static/media/time-expired.svg": "/static/media/time-expired.07f1c40a657a915a9211656bd91f04bd.svg",
+    "static/media/one.svg": "/static/media/one.34e5fff939ae94dcf960231da2569090.svg",
+    "index.html": "/index.html",
+    "main.6e642060.css.map": "/static/css/main.6e642060.css.map",
+    "main.00e55849.js.map": "/static/js/main.00e55849.js.map",
+    "488.e75445ad.chunk.js.map": "/static/js/488.e75445ad.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.6e642060.css",
+    "static/js/main.00e55849.js"
+  ]
+}

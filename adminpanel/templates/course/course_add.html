@@ -1,6 +1,7 @@
 {% extends "layouts/master.html" %} 
 {% block content %} 
 {% load static %}
+{% include 'layouts/breadcrumb.html' %}
   <!-- Content wrapper -->
   <div class="content-wrapper">
     <!-- Content -->
@@ -12,17 +13,17 @@
             {% csrf_token %}
             <div class="row g-6">
                 <div class="col-md-6">
-                    <label class="form-label" for="institute_id">Institute</label>
-                    <select id="institute_id" name="institute_id" class="form-select">
-                        <option value="" disabled {% if not request.POST.institute_id %}selected{% endif %}>Select Institute</option>
+                    <label class="form-label" for="crm_id">Institute</label>
+                    <select id="crm_id" name="crm_id" class="form-select">
+                        <option value="" disabled {% if not request.POST.crm_id %}selected{% endif %}>Select Institute</option>
                           {% for institute in institutes %}
-                            <option value="{{ institute.id }}" {% if request.POST.institute_id == institute.id|stringformat:"s" %}selected{% endif %}>
+                            <option value="{{ institute.id }}" {% if request.POST.crm_id == institute.id|stringformat:"s" %}selected{% endif %}>
                               {{ institute.institute_name }}
                             </option>
                           {% endfor %}
                     </select>
-                    {% if errors.institute_id %}
-                        <small class="text-danger">{{ errors.institute_id }}</small>
+                    {% if errors.crm_id %}
+                        <small class="text-danger">{{ errors.crm_id }}</small>
                     {% endif %}
                 </div>
                 <div class="col-md-6">

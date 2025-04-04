@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+import pymysql
+
+pymysql.install_as_MySQLdb()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,7 +28,7 @@ SECRET_KEY = 'django-insecure-xm5c1eakitra$psy4$sy-8o$9la=(r9kr+a&t9msif%smg4l#u
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -39,9 +42,14 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "adminpanel",
     "studentpanel",
+    "studentmanagerpanel",
     'api',
     'rest_framework',
     'corsheaders',
+    'sslserver',
+    'django_extensions',
+    'commands',
+    'django_q',
 
 ]
 
@@ -54,6 +62,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'adminpanel.middlewares.loginRequiredMiddleware.LoginRequiredMiddleware',
+    'adminpanel.middlewares.Force404Middleware.Force404Middleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'ascencia_interviews.urls'
@@ -87,14 +97,62 @@ WSGI_APPLICATION = 'ascencia_interviews.wsgi.application'
 #     }
 # }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'ascencia-interviews',
+#         'USER': 'postgres',
+#         'PASSWORD': 'root',
+#         'HOST': 'localhost',  # or the server IP/hostname
+#         'PORT': '5432',     # default PostgreSQL port
+#     }
+# }
+
+# abdulla database
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'ascencia-interviews',
+#         'USER': 'postgres',
+#         'PASSWORD': '1234',
+#         'HOST': 'localhost',  # or the server IP/hostname
+#         'PORT': '5432',     # default PostgreSQL port
+#     }
+# }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'ascencia-interviews',
+#         'USER': 'root',
+#         'PASSWORD': '',
+#         'HOST': '127.0.0.1',  # Or your MySQL server address
+#         'PORT': '3306',       # Default MySQL port
+#     }
+# }
+
+
+# ashish database
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'ascencia-interviews',
+#         'USER': 'postgres',
+#         'PASSWORD': '123',
+#         'HOST': 'localhost',  # or the server IP/hostname
+#         'PORT': '5432',     # default PostgreSQL port
+#     }
+# }
+
+# live
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'ascencia-interviews',
-        'USER': 'postgres',
-        'PASSWORD': '1234',
-        'HOST': 'localhost',  # or the server IP/hostname
-        'PORT': '5432',       # default PostgreSQL port
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'ascenciamalta_ascencia_interviews_dev',
+        'USER': 'ascenciamalta_ascencia_interview',
+        'PASSWORD': 'qV{XtqpQg(Lg',
+        'HOST': '127.0.0.1',  # Or your MySQL server address
+        'PORT': '3306',       # Default MySQL port
     }
 }
 
@@ -142,13 +200,78 @@ STATICFILES_DIRS = [
 STATIC_ROOT = BASE_DIR / "staticfiles"
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
-
+STUDENT_UPLOAD = BASE_DIR 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = '/login/'
 
-CORS_ALLOW_ALL_ORIGINS = True
-CSRF_COOKIE_SECURE = False
+
+# CORS_ALLOW_ALL_ORIGINS = True
+# CSRF_COOKIE_SECURE = False
+# SECURE_SSL_REDIRECT = True  # Redirect all HTTP requests to HTTPS
+# SESSION_COOKIE_SECURE = True  # Ensure cookies are sent over HTTPS
+# CSRF_COOKIE_SECURE = True  # Ensure CSRF cookies are sent over HTTPS
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# CORS_ALLOWED_ORIGINS = [
+#     'https://192.168.1.63:3000',  # React app URL
+# ]
+
+# # HTTP Strict Transport Security (HSTS) settings
+# SECURE_HSTS_SECONDS = 31536000         # Enforce HTTPS for 1 year
+# SECURE_HSTS_INCLUDE_SUBDOMAINS = True    # Apply to all subdomains
+# SECURE_HSTS_PRELOAD = True               # Allow your domain to be included in browsers’ HSTS preload list
+
+# # Additional security settings (optional but recommended)
+# SECURE_BROWSER_XSS_FILTER = True
+# SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
+# ADMIN_BASE_URL = "http://192.168.1.63:5000"
+
+ADMIN_BASE_URL = "http://interview.ascenciamalta.mt:8080/"
+
+BUNNY_STREAM_API_KEY = "e31364b4-b2f4-4221-aac3bd5d34e5-6769-4f29"  # Replace with your actual Library Key
+BUNNY_STREAM_LIBRARY_ID = "390607"
 
 
-TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+# Email Settings
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587 
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+EMAIL_HOST_USER = "abdullah@angel-portal.com"
+EMAIL_HOST_PASSWORD = "iuljudjtemskylkl"
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
+
+
+
+
+# Q_CLUSTER = {
+#     "name": "DjangoQCluster",
+#     "workers": 8,  # Number of worker processes
+#     "timeout": 90,  # Task timeout in seconds
+#     "retry": 120,  # Retry failed tasks after 2 minutes
+#     "queue_limit": 150,  # Maximum number of queued tasks
+#     "bulk": 4,  # Number of tasks processed at once
+#     "orm": "default",  # Use Django ORM for task management
+# }
+
+Q_CLUSTER = {
+    "name": "DjangoQCluster",
+    "workers": 6,  # Slightly fewer workers to avoid overwhelming the system
+    "timeout": 180,  # Adjusted timeout to 3 minutes (matches your task duration)
+    "retry": 300,  # Retry failed tasks after 5 minutes (gives time to resolve issues)
+    "queue_limit": 200,  # Increased queue size to handle more tasks
+    "bulk": 3,  # Processes 3 tasks at a time for balanced load
+    "orm": "default",  # Use Django ORM for task management
+}
+
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://interview.ascenciamalta.mt",
+    "http://interview.ascenciamalta.mt:8080",
+]

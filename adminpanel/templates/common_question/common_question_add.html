@@ -1,6 +1,7 @@
 {% extends "layouts/master.html" %} 
 {% block content %} 
 {% load static %}
+{% include 'layouts/breadcrumb.html' %}
   <!-- Content wrapper -->
   <div class="content-wrapper">
     <!-- Content -->
@@ -11,21 +12,25 @@
         <form class="card-body" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="row g-6">
-                <div class="col-md-12">
+              <div class="col-md-6">
+                  <label class="form-label" for="crm_id">Institute</label>
+                  <select id="crm_id" name="crm_id" class="form-select">
+                      <option value="" disabled {% if not request.POST.crm_id %}selected{% endif %}>Select Institute</option>
+                        {% for institute in institutes %}
+                          <option value="{{ institute.id }}" {% if request.POST.crm_id == institute.id|stringformat:"s" %}selected{% endif %}>
+                            {{ institute.institute_name }}
+                          </option>
+                        {% endfor %}
+                  </select>
+                  {% if errors.crm_id %}
+                      <small class="text-danger">{{ errors.crm_id }}</small>
+                  {% endif %}
+              </div>
+                <div class="col-md-6 mt-2 mt-md-0">
                   <label class="form-label" for="question">Question</label>
                   <input type="text" id="question" name="question" class="form-control" placeholder="Question" value="{{ request.POST.question|default:'' }}">
                   {% if errors.question %}
                       <small class="text-danger">{{ errors.question }}</small>
-                  {% endif %}
-                </div>
-              
-            </div>
-            <div class="row g-6 mt-3">
-                <div class="col-md-12">
-                  <label class="form-label" for="answer">Answer</label>
-                  <textarea id="answer" name="answer" class="form-control" placeholder="Answer">{{ request.POST.answer|default:'' }}</textarea>
-                  {% if errors.answer %}
-                      <small class="text-danger">{{ errors.answer }}</small>
                   {% endif %}
                 </div>
               

@@ -12,7 +12,7 @@ class ActiveManager(models.Manager):
 
 class Course(models.Model):
     course_name = models.CharField(max_length=255)
-    institute_id = models.ForeignKey(
+    crm_id = models.ForeignKey(
         Institute, 
         on_delete=models.CASCADE, 
         related_name='courses'
@@ -24,10 +24,11 @@ class Course(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['institute_id']),
+            models.Index(fields=['crm_id']),
         ]
         verbose_name = "Course"
         verbose_name_plural = "Courses"
+        unique_together = ('course_name', 'crm_id')
 
     def soft_delete(self):
         """Soft delete the course by setting the deleted_at field."""
@@ -46,7 +47,7 @@ class Course(models.Model):
         return self.deleted_at is not None
 
     def __str__(self):
-        return self.course_names
+        return self.course_name
 
     # Managers
     objects = models.Manager()  # Default manager for all records

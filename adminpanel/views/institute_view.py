@@ -6,13 +6,25 @@ def institute_list(request):
         institutes = Institute.objects.filter(deleted_at__isnull=True)
         institute_data = [
             {
-                'institute_id': institute.institute_id,
+                'crm_id': institute.crm_id,
                 'institute_name': institute.institute_name,
                 'encoded_id': base64_encode(institute.id)
             }
             for institute in institutes
         ]
-        return render(request, 'institute/institute.html', {'institutes': institute_data})
+            
+        breadcrumb_items = [
+            {"name": "Dashboard", "url": reverse('admindashboard')},
+            {"name": "Institutes", "url": ""},
+        ]
+
+        data = {
+            'institutes': institute_data,
+            "show_breadcrumb": True,
+            "breadcrumb_items": breadcrumb_items,
+        }
+
+        return render(request, 'institute/institute.html', data)
 
     except Exception as e:
         messages.error(request, f"An error occurred while fetching the institutes: {e}")
@@ -20,23 +32,34 @@ def institute_list(request):
 
 
 def institute_add(request):
+
+    breadcrumb_items = [
+        {"name": "Dashboard", "url": reverse('admindashboard')},
+        {"name": "Institutes", "url": reverse('institute_list')},
+        {"name": "Institute Add", "url": ""},
+    ]
+
     if request.method == 'POST':
         errors = {}
         data = request.POST
         institute_name = data.get('institute_name')
-        institute_id = data.get('institute_id')
+        crm_id = data.get('crm_id')
 
         if not institute_name:
             errors['institute_name'] = "Institute Name is required."
-        if not institute_id:
-            errors['institute_id'] = "Institute id is required."
+        else:
+            if Institute.objects.filter(institute_name=institute_name).exists():
+                errors['institute_name'] = "Institute Name must be unique."
+
+        if not crm_id:
+            errors['crm_id'] = "CRM id is required."
 
         if errors:
-            return render(request, 'institute/institute_add.html', {'errors': errors})
+            return render(request, 'institute/institute_add.html', {'errors': errors, "show_breadcrumb": True, "breadcrumb_items": breadcrumb_items})
         try:
             data_to_save = {
                 'institute_name': institute_name,
-                'institute_id': institute_id,
+                'crm_id': crm_id,
             }
 
             result = save_data(Institute, data_to_save)
@@ -46,17 +69,22 @@ def institute_add(request):
                 return redirect('institute_list')
             else:
                 messages.error(request, "Failed to save the institute. Please try again.")
-                return render(request, 'institute/institute_add.html')
+                return render(request, 'institute/institute_add.html', {"show_breadcrumb": True, "breadcrumb_items": breadcrumb_items,})
 
         except IntegrityError as e:
             messages.error(request, "A database error occurred. Please try again later.")
-            return render(request, 'institute/institute_add.html')
+            return render(request, 'institute/institute_add.html', {"show_breadcrumb": True, "breadcrumb_items": breadcrumb_items,})
 
         except Exception as e:
             messages.error(request, f"An error occurred: {e}")
-            return render(request, 'institute/institute_add.html')
+            return render(request, 'institute/institute_add.html', {"show_breadcrumb": True, "breadcrumb_items": breadcrumb_items,})
 
-    return render(request, 'institute/institute_add.html')
+    data = {
+        "show_breadcrumb": True,
+        "breadcrumb_items": breadcrumb_items,
+    }
+
+    return render(request, 'institute/institute_add.html', data)
 
 
 def institute_update(request, id):
@@ -66,25 +94,34 @@ def institute_update(request, id):
         return HttpResponse("Invalid or tampered ID", status=400)
 
     institute = get_object_or_404(Institute, id=id)
+           
+    breadcrumb_items = [
+        {"name": "Dashboard", "url": reverse('admindashboard')},
+        {"name": "Institutes", "url": reverse('institute_list')},
+        {"name": "Institute Update", "url": ""},
+    ]
 
     if request.method == 'POST':
         errors = {}
         institute_name = request.POST.get('institute_name')
-        institute_id = request.POST.get('institute_id')
+        crm_id = request.POST.get('crm_id')
 
         
         if not institute_name:
             errors['institute_name'] = "Institute Name is required."
-        if not institute_id:
-            errors['institute_id'] = "Institute id is required."
+        else:
+            if Institute.objects.filter(institute_name=institute_name).exclude(id=id).exists():
+                errors['institute_name'] = "Institute Name must be unique."
+        if not crm_id:
+            errors['crm_id'] = "CRM id is required."
 
         if errors:
-            return render(request, 'institute/institute_update.html', {'errors': errors})
+            return render(request, 'institute/institute_update.html', {'errors': errors, 'institute': institute, "show_breadcrumb": True, "breadcrumb_items": breadcrumb_items})
 
         try:
             data = {
                 'institute_name': institute_name,
-                'institute_id': institute_id,
+                'crm_id': crm_id,
             }
 
             result = save_data(Institute, data, where={'id': id})
@@ -94,13 +131,20 @@ def institute_update(request, id):
                 return redirect('institute_list')
             else:
                 messages.error(request, result.get('error', "Failed to update the institute."))
-                return render(request, 'institute/institute_update.html', {'institute': institute})
+                return render(request, 'institute/institute_update.html', {'institute': institute, "show_breadcrumb": True, "breadcrumb_items": breadcrumb_items})
 
         except Exception as e:
             messages.error(request, f"An error occurred while updating the institute: {e}")
-            return render(request, 'institute/institute_update.html', {'institute': institute})
+            return render(request, 'institute/institute_update.html', {'institute': institute, "show_breadcrumb": True, "breadcrumb_items": breadcrumb_items})
 
-    return render(request, 'institute/institute_update.html', {'institute': institute})
+     
+    data = {
+        'institute': institute,
+        "show_breadcrumb": True,
+        "breadcrumb_items": breadcrumb_items,
+    }
+
+    return render(request, 'institute/institute_update.html', data)
 
 
 def institute_delete(request, id):
@@ -124,3 +168,35 @@ def institute_delete(request, id):
         messages.error(request, f"An error occurred while deleting the institute: {e}")
 
     return redirect('institute_list')
+
+
+def student_managers_by_institute(request, id):
+    id = base64_decode(id)
+    institute = get_object_or_404(Institute, id=id)
+    
+    studentManagers = User.objects.filter(
+        id__in=StudentManagerProfile.objects.filter(institute_id=institute).values_list('user_id', flat=True)
+    )
+
+    student_manager_data = [
+        {
+            'first_name': studentManager.first_name,
+            'last_name': studentManager.last_name,
+            'email': studentManager.email,
+            'encoded_id': base64_encode(studentManager.id)
+        }
+        for studentManager in studentManagers
+    ]
+
+    breadcrumb_items = [
+        {"name": "Dashboard", "url": reverse('admindashboard')},
+        {"name": "Institutes", "url": reverse('institute_list')},
+        {"name": f"Student Managers - {institute.institute_name}", "url": ""}
+    ]
+
+    return render(request, 'student_manager/student_managers_by_institute.html', {
+        'student_managers': student_manager_data,
+        'institute_name': institute.institute_name,
+        "show_breadcrumb": True,
+        "breadcrumb_items": breadcrumb_items,
+    })

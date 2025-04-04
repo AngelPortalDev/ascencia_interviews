@@ -1,6 +1,6 @@
 {% load static %}
 <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
-          <div class="app-brand demo">
+          {% comment %} <div class="app-brand demo">
             <a href="{% url 'admindashboard' %}" class="app-brand-link">
               <span class="app-brand-logo demo">
                 <svg
@@ -63,8 +63,14 @@
             <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
               <i class="bx bx-chevron-left bx-sm align-middle"></i>
             </a>
-          </div>
+          </div> {% endcomment %}
 
+          <div class="app-brand d-flex flex-column align-items-center py-3">
+            <a href="{% url 'admindashboard' %}" class="app-brand-link">
+                <img src="{% static 'img/logo/Ascencia-Malta-Logo.svg' %}" alt="AI Interview" class="img-fluid" style="max-width: 80%; height: auto;"/>
+            </a>
+          </div>
+          
           <div class="menu-inner-shadow"></div>
 
           <ul class="menu-inner py-1">
@@ -79,21 +85,21 @@
             <li class="menu-item {% if '/institute' in request.path %}active{% endif %}">
               <a href="{% url 'institute_list' %}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-building"></i>
-                <div data-i18n="Basic">Institute</div>
+                <div data-i18n="Basic">Institutes</div>
               </a>
             </li>
             <!-- Course -->
             <li class="menu-item {% if '/course' in request.path %}active{% endif %}">
               <a href="{% url 'courses' %}" class="menu-link">
                 <i class="menu-icon bx bx-book" aria-hidden="true"></i>
-                <div data-i18n="Basic">Course</div>
+                <div data-i18n="Basic">Courses</div>
               </a>
             </li>
             <!-- Student -->
-            <li class="menu-item {% if '/course' in request.path %}active{% endif %}">
+            <li class="menu-item {% if '/student' in request.path %}active{% endif %}">
               <a href="{% url 'students_list' %}" class="menu-link">
-                <i class="menu-icon bx bx-book" aria-hidden="true"></i>
-                <div data-i18n="Basic">Student</div>
+                <i class="menu-icon bx bx-user" aria-hidden="true"></i>
+                <div data-i18n="Basic">Students</div>
               </a>
             </li>
             <!-- Question -->
@@ -108,12 +114,19 @@
                     <div data-i18n="Basic Inputs">Common Question</div>
                   </a>
                 </li>
-                <li class="menu-item {% if '/question' in request.path %}active{% endif %}">
-                  <a href="{% url 'questions' %}" class="menu-link">
-                    <div data-i18n="Basic Inputs">Customize Question</div>
-                  </a>
-                </li>
+                <!-- <li class="menu-item {% if '/question' in request.path %}active{% endif %}">
+                    <a href="{% url 'questions' %}" class="menu-link">
+                      <div data-i18n="Basic Inputs">Customize Question</div>
+                    </a>
+                  </li> -->
               </ul>
+            </li>
+            <!-- Student Manager -->
+            <li class="menu-item {% if '/student_manager' in request.path %}active{% endif %}">
+              <a href="{% url 'student_managers' %}" class="menu-link">
+                <i class="menu-icon bx bx-id-card" aria-hidden="true"></i>
+                <div data-i18n="Basic">Student Manager</div>
+              </a>
             </li>
           </ul>
         </aside>

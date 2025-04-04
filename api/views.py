@@ -1,853 +1,1127 @@
+
+from adminpanel.common_imports import *
+
+import requests
+import tempfile
+import base64
+import mimetypes
 # import pytesseract
-# import re
-# import cv2
-# import numpy as np
-# from PIL import Image
-# from django.http import JsonResponse
-# from django.views.decorators.csrf import csrf_exempt
-# import logging
-# import fitz  # PyMuPDF for handling PDFs
-
-# # Set the Tesseract command location
-# pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-
-# # Configure logging
-# logging.basicConfig(level=logging.INFO)
-
-# # Preprocess the image for better OCR results
-# def preprocess_image(image):
-#     img = np.array(image)
-#     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-#     # Apply Gaussian blur to reduce noise
-#     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-#     # Apply adaptive thresholding
-#     binary_img = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
-#     # Resize the image for better OCR accuracy
-#     resized_img = cv2.resize(binary_img, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
-#     return resized_img
-
-
-# def extract_text_from_pdf(pdf_data):
-#     extracted_text = ""
-#     pdf_document = fitz.open(stream=pdf_data, filetype="pdf")
-#     for page_num in range(len(pdf_document)):
-#         page = pdf_document.load_page(page_num)
-#         pix = page.get_pixmap()
-        
-#         # Convert PDF page to grayscale image
-#         img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples).convert("L")
-        
-#         # Extract MRZ text
-#         extracted_text += extract_mrz_text(img) + "\n"
-
-#     return extracted_text.strip()
-
-# def clean_mrz_text(text):
-#     # Remove spaces and invalid characters
-#     text = re.sub(r'[^A-Z0-9<]', '', text.replace(" ", ""))
-    
-#     # Ensure two-line format
-#     lines = text.split("\n")
-#     if len(lines) >= 2:
-#         return f"{lines[0]}\n{lines[1]}"
-#     return text
-
-
-
-# def extract_mrz_text(image):
-#     processed_image = preprocess_image(image)
-#     extracted_text = pytesseract.image_to_string(
-#         Image.fromarray(processed_image), 
-#         config="--oem 3 --psm 6 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<"
-#     )
-#     return clean_mrz_text(extracted_text)
-
-
-# def parse_mrz(mrz_text):
-#     # Clean up the MRZ text
-#     mrz_text = mrz_text.replace("\n", "")
-#     # mrz_text = re.sub(r'[^A-Z0-9<]', '', mrz_text)  # Only keep A-Z, 0-9, and '<'
-#     mrz_text = re.sub(r'[^A-Z0-9<\n]', '', mrz_text)
-
-
-#     # Check if the MRZ text starts with 'P<' (Type 3 passport)
-#     if mrz_text.startswith("P<"):
-#         # Parse Type 3 (TD3) MRZ
-#         lines = mrz_text.split('<')
-#         if len(lines) >= 2:
-#             country_code = lines[0][2:5]  # Country code (positions 2-4)
-#             surname = lines[1]  # Surname (first part after '<')
-#             given_names = lines[2]  # Given names (second part after '<')
-#             passport_number = lines[3][:9]  # Passport number (first 9 characters)
-#             nationality = lines[3][9:12]  # Nationality (positions 10-12)
-#             date_of_birth = lines[3][12:18]  # Date of birth (positions 13-18)
-#             gender = lines[3][18]  # Gender (position 19)
-#             expiration_date = lines[3][19:25]  # Expiration date (positions 20-25)
-#             optional_data = lines[3][25:]  # Optional data (positions 26+)
-
-#             return {
-#                 "country_code": country_code,
-#                 "surname": surname,
-#                 "given_names": given_names,
-#                 "passport_number": passport_number,
-#                 "nationality": nationality,
-#                 "date_of_birth": date_of_birth,
-#                 "gender": gender,
-#                 "expiration_date": expiration_date,
-#                 "optional_data": optional_data,
-#             }
-#         else:
-#             raise ValueError("Invalid MRZ format: Not enough parts.")
-#     else:
-#         raise ValueError("Invalid MRZ format: Does not start with 'P<'.")
-
-
-# # Format MRZ text for better structure
-# def format_mrz(mrz_text):
-#     logging.info(f"Raw MRZ Text: {mrz_text}")
-
-#     # Clean up the MRZ text, remove unwanted characters
-#     mrz_text = mrz_text.replace("\n", "")
-#     mrz_text = re.sub(r'[^A-Z0-9<]', '', mrz_text)  # Only keep A-Z, 0-9, and '<'
-
-#     # Ensure MRZ starts with 'P<' (Type 3 passport)
-#     if not mrz_text.startswith("P<"):
-#         logging.error(f"Invalid MRZ format: Does not start with 'P<'. MRZ Text: {mrz_text}")
-#         raise ValueError("Invalid MRZ format: Does not start with 'P<'.")
-
-#     # Split the MRZ text into lines (assuming two lines for Type 3)
-#     lines = mrz_text.split('<')
-#     if len(lines) < 2:
-#         logging.error(f"Invalid MRZ format: Not enough lines. MRZ Text: {mrz_text}")
-#         raise ValueError("Invalid MRZ format: Not enough lines.")
-
-#     # Extract fields from the first line
-#     first_line = lines[0]
-#     country_code = first_line[2:5]  # Country code (positions 2-4)
-#     surname = lines[1]  # Surname (first part after '<')
-#     given_names = lines[2]  # Given names (second part after '<')
-
-#     # Extract fields from the second line
-#     second_line = lines[3]
-#     passport_number = second_line[:9]  # Passport number (first 9 characters)
-#     nationality = second_line[9:12]  # Nationality (positions 10-12)
-#     date_of_birth = second_line[12:18]  # Date of birth (positions 13-18)
-#     gender = second_line[18]  # Gender (position 19)
-#     expiration_date = second_line[19:25]  # Expiration date (positions 20-25)
-#     optional_data = second_line[25:]  # Optional data (positions 26+)
-
-#     # Format the extracted data
-#     formatted_text = (
-#         f"Country Code: {country_code}\n"
-#         f"Surname: {surname}\n"
-#         f"Given Names: {given_names}\n"
-#         f"Passport Number: {passport_number}\n"
-#         f"Nationality: {nationality}\n"
-#         f"Date of Birth: {date_of_birth}\n"
-#         f"Gender: {gender}\n"
-#         f"Expiration Date: {expiration_date}\n"
-#         f"Optional Data: {optional_data}"
-#     )
-
-#     return formatted_text
-
-
-
-
-# # Process uploaded document
-# @csrf_exempt
-# def process_lead(request):
-#     if request.method == "POST":
-#         uploaded_file = request.FILES.get('document')
-
-#         if uploaded_file:
-#             try:
-#                 # Only allow specific file types
-#                 if uploaded_file.content_type not in ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf']:
-#                     return JsonResponse({"error": "Invalid file format. Only image and PDF files are allowed."}, status=400)
-
-#                 extracted_text = ""
-#                 if uploaded_file.content_type == "application/pdf":
-#                     # Convert PDF to images using PyMuPDF
-#                     pdf_data = uploaded_file.read()
-#                     pdf_document = fitz.open(stream=pdf_data, filetype="pdf")
-#                     for page_num in range(len(pdf_document)):
-#                         page = pdf_document.load_page(page_num)
-#                         pix = page.get_pixmap()
-#                         img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-#                         extracted_text += extract_mrz_text(img) + "\n"
-#                 else:
-#                     # Process image files
-#                     image = Image.open(uploaded_file)
-#                     extracted_text = extract_mrz_text(image)
-
-#                 # Check if extracted text is empty
-#                 if not extracted_text:
-#                     return JsonResponse({"error": "MRZ text not found in document"}, status=400)
-
-#                 # Parse the MRZ text
-#                 try:
-#                     mrz_data = parse_mrz(extracted_text)
-#                 except ValueError as e:
-#                     logging.error(f"Error parsing MRZ text: {str(e)}")
-#                     return JsonResponse({"error": str(e)}, status=400)
-
-#                 return JsonResponse({
-#                     "message": "Data processed successfully",
-#                     "extracted_data": extracted_text,
-#                     "mrz_data": mrz_data,
-#                 }, status=200)
-
-#             except Exception as e:
-#                 logging.error(f"Error processing document: {str(e)}")
-#                 return JsonResponse({"error": "An internal error occurred. Please try again later."}, status=500)
-
-#         else:
-#             return JsonResponse({"error": "No document uploaded"}, status=400)
-#     else:
-#         return JsonResponse({"error": "Only POST requests allowed"}, status=405)    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-import pytesseract
-import re
 import cv2
+import re
 import numpy as np
-from PIL import Image
+from pdf2image import convert_from_path
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-import fitz  # PyMuPDF
-import easyocr
-import pycountry
-
-reader = easyocr.Reader(["en"])
-
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-
-# Preprocess image
-def preprocess_image(image):
-    img = np.array(image)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    gray = cv2.equalizeHist(gray)
-    blurred = cv2.GaussianBlur(gray, (3, 3), 0)
-    binary_img = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
-    return binary_img
-
-
-# Extract text from image
-def extract_text_from_image(image):
-    img = np.array(image)
-    results = reader.readtext(img, detail=0)  # Using EasyOCR
-    return " ".join(results)
+from rapidfuzz import fuzz
+from concurrent.futures import ThreadPoolExecutor
+from PIL import Image
+from mindee import Client, AsyncPredictResponse, product
+from urllib.parse import parse_qs, urlparse, unquote
+from difflib import SequenceMatcher
+import logging
+import json
+from studentpanel.utils.ZohoAuth import ZohoAuth
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from studentpanel.models.interview_process_model import Students
+from studentpanel.models.interview_link import StudentInterviewLink
+from django.utils.timezone import now
+from datetime import timedelta
+from adminpanel.utils import send_email
 
 
-# Extract text from PDF
-def extract_text_from_pdf(pdf_data):
-    pdf_document = fitz.open(stream=pdf_data, filetype="pdf")
-    extracted_text = ""
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 
-    for page_num in range(len(pdf_document)):
-        page = pdf_document.load_page(page_num)
-        pix = page.get_pixmap()
-        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples).convert("L")
-        extracted_text += extract_text_from_image(img) + "\n"
 
-    return extracted_text.strip()
 
-# Extract name from MRZ
-def extract_surname_from_mrz(text):
-    mrz_pattern = r"P<([A-Z]{3})([A-Z0-9<]+)<<([A-Z0-9]+)"
-    match = re.search(mrz_pattern, text)
-    if match:
-        surname = match.group(2).replace("<", "")
-        name = match.group(3).replace("<", "")
-        return surname, name 
-    return None, None
-    
-    
-# Extract DOB and Expiry Date from MRZ
-def extract_dob_and_doe_from_mrz(text):
-    # Pattern to match the DOB and expiry date in the MRZ (YYMMDD format), and capture the extra digit before gender
-    dob_pattern = r"(\d{6,7})([MF])(\d{6})"
+ZOHO_API_BASE_URL = "https://www.zohoapis.com/crm/v7"
 
-    # Search for the DOB pattern in the entire text
-    match = re.search(dob_pattern, text)
+# Initialize Mindee client
+mindee_client = Client(api_key="4951866b395bb3fefdb1e4753c6bbd8e")
 
-    if match:
-        # Extract the DOB and expiry date from the match groups
-        dob_digits = match.group(1)  # First 6 or 7 digits, representing DOB in YYMMDD format
-        gender_char = match.group(2)  # Gender character (M or F)
-        expiry_digits = match.group(3)  # The next 6 digits, representing expiry date in YYMMDD format
-        
-        # Check if DOB digits have 6 or 7 characters
-        if len(dob_digits) == 6:
-            # For 6 digits, use the first 2 for the year, the next 2 for the month, and the last 2 for the day
-            dob_year = "200" + dob_digits[0:1]  # Assuming DOB is in the 2000s (e.g., '03' -> '2003')
-            dob_month = dob_digits[1:3]  # Month (e.g., '12')
-            dob_day = dob_digits[3:5]  # Day (e.g., '12')
-        elif len(dob_digits) == 7:
-            # For 7 digits, adjust to skip the extra digit (e.g., '0302151' -> '030215')
-            dob_year_prefix = "20" if int(dob_digits[0:2]) <= 50 else "19"
-            dob_year = dob_year_prefix + dob_digits[0:2]    # Assuming DOB is in the 2000s (e.g., '03' -> '2003')
-            dob_month = dob_digits[2:4]  # Month (e.g., '12')
-            dob_day = dob_digits[4:6]  # Day (e.g., '12')
+# Add endpoint configuration
+my_endpoint = mindee_client.create_endpoint(
+    account_name="ANKITAGAVAS",
+    endpoint_name="eductional_cert_v4",
+    version="1"
+)
 
-        dob_formatted = f"{dob_year}-{dob_month}-{dob_day}"
+def encode_base64(data):
+    """Encodes data in Base64 format (URL-safe)."""
+    return base64.urlsafe_b64encode(str(data).encode()).decode()
 
-        # Extract and format expiry date
-        expiry_year = "20" + expiry_digits[0:2]  # Assuming expiry is in the 2000s
-        expiry_month = expiry_digits[2:4]
-        expiry_day = expiry_digits[4:6]
 
-        expiry_formatted = f"{expiry_year}-{expiry_month}-{expiry_day}"
+# Define educational certificate keywords
+EDUCATION_CERTIFICATE_KEYWORDS = [
+    "Certificate of Completion", "Degree", "Diploma", "Bachelor", "Master",
+    "Doctorate", "University", "College", "Institution", "High School",
+    "Transcript", "Graduation", "Awarded", "Academic", "Educational",
+    "Associate Degree", "Graduate Degree", "Postgraduate Degree", "Professional Degree",
+    "Honorary Degree", "Juris Doctor", "PhD", "MD", "MBA", "MS", "MA", "BSc", "BA",
+    "Vocational Certificate", "Technical Diploma", "Online Certification", "Distance Learning",
+    "Course Completion", "Credential", "Accreditation", "Qualification", "Specialization",
+    "Major", "Minor", "Field of Study", "Thesis", "Dissertation", "Research Paper",
+    "Academic Record", "Grade Sheet", "Mark Sheet", "Enrollment Verification", "Degree Verification",
+    "Proof of Education", "Educational Attainment", "Alumni", "Commencement", "Convocation"
+]
 
-        # Return DOB and Expiry Date
-        return dob_formatted, expiry_formatted
+RESTRICTED_FILE_NAMES = ["passport", "cv", "resume"]
+FUZZY_THRESHOLD = 85  # Adjust threshold for stricter/looser matching
+
+def serialize_field(field):
+    """Recursively serializes fields into JSON serializable formats."""
+    if isinstance(field, dict):  # If already a dictionary
+        return {key: serialize_field(value) for key, value in field.items()}
+    elif isinstance(field, list):  # If it's a list, process each element
+        return [serialize_field(item) for item in field]
     else:
-        return None, None
+        return str(field) if field is not None else "N/A"
+
+def is_restricted_filename(filename):
+    filename = filename.lower()  # Normalize to lowercase
+    
+    for restricted_word in RESTRICTED_FILE_NAMES:
+        similarity_score = fuzz.partial_ratio(restricted_word, filename)
+        
+        if similarity_score >= FUZZY_THRESHOLD:
+            return True  # Block file if it matches closely
+    
+    return False
+
+# OCR Preprocessing: Noise Reduction & Adaptive Thresholding
+def preprocess_image(image):
+    # Convert to grayscale
+    gray = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
+    
+    # Apply adaptive thresholding
+    threshold = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                                      cv2.THRESH_BINARY, 31, 2)
+    
+    # Optional: Apply noise reduction
+    kernel = np.ones((1, 1), np.uint8)
+    threshold = cv2.dilate(threshold, kernel, iterations=1)
+    threshold = cv2.erode(threshold, kernel, iterations=1)
+    
+    return threshold
+
+# Extract text using optimized OCR settings
+# def extract_text_from_image(image):
+#     processed_image = preprocess_image(image)
+#     text = pytesseract.image_to_string(processed_image, config='--psm 6 --oem 3')
+#     return text.strip()
+
+# # Convert PDF pages to images & extract text in parallel
+# def extract_text_from_pdf(pdf_path):
+#     images = convert_from_path(pdf_path, dpi=300)
+#     extracted_text = ""
+
+#     # Use ThreadPoolExecutor for parallel processing
+#     with ThreadPoolExecutor() as executor:
+#         texts = list(executor.map(extract_text_from_image, images))
+#         extracted_text = " ".join(texts).strip()
+
+#     return extracted_text if extracted_text else ""
+
+# Extract text from an image file (PNG, JPG, JPEG)
+def extract_text_from_image_file(image_path):
+    image = Image.open(image_path)
+    return extract_text_from_image(image)
+
+# Keyword Matching with Fuzzy Search (Better Accuracy)
+def check_educational_keywords(text):
+    threshold = 90  # Adjust this to reduce false positives
+    matched_keywords = []
+
+    for keyword in EDUCATION_CERTIFICATE_KEYWORDS:
+        score = fuzz.partial_ratio(keyword.lower(), text.lower())
+        if score > threshold:
+            matched_keywords.append(keyword)
+
+    # Require at least 3 distinct educational keywords to classify as an educational certificate
+    return len(set(matched_keywords)) >= 5
 
 
-
-# Extract passport number from MRZ
-def extract_passport_number_from_mrz(text):
-    lines = text.split("\n")
-    # print(r'lines:', lines)
-    
-    if len(lines) < 2:
-        return None  # Ensure at least two lines exist
-    
-    second_line = lines[1]  # MRZ second line contains the passport number
-    # print(r'second_line:', second_line)
-    
-    # Passport number patterns
-    passport_patterns = [
-        r"\b[A-Z]\d{6,9}\b",  # First pattern (e.g., C0018730)
-        r"\b[A-Z]{2}\d{7}\b",  # Second pattern (e.g., AB1234567)
-        r"\b\d{9}\b"  # Third pattern (e.g., 123456789)
-        r"\b[A-Z]{2}\d{6}\b",  # Fourth pattern (e.g., AB123456)
+def is_certificate_filename(filename):
+    certificate_keywords = [
+        "certificate", "diploma", "degree", "transcript",  
+        "completion", "training", "achievement", "award", "merit",  
+        "qualification", "course", "certification", "graduate",  
+        "honors", "recognition", "accreditation", "licensure",  
+        "appreciation", "scholarship", "education", "proficiency",  
+        "competency", "accomplishment", "exam", "assessment",  
+        "school", "university", "college", "institution", "faculty"
     ]
-    
-    # Check for matching patterns
-    for pattern in passport_patterns:
-        match = re.search(pattern, second_line)
-        if match:
-            return match.group(0)  # Extracted passport number
 
-    return None
+    # return any(keyword in filename for keyword in certificate_keywords)
 
-# Extract passport number from regular text
-def extract_passport_number(text):
-    # print(r'text:', text)
-    passport_patterns = [
-        r"\b[A-Z]{2}\d{7}\b",  # AB1234567
-        r"\b[A-Z]{2}\d{6}\b",  # AB123456
-        r"\b[A-Z]\d{8}\b",  # A12345678
-        r"\b\d{9}\b",  # 123456789
-        r"\b[A-Z0-9]{9}\b",  # Alphanumeric passport
-        r"\b[A-Z]{3}\d{6}\b"  # ABC123456
-    ]
-
-    passport_numbers = []
-    for pattern in passport_patterns:
-        matches = re.findall(pattern, text)
-        passport_numbers.extend(matches)  # Add all matches to the list
-
-    return passport_numbers  # Extracted passport number
-
-    return None
+    return any(keyword.lower() in filename.lower() for keyword in EDUCATION_CERTIFICATE_KEYWORDS)
 
 
-def validate_passport_number(passport_number):
-    print(r'passport_number:', passport_number)
-    
-    # Ensure the passport number is not empty and has a valid length (8 or 9 characters)
-    if not passport_number or len(passport_number) not in [8, 9]:
+
+def check_eligibility(data):
+    try:
+        logging.info("Received data: %s", data)
+
+        # Extracting data
+        is_bachelor_certificate = data["prediction"]["fields"]["fields"].get("is_bachelor_certificate", "0") == "1"
+        is_intermediate_certificate = data["prediction"]["fields"]["fields"].get("is_intermediate_certificate", "0") == "1"
+        is_post_graduation_certificate = data["prediction"]["fields"]["fields"].get("is_post_graduation_certificate", "0") == "1"
+        name_of_certification = data["prediction"]["fields"]["fields"].get("name_of_certification", "").lower()
+        program = data["program"].lower()
+
+        logging.info("Bachelor Certificate: %s", is_bachelor_certificate)
+        logging.info("Intermediate Certificate: %s", is_intermediate_certificate)
+        logging.info("Post Graduation Certificate: %s", is_post_graduation_certificate)
+        logging.info("Name of Certification: %s", name_of_certification)
+        logging.info("Program: %s", program)
+
+        # Define eligibility criteria
+        eligibility_criteria = {
+            "bachelor": is_intermediate_certificate or is_bachelor_certificate or is_post_graduation_certificate,
+            "undergraduate": is_intermediate_certificate or is_bachelor_certificate or is_post_graduation_certificate,
+            "master": is_bachelor_certificate or is_post_graduation_certificate,
+            "postgraduate": is_post_graduation_certificate,
+        }
+
+        logging.info("Eligibility Criteria: %s", eligibility_criteria)
+
+        program_type = None
+        for key in eligibility_criteria.keys():
+            if key in program:
+                program_type = key
+                break
+
+        if not program_type:
+            logging.warning("Program Not Found in Criteria")
+            return False
+
+        # Special check for Computer Science programs
+        cs_keywords = ["computer science", "information technology", "software engineering"]
+        if "computer science" in program:
+            if not any(re.search(rf"\b{cs_field}\b", name_of_certification, re.IGNORECASE) for cs_field in cs_keywords):
+                logging.warning("Failed Computer Science Eligibility Check")
+                return False
+
+        # General eligibility check
+        if eligibility_criteria[program_type]:
+            logging.info("Eligibility Check Passed")
+            return True
+
+        logging.warning("Eligibility Check Failed")
         return False
 
-    # If the passport starts with one or two letters, we handle that case
-    if passport_number[0].isalpha():
-        # If it starts with two letters, we remove the first two characters for validation
-        if len(passport_number) >= 8 and passport_number[1].isalpha():
-            passport_number = passport_number[2:]
+    except KeyError as e:
+        logging.error("Missing key in data: %s", e)
+        return False
+    except Exception as e:
+        logging.error("Unexpected error: %s", e)
+        return False
+    
+
+def name_match_ratio(name1, name2):
+    return SequenceMatcher(None, name1.lower(), name2.lower()).ratio()
+
+
+def update_zoho_lead(crm_id, lead_id, update_data):
+    try:
+        access_token = ZohoAuth.get_access_token(crm_id)  # Ensure a fresh token
+        url = f"https://www.zohoapis.com/crm/v2/Leads/{lead_id}"
+        headers = {
+            "Authorization": f"Zoho-oauthtoken {access_token}",
+            "Content-Type": "application/json"
+        }
+
+        payload = {
+            "data": [
+                {
+                    "id": lead_id,  # Include the lead ID in the payload
+                    **update_data
+                }
+            ]
+        }
+
+        response = requests.put(url, json=payload, headers=headers)
+        response_data = response.json()
+
+        print("Response Data:", response_data)
+
+        if response.status_code == 200 and response_data.get("data"):
+            logging.info(f"Zoho Lead {lead_id} updated successfully")
+            return True  # Success
         else:
-            passport_number = passport_number[1:]
+            logging.error(f"Failed to update Zoho Lead {lead_id}: {response_data}")
+            return False  # Failure
 
-    # Now check if the remaining characters are all digits
-    if not passport_number.isdigit():
-        return False  # Fail if there are non-digit characters remaining
-
-    # If length is 9, consider it a valid passport number
-    if len(passport_number) == 9:
-        return True  # Passport number is valid if it's 9 digits long
-
-    # If the passport number is valid 8-digit, also accept it
-    return True
+    except Exception as e:
+        logging.error(f"Error updating Zoho Lead {lead_id}: {e}")
+        return False
+    
 
 
-# Fetch passport number (from MRZ or regular text)
-def fetch_passport_number(text):
-    passport_number = extract_passport_number_from_mrz(text)
+# def send_email(interview_url, student_name, student_manager_email):
+#     sender_email = "abdullah@angel-portal.com"
+#     receiver_email = "abdullah@angel-portal.com"
+#     student_manager_email = f"student_manager_email" 
+    
+#     subject = "Zoho Lead Update Notification"    
+#     body = f"""
+#         <html>
+#         <body>
+#             <p>Lead update was successful.</p>
+#             <p>Click the link below to proceed:</p>
+#             <p><a href='{interview_url}'>Go to Interview</a></p>
+#         </body>
+#         </html>
+#     """
 
-    if passport_number:
-        if validate_passport_number(passport_number):
-            return passport_number  # Valid passport number from MRZ
-        else:
-            return None  # Invalid passport number from MRZ
-    else:
-        # If no passport number from MRZ, check regular extraction
-        passport_numbers = extract_passport_number(text)
+    
+#     student_manager_body = f"""
+#         <html>
+#         <head>
+#             <style>
+#                 body {{
+#                     font-family: Arial, sans-serif;
+#                     background-color: #f4f4f4;
+#                     padding: 20px;
+#                     text-align: center;
+#                 }}
+#                 .email-container {{
+#                     max-width: 600px;
+#                     margin: auto;
+#                     background: #ffffff;
+#                     padding: 20px;
+#                     border-radius: 8px;
+#                     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+#                 }}
+#                 h2 {{
+#                     color: #2c3e50;
+#                 }}
+#                 p {{
+#                     color: #555555;
+#                     font-size: 16px;
+#                     line-height: 1.6;
+#                 }}
+#                 .btn {{
+#                     display: inline-block;
+#                     background: #007bff;
+#                     color: #ffffff;
+#                     text-decoration: none;
+#                     padding: 10px 20px;
+#                     border-radius: 5px;
+#                     font-weight: bold;
+#                     margin-top: 10px;
+#                 }}
+#                 .btn:hover {{
+#                     background: #0056b3;
+#                 }}
+#             </style>
+#         </head>
+#         <body>
+#             <div class="email-container">
+#                 <h2>Document Verification Completed</h2>
+#                 <p>Dear {student_manager_name},</p>
+#                 <p>The document verification process for <strong>{student_name}</strong> has been successfully completed.</p>
+#                 <p>Click the button below to review the details:</p>
+#                 <a href='http://127.0.0.1:8000/verification' class="btn">View Verification Details</a>
+#             </div>
+#         </body>
+#         </html>
+#     """
+
+
+
+
+#     msg = MIMEMultipart()
+#     msg["From"] = sender_email
+#     msg["To"] = receiver_email
+#     msg["Subject"] = subject
+#     msg.attach(MIMEText(body, "html"))
+
+#     try:
+#         # ✅ Use the correct SMTP server for your email provider
+#         with smtplib.SMTP("smtp.gmail.com", 587) as server:  # Change to your email provider's SMTP
+#             server.starttls()
+#             server.login(sender_email, "iuljudjtemskylkl")  # Use an app password if required
+
+#             # Email to the user
+#             msg_user = MIMEMultipart()
+#             msg_user["From"] = sender_email
+#             msg_user["To"] = receiver_email
+#             msg_user["Subject"] = subject
+#             msg_user.attach(MIMEText(body, "html"))
+#             server.sendmail(sender_email, receiver_email, msg_user.as_string())
+#             # server.sendmail(sender_email, receiver_email, msg.as_string())
+
+
+#             # Email to the Student Manager
+#             msg_manager = MIMEMultipart()
+#             msg_manager["From"] = sender_email
+#             msg_manager["To"] = student_manager_email
+#             msg_manager["Subject"] = "Document Verification Update"
+#             msg_manager.attach(MIMEText(student_manager_body, "html"))
+#             server.sendmail(sender_email, student_manager_email, msg_manager.as_string())
         
-        if passport_numbers:
-            for passport_number in passport_numbers:
-                if validate_passport_number(passport_number):
-                    return passport_number
-            return None
-
-    return None  # No passport number found or invalid
+#         print("Email sent successfully")
+#     except Exception as e:
+#         print(f"Email sending failed: {str(e)}")
 
 
 
-# Django view to process uploaded document
 @csrf_exempt
 def process_document(request):
-    if request.method == "POST":
+
+    if request.method != "POST":
+        return JsonResponse({"error": "Only POST requests are allowed"}, status=405)
+
+    try:
+        # Retrieve form data
         uploaded_file = request.FILES.get("document")
-        
+        zoho_first_name = request.POST.get("first_name", "").strip()
+        zoho_last_name = request.POST.get("last_name", "").strip()
+        program = request.POST.get("program", "").strip()
+        zoho_lead_id = request.POST.get("zoho_lead_id", "").strip()
+        crm_id = request.POST.get("crm_id", "").strip()
+        API_TOKEN = request.POST.get("API_TOKEN", "")
+
+        student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        student.mindee_verification_status = "Inprogress"
+        student.save()
+
+        email = student.student_manager_email.strip().lower()
+        student_manager = User.objects.filter(email__iexact=email).first()
+        student_manager_name = ''
+        if student_manager:  
+            student_manager_name = f"{student_manager.first_name} {student_manager.last_name}".strip()
+            print(f"student_manager_name: {student_manager_name}")
+
+        print(f"Received first_name: {zoho_first_name}, last_name: {zoho_last_name}, program: {program}")
+
         if not uploaded_file:
+            student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+            student.verification_failed_reason = "No document uploaded"
+            student.mindee_verification_status = "Completed"
+            student.save()
             return JsonResponse({"error": "No document uploaded"}, status=400)
 
+        # Validate file name
+        # filename = re.search(r"&name=([^&]+)", uploaded_file.name.lower())
+        # filename = unquote(filename.group(1)) if filename else "unknown.pdf"
+
+        # filename_match = re.search(r"&name=([^&]+)", uploaded_file.name.lower())
+        # filename = unquote(filename_match.group(1)) if filename_match else "unknown.pdf"
+
+        # print(f"Processed filename: {filename}")
+
+        # if is_restricted_filename(filename):
+        #     student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        #     student.verification_failed_reason = "Invalid file. Passport, CV, and Resume files are not allowed."
+        #     student.mindee_verification_status = "Completed"
+        #     student.save()
+        #     return JsonResponse({"error": "Invalid file. Passport, CV, and Resume files are not allowed."}, status=400)
+
+        # Construct URL
+        url = f"https://crm.zoho.com/crm/org771809603/{uploaded_file}"
+        query_params = parse_qs(urlparse(url).query)
+
+        # Extract parent_id and file_id
+        parent_id, file_id = query_params.get("parentId", [""])[0], query_params.get("id", [""])[0]
+        file_url = f"https://www.zohoapis.com/crm/v7/Leads/{parent_id}/Attachments/{file_id}"
+
+        # Download the file
+        headers = {"Authorization": f"Zoho-oauthtoken {API_TOKEN}", "User-Agent": "Mozilla/5.0"}
+        response = requests.get(file_url, headers=headers, allow_redirects=True)
+
+        if response.status_code != 200:
+            student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+            student.verification_failed_reason = "Failed to download file"
+            student.mindee_verification_status = "Completed"
+            student.save()
+            return JsonResponse({"error": f"Failed to download file, Status Code: {response.status_code}"}, status=400)
+
+        # Save the downloaded file temporarily
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
+            temp_file.write(response.content)
+            temp_file_path = temp_file.name
+
+        print(f"File downloaded and saved at: {temp_file_path}")
+
+        # Validate MIME type
+        mime_type = uploaded_file.content_type
+        if mime_type not in ["application/pdf", "image/png", "image/jpeg", "image/jpg"]:
+            student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+            student.verification_failed_reason = "Invalid file type. Only PDF, PNG, JPG, and JPEG files are supported."
+            student.mindee_verification_status = "Completed"
+            student.save()
+            return JsonResponse({"error": "Invalid file type. Only PDF, PNG, JPG, and JPEG files are supported."}, status=400)
+
+        # Extract text
+        # extracted_text = (
+        #     extract_text_from_pdf(temp_file_path) if mime_type == "application/pdf"
+        #     else extract_text_from_image_file(temp_file_path)
+        # )
+
+        # if not extracted_text:
+        #     return JsonResponse({"error": "Text extraction failed. The document might be too blurry or contain no text."}, status=400)
+
+        # # Check if the document is an educational certificate
+        # if not (check_educational_keywords(extracted_text) or is_certificate_filename(filename)):
+        #     return JsonResponse({"message": "Error", "is_education_certificate": False}, status=200)
+
+
+        # if not is_certificate_filename(filename):
+        #     student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        #     student.verification_failed_reason = "Invalid document name. Please upload a file with a recognizable education certificate title."
+        #     student.mindee_verification_status = "Completed"
+        #     student.save()
+        #     return JsonResponse({"message": "Error", "is_education_certificate": False}, status=200)
+
+        # Process document with Mindee
         try:
-            if uploaded_file.content_type == "application/pdf":
-                pdf_data = uploaded_file.read()
-                extracted_text = extract_text_from_pdf(pdf_data)
+            input_doc = mindee_client.source_from_path(temp_file_path)
+            result: AsyncPredictResponse = mindee_client.enqueue_and_parse(product.GeneratedV1, input_doc, endpoint=my_endpoint)
+
+            prediction = result.document.inference.prediction
+            serialized_prediction = serialize_field(vars(prediction))
+
+            data = {"prediction": {"fields": serialized_prediction}, "program": program}
+
+            # Name similarity check
+            mindee_first_name = data["prediction"]["fields"]["fields"].get("first_name", "").strip().lower()
+            mindee_last_name = data["prediction"]["fields"]["fields"].get("last_name", "").strip().lower()
+            zoho_full_name, mindee_full_name = f"{zoho_first_name} {zoho_last_name}".lower(), f"{mindee_first_name} {mindee_last_name}".lower()
+
+            if name_match_ratio(zoho_full_name, mindee_full_name) < 0.70:
+                update_data = {"Interview_Process": "First Round Interview Hold"}
+                
+                student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+                student.mindee_verification_status = "Completed"
+                student.edu_doc_verification_status = "rejected"
+                student.verification_failed_reason = "Name Not Matched"
+                student.save()
+                # if update_zoho_lead(crm_id, zoho_lead_id, update_data):
+                #     print("Lead updated successfully")
+                # else:
+                #     print("Lead update failed")
+                
+                # Student Manager Notification Email (Document Rejected)
+                send_email(
+                    subject="Document Verification Rejected",
+                    message=f"""
+                        <html>
+                        <head>
+                            <style>
+                                body {{
+                                    font-family: Tahoma !important;
+                                    background-color: #f4f4f4;
+                                    padding: 20px;
+                                    text-align: left;
+                                }}
+                                .email-container {{
+                                    max-width: 600px;
+                                    margin: auto;
+                                    background: #ffffff;
+                                    padding: 20px;
+                                    border-radius: 8px;
+                                    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                                    border: 1px solid #ddd;
+                                }}
+                                .header {{
+                                    text-align: center;
+                                    padding-bottom: 20px;
+                                    border-bottom: 1px solid #ddd;
+                                }}
+                                .header img {{
+                                    max-width: 150px;
+                                    display:flex;
+                                    margin:0 auto;
+                                }}
+                                h2 {{
+                                    color: #c0392b;  /* Red color for rejection */
+                                }}
+                                p {{
+                                    color: #555555;
+                                    font-size: 16px;
+                                    line-height: 1.6;
+                                }}
+                                .btn {{
+                                    display: inline-block;
+                                    background: #c0392b;  /* Red button */
+                                    color: #FFFFFF;
+                                    text-decoration: none;
+                                    padding: 10px 20px;
+                                    border-radius: 5px;
+                                    font-weight: bold;
+                                    margin-top: 10px;
+                                }}
+                                .btn:hover {{
+                                    background: #a93226;
+                                    color: #FFFFFF;
+                                }}
+                                .email-logo {{
+                                    max-width: 300px;
+                                    height: auto;
+                                    width: 100%;
+                                    margin-bottom: 20px;
+                                    display: flex;
+                                    justify-content: center;
+                                    margin: 0 auto;
+                                }}
+                                .logo_style{{
+                                    height:40px;
+                                    width:auto;
+                                }}
+                                @media only screen and (max-width: 600px) {{
+                                                .email_logo_lead {{
+                                                    width: 100% !important;
+                                                }}
+                                        }}
+                            </style>
+                        </head>
+                        <body>
+                            <table role="presentation" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td>
+                                        <div class="email-container">
+                                            <div class="header">
+                                                <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style">
+                                            </div>
+                                            <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/doc_rejected.png" 
+                                                alt="Document Rejected" class="email_logo_lead" style="width:60%;"/>
+                                            <h2>Document Verification Rejected</h2>
+                                            <p>Dear {student_manager_name},</p>
+                                            <p>The document verification process for <strong>{zoho_full_name}</strong> has been <strong>rejected</strong>.</p>
+                                            
+                                            <p><strong>Next Steps:</strong> Please review the reason for rejection and ask the student to re-upload the correct documents.</p>
+                                            
+                                            <p>Click below to review rejection details:</p>
+                                            <a href="https://interview.ascenciamalta.mt/studentmanagerpanel/student/{zoho_lead_id}" class="btn">View Rejection Details</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </body>
+                        </html>
+                    """,
+                    recipient=["abdullah@angel-portal.com"],
+                    # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
+                )
+                return JsonResponse({"message": "Success", "result": False}, status=200)
+
+            # Completion check
+            if not data["prediction"]["fields"]["fields"].get("completion_remark"):
+                update_data = {"Interview_Process": "First Round Interview Hold"}
+                
+                student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+                student.mindee_verification_status = "Completed"
+                student.edu_doc_verification_status = "rejected"
+                student.verification_failed_reason = "Criteria not matched"
+                student.save()
+                if update_zoho_lead(crm_id, zoho_lead_id, update_data):
+                    print("Lead updated successfully")
+                else:
+                    print("Lead update failed")
+
+
+                # Student Manager Notification Email (Document Rejected)
+                send_email(
+                    subject="Document Verification Rejected",
+                    message=f"""
+                        <html>
+                        <head>
+                            <style>
+                                body {{
+                                    font-family: Tahoma !important;
+                                    background-color: #f4f4f4;
+                                    padding: 20px;
+                                    text-align: left;
+                                }}
+                                .email-container {{
+                                    max-width: 600px;
+                                    margin: auto;
+                                    background: #ffffff;
+                                    padding: 20px;
+                                    border-radius: 8px;
+                                    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                                    border: 1px solid #ddd;
+                                }}
+                                .header {{
+                                    text-align: center;
+                                    padding-bottom: 20px;
+                                    border-bottom: 1px solid #ddd;
+                                }}
+                                .header img {{
+                                    max-width: 150px;
+                                    display:flex;
+                                    margin:0 auto;
+                                }}
+                                h2 {{
+                                    color: #c0392b;  /* Red color for rejection */
+                                }}
+                                p {{
+                                    color: #555555;
+                                    font-size: 16px;
+                                    line-height: 1.6;
+                                }}
+                                .btn {{
+                                    display: inline-block;
+                                    background: #c0392b;  /* Red button */
+                                    color: #ffffff;
+                                    text-decoration: none;
+                                    padding: 10px 20px;
+                                    border-radius: 5px;
+                                    font-weight: bold;
+                                    margin-top: 10px;
+                                }}
+                                .btn:hover {{
+                                    background: #a93226;
+                                }}
+                                .logo_style{{
+                                    height:40px;
+                                    width:auto;
+                                }}
+                                .email-logo {{
+                                    max-width: 300px;
+                                    height: auto;
+                                    width: 100%;
+                                    margin-bottom: 20px;
+                                    display: flex;
+                                    justify-content: center;
+                                    margin: 0 auto;
+                                }}
+                                @media only screen and (max-width: 600px) {{
+                                                .email_logo_lead {{
+                                                    width: 100% !important;
+                                                }}
+                                        }}
+                            </style>
+                        </head>
+                        <body>
+                            <table role="presentation" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td>
+                                        <div class="email-container">
+                                            <div class="header">
+                                                <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style">
+                                            </div>
+                                            <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/doc_rejected.png" 
+                                                alt="Document Rejected" class="email_logo_lead" style="width:60%;"/>
+                                            <h2>Document Verification Rejected</h2>
+                                            <p>Dear {student_manager_name},</p>
+                                            <p>The document verification process for <strong>{zoho_full_name}</strong> has been <strong>rejected</strong>.</p>
+                                            
+                                            <p><strong>Next Steps:</strong> Please review the reason for rejection and ask the student to re-upload the correct documents.</p>
+                                            
+                                            <p>Click below to review rejection details:</p>
+                                            <a href="https://interview.ascenciamalta.mt/studentmanagerpanel/student/{zoho_lead_id}" class="btn">View Rejection Details</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </body>
+                        </html>
+                    """,
+                    recipient=["abdullah@angel-portal.com"],
+                    # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
+                )
+
+                return JsonResponse({"message": "Success", "result": False}, status=200)
+
+            result = check_eligibility(data)
+            
+
+            if result:
+                update_data = {"Interview_Process": "First Round Interview"}
+
+                if update_zoho_lead(crm_id, zoho_lead_id, update_data):
+                    student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+                    student.mindee_verification_status = "Completed"
+                    student.edu_doc_verification_status = "approved"
+                    student.verification_failed_reason = ""
+                    student.is_interview_link_sent = True
+                    student.interview_link_send_count += 1
+                    student.save()
+
+                    encoded_zoho_lead_id = encode_base64(zoho_lead_id)
+                    encoded_interview_link_send_count = encode_base64(student.interview_link_send_count)
+                    interview_url = f'http://127.0.0.1:8000/interview_panel/{encoded_zoho_lead_id}/{encoded_interview_link_send_count}'
+                    
+                    interview_link, created = StudentInterviewLink.objects.update_or_create(
+                        zoho_lead_id=zoho_lead_id,
+                        defaults={
+                            "interview_link": interview_url,
+                            "expires_at": now() + timedelta(hours=72),
+                        }
+                    )
+
+                    # interview_link = StudentInterviewLink.objects.create(
+                    #     zoho_lead_id=zoho_lead_id,
+                    #     interview_link=interview_url,
+                    #     expires_at=now() + timedelta(hours=72)
+                    # )
+                    
+                    # send_email(interview_url, zoho_full_name, 'student@manager.com')
+                    
+                    # student
+                    send_email(
+                        subject="Zoho Lead Update Notification",
+                        message=f"""
+                                <html>
+                                    <head>
+                                        <style>
+                                            body{{
+                                                background-color: #f4f4f4;
+                                                padding: 20px;
+                                                font-family: Tahoma !important;
+                                            }}
+                                             .email-container {{
+                                                max-width: 600px;
+                                                margin: auto;
+                                                background: #ffffff;
+                                                padding: 20px;
+                                                border-radius: 8px;
+                                                box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                                                border: 1px solid #ddd;
+                                             }}
+                                            .header {{
+                                                text-align: center;
+                                                padding-bottom: 20px;
+                                                border-bottom: 1px solid #ddd; 
+                                            }}
+                                            .header img {{
+                                                max-width: 150px;
+                                                display:flex;
+                                                margin:0 auto;
+                                            }}
+                                             h2 {{
+                                               color: #2c3e50;  
+                                             }}
+                                             p {{
+                                                color: #555555;
+                                                font-size: 16px;
+                                                line-height: 1.6;
+                                             }}
+                                             .btn {{
+                                                display: inline-block;
+                                                background: #db2777;
+                                                color: #FFFFFF;
+                                                text-decoration: none;
+                                                padding: 10px 15px;
+                                                border-radius: 5px;
+                                                font-weight: bold;
+                                                margin-top: 10px; 
+                                             }}
+                                             .btn:hover {{
+                                                 background: #0056b3;
+                                                 color: #FFFFFF;
+                                             }}
+                                            .email-logo {{
+                                                max-width:300px;
+                                                height:auto;
+                                                width:100%;
+                                                margin-bottom: 20px;
+                                                display:flex;
+                                                justify-content:center;
+                                                margin:0 auto;
+                                            }}
+                                            .logo_style{{
+                                                height:40px;
+                                                width:auto;
+                                            }}
+                                            
+                                            @media only screen and (max-width: 600px) {{
+                                                .email_logo_lead {{
+                                                    width: 100% !important;
+                                                }}
+                                        }}
+                                        </style>
+                                        <body>
+                                            <table role="presentation" cellspacing="0" cellpadding="0">
+                                                <tr>
+                                                    <td align="left">
+                                                        <div class="email-container">
+                                                        <div class="header">
+                                                            <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style"/>
+                                                        </div>
+                                                         <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/notification.png" alt="Zoho Lead Update" class="email_logo_lead" style="width:60%;"/>
+                                                            <h2>Zoho Lead Update Notification</h2>
+                                                            <p>Dear {zoho_full_name},</p>
+                                                            <p>The lead update was successful.</p>
+                                                            <p>Click the button below to proceed:</p>
+                                                            <a href="{ interview_url }" class="btn">Go to Interview</a>
+                                                            <p>If you have any questions, please contact support.</p>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                    </body>
+                                    </head>
+                                </html>
+                            """,
+                        recipient=["abdullah@angel-portal.com"],
+                        # cc=["admin@example.com", "hr@example.com"]  # CC recipients
+                    )
+
+                    # Student Manager Notification Email
+                    send_email(
+                        subject="Document Verification & Interview Link",
+                        message=f"""
+                            <html>
+                            <head>
+                                <style>
+                                    body {{
+                                        font-family: Tahoma !important;
+                                        background-color: #f4f4f4;
+                                        padding: 20px;
+                                        text-align: left;
+                                    }}
+                                    .email-container {{
+                                        max-width: 600px;
+                                        margin: auto;
+                                        background: #ffffff;
+                                        padding: 20px;
+                                        border-radius: 8px;
+                                        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                                    }}
+                                    .header {{
+                                        text-align: center;
+                                        padding-bottom: 20px;
+                                        border-bottom: 1px solid #ddd; 
+                                    }}
+                                    .header img {{
+                                        max-width: 150px;
+                                    }}
+                                    h2 {{
+                                        color: #2c3e50;
+                                    }}
+                                    p {{
+                                        color: #555555;
+                                        font-size: 16px;
+                                        line-height: 1.6;
+                                    }}
+                                    .btn {{
+                                        display: inline-block;
+                                        background: #db2777;
+                                        color: #FFFFFF;
+                                        text-decoration: none;
+                                        padding: 10px 20px;
+                                        border-radius: 5px;
+                                        font-weight: bold;
+                                        margin-top: 10px;
+                                    }}
+                                    .btn:hover {{
+                                        background: #0056b3;
+                                        color: #FFFFFF;
+                                    }}
+                                    .email-logo {{
+                                        max-width: 300px;
+                                        height: auto;
+                                        width: 100%;
+                                        margin-bottom: 20px;
+                                        display: flex;
+                                        justify-content: center;
+                                        margin: 0 auto;
+                                    }}
+                                    .logo_style{{
+                                        height:40px;
+                                        width:auto;
+                                    }}
+                                    @media only screen and (max-width: 600px) {{
+                                                .email_logo_lead {{
+                                                    width: 100% !important;
+                                                }}
+                                        }}
+                                </style>
+                            </head>
+                            <body>
+                                <table role="presentation" cellspacing="0" cellpadding="0">
+                                    <tr>
+                                        <td>
+                                            <div class="email-container">
+                                                <div class="header">
+                                                    <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/ascencia_logo.svg" alt="Company Logo" class="logo_style">
+                                                </div>
+                                                <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/doc_verified.png" alt="Document Verified" class="email-logo" class="email_logo_lead" style="width:60%;"/>
+                                                <h2>Document Verification Completed</h2>
+                                                <p>Dear {student_manager_name},</p>
+                                                <p>The document verification process for <strong>{zoho_full_name}</strong> has been successfully completed.</p>
+                                                
+                                                <p><strong>Next Step:</strong> The student is now eligible for the interview process.</p>
+                                                
+                                                <p>Click below to review verification details:</p>
+                                                <a href="https://interview.ascenciamalta.mt/studentmanagerpanel/student/{zoho_lead_id}" class="btn">View Verification Details</a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </body>
+                            </html>
+                        """,
+                        recipient=["abdullah@angel-portal.com"],
+                        # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
+                    )
+                    
+                    print("Lead updated successfully")
+                else:
+                    print("Lead update failed")
             else:
-                image = Image.open(uploaded_file)
-                extracted_text = extract_text_from_image(image)
+                update_data = {"Interview_Process": "First Round Interview Hold"}
+                
+                student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+                student.mindee_verification_status = "Completed"
+                student.edu_doc_verification_status = "rejected"
+                student.verification_failed_reason = "Criteria not matched"
+                student.save()
+                if update_zoho_lead(crm_id, zoho_lead_id, update_data):
+                    print("Lead updated successfully")
+                else:
+                    print("Lead update failed")
 
-            surname, name = extract_surname_from_mrz(extracted_text)
-            passport_number = fetch_passport_number(extracted_text)
-            dob, expire_date = extract_dob_and_doe_from_mrz(extracted_text)
+            # Student Manager Notification Email (Document Rejected)
+            send_email(
+                subject="Document Verification Rejected",
+                message=f"""
+                    <html>
+                    <head>
+                        <style>
+                            body {{
+                                font-family: Tahoma !important;
+                                background-color: #f4f4f4;
+                                padding: 20px;
+                                text-align: left;
+                            }}
+                            .email-container {{ 
+                                max-width: 600px;
+                                margin: auto;
+                                background: #ffffff;
+                                padding: 20px;
+                                border-radius: 8px;
+                                box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                                border: 1px solid #ddd;
+                            }}
+                            .header {{
+                                text-align: center;
+                                padding-bottom: 20px;
+                                border-bottom: 1px solid #ddd;
+                            }}
+                            .header img {{
+                                max-width: 150px;
+                                display:flex;
+                                margin:0 auto;
+                            }}
+                            h2 {{
+                                color: #c0392b;  /* Red color for rejection */
+                            }}
+                            p {{
+                                color: #555555;
+                                font-size: 16px;
+                                line-height: 1.6;
+                            }}
+                            .btn {{
+                                display: inline-block;
+                                background: #c0392b;  /* Red button */
+                                color: #FFFFFF;
+                                text-decoration: none;
+                                padding: 10px 20px;
+                                border-radius: 5px;
+                                font-weight: bold;
+                                margin-top: 10px;
+                            }}
+                            .btn:hover {{
+                                background: #a93226;
+                                color: #FFFFFF;
+                            }}
+                            .email-logo {{
+                                max-width: 300px;
+                                height: auto;
+                                width: 100%;
+                                margin-bottom: 20px;
+                                display: flex;
+                                justify-content: center;
+                                margin: 0 auto;
+                            }}
+                            .logo_style{{
+                                height:40px;
+                                width:auto;
+                            }}
+                            @media only screen and (max-width: 600px) {{
+                                                .email_logo_lead {{
+                                                    width: 100% !important;
+                                                }}
+                                        }}
+                        </style>
+                    </head>
+                    <body>
+                        <table role="presentation" cellspacing="0" cellpadding="0">
+                            <tr>
+                                <td>
+                                    <div class="email-container">
+                                        <div class="header">
+                                            <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style">
+                                        </div>
+                                        <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/doc_rejected.png" 
+                                            alt="Document Rejected" class="email_logo_lead" style="width:60%;"/>
+                                        <h2>Document Verification Rejected</h2>
+                                        <p>Dear {student_manager_name},</p>
+                                        <p>The document verification process for <strong>{zoho_full_name}</strong> has been <strong>rejected</strong>.</p>
+                                        
+                                        <p>Click below to review rejection details:</p>
+                                        <a href="https://interview.ascenciamalta.mt/studentmanagerpanel/student/{zoho_lead_id}" class="btn">View Rejection Details</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </body>
+                    </html>
+                """,
+                recipient=["abdullah@angel-portal.com"],
+                # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
+            )
+            return JsonResponse({"message": "Success", "result": result}, status=200)
 
-            return JsonResponse({
-                "message": "Success", 
-                "extracted_text": extracted_text, 
-                "surname": surname, 
-                "given_name": name, 
-                "passport_number": passport_number, 
-                "dob": dob,
-                "expire_date": expire_date,
-            }, status=200)
 
         except Exception as e:
-            return JsonResponse({"error": "An error occurred: " + str(e)}, status=500)
+            student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+            student.verification_failed_reason = "Mindee API processing failed"
+            student.mindee_verification_status = "Completed"
+            student.save()
+            return JsonResponse({"error": f"Mindee API processing failed: {str(e)}"}, status=500)
+
+    except Exception as e:
+        student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        student.verification_failed_reason = "unexpected error occurred"
+        student.mindee_verification_status = "Completed"
+        student.save()
+        return JsonResponse({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
+
     
-    return JsonResponse({"error": "Only POST requests are allowed"}, status=405)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# import re
-# import logging
-# import numpy as np
-# import easyocr
-# import spacy
-# import cv2
-# from PIL import Image
-# from transformers import pipeline
-# import fitz
-# from django.http import JsonResponse
-# from django.views.decorators.csrf import csrf_exempt
-
-# # Initialize EasyOCR Reader and Spacy NLP model
-# reader = easyocr.Reader(['en'])
-# nlp = spacy.load("en_core_web_sm")
-# classifier = pipeline("zero-shot-classification")
-
-# # Setup logging
-# logging.basicConfig(level=logging.INFO)
-
-# def preprocess_image(image):
-#     """
-#     Preprocess image to enhance OCR accuracy.
-#     """
-#     img = np.array(image)
-#     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-#     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-#     binary_img = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
-#     resized_img = cv2.resize(binary_img, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
-#     return resized_img
-
-# def extract_text_with_easyocr(image):
-#     """
-#     Extract text from an image using EasyOCR.
-#     """
-#     result = reader.readtext(np.array(image))
-#     extracted_text = ' '.join([item[1] for item in result])
-#     return extracted_text
-
-# def classify_document(extracted_text):
-#     """
-#     Classify the document type based on the extracted text.
-#     """
-#     labels = [
-#         "Passport", "Passeport", "Pasaporte", "Reisepass", "Passaporto", "Паспорт", "جواز سفر", "护照",
-#         "パスポート", "여권", "पासपोर्ट", "پاسپورٹ", "Paspoorte", "پاسپورت", 
-#         "Education Certificate", "Degree Certificate", "Diploma Certificate", "Academic Transcript",
-#         "Resume", "CV", "Curriculum Vitae", "Bio-data", "Professional Profile", "Job Application Form",
-#     ]
-#     result = classifier(extracted_text, candidate_labels=labels)
-#     return result['labels'][0]
-
-# def extract_passport_number(text):
-#     """Extract passport number (1 letter followed by 7-9 digits)."""
-#     pattern = r'\b[A-Z][0-9]{7,9}\b'
-#     match = re.search(pattern, text)
-#     return match.group(0) if match else None
-
-# def extract_name(text):
-#     """Extract name based on known passport text structure."""
-#     pattern = r'(?:Surname|Nom)[\s:]([A-Za-z\s\-]+)\s(?:Given Names|Prenoms)[\s:]*([A-Za-z\s\-]+)'
+def fetch_interview_questions(request, crm_id):
+    try:
+        # Fetch 2 random questions from commonquestions
+        if crm_id:
+            common_questions = list(CommonQuestion.objects.filter(crm_id=crm_id).order_by('id')[:2])
+        else:
+            common_questions = []
+
+        # Fetch 3 random questions from questions
+        # customized_questions = list(Question.objects.order_by('id')[:3])  
+
+        # Combine questions
+        # questions_list = common_questions + customized_questions
+        questions_list = common_questions
+
+        # Convert to JSON serializable format
+        data = [
+            {
+                'id': q.id,
+                'question': q.question,
+                'type': 'common' if isinstance(q, CommonQuestion) else 'customized'
+            } 
+            for q in questions_list
+        ]
+
+        return JsonResponse({'status': 'success', 'questions': data})
     
-#     match = re.search(pattern, text, re.IGNORECASE)
-#     if match:
-#         surname = match.group(1).strip()
-#         given_names = match.group(2).strip()
-#         return f"{surname} {given_names}"
-#     return None
-
-# @csrf_exempt
-# def process_lead(request):
-#     """
-#     API endpoint to process uploaded documents and extract details.
-#     """
-#     if request.method == "POST":
-#         uploaded_file = request.FILES.get('document')
-
-#         if uploaded_file:
-#             try:
-#                 if uploaded_file.content_type not in ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf']:
-#                     return JsonResponse({"error": "Invalid file format. Only image and PDF files are allowed."}, status=400)
-
-#                 extracted_text = ""
-#                 if uploaded_file.content_type == "application/pdf":
-#                     pdf_data = uploaded_file.read()
-#                     pdf_document = fitz.open(stream=pdf_data, filetype="pdf")
-#                     for page_num in range(len(pdf_document)):
-#                         page = pdf_document.load_page(page_num)
-#                         pix = page.get_pixmap()
-#                         img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-#                         processed_image = preprocess_image(img)
-#                         extracted_text += extract_text_with_easyocr(Image.fromarray(processed_image)) + "\n"
-#                 else:
-#                     image = Image.open(uploaded_file)
-#                     processed_image = preprocess_image(image)
-#                     extracted_text = extract_text_with_easyocr(Image.fromarray(processed_image))
-
-#                 document_type = classify_document(extracted_text)
-#                 passport_number = extract_passport_number(extracted_text)
-#                 name = extract_name(extracted_text)
-
-#                 return JsonResponse({
-#                     "message": "Data processed successfully",
-#                     "extracted_text": extracted_text,
-#                     "document_type": document_type,
-#                     "passport_number": passport_number,
-#                     "name": name,
-#                 }, status=200)
-
-#             except Exception as e:
-#                 logging.error(f"Error processing document: {str(e)}")
-#                 return JsonResponse({"error": "An internal error occurred. Please try again later."}, status=500)
-
-#         else:
-#             return JsonResponse({"error": "No document uploaded"}, status=400)
-#     else:
-#         return JsonResponse({"error": "Only POST requests allowed"}, status=405)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# import os
-# import traceback
-# import tempfile
-# import textract
-# import spacy
-# import re
-# from transformers import pipeline
-# import logging
-# import pytesseract
-# from PIL import Image
-# from django.core.files.uploadedfile import TemporaryUploadedFile, InMemoryUploadedFile
-# from django.http import JsonResponse
-# from django.views.decorators.csrf import csrf_exempt
-
-# # Load SpaCy's pre-trained NER model
-# nlp = spacy.load("en_core_web_sm")
-
-# # Initialize Hugging Face zero-shot classification pipeline
-# classifier = pipeline("zero-shot-classification")
-
-# # Configure logging
-# logging.basicConfig(level=logging.INFO)
-
-# def extract_text(file, content_type):
-#     """Extracts text from uploaded document."""
-#     try:
-#         temp_file_path = None
-
-#         # If file is in memory, write to temp file
-#         if isinstance(file, InMemoryUploadedFile) or isinstance(file, TemporaryUploadedFile):
-#             temp_file = tempfile.NamedTemporaryFile(delete=False)
-#             for chunk in file.chunks():
-#                 temp_file.write(chunk)
-#             temp_file.close()
-#             temp_file_path = temp_file.name
-#         else:
-#             return ""
-
-#         # Extract text
-#         text = ""
-#         if content_type in ["application/pdf", "text/plain"]:
-#             text = textract.process(temp_file_path).decode("utf-8")
-#         elif content_type in ["image/jpeg", "image/png", "image/jpg"]:
-#             text = pytesseract.image_to_string(Image.open(temp_file_path))
-        
-#         os.remove(temp_file_path)  # Cleanup temp file
-#         return text.strip()
-    
-#     except Exception as e:
-#         logging.error(f"Error extracting text: {traceback.format_exc()}")
-#         return ""
-
-# def classify_document(extracted_text):
-#     """Classifies document type."""
-#     # labels = ["Passport", "Education Certificate", "Resume"]
-#     labels = [
-#         "Passport", "Passeport", "Pasaporte", "Reisepass", "Passaporto", "Паспорт", "جواز سفر", "护照", 
-#         "パスポート", "여권", "पासपोर्ट", "پاسپورٹ", "Paspoorte", "پاسپورت", 
-#         "Education Certificate", "Degree Certificate", "Diploma Certificate", "Academic Transcript", 
-#         "Higher Education Diploma", "Graduate Certificate", "Postgraduate Certificate", 
-#         "Secondary School Certificate", "High School Diploma", "Bachelor's Degree", "Master's Degree", 
-#         "PhD Diploma", "Baccalauréat", "Certificado de Estudios", "Zeugnis", "Diploma di Laurea", 
-#         "شهادة تعليمية", "毕业证书", "학위 증명서", "प्रमाणपत्र", 
-#         "Resume", "CV", "Curriculum Vitae", "Bio-data", "Professional Profile", "Job Application Form", 
-#         "Employment History", "Dossier de Candidature", "Hoja de Vida", "Lebenslauf", "Currículo", 
-#         "سيرة ذاتية", "履歴書", "이력서", "रिज्यूमे"
-#     ]
-#     result = classifier(extracted_text, candidate_labels=labels)
-#     return result['labels'][0], result['scores'][0]
-
-# def extract_named_entities(text):
-#     """Extracts named entities such as Name, Date of Birth, ID Number, Address."""
-#     entities = {"Name": None, "Date of Birth": None, "ID Number": None, "Address": None}
-    
-#     # SpaCy for name extraction
-#     doc = nlp(text)
-#     for ent in doc.ents:
-#         if ent.label_ == "PERSON":
-#             entities["Name"] = ent.text
-#             break
-
-#     # Regex-based extraction
-#     patterns = {
-#         "Date of Birth": r"(DOB|Birth Date)[:\-]?\s*(\d{1,2}[/\-]\d{1,2}[/\-]\d{4})",
-#         "ID Number": r"(ID Number|Passport No)[:\-]?\s*([\w\d\-]+)",
-#         "Address": r"(Address)[:\-]?\s*([\w\s,.-]+)"
-#     }
-#     for key, pattern in patterns.items():
-#         match = re.search(pattern, text, re.IGNORECASE)
-#         if match:
-#             entities[key] = match.group(2)
-
-#     return entities
-
-# @csrf_exempt
-# def process_lead(request):
-#     """Handles document processing via POST request."""
-#     if request.method == "POST":
-#         uploaded_file = request.FILES.get("document")
-
-#         if not uploaded_file:
-#             return JsonResponse({"error": "No document uploaded"}, status=400)
-
-#         try:
-#             # Validate file format
-#             allowed_types = ["image/jpeg", "image/png", "image/jpg", "application/pdf"]
-#             if uploaded_file.content_type not in allowed_types:
-#                 return JsonResponse({"error": "Invalid file format. Allowed: JPG, PNG, PDF"}, status=400)
-
-#             # Extract text
-#             extracted_text = extract_text(uploaded_file, uploaded_file.content_type)
-
-#             # Classify document
-#             document_type, confidence_score = classify_document(extracted_text)
-
-#             # Extract entities
-#             named_entities = extract_named_entities(extracted_text)
-
-#             return JsonResponse({
-#                 "message": "Processed successfully",
-#                 "extracted_text": extracted_text,
-#                 "document_type": document_type,
-#                 "confidence_score": confidence_score,
-#                 "named_entities": named_entities
-#             }, status=200)
-
-#         except Exception as e:
-#             logging.error(f"Processing error: {traceback.format_exc()}")
-#             return JsonResponse({"error": "Internal server error"}, status=500)
-
-#     return JsonResponse({"error": "Only POST requests allowed"}, status=405)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)

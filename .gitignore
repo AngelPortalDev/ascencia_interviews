@@ -5,3 +5,15 @@
 /ascencia_interviews/__pycache__
 .env
 manage.py
+/uploads/
+/venv
+/ascencia_interviews/settings.py
+debug.log
+
+
+
+# Ignore Python cache files
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd

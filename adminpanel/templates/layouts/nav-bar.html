@@ -25,7 +25,7 @@
 
               <ul class="navbar-nav flex-row align-items-center ms-auto">
                 <!-- Place this tag where you want the button to render. -->
-                <li class="nav-item lh-1 me-3">
+                <!-- <li class="nav-item lh-1 me-3">
                   <a
                     class="github-button"
                     href="https://github.com/themeselection/sneat-html-admin-template-free"
@@ -35,10 +35,54 @@
                     aria-label="Star themeselection/sneat-html-admin-template-free on GitHub"
                     >Star</a
                   >
-                </li>
+                </li> -->
 
                 <!-- User -->
-                <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle hide-arrow d-flex align-items-center" href="javascript:void(0);" data-bs-toggle="dropdown">
+                    <div class="avatar avatar-online me-2 position-relative">
+                      <img src="{% static 'img/avatars/1.png' %}" alt="User Avatar" class="w-px-40 h-auto rounded-circle border border-2 border-primary" />
+                      <span class="position-absolute bottom-0 end-0 bg-success rounded-circle p-1 border border-white" style="width: 10px; height: 10px;"></span>
+                    </div>
+                    <span class="d-none d-md-inline fw-semibold text-dark">{{ request.user.first_name }} {{ request.user.last_name }}</span> 
+                  </a>
+                
+                  <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 p-3" style="width: 220px;">
+                    <!-- User Info -->
+                    <li class="text-center border-bottom pb-2">
+                      <div class="position-relative d-inline-block">
+                        <img src="{% static 'img/avatars/1.png' %}" alt="User Avatar" class="w-px-50 h-auto rounded-circle border border-3 border-secondary" />
+                        <span class="position-absolute bottom-0 end-0 bg-success rounded-circle p-1 border border-white" style="width: 10px; height: 10px;"></span>
+                      </div>
+                      <!-- <h6 class="mb-0 fw-bold mt-2 text-dark">{{ request.user.first_name }} {{ request.user.last_name }}</h6> -->
+                    </li>
+                
+                    <!-- Profile -->
+                    <li>
+                      <a class="dropdown-item d-flex align-items-center py-2" href="{% url 'profile_update' %}">
+                        <i class="bx bx-user me-2 fs-5 text-primary"></i> 
+                        <span class="text-dark fw-medium">My Profile</span>
+                      </a>
+                    </li>
+                
+                    <!-- Divider -->
+                    <li><div class="dropdown-divider"></div></li>
+                
+                    <!-- Logout -->
+                    <li>
+                      <form method="post" action="{% url 'logout' %}" class="px-3">
+                        {% csrf_token %}
+                        <button type="submit" class="dropdown-item d-flex align-items-center text-danger fw-semibold py-2 w-100" style="background: none; border: none; cursor: pointer;">
+                          <i class="bx bx-power-off me-2 fs-5"></i> 
+                          <span>Log Out</span>
+                        </button>
+                      </form>
+                    </li>
+                  </ul>
+                </li>
+                
+                
+                <!-- <li class="nav-item navbar-dropdown dropdown-user dropdown">
                   <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
                     <div class="avatar avatar-online">
                       <img src="{% static 'img/avatars/1.png' %}" alt class="w-px-40 h-auto rounded-circle" />
@@ -54,8 +98,9 @@
                             </div>
                           </div>
                           <div class="flex-grow-1">
-                            <span class="fw-semibold d-block">John Doe</span>
+                            <span class="fw-semibold d-block">{{ request.user.first_name }} {{ request.user.last_name }}</span>
                             <small class="text-muted">Admin</small>
+                            
                           </div>
                         </div>
                       </a>
@@ -64,7 +109,7 @@
                       <div class="dropdown-divider"></div>
                     </li>
                     <li>
-                      <a class="dropdown-item" href="#">
+                      <a class="dropdown-item" href="{% url 'profile_update' %}">
                         <i class="bx bx-user me-2"></i>
                         <span class="align-middle">My Profile</span>
                       </a>
@@ -91,10 +136,10 @@
                       <form method="post" action="{% url 'logout' %}" style="display: inline;">
                         {% csrf_token %}
                         
-                        <!-- <a class="dropdown-item" href="#">
+                        <a class="dropdown-item" href="#">
                           <i class="bx bx-power-off me-2"></i>
                           <span class="align-middle">Log Out</span>
-                        </a> -->
+                        </a>
                         <button type="submit" class="dropdown-item" style="background: none; border: none; padding: 0; cursor: pointer;">
                             <i class="bx bx-power-off me-2"></i>
                             <span class="align-middle">Log Out</span>
@@ -102,7 +147,7 @@
                       </form>
                     </li>
                   </ul>
-                </li>
+                </li> -->
                 <!--/ User -->
               </ul>
             </div>

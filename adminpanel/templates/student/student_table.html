@@ -1,0 +1,86 @@
+
+<table class="table table-bordered table-responsive dataTable dtr-column"
+    id="{{ tab_id }}" aria-describedby="{{ tab_id }}_info" style="width: 100%">
+    <thead>
+        <tr>
+            {% comment %} <th data-dt-column="1" rowspan="1" colspan="1" class="dt-select dt-orderable-none w-auto" aria-label="">
+                <span class="dt-column-title"></span><span class="dt-column-order"></span>
+                <input class="form-check-input" type="checkbox" aria-label="Select all rows" />
+            </th> {% endcomment %}
+            <th>Sr No.</th>
+            <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc w-auto"
+                aria-label="Name: Activate to sort" tabindex="0">
+                <span class="dt-column-title" role="button">Name</span><span class="dt-column-order"></span>
+            </th>
+            <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc w-auto"
+                aria-label="Email: Activate to sort" tabindex="0">
+                <span class="dt-column-title" role="button">Email</span><span class="dt-column-order"></span>
+            </th>
+            <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc w-auto"
+                aria-label="Phone No.: Activate to sort" tabindex="0">
+                <span class="dt-column-title" role="button">Phone No.</span><span class="dt-column-order"></span>
+            </th>
+            <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc w-auto"
+                aria-label="Student Manager.: Activate to sort" tabindex="0">
+                <span class="dt-column-title" role="button">Student Manager</span><span class="dt-column-order"></span>
+            </th>
+            <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc w-auto"
+                aria-label="Program: Activate to sort" tabindex="0">
+                <span class="dt-column-title" role="button">Course Applied</span><span class="dt-column-order"></span>
+            </th>
+            <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc w-auto"
+                aria-label="Verification Status" tabindex="0">
+                <span class="dt-column-title" role="button">Verification Status</span><span class="dt-column-order"></span>
+            </th>
+            <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc w-auto"
+                aria-label="Intake Year: Activate to sort" tabindex="0">
+                <span class="dt-column-title" role="button">Intake Year</span><span class="dt-column-order"></span>
+            </th>
+            <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc w-auto"
+                aria-label="Intake Month: Activate to sort" tabindex="0">
+                <span class="dt-column-title" role="button">Intake Month</span><span class="dt-column-order"></span>
+            </th>
+            <th class="d-flex align-items-center dt-orderable-none w-auto" data-dt-column="8" rowspan="1" colspan="1"
+                aria-label="Actions">
+                <span class="dt-column-title">Actions</span><span class="dt-column-order"></span>
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for student in students %}
+        <tr>
+            {% comment %} <td class="dt-select">
+                <input aria-label="Select row" class="form-check-input" type="checkbox" />
+            </td> {% endcomment %}
+            <td>{{ forloop.counter }}</td>
+            <td>{{ student.first_name }} {{ student.last_name }}</td>
+            <td>{{ student.email }}</td>
+            <td>{{ student.phone }}</td>
+            <td>{{ student.student_manager_name }}</td>
+            <td>{{ student.program }}</td>
+            {% comment %} <td>{{ student.edu_doc_verification_status }}</td> {% endcomment %}
+            <td>
+                {% if student.edu_doc_verification_status == 'approved' %}
+                  Verified
+                {% else %}
+                    {{ student.edu_doc_verification_status|title }}
+                {% endif %}
+            </td>
+            <td>{{ student.intake_year }}</td>
+            <td>{{ student.intake_month }}</td>
+            <td class="d-flex align-items-center">
+                <a href="{% url request.user.profile.role|yesno:'studentmanager_student_detail,student_detail' zoho_lead_id=student.zoho_lead_id %}" 
+                class="btn btn-sm btn-light border me-2">
+                    <i class="bx bx-show"></i>
+                </a>
+                <a href="https://crm.zoho.com/crm/org{{student.crm_id}}/tab/Leads/{{ student.zoho_lead_id }}" 
+                    target="_blank" 
+                    class="btn btn-sm btn-primary">
+                    Zoho
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot></tfoot>
+</table>
