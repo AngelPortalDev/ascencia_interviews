@@ -32,7 +32,7 @@ function App() {
 
   return (
 
-      <Router basename="/frontend">
+      <Router basename="/interview/frontend">
         <ToastContainer/>
         <Routes>
           <Route path="/interview_panel/:encoded_zoho_lead_id/:encoded_interview_link_send_count" element={<Home />} />
