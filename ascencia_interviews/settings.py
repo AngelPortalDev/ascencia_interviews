@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import pymysql
+import os
 
 pymysql.install_as_MySQLdb()
 
@@ -71,7 +72,8 @@ ROOT_URLCONF = 'ascencia_interviews.urls'
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
+        # "DIRS": [BASE_DIR / "templates"],
+        "DIRS": [os.path.join(BASE_DIR, "frontend", "build")],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -148,13 +150,14 @@ WSGI_APPLICATION = 'ascencia_interviews.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'ascenciamalta_ascencia_interviews_dev',
-        'USER': 'ascenciamalta_ascencia_interview',
-        'PASSWORD': 'qV{XtqpQg(Lg',
+        'NAME': 'ascendmalta_ascencia_interviews',
+        'USER': 'ascendmalta_ascencia_interview',
+        'PASSWORD': ',0MI2hql;U@8',
         'HOST': '127.0.0.1',  # Or your MySQL server address
         'PORT': '3306',       # Default MySQL port
     }
 }
+
 
 
 
@@ -194,10 +197,12 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
+
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+    os.path.join(BASE_DIR, "frontend", "build", "static"),
+]
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 STUDENT_UPLOAD = BASE_DIR 
@@ -206,30 +211,30 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/login/'
 
 
-# CORS_ALLOW_ALL_ORIGINS = True
-# CSRF_COOKIE_SECURE = False
-# SECURE_SSL_REDIRECT = True  # Redirect all HTTP requests to HTTPS
-# SESSION_COOKIE_SECURE = True  # Ensure cookies are sent over HTTPS
-# CSRF_COOKIE_SECURE = True  # Ensure CSRF cookies are sent over HTTPS
-# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-# CORS_ALLOWED_ORIGINS = [
-#     'https://192.168.1.63:3000',  # React app URL
-# ]
+CORS_ALLOW_ALL_ORIGINS = True
+CSRF_COOKIE_SECURE = True
+SECURE_SSL_REDIRECT = True  # Redirect all HTTP requests to HTTPS
+SESSION_COOKIE_SECURE = True  # Ensure cookies are sent over HTTPS
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+CORS_ALLOWED_ORIGINS = [
+    "http://ascend-malta.com/interview/",  # React app URL
+    "http://localhost:3000"
+]
 
 # # HTTP Strict Transport Security (HSTS) settings
-# SECURE_HSTS_SECONDS = 31536000         # Enforce HTTPS for 1 year
-# SECURE_HSTS_INCLUDE_SUBDOMAINS = True    # Apply to all subdomains
-# SECURE_HSTS_PRELOAD = True               # Allow your domain to be included in browsers’ HSTS preload list
+SECURE_HSTS_SECONDS = 31536000         # Enforce HTTPS for 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True    # Apply to all subdomains
+SECURE_HSTS_PRELOAD = True               # Allow your domain to be included in browsers’ HSTS preload list
 
 # # Additional security settings (optional but recommended)
-# SECURE_BROWSER_XSS_FILTER = True
-# SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
 
 # TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 # ADMIN_BASE_URL = "http://192.168.1.63:5000"
 
-ADMIN_BASE_URL = "http://interview.ascenciamalta.mt:8080/"
+ADMIN_BASE_URL = "http://ascend-malta.com/interview/"
 
 BUNNY_STREAM_API_KEY = "e31364b4-b2f4-4221-aac3bd5d34e5-6769-4f29"  # Replace with your actual Library Key
 BUNNY_STREAM_LIBRARY_ID = "390607"
@@ -272,6 +277,6 @@ Q_CLUSTER = {
 
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://interview.ascenciamalta.mt",
-    "http://interview.ascenciamalta.mt:8080",
+    "http://ascend-malta.com/interview/",
+    "http://ascend-malta.com:8080/",
 ]
