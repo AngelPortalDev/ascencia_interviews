@@ -217,7 +217,7 @@ SECURE_SSL_REDIRECT = True  # Redirect all HTTP requests to HTTPS
 SESSION_COOKIE_SECURE = True  # Ensure cookies are sent over HTTPS
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 CORS_ALLOWED_ORIGINS = [
-    "http://ascend-malta.com/interview/",  # React app URL
+    "https://ascend-malta.com/interview/",  # React app URL
     "http://localhost:3000"
 ]
 
@@ -234,7 +234,7 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 
 # ADMIN_BASE_URL = "http://192.168.1.63:5000"
 
-ADMIN_BASE_URL = "http://ascend-malta.com/interview/"
+ADMIN_BASE_URL = "https://ascend-malta.com/interview/"
 
 BUNNY_STREAM_API_KEY = "e31364b4-b2f4-4221-aac3bd5d34e5-6769-4f29"  # Replace with your actual Library Key
 BUNNY_STREAM_LIBRARY_ID = "390607"
@@ -277,6 +277,6 @@ Q_CLUSTER = {
 
 
 CSRF_TRUSTED_ORIGINS = [
-    "http://ascend-malta.com/interview/",
+    "https://ascend-malta.com/interview/",
     "http://ascend-malta.com:8080/",
 ]
