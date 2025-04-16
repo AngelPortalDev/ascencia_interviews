@@ -21,14 +21,14 @@ handler404 = custom_404_view
 
 def redirect_to_dashboard(request):
     
-    return redirect('interview/adminpanel/dashboard')
+    return redirect('/adminpanel/dashboard')
 
 urlpatterns = [
     # path('', redirect_to_dashboard),
     path("", login_view, name="login"),
-    path("interview/index/", index),
-    path("interview/admin/", admin.site.urls),
-    path("interview/api/", include('api.urls')),
+    path("index/", index),
+    path("admin/", admin.site.urls),
+    path("api/", include('api.urls')),
     path("interview/login", login_view, name="login"),
     path("interview/register", register_view, name="register"),
     path("interview/logout/", logout_view, name="logout"),
