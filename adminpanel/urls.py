@@ -12,7 +12,7 @@ from adminpanel.views.student_view import students_leads_api,students_list, stud
 
 urlpatterns = [
     path(
-        "adminpanel/",
+        "interview/adminpanel/",
         include(
             [
                 # profile
