@@ -32,7 +32,7 @@ urlpatterns = [
     path("login", login_view, name="login"),
     path("register", register_view, name="register"),
     path("logout/", logout_view, name="logout"),
-    path("", include('adminpanel.urls')),
+    path("interview", include('adminpanel.urls')),
     path("", include('studentpanel.urls')),
     path("", include('studentmanagerpanel.urls')),
 
