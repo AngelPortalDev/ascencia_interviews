@@ -5,7 +5,7 @@ from adminpanel.views.dashboard_view import admindashboard, custom_404_view
 from adminpanel.views.institute_view import institute_list, institute_add, institute_update, institute_delete, toggle_institute_status, student_managers_by_institute
 from adminpanel.views.course_view import courses, course_add, course_update, course_delete
 from adminpanel.views.question_view import questions, question_add, question_update, question_delete, common_questions, common_question_add, common_question_update, common_question_delete
-from adminpanel.views.student_manager_view import student_managers, student_manager_add, student_manager_update, student_manager_delete, student_list_by_manager
+from adminpanel.views.student_manager_view import student_managers, student_manager_add, student_manager_update, student_manager_delete, toggle_student_manager_status, student_list_by_manager
 from adminpanel.views.student_view import students_leads_api,students_list, student_detail
 
 
@@ -50,6 +50,7 @@ urlpatterns = [
                     path("student_manager/add", student_manager_add, name="student_manager_add"),
                     path("student_manager/update/<id>/", student_manager_update, name="student_manager_update"),
                     path("student_manager/delete/<id>/", student_manager_delete, name="student_manager_delete"),
+                    path("student_manager/toggle-student-manager-status/<id>/", toggle_student_manager_status, name="toggle_student_manager_status"),
                     path('student_manager/<str:id>/students/', student_list_by_manager, name='student_list_by_manager'),
 
 

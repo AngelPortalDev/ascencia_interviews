@@ -22,6 +22,7 @@ def student_managers(request):
                 'last_name': studentManager.last_name,
                 'email': studentManager.email,
                 # 'institute_id': studentManager.institute_id,
+                'is_active': studentManager.is_active,
                 'encoded_id': base64_encode(studentManager.id)
             }
             for studentManager in studentManagers
@@ -303,3 +304,12 @@ def student_list_by_manager(request, id):
         "show_breadcrumb": True,
         "breadcrumb_items": breadcrumb_items,
     })
+    
+def toggle_student_manager_status(request, id):
+    id = base64_decode(id)
+    user = get_object_or_404(User, id=id)
+    user.is_active = not user.is_active
+    user.save()
+    status = "activated" if user.is_active else "deactivated"
+    messages.success(request, f"Student Manager has been {status}.")
+    return redirect('student_managers')

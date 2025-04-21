@@ -67,16 +67,29 @@
                           <i class="bx bx-edit"></i> Update
                         </a>
                         <!-- Delete Link with Confirmation -->
-                        <a href="javascript:void(0);" 
+                        {% comment %} <a href="javascript:void(0);" 
                            onclick="confirmDelete('{{ student_manager.encoded_id }}', '/adminpanel/student_manager/delete/')" 
                            class="btn btn-danger btn-sm text-white">
                           <i class="bx bx-trash"></i> Delete
-                        </a>
+                        </a> {% endcomment %}
                         <!-- Student List Link -->
                         <a href="{% url 'student_list_by_manager' id=student_manager.encoded_id %}" 
                           class="btn btn-info btn-sm text-white">
                           <i class="bx bx-group"></i> Students
                         </a>
+                        
+                        <!-- Active / Inactive -->
+                        {% if student_manager.is_active %}
+                          <a href="{% url 'toggle_student_manager_status' id=student_manager.encoded_id %}" 
+                            class="btn btn-outline-danger btn-sm shadow-sm bg-danger text-white toggle-status">
+                            <i class="bx bx-x-circle"></i> Inactive
+                          </a>
+                        {% else %}
+                          <a href="{% url 'toggle_student_manager_status' id=student_manager.encoded_id %}" 
+                            class="btn btn-outline-success btn-sm shadow-sm bg-success text-white toggle-status">
+                            <i class="bx bx-check-circle"></i> Active
+                          </a>
+                        {% endif %}
                       </td>
                     </tr>
                     {% endfor %}
