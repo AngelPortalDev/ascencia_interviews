@@ -13,108 +13,20 @@
             <div class="row card-header flex-column flex-sm-row pb-0">
               <div class="d-sm-flex justify-content-between align-items-center dt-layout-start col-sm-auto me-auto mt-0">
                 <h5 class="card-title mb-0 text-md-start text-center mb-2 mb-sm-0">
-                  {% comment %} Institute Table {% endcomment %}
                 </h5>
               </div>
               <div class="d-sm-flex d-flex justify-content-sm-between justify-content-center align-items-center dt-layout-end col-sm-auto ms-auto mt-0">
                 <div class="dt-buttons btn-group flex-wrap mb-0">
-                  <!-- <div class="btn-group">
-                    <button class="btn buttons-collection btn-label-primary dropdown-toggle me-4" tabindex="0"
-                      aria-controls="DataTables_Table_0" type="button" aria-haspopup="dialog" aria-expanded="false"
-                      fdprocessedid="7lkvq5">
-                      <span><span class="d-flex align-items-center gap-2"><i class="icon-base bx bx-export me-sm-1"></i>
-                          <span class="d-none d-sm-inline-block">Export</span></span></span>
-                    </button>
-                  </div> -->
-                {% comment %} <a href="{% url 'institute_add' %}" class="btn create-new btn-primary" tabindex="0" aria-controls="DataTables_Table_0" type="button"
-                    fdprocessedid="gbgsua">
-                    <span><span class="d-flex align-items-center gap-2"><i class="icon-base bx bx-plus icon-sm"></i>
-                        <span class="d-none d-sm-inline-block">Add Institute</span></span></span>
-                    </a>  {% endcomment %}
                 </div>
               </div>
             </div>
-            {% comment %} <hr> {% endcomment %}
-            {% comment %} <div class="row m-3 my-0 justify-content-between">
-              <div class="d-md-flex justify-content-between align-items-center dt-layout-start col-md-auto me-auto mt-0">
-                <div class="dt-length">
-                  <label for="dt-length-0">Show<select name="DataTables_Table_0_length" aria-controls="DataTables_Table_0"
-                      class="form-select" id="dt-length-0" fdprocessedid="trywsk">
-                      <option value="10">10</option>
-                      <option value="25">25</option>
-                      <option value="50">50</option>
-                      <option value="100">100</option>
-                    </select>entries</label>
-                </div>
-              </div>
-              <div class="d-md-flex justify-content-between align-items-center dt-layout-end col-md-auto ms-auto mt-0">
-                <div class="dt-search mt-0 mt-md-6">
-                  <label for="dt-search-0">Search:</label><input type="search" class="form-control ms-4" id="dt-search-0"
-                    placeholder="" aria-controls="DataTables_Table_0" />
-                </div>
-              </div>
-            </div> {% endcomment %}
          <div class="justify-content-between dt-layout-table">
-              {% comment %} <div class="d-md-flex justify-content-between align-items-center col-12 dt-layout-full col-md">
-                <table class="datatables-basic table table-bordered table-responsive dataTable dtr-column"
-                  id="DataTables_Table_0" aria-describedby="DataTables_Table_0_info" style="width: 100%">
-                  <thead>
-                      <tr>
-                        <th data-dt-column="1" rowspan="1" colspan="1" class="dt-select dt-orderable-none" aria-label="">
-                          <span class="dt-column-title"></span><span class="dt-column-order"></span><input
-                            class="form-check-input" type="checkbox" aria-label="Select all rows" />
-                        </th>
-                        <th data-dt-column="4" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc"
-                          aria-label="Email: Activate to sort" tabindex="0">
-                          <span class="dt-column-title" role="button">Institute Id</span><span class="dt-column-order"></span>
-                        </th>
-                        <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc"
-                          aria-label="Name: Activate to sort" tabindex="0">
-                          <span class="dt-column-title" role="button">Institute Name</span><span class="dt-column-order"></span>
-                        </th>
-                        <th class="d-flex align-items-center dt-orderable-none" data-dt-column="8" rowspan="1" colspan="1"
-                          aria-label="Actions">
-                          <span class="dt-column-title">Actions</span><span class="dt-column-order"></span>
-                        </th>
-                      </tr>
-                  </thead>
-                  <tbody>
-                      {% for institute in institutes %}
-                        <tr>
-                          <td class="dt-select">
-                            <input aria-label="Select row" class="form-check-input" type="checkbox" />
-                          </td>
-                          <td>{{institute.crm_id}}</td>
-                          <td>{{institute.institute_name}}</td>
-                          <td class="d-flex align-items-center">
-                              <a href="{% url 'institute_update' id=institute.encoded_id %}" class="btn btn-icon item-edit"><i class="icon-base bx bx-edit icon-sm"></i></a>
-                                <a href="javascript:void(0);" onclick="confirmDelete('{{ institute.encoded_id }}', '/adminpanel/institute/delete/')" class="btn btn-icon item-trash">
-                                    <i class="icon-base bx bx-trash icon-sm"></i>
-                                </a>
-                              
-                          </td>
-                        </tr>
-                      {% endfor %}
-                  </tbody>
-                  <tfoot></tfoot>
-                </table>
-              </div>
-            </div>  {% endcomment %}
-
             <div class="card shadow-none rounded">
               <!-- Card Header with Button -->
               <div class="card-header d-flex flex-column flex-sm-row justify-content-between align-items-center p-3 mx-auto mx-sm-0">
                 <h5 class="card-title mb-0 mb-2 mb-sm-0">Institute Table</h5>
                 <div class="d-md-flex justify-content-between align-items-center dt-layout-end col-md-auto ms-auto mt-0">
                   <div class="dt-buttons btn-group flex-wrap mb-0">
-                    <!-- <div class="btn-group">
-                      <button class="btn buttons-collection btn-label-primary dropdown-toggle me-4" tabindex="0"
-                        aria-controls="DataTables_Table_0" type="button" aria-haspopup="dialog" aria-expanded="false"
-                        fdprocessedid="7lkvq5">
-                        <span><span class="d-flex align-items-center gap-2"><i class="icon-base bx bx-export me-sm-1"></i>
-                            <span class="d-none d-sm-inline-block">Export</span></span></span>
-                      </button>
-                    </div> -->
                   <a href="{% url 'institute_add' %}" class="btn create-new btn-primary" tabindex="0" aria-controls="DataTables_Table_0" type="button"
                       fdprocessedid="gbgsua">
                       <span><span class="d-flex align-items-center gap-2"><i class="icon-base bx bx-plus icon-sm"></i>
