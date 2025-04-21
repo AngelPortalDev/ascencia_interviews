@@ -18,14 +18,6 @@
               </div>
               <div class="d-sm-flex d-flex justify-content-sm-between justify-content-center align-items-center dt-layout-end col-sm-auto ms-auto mt-0">
                 <div class="dt-buttons btn-group flex-wrap mb-0">
-                  <!-- <div class="btn-group">
-                    <button class="btn buttons-collection btn-label-primary dropdown-toggle me-4" tabindex="0"
-                      aria-controls="DataTables_Table_0" type="button" aria-haspopup="dialog" aria-expanded="false"
-                      fdprocessedid="7lkvq5">
-                      <span><span class="d-flex align-items-center gap-2"><i class="icon-base bx bx-export me-sm-1"></i>
-                          <span class="d-none d-sm-inline-block">Export</span></span></span>
-                    </button>
-                  </div> -->
                   <a href="{% url 'student_manager_add' %}" class="btn create-new btn-primary" tabindex="0" aria-controls="DataTables_Table_0" type="button"
                     fdprocessedid="gbgsua">
                     <span><span class="d-flex align-items-center gap-2"><i class="icon-base bx bx-plus icon-sm"></i>
@@ -57,7 +49,17 @@
                     <tr>
                       {% comment %} <td><input class="form-check-input" type="checkbox" aria-label="Select row" /></td> {% endcomment %}
                       <td>{{ forloop.counter }}</td>
-                      <td class="text-start">{{ student_manager.first_name }}</td>
+                      {% comment %} <td class="text-start">{{ student_manager.first_name }}</td> {% endcomment %}
+                      <td>
+                        <div class="d-flex align-items-center flex-wrap gap-2">
+                          <span>{{ student_manager.first_name }}</span>
+                          {% if student_manager.is_active %}
+                            <span class="text-success fs-2">•</span>
+                          {% else %}
+                            <span class="text-danger fs-2">•</span>
+                          {% endif %}
+                        </div>
+                      </td>
                       <td class="text-start">{{ student_manager.last_name }}</td>
                       <td class="text-start">{{ student_manager.email }}</td>
                       {% comment %} <td class="text-start">{{ student_manager.institute_id }}</td> {% endcomment %}
@@ -67,16 +69,29 @@
                           <i class="bx bx-edit"></i> Update
                         </a>
                         <!-- Delete Link with Confirmation -->
-                        <a href="javascript:void(0);" 
+                        {% comment %} <a href="javascript:void(0);" 
                            onclick="confirmDelete('{{ student_manager.encoded_id }}', '/adminpanel/student_manager/delete/')" 
                            class="btn btn-danger btn-sm text-white">
                           <i class="bx bx-trash"></i> Delete
-                        </a>
+                        </a> {% endcomment %}
                         <!-- Student List Link -->
                         <a href="{% url 'student_list_by_manager' id=student_manager.encoded_id %}" 
                           class="btn btn-info btn-sm text-white">
                           <i class="bx bx-group"></i> Students
                         </a>
+                        
+                        <!-- Active / Inactive -->
+                        {% if student_manager.is_active %}
+                          <a href="{% url 'toggle_student_manager_status' id=student_manager.encoded_id %}" 
+                            class="btn btn-outline-danger btn-sm shadow-sm bg-danger text-white toggle-status">
+                            <i class="bx bx-x-circle"></i> Inactive
+                          </a>
+                        {% else %}
+                          <a href="{% url 'toggle_student_manager_status' id=student_manager.encoded_id %}" 
+                            class="btn btn-outline-success btn-sm shadow-sm bg-success text-white toggle-status">
+                            <i class="bx bx-check-circle"></i> Active
+                          </a>
+                        {% endif %}
                       </td>
                     </tr>
                     {% endfor %}
@@ -85,76 +100,6 @@
                 </table>
               </div>
             </div>
-            
-            {% comment %} <div class="row mx-3 justify-content-between">
-              <div class="d-md-flex justify-content-between align-items-center dt-layout-start col-md-auto me-auto mt-0">
-                <div class="dt-info" aria-live="polite" id="DataTables_Table_0_info" role="status">
-                  Showing 1 to 10 of 100 entries
-                </div>
-              </div>
-              <div class="d-md-flex justify-content-between align-items-center dt-layout-end col-md-auto ms-auto mt-0">
-                <div class="dt-paging">
-                  <nav aria-label="pagination">
-                    <ul class="pagination">
-                      <li class="dt-paging-button page-item disabled">
-                        <button class="page-link previous" role="link" type="button" aria-controls="DataTables_Table_0"
-                          aria-disabled="true" aria-label="Previous" data-dt-idx="previous" tabindex="-1">
-                          <i class="icon-base bx bx-chevron-left scaleX-n1-rtl icon-sm"></i>
-                        </button>
-                      </li>
-                      <li class="dt-paging-button page-item active">
-                        <button class="page-link" role="link" type="button" aria-controls="DataTables_Table_0"
-                          aria-current="page" data-dt-idx="0" fdprocessedid="5741ql">
-                          1
-                        </button>
-                      </li>
-                      <li class="dt-paging-button page-item">
-                        <button class="page-link" role="link" type="button" aria-controls="DataTables_Table_0"
-                          data-dt-idx="1" fdprocessedid="od8bui">
-                          2
-                        </button>
-                      </li>
-                      <li class="dt-paging-button page-item">
-                        <button class="page-link" role="link" type="button" aria-controls="DataTables_Table_0"
-                          data-dt-idx="2" fdprocessedid="rk5ulw">
-                          3
-                        </button>
-                      </li>
-                      <li class="dt-paging-button page-item">
-                        <button class="page-link" role="link" type="button" aria-controls="DataTables_Table_0"
-                          data-dt-idx="3" fdprocessedid="h6stpx">
-                          4
-                        </button>
-                      </li>
-                      <li class="dt-paging-button page-item">
-                        <button class="page-link" role="link" type="button" aria-controls="DataTables_Table_0"
-                          data-dt-idx="4" fdprocessedid="nevi2r">
-                          5
-                        </button>
-                      </li>
-                      <li class="dt-paging-button page-item disabled">
-                        <button class="page-link ellipsis" role="link" type="button" aria-controls="DataTables_Table_0"
-                          aria-disabled="true" data-dt-idx="ellipsis" tabindex="-1">
-                          …
-                        </button>
-                      </li>
-                      <li class="dt-paging-button page-item">
-                        <button class="page-link" role="link" type="button" aria-controls="DataTables_Table_0"
-                          data-dt-idx="9" fdprocessedid="r3ld5b">
-                          10
-                        </button>
-                      </li>
-                      <li class="dt-paging-button page-item">
-                        <button class="page-link next" role="link" type="button" aria-controls="DataTables_Table_0"
-                          aria-label="Next" data-dt-idx="next" fdprocessedid="mxxepw">
-                          <i class="icon-base bx bx-chevron-right scaleX-n1-rtl icon-sm"></i>
-                        </button>
-                      </li>
-                    </ul>
-                  </nav>
-                </div>
-              </div>
-            </div> {% endcomment %}
           </div>
         </div>
       </div>
