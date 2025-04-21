@@ -8,10 +8,13 @@ def institute_list(request):
             {
                 'crm_id': institute.crm_id,
                 'institute_name': institute.institute_name,
+                'is_active': institute.is_active,
                 'encoded_id': base64_encode(institute.id)
             }
             for institute in institutes
         ]
+        print(f"institute_data: {institute_data}")
+
             
         breadcrumb_items = [
             {"name": "Dashboard", "url": reverse('admindashboard')},
@@ -48,7 +51,7 @@ def institute_add(request):
         if not institute_name:
             errors['institute_name'] = "Institute Name is required."
         else:
-            if Institute.objects.filter(institute_name=institute_name).exists():
+            if Institute.objects.filter(institute_name=institute_name, deleted_at__isnull=True).exists():
                 errors['institute_name'] = "Institute Name must be unique."
 
         if not crm_id:
@@ -200,3 +203,12 @@ def student_managers_by_institute(request, id):
         "show_breadcrumb": True,
         "breadcrumb_items": breadcrumb_items,
     })
+    
+def toggle_institute_status(request, id):
+    id = base64_decode(id)
+    institute = get_object_or_404(Institute, id=id)
+    institute.is_active = not institute.is_active
+    institute.save()
+    status = "activated" if institute.is_active else "deactivated"
+    messages.success(request, f"Institution has been {status}.")
+    return redirect('institute_list')

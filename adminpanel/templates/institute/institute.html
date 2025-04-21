@@ -143,19 +143,42 @@
                       {% comment %} <td> <input aria-label="Select row" class="form-check-input" type="checkbox" /></td> {% endcomment %}
                       <td>{{ forloop.counter }}</td>
                       <td>{{institute.crm_id}}</td>
-                      <td>{{institute.institute_name}}</td>
+                      {% comment %} <td>{{institute.institute_name}}</td> {% endcomment %}
+                      <td>
+                        <div class="d-flex align-items-center flex-wrap gap-2">
+                          <span>{{ institute.institute_name }}</span>
+                          {% if institute.is_active %}
+                            <span class="text-success fs-2">•</span>
+                          {% else %}
+                            <span class="text-danger fs-2">•</span>
+                          {% endif %}
+                        </div>
+                      </td>
+                      
                       <td>
                         <a href="{% url 'institute_update' id=institute.encoded_id %}" class="btn btn-warning btn-sm text-white shadow-sm me-1">
                           <i class="bx bx-edit icon-sm"></i> Update
                         </a>
-                        <a href="javascript:void(0);" onclick="confirmDelete('{{ institute.encoded_id }}', '/adminpanel/institute/delete/')" class="btn btn-danger btn-sm text-white shadow-sm">
+                        {% comment %} <a href="javascript:void(0);" onclick="confirmDelete('{{ institute.encoded_id }}', '/adminpanel/institute/delete/')" class="btn btn-danger btn-sm text-white shadow-sm">
                           <i class="bx bx-trash icon-sm"></i> Delete
-                        </a>
+                        </a> {% endcomment %}
                         <!-- Student Manager List Link -->
                         <a href="{% url 'student_managers_by_institute' id=institute.encoded_id %}" 
                           class="btn btn-info btn-sm text-white">
                           <i class="bx bx-user"></i> Student Managers
                         </a>
+
+                        {% if institute.is_active %}
+                          <a href="{% url 'toggle_institute_status' id=institute.encoded_id %}" 
+                             class="btn btn-outline-danger btn-sm shadow-sm">
+                            <i class="bx bx-x-circle"></i> Inactive
+                          </a>
+                        {% else %}
+                        <a href="{% url 'toggle_institute_status' id=institute.encoded_id %}" 
+                           class="btn btn-outline-success btn-sm shadow-sm">
+                          <i class="bx bx-check-circle"></i> Active
+                        </a>
+                        {% endif %}
                       </td>
                     </tr>
                     {% endfor %}
