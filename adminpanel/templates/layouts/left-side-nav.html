@@ -1,7 +1,7 @@
 {% load static %}
 <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
           {% comment %} <div class="app-brand demo">
-            <a href="{% url 'admindashboard' %}" class="app-brand-link">
+            <a href="{% if request.user.profile.role == 0 %}{% url 'admindashboard' %}{% else %}{% url 'studentmanagerdashboard' %}{% endif %}" class="app-brand-link">
               <span class="app-brand-logo demo">
                 <svg
                   width="25"
@@ -70,63 +70,86 @@
                 <img src="{% static 'img/logo/Ascencia-Malta-Logo.svg' %}" alt="AI Interview" class="img-fluid" style="max-width: 80%; height: auto;"/>
             </a>
           </div>
-          
+        
           <div class="menu-inner-shadow"></div>
 
-          <ul class="menu-inner py-1">
-            <!-- Dashboard -->
-            <li class="menu-item  {% if '/admindashboard' in request.path %}active{% endif %}">
-              <a href="{% url 'admindashboard' %}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-home-circle"></i>
-                <div data-i18n="Analytics">Dashboard</div>
-              </a>
-            </li>
-            <!-- Institute -->
-            <li class="menu-item {% if '/institute' in request.path %}active{% endif %}">
-              <a href="{% url 'institute_list' %}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-building"></i>
-                <div data-i18n="Basic">Institutes</div>
-              </a>
-            </li>
-            <!-- Course -->
-            <li class="menu-item {% if '/course' in request.path %}active{% endif %}">
-              <a href="{% url 'courses' %}" class="menu-link">
-                <i class="menu-icon bx bx-book" aria-hidden="true"></i>
-                <div data-i18n="Basic">Courses</div>
-              </a>
-            </li>
-            <!-- Student -->
-            <li class="menu-item {% if '/student' in request.path %}active{% endif %}">
-              <a href="{% url 'students_list' %}" class="menu-link">
-                <i class="menu-icon bx bx-user" aria-hidden="true"></i>
-                <div data-i18n="Basic">Students</div>
-              </a>
-            </li>
-            <!-- Question -->
-            <li class="menu-item {% if '/question' in request.path or '/common_question' in request.path %}active open{% endif %}">
-              <a href="javascript:void(0);" class="menu-link menu-toggle">
-                <i class="menu-icon bx bx-help-circle" aria-hidden="true"></i>
-                <div data-i18n="Form Elements">Questions</div>
-              </a>
-              <ul class="menu-sub">
-                <li class="menu-item {% if '/common_question' in request.path %}active{% endif %}">
-                  <a href="{% url 'common_questions' %}" class="menu-link">
-                    <div data-i18n="Basic Inputs">Common Question</div>
+          
+            {% if request.user.profile.role == 0 %}
+              <ul class="menu-inner py-1">
+                <!-- Dashboard -->
+                <li class="menu-item  {% if '/adminpanel/dashboard/' in request.path %}active{% endif %}">
+                  <a href="{% url 'admindashboard' %}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-home-circle"></i>
+                    <div data-i18n="Analytics">Dashboard</div>
                   </a>
                 </li>
-                <!-- <li class="menu-item {% if '/question' in request.path %}active{% endif %}">
-                    <a href="{% url 'questions' %}" class="menu-link">
-                      <div data-i18n="Basic Inputs">Customize Question</div>
-                    </a>
-                  </li> -->
+                <!-- Institute -->
+                <li class="menu-item {% if '/institute' in request.path %}active{% endif %}">
+                  <a href="{% url 'institute_list' %}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-building"></i>
+                    <div data-i18n="Basic">Institutes</div>
+                  </a>
+                </li>
+                <!-- Course -->
+                <li class="menu-item {% if '/course' in request.path %}active{% endif %}">
+                  <a href="{% url 'courses' %}" class="menu-link">
+                    <i class="menu-icon bx bx-book" aria-hidden="true"></i>
+                    <div data-i18n="Basic">Courses</div>
+                  </a>
+                </li>
+                <!-- Student -->
+                <li class="menu-item {% if request.resolver_match.url_name == 'students_list' %}active{% endif %}">
+                  <a href="{% url 'students_list' %}" class="menu-link">
+                    <i class="menu-icon bx bx-user" aria-hidden="true"></i>
+                    <div data-i18n="Basic">Students</div>
+                  </a>
+                </li>
+                <!-- Question -->
+                <li class="menu-item {% if '/question' in request.path or '/common_question' in request.path %}active open{% endif %}">
+                  <a href="javascript:void(0);" class="menu-link menu-toggle">
+                    <i class="menu-icon bx bx-help-circle" aria-hidden="true"></i>
+                    <div data-i18n="Form Elements">Questions</div>
+                  </a>
+                  <ul class="menu-sub">
+                    <li class="menu-item {% if '/common_question' in request.path %}active{% endif %}">
+                      <a href="{% url 'common_questions' %}" class="menu-link">
+                        <div data-i18n="Basic Inputs">Common Question</div>
+                      </a>
+                    </li>
+                    <!-- <li class="menu-item {% if '/question' in request.path %}active{% endif %}">
+                      <a href="{% url 'questions' %}" class="menu-link">
+                        <div data-i18n="Basic Inputs">Customize Question</div>
+                      </a>
+                    </li> -->
+                  </ul>
+                </li>
+                <!-- Student Manager -->
+                <li class="menu-item {% if '/student_manager' in request.path %}active{% endif %}">
+                  <a href="{% url 'student_managers' %}" class="menu-link">
+                    <i class="menu-icon bx bx-id-card" aria-hidden="true"></i>
+                    <div data-i18n="Basic">Student Managers</div>
+                  </a>
+                </li>
               </ul>
-            </li>
-            <!-- Student Manager -->
-            <li class="menu-item {% if '/student_manager' in request.path %}active{% endif %}">
-              <a href="{% url 'student_managers' %}" class="menu-link">
-                <i class="menu-icon bx bx-id-card" aria-hidden="true"></i>
-                <div data-i18n="Basic">Student Manager</div>
-              </a>
-            </li>
-          </ul>
+            {% endif %}
+            
+            {% if request.user.profile.role == 1 %}
+              <ul class="menu-inner py-1">
+                <!-- Dashboard -->
+                <li class="menu-item  {% if '/dashboard' in request.path %}active{% endif %}">
+                  <a href="{% url 'studentmanagerdashboard' %}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-home-circle"></i>
+                    <div data-i18n="Analytics">Dashboard</div>
+                  </a>
+                </li> 
+                <!-- Students -->
+                <li class="menu-item {% if request.resolver_match.url_name == 'studentmanager_students_list' %}active{% endif %}">
+                  <a href="{% url 'studentmanager_students_list' %}" class="menu-link">
+                    <i class="menu-icon bx bx-user" aria-hidden="true"></i>
+                    <div data-i18n="Basic">Students</div>
+                  </a>
+                </li>
+              </ul>
+            {% endif %}
+              
         </aside>
