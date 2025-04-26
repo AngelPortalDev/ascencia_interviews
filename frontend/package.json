@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "homepage": "/frontend",
   "dependencies": {
     "@headlessui/react": "^2.2.0",
     "axios": "^1.7.9",
