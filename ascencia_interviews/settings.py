@@ -92,35 +92,6 @@ WSGI_APPLICATION = 'ascencia_interviews.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'ascencia-interviews',
-#         'USER': 'postgres',
-#         'PASSWORD': 'root',
-#         'HOST': 'localhost',  # or the server IP/hostname
-#         'PORT': '5432',     # default PostgreSQL port
-#     }
-# }
-
-# abdulla database
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'ascencia-interviews',
-#         'USER': 'postgres',
-#         'PASSWORD': '1234',
-#         'HOST': 'localhost',  # or the server IP/hostname
-#         'PORT': '5432',     # default PostgreSQL port
-#     }
-# }
 
 # DATABASES = {
 #     'default': {
@@ -134,25 +105,25 @@ WSGI_APPLICATION = 'ascencia_interviews.wsgi.application'
 # }
 
 
-# ashish database
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
+#         'ENGINE': 'django.db.backends.mysql',
 #         'NAME': 'ascencia-interviews',
-#         'USER': 'postgres',
-#         'PASSWORD': '123',
-#         'HOST': 'localhost',  # or the server IP/hostname
-#         'PORT': '5432',     # default PostgreSQL port
+#         'USER': 'root',
+#         'PASSWORD': '',
+#         'HOST': '127.0.0.1',  # Or your MySQL server address
+#         'PORT': '3306',       # Default MySQL port
 #     }
 # }
+
 
 # live
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'ascendmalta_ascencia_interviews',
-        'USER': 'ascendmalta_ascencia_interview',
-        'PASSWORD': ',0MI2hql;U@8',
+        'NAME': 'ascenciaintervie_db',
+        'USER': 'ascenciaintervie_db',
+        'PASSWORD': '}Qc,O3Sw-?).',
         'HOST': '127.0.0.1',  # Or your MySQL server address
         'PORT': '3306',       # Default MySQL port
     }
@@ -218,7 +189,7 @@ LOGIN_URL = '/login/'
 # CSRF_COOKIE_SECURE = True  # Ensure CSRF cookies are sent over HTTPS
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # CORS_ALLOWED_ORIGINS = [
-#     'https://192.168.1.63:3000',  # React app URL
+#     'https://192.168.0.160:3000',  # React app URL
 # ]
 
 # # HTTP Strict Transport Security (HSTS) settings
@@ -232,9 +203,9 @@ LOGIN_URL = '/login/'
 
 # TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
-# ADMIN_BASE_URL = "http://192.168.1.63:5000"
+# ADMIN_BASE_URL = "http://192.168.0.160:5000"
 
-ADMIN_BASE_URL = "http://interview.ascenciamalta.mt:8080/"
+ADMIN_BASE_URL = "https://ascencia-interview.com/"
 
 BUNNY_STREAM_API_KEY = "e31364b4-b2f4-4221-aac3bd5d34e5-6769-4f29"  # Replace with your actual Library Key
 BUNNY_STREAM_LIBRARY_ID = "390607"
@@ -277,6 +248,5 @@ Q_CLUSTER = {
 
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://interview.ascenciamalta.mt",
-    "http://interview.ascenciamalta.mt:8080",
+    "https://ascencia-interview.com",
 ]
