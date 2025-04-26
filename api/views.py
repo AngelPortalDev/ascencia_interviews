@@ -6,7 +6,7 @@ import tempfile
 import base64
 import mimetypes
 # import pytesseract
-import cv2
+# import cv2
 import re
 import numpy as np
 from pdf2image import convert_from_path
@@ -29,7 +29,7 @@ from studentpanel.models.interview_link import StudentInterviewLink
 from django.utils.timezone import now
 from datetime import timedelta
 from adminpanel.utils import send_email
-
+from django.conf import settings
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -91,20 +91,20 @@ def is_restricted_filename(filename):
     return False
 
 # OCR Preprocessing: Noise Reduction & Adaptive Thresholding
-def preprocess_image(image):
-    # Convert to grayscale
-    gray = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
+# def preprocess_image(image):
+#     # Convert to grayscale
+#     gray = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
     
-    # Apply adaptive thresholding
-    threshold = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
-                                      cv2.THRESH_BINARY, 31, 2)
+#     # Apply adaptive thresholding
+#     threshold = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+#                                       cv2.THRESH_BINARY, 31, 2)
     
-    # Optional: Apply noise reduction
-    kernel = np.ones((1, 1), np.uint8)
-    threshold = cv2.dilate(threshold, kernel, iterations=1)
-    threshold = cv2.erode(threshold, kernel, iterations=1)
+#     # Optional: Apply noise reduction
+#     kernel = np.ones((1, 1), np.uint8)
+#     threshold = cv2.dilate(threshold, kernel, iterations=1)
+#     threshold = cv2.erode(threshold, kernel, iterations=1)
     
-    return threshold
+#     return threshold
 
 # Extract text using optimized OCR settings
 # def extract_text_from_image(image):
@@ -745,7 +745,7 @@ def process_document(request):
 
                     encoded_zoho_lead_id = encode_base64(zoho_lead_id)
                     encoded_interview_link_send_count = encode_base64(student.interview_link_send_count)
-                    interview_url = f'http://127.0.0.1:8000/interview_panel/{encoded_zoho_lead_id}/{encoded_interview_link_send_count}'
+                    interview_url = f'{settings.ADMIN_BASE_URL}/frontend/interview_panel/{encoded_zoho_lead_id}/{encoded_interview_link_send_count}'
                     
                     interview_link, created = StudentInterviewLink.objects.update_or_create(
                         zoho_lead_id=zoho_lead_id,
