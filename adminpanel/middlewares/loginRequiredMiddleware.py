@@ -17,7 +17,7 @@ class LoginRequiredMiddleware:
         ]
 
         # Define the login URL
-        login_url = '/login/'  # Change this if your login page is different
+        login_url = '/login'  # Change this if your login page is different
 
         # Check if the user is authenticated and if the request path starts with any of the prefixes
         # if not request.user.is_authenticated and any(request.path.startswith(prefix) for prefix in login_required_prefixes):

@@ -119,6 +119,40 @@ class APIDataFetcher:
 
 
 
+# def process_documents_task(file_url, publisher, API_TOKEN):
+#     """Processes a single document in a Django Q worker."""
+#     import requests
+#     import time
+#     from django.conf import settings
+
+#     # Fetch document
+#     file_response = requests.get(file_url)
+#     if file_response.status_code != 200:
+#         print(f"❌ Failed to download file: {file_url}")
+#         return
+
+
+#     # Process document
+#     process_api_url = f"{settings.ADMIN_BASE_URL}/api/process_document"
+#     data = {
+#         "first_name": publisher.first_name,
+#         "last_name": publisher.last_name,
+#         "program": publisher.program,
+#         "zoho_lead_id": publisher.zoho_lead_id,
+#         "crm_id": publisher.crm_id,
+#         "API_TOKEN": API_TOKEN,
+#     }
+#     files = {"document": (file_url, file_response.content, "application/pdf")}
+
+#     try:
+#         process_response = requests.post(process_api_url, files=files, data=data)
+#         print(f"✅ Document processed: {process_response.json()}")
+#     except requests.RequestException as e:
+#         print(f"❌ Processing failed: {e}")
+
+#     time.sleep(5)  # Optional delay
+
+
 def process_documents_task(file_url, publisher, API_TOKEN):
     """Processes a single document in a Django Q worker."""
     import requests
@@ -126,9 +160,11 @@ def process_documents_task(file_url, publisher, API_TOKEN):
     from django.conf import settings
 
     # Fetch document
-    file_response = requests.get(file_url)
-    if file_response.status_code != 200:
-        print(f"❌ Failed to download file: {file_url}")
+    try:
+        file_response = requests.get(file_url)
+        file_response.raise_for_status()  # This will raise an HTTPError for bad responses
+    except requests.RequestException as e:
+        print(f"❌ Failed to download file: {file_url}, Error: {e}")
         return
 
     # Process document
@@ -144,12 +180,29 @@ def process_documents_task(file_url, publisher, API_TOKEN):
     files = {"document": (file_url, file_response.content, "application/pdf")}
 
     try:
+        # Send the request
         process_response = requests.post(process_api_url, files=files, data=data)
-        print(f"✅ Document processed: {process_response.json()}")
+
+        # Log the response status and content for debugging
+        print(f"Response Status Code: {process_response.status_code}")
+        print(f"Response Content: {process_response.text}")  # This will show the raw response body
+
+        # Check if the response is JSON
+        if process_response.status_code == 200:
+            try:
+                response_data = process_response.json()
+                print(f"✅ Document processed: {response_data}")
+            except ValueError:
+                print(f"❌ Response is not in JSON format. Raw Response: {process_response.text}")
+        else:
+            print(f"❌ Failed to process document, Status Code: {process_response.status_code}")
+            print(f"Response content: {process_response.text}")
+
     except requests.RequestException as e:
         print(f"❌ Processing failed: {e}")
 
     time.sleep(5)  # Optional delay
+
 
 
 
