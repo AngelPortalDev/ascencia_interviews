@@ -585,9 +585,9 @@ def process_document(request):
                                     <td>
                                         <div class="email-container">
                                             <div class="header">
-                                                <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style">
+                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style">
                                             </div>
-                                            <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/doc_rejected.png" 
+                                            <img src="https://ascencia-interview.com/static/img/email_template_icon/doc_rejected.png" 
                                                 alt="Document Rejected" class="email_logo_lead" style="width:60%;"/>
                                             <h2>Document Verification Rejected</h2>
                                             <p>Dear {student_manager_name},</p>
@@ -596,7 +596,7 @@ def process_document(request):
                                             <p><strong>Next Steps:</strong> Please review the reason for rejection and ask the student to re-upload the correct documents.</p>
                                             
                                             <p>Click below to review rejection details:</p>
-                                            <a href="https://interview.ascenciamalta.mt/studentmanagerpanel/student/{zoho_lead_id}" class="btn">View Rejection Details</a>
+                                            <a href="https://ascencia-interview.com/studentmanagerpanel/student/{zoho_lead_id}" class="btn">View Rejection Details</a>
                                         </div>
                                     </td>
                                 </tr>
@@ -703,9 +703,9 @@ def process_document(request):
                                     <td>
                                         <div class="email-container">
                                             <div class="header">
-                                                <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style">
+                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style">
                                             </div>
-                                            <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/doc_rejected.png" 
+                                            <img src="https://ascencia-interview.com/static/img/email_template_icon/doc_rejected.png" 
                                                 alt="Document Rejected" class="email_logo_lead" style="width:60%;"/>
                                             <h2>Document Verification Rejected</h2>
                                             <p>Dear {student_manager_name},</p>
@@ -714,7 +714,7 @@ def process_document(request):
                                             <p><strong>Next Steps:</strong> Please review the reason for rejection and ask the student to re-upload the correct documents.</p>
                                             
                                             <p>Click below to review rejection details:</p>
-                                            <a href="https://interview.ascenciamalta.mt/studentmanagerpanel/student/{zoho_lead_id}" class="btn">View Rejection Details</a>
+                                            <a href="https://ascencia-interview.com/studentmanagerpanel/student/{zoho_lead_id}" class="btn">View Rejection Details</a>
                                         </div>
                                     </td>
                                 </tr>
@@ -842,9 +842,9 @@ def process_document(request):
                                                     <td align="left">
                                                         <div class="email-container">
                                                         <div class="header">
-                                                            <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style"/>
+                                                            <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style"/>
                                                         </div>
-                                                         <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/notification.png" alt="Zoho Lead Update" class="email_logo_lead" style="width:60%;"/>
+                                                         <img src="https://ascencia-interview.com/static/img/email_template_icon/notification.png" alt="Zoho Lead Update" class="email_logo_lead" style="width:60%;"/>
                                                             <h2>Zoho Lead Update Notification</h2>
                                                             <p>Dear {zoho_full_name},</p>
                                                             <p>The lead update was successful.</p>
@@ -940,9 +940,9 @@ def process_document(request):
                                         <td>
                                             <div class="email-container">
                                                 <div class="header">
-                                                    <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/ascencia_logo.svg" alt="Company Logo" class="logo_style">
+                                                    <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.svg" alt="Company Logo" class="logo_style">
                                                 </div>
-                                                <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/doc_verified.png" alt="Document Verified" class="email-logo" class="email_logo_lead" style="width:60%;"/>
+                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/doc_verified.png" alt="Document Verified" class="email-logo" class="email_logo_lead" style="width:60%;"/>
                                                 <h2>Document Verification Completed</h2>
                                                 <p>Dear {student_manager_name},</p>
                                                 <p>The document verification process for <strong>{zoho_full_name}</strong> has been successfully completed.</p>
@@ -950,7 +950,7 @@ def process_document(request):
                                                 <p><strong>Next Step:</strong> The student is now eligible for the interview process.</p>
                                                 
                                                 <p>Click below to review verification details:</p>
-                                                <a href="https://interview.ascenciamalta.mt/studentmanagerpanel/student/{zoho_lead_id}" class="btn">View Verification Details</a>
+                                                <a href="https://ascencia-interview.com/studentmanagerpanel/student/{zoho_lead_id}" class="btn">View Verification Details</a>
                                             </div>
                                         </td>
                                     </tr>
@@ -1058,16 +1058,16 @@ def process_document(request):
                                 <td>
                                     <div class="email-container">
                                         <div class="header">
-                                            <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style">
+                                            <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style">
                                         </div>
-                                        <img src="https://interview.ascenciamalta.mt/static/img/email_template_icon/doc_rejected.png" 
+                                        <img src="https://ascencia-interview.com/static/img/email_template_icon/doc_rejected.png" 
                                             alt="Document Rejected" class="email_logo_lead" style="width:60%;"/>
                                         <h2>Document Verification Rejected</h2>
                                         <p>Dear {student_manager_name},</p>
                                         <p>The document verification process for <strong>{zoho_full_name}</strong> has been <strong>rejected</strong>.</p>
                                         
                                         <p>Click below to review rejection details:</p>
-                                        <a href="https://interview.ascenciamalta.mt/studentmanagerpanel/student/{zoho_lead_id}" class="btn">View Rejection Details</a>
+                                        <a href="https://ascencia-interview.com/studentmanagerpanel/student/{zoho_lead_id}" class="btn">View Rejection Details</a>
                                     </div>
                                 </td>
                             </tr>
