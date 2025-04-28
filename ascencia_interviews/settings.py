@@ -205,7 +205,7 @@ LOGIN_URL = '/login'
 
 # ADMIN_BASE_URL = "https://bb91-103-71-112-194.ngrok-free.app"
 
-ADMIN_BASE_URL = "https://ascencia-interview.com/"
+ADMIN_BASE_URL = "https://ascencia-interview.com"
 
 BUNNY_STREAM_API_KEY = "e31364b4-b2f4-4221-aac3bd5d34e5-6769-4f29"  # Replace with your actual Library Key
 BUNNY_STREAM_LIBRARY_ID = "390607"
