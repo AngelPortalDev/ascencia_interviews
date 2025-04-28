@@ -179,7 +179,7 @@ STATICFILES_DIRS = [
 STUDENT_UPLOAD = BASE_DIR 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_URL = '/login/'
+LOGIN_URL = '/login'
 
 
 # CORS_ALLOW_ALL_ORIGINS = True
@@ -203,7 +203,7 @@ LOGIN_URL = '/login/'
 
 # TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
-# ADMIN_BASE_URL = "http://192.168.0.160:5000"
+# ADMIN_BASE_URL = "https://bb91-103-71-112-194.ngrok-free.app"
 
 ADMIN_BASE_URL = "https://ascencia-interview.com/"
 
@@ -249,4 +249,8 @@ Q_CLUSTER = {
 
 CSRF_TRUSTED_ORIGINS = [
     "https://ascencia-interview.com",
+    "https://bb91-103-71-112-194.ngrok-free.app",
 ]
+
+CSRF_COOKIE_SECURE = True 
+CSRF_COOKIE_SAMESITE = 'None'

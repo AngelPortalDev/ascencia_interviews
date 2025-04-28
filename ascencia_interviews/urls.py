@@ -35,6 +35,7 @@ urlpatterns = [
     path("", include('adminpanel.urls')),
     path("", include('studentpanel.urls')),
     path("", include('studentmanagerpanel.urls')),
+    path("students_leads_api/", students_leads_api, name="students_leads_api"),
 
     # ✅ Serve React frontend only for non-backend paths
     re_path(r'^(?!api/|admin/|login|logout|register).*$', index),
