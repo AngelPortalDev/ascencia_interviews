@@ -602,7 +602,7 @@ def process_document(request):
                         </body>
                         </html>
                     """,
-                    recipient=["abdullah@angel-portal.com"],
+                    recipient=["ankita@angel-portal.com"],
                     # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
                 )
                 return JsonResponse({"message": "Success", "result": False}, status=200)
@@ -717,7 +717,7 @@ def process_document(request):
                         </body>
                         </html>
                     """,
-                    recipient=["abdullah@angel-portal.com"],
+                    recipient=["ankita@angel-portal.com"],
                     # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
                 )
 
@@ -854,7 +854,7 @@ def process_document(request):
                                     
                                 </html>
                             """,
-                        recipient=["abdullah@angel-portal.com"],
+                        recipient=["ankita@angel-portal.com"],
                         # cc=["admin@example.com", "hr@example.com"]  # CC recipients
                     )
 
@@ -951,7 +951,7 @@ def process_document(request):
                             </body>
                             </html>
                         """,
-                        recipient=["abdullah@angel-portal.com"],
+                        recipient=["ankita@angel-portal.com"],
                         # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
                     )
                     
