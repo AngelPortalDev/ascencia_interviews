@@ -217,8 +217,8 @@ EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587 
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
-EMAIL_HOST_USER = "abdullah@angel-portal.com"
-EMAIL_HOST_PASSWORD = "iuljudjtemskylkl"
+EMAIL_HOST_USER = "ankita@angel-portal.com"
+EMAIL_HOST_PASSWORD = "hztmgxknumenllhp"
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 

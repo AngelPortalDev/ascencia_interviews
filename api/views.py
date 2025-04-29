@@ -579,32 +579,30 @@ def process_document(request):
                                         }}
                             </style>
                         </head>
-                        <body>
-                            <table role="presentation" cellspacing="0" cellpadding="0">
-                                <tr>
-                                    <td>
-                                        <div class="email-container">
-                                            <div class="header">
-                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style">
+                        <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+                          
+                                        <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box;">
+                                            <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
+                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style" style="height: 40px; width: auto; margin-bottom: 10px;">
                                             </div>
                                             <img src="https://ascencia-interview.com/static/img/email_template_icon/doc_rejected.png" 
-                                                alt="Document Rejected" class="email_logo_lead" style="width:60%;"/>
-                                            <h2>Document Verification Rejected</h2>
-                                            <p>Dear {student_manager_name},</p>
-                                            <p>The document verification process for <strong>{zoho_full_name}</strong> has been <strong>rejected</strong>.</p>
+                                                alt="Document Rejected" class="email_logo_lead" style="width: 50%; display: block; margin: 20px auto;"/>
+                                            <h2 style="color: #2c3e50; text-align: center;">Document Verification Rejected</h2>
+                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Dear <span style="font-weight:bold">{student_manager_name},</span></p>
+                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">The document verification process for <strong>{zoho_full_name}</strong> has been <strong>rejected</strong>.</p>
                                             
-                                            <p><strong>Next Steps:</strong> Please review the reason for rejection and ask the student to re-upload the correct documents.</p>
+                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;"><strong>Next Steps:</strong> Please review the reason for rejection and ask the student to re-upload the correct documents.</p>
                                             
-                                            <p>Click below to review rejection details:</p>
-                                            <a href="https://ascencia-interview.com/studentmanagerpanel/student/{zoho_lead_id}" class="btn">View Rejection Details</a>
+                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Click below to review rejection details:</p>
+                                              <div style="text-align: center;">
+                                                <a href="https://ascencia-interview.com/studentmanagerpanel/student/{zoho_lead_id}" class="btn" style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: center;">View Rejection Details</a>
+                                              </div>
                                         </div>
-                                    </td>
-                                </tr>
-                            </table>
+                                    
                         </body>
                         </html>
                     """,
-                    recipient=["abdullah@angel-portal.com"],
+                    recipient=["ankita@angel-portal.com"],
                     # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
                 )
                 return JsonResponse({"message": "Success", "result": False}, status=200)
@@ -697,32 +695,29 @@ def process_document(request):
                                         }}
                             </style>
                         </head>
-                        <body>
-                            <table role="presentation" cellspacing="0" cellpadding="0">
-                                <tr>
-                                    <td>
-                                        <div class="email-container">
-                                            <div class="header">
-                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style">
+                        <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+                        
+                                        <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box;">
+                                            <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
+                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style" style="height: 40px; width: auto; margin-bottom: 10px;">
                                             </div>
                                             <img src="https://ascencia-interview.com/static/img/email_template_icon/doc_rejected.png" 
-                                                alt="Document Rejected" class="email_logo_lead" style="width:60%;"/>
-                                            <h2>Document Verification Rejected</h2>
-                                            <p>Dear {student_manager_name},</p>
-                                            <p>The document verification process for <strong>{zoho_full_name}</strong> has been <strong>rejected</strong>.</p>
+                                                alt="Document Rejected" class="email_logo_lead" style="width: 50%; display: block; margin: 20px auto;"/>
+                                            <h2 style="color: #2c3e50; text-align: center;">Document Verification Rejected</h2>
+                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Dear <span style="font-weight:bold">{student_manager_name},</span></p>
+                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">The document verification process for <strong>{zoho_full_name}</strong> has been <strong>rejected</strong>.</p>
                                             
-                                            <p><strong>Next Steps:</strong> Please review the reason for rejection and ask the student to re-upload the correct documents.</p>
+                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;"><strong>Next Steps:</strong> Please review the reason for rejection and ask the student to re-upload the correct documents.</p>
                                             
-                                            <p>Click below to review rejection details:</p>
-                                            <a href="https://ascencia-interview.com/studentmanagerpanel/student/{zoho_lead_id}" class="btn">View Rejection Details</a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </table>
+                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Click below to review rejection details:</p>
+                                              <div style="text-align: center;">
+                                                <a href="https://ascencia-interview.com/studentmanagerpanel/student/{zoho_lead_id}" class="btn" style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: center;">View Rejection Details</a>
+                                              </div>
+                                    
                         </body>
                         </html>
                     """,
-                    recipient=["abdullah@angel-portal.com"],
+                    recipient=["ankita@angel-portal.com"],
                     # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
                 )
 
@@ -770,96 +765,96 @@ def process_document(request):
                                 <html>
                                     <head>
                                         <style>
-                                            body{{
+                                           body {{
                                                 background-color: #f4f4f4;
-                                                padding: 20px;
-                                                font-family: Tahoma !important;
+                                                font-family: Tahoma, sans-serif;
+                                                margin: 0;
+                                                padding: 40px 20px;
+                                                display: flex;
+                                                justify-content: center;
+                                                align-items: center;
+                                                min-height: 100vh;
                                             }}
                                              .email-container {{
-                                                max-width: 600px;
-                                                margin: auto;
                                                 background: #ffffff;
-                                                padding: 20px;
-                                                border-radius: 8px;
-                                                box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                                                max-width: 600px;
+                                                width: 100%;
+                                                padding: 30px 25px;
+                                                border-radius: 10px;
+                                                box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
                                                 border: 1px solid #ddd;
+                                                box-sizing: border-box;
                                              }}
                                             .header {{
                                                 text-align: center;
-                                                padding-bottom: 20px;
-                                                border-bottom: 1px solid #ddd; 
+                                                margin-bottom: 20px;
+                                                border-bottom: 1px solid #eee;
                                             }}
                                             .header img {{
-                                                max-width: 150px;
-                                                display:flex;
-                                                margin:0 auto;
+                                               height: 40px;
+                                               width: auto;
+                                               margin-bottom: 10px;
+                                            }}
+                                            .email-logo {{
+                                                width: 40%;
+                                                display: block;
+                                                margin: 20px auto;
                                             }}
                                              h2 {{
-                                               color: #2c3e50;  
+                                               color: #2c3e50;
+                                                text-align: center;
                                              }}
                                              p {{
-                                                color: #555555;
+                                                color: #555;
                                                 font-size: 16px;
                                                 line-height: 1.6;
+                                                text-align: center;
                                              }}
-                                             .btn {{
+                                             .goInterviewbtnStyle {{
                                                 display: inline-block;
                                                 background: #db2777;
-                                                color: #FFFFFF;
+                                                color: #fff;
                                                 text-decoration: none;
-                                                padding: 10px 15px;
+                                                padding: 12px 20px;
                                                 border-radius: 5px;
                                                 font-weight: bold;
-                                                margin-top: 10px; 
+                                                margin: 20px auto 10px;
+                                                text-align: center;
                                              }}
-                                             .btn:hover {{
-                                                 background: #0056b3;
-                                                 color: #FFFFFF;
+                                             .goInterviewbtnStyle:hover {{
+                                                 background-color: #0056b3;
+                                                 color:#fff;
                                              }}
-                                            .email-logo {{
-                                                max-width:300px;
-                                                height:auto;
-                                                width:100%;
-                                                margin-bottom: 20px;
-                                                display:flex;
-                                                justify-content:center;
-                                                margin:0 auto;
-                                            }}
-                                            .logo_style{{
-                                                height:40px;
-                                                width:auto;
-                                            }}
                                             
                                             @media only screen and (max-width: 600px) {{
-                                                .email_logo_lead {{
-                                                    width: 100% !important;
+                                                .email-logo {{
+                                                    width: 80% !important;
                                                 }}
                                         }}
                                         </style>
-                                        <body>
-                                            <table role="presentation" cellspacing="0" cellpadding="0">
-                                                <tr>
-                                                    <td align="left">
-                                                        <div class="email-container">
-                                                        <div class="header">
-                                                            <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style"/>
+                                        </head>
+                                        <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+                                          
+                                                    <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box;">
+                                                        <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
+                                                            <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" style="height: 40px; width: auto; margin-bottom: 10px;"/>
                                                         </div>
-                                                         <img src="https://ascencia-interview.com/static/img/email_template_icon/notification.png" alt="Zoho Lead Update" class="email_logo_lead" style="width:60%;"/>
-                                                            <h2>Zoho Lead Update Notification</h2>
-                                                            <p>Dear {zoho_full_name},</p>
-                                                            <p>The lead update was successful.</p>
-                                                            <p>Click the button below to proceed:</p>
-                                                            <a href="{ interview_url }" class="btn">Go to Interview</a>
-                                                            <p>If you have any questions, please contact support.</p>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            </table>
+                                                         <img src="https://ascencia-interview.com/static/img/email_template_icon/notification.png" alt="Zoho Lead Update" class="email-logo" style="width: 50%; display: block; margin: 20px auto;"/>
+                                                            <h2 style="color: #2c3e50; text-align: center;">Zoho Lead Update Notification</h2>
+                                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Dear <span style="font-weight:bold;">{zoho_full_name},</span></p>
+                                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">The lead update was successful.</p>
+                                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Click the button below to proceed:</p>
+                                                            <div style="text-align: center;">
+                                                                <a href="{ interview_url }" class="goInterviewbtnStyle" style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: center;">Go to Interview</a>
+                                                            </div>
+                                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">If you have any questions, please contact support.</p>
+                                                    </div>
+                                                    
                                     </body>
-                                    </head>
+                                    
                                 </html>
                             """,
-                        recipient=["abdullah@angel-portal.com"],
+                        recipient=["ankita@angel-portal.com"],
                         # cc=["admin@example.com", "hr@example.com"]  # CC recipients
                     )
 
@@ -934,31 +929,29 @@ def process_document(request):
                                         }}
                                 </style>
                             </head>
-                            <body>
-                                <table role="presentation" cellspacing="0" cellpadding="0">
-                                    <tr>
-                                        <td>
-                                            <div class="email-container">
-                                                <div class="header">
-                                                    <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.svg" alt="Company Logo" class="logo_style">
+                            <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+                                
+                                            <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box;">
+                                                <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
+                                                    <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.svg" alt="Company Logo" class="logo_style" style="height: 40px; width: auto; margin-bottom: 10px;">
                                                 </div>
-                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/doc_verified.png" alt="Document Verified" class="email-logo" class="email_logo_lead" style="width:60%;"/>
-                                                <h2>Document Verification Completed</h2>
-                                                <p>Dear {student_manager_name},</p>
-                                                <p>The document verification process for <strong>{zoho_full_name}</strong> has been successfully completed.</p>
+                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/doc_verified.png" alt="Document Verified" class="email-logo" class="email_logo_lead" style="width: 50%; display: block; margin: 20px auto;"/>
+                                                <h2 style="color: #2c3e50; text-align: center;">Document Verification Completed</h2>
+                                                <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Dear <span style="font-weight:bold">{student_manager_name},</span></p>
+                                                <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">The document verification process for <strong>{zoho_full_name}</strong> has been successfully completed.</p>
                                                 
-                                                <p><strong>Next Step:</strong> The student is now eligible for the interview process.</p>
+                                                <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;"><strong>Next Step:</strong> The student is now eligible for the interview process.</p>
                                                 
-                                                <p>Click below to review verification details:</p>
-                                                <a href="https://ascencia-interview.com/studentmanagerpanel/student/{zoho_lead_id}" class="btn">View Verification Details</a>
+                                                <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Click below to review verification details:</p>
+                                                  <div style="text-align: center;">
+                                                    <a href="https://ascencia-interview.com/studentmanagerpanel/student/{zoho_lead_id}" class="btn" style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: center;">View Verification Details</a>
+                                                  </div>
                                             </div>
-                                        </td>
-                                    </tr>
-                                </table>
+                                       
                             </body>
                             </html>
                         """,
-                        recipient=["abdullah@angel-portal.com"],
+                        recipient=["ankita@angel-portal.com"],
                         # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
                     )
                     
@@ -1052,26 +1045,24 @@ def process_document(request):
                                             }}
                             </style>
                         </head>
-                        <body>
-                            <table role="presentation" cellspacing="0" cellpadding="0">
-                                <tr>
-                                    <td>
-                                        <div class="email-container">
-                                            <div class="header">
-                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style">
+                        <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+                           
+                                        <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box;">
+                                            <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
+                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style" style="height: 40px; width: auto; margin-bottom: 10px;">
                                             </div>
                                             <img src="https://ascencia-interview.com/static/img/email_template_icon/doc_rejected.png" 
-                                                alt="Document Rejected" class="email_logo_lead" style="width:60%;"/>
-                                            <h2>Document Verification Rejected</h2>
-                                            <p>Dear {student_manager_name},</p>
-                                            <p>The document verification process for <strong>{zoho_full_name}</strong> has been <strong>rejected</strong>.</p>
+                                                alt="Document Rejected" class="email_logo_lead" style="width: 50%; display: block; margin: 20px auto;"/>
+                                            <h2 style="color: #2c3e50; text-align: center;">Document Verification Rejected</h2>
+                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Dear <span style="font-weight:bold">{student_manager_name},</span></p>
+                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">The document verification process for <strong>{zoho_full_name}</strong> has been <strong>rejected</strong>.</p>
                                             
-                                            <p>Click below to review rejection details:</p>
-                                            <a href="https://ascencia-interview.com/studentmanagerpanel/student/{zoho_lead_id}" class="btn">View Rejection Details</a>
+                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Click below to review rejection details:</p>
+                                             <div style="text-align: center;">
+                                                <a href="https://ascencia-interview.com/studentmanagerpanel/student/{zoho_lead_id}" class="btn"  style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: center;">View Rejection Details</a>
+                                             </div>
                                         </div>
-                                    </td>
-                                </tr>
-                            </table>
+                                   
                         </body>
                         </html>
                     """,

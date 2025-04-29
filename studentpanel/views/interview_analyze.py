@@ -43,7 +43,8 @@ from fuzzywuzzy import fuzz
 from datetime import datetime
 
 # ✅ Paths (Update as per your system)
-FFMPEG_PATH = r"C:\ffmpeg-2025-02-20-git-bc1a3bfd2c-full_build\bin\ffmpeg.exe"
+# FFMPEG_PATH = r"C:\ffmpeg-2025-02-20-git-bc1a3bfd2c-full_build\bin\ffmpeg.exe"
+FFMPEG_PATH = "/usr/bin/ffmpeg"
 # VOSK_MODEL_PATH = r"C:\Users\angel\Downloads\vosk-model-small-en-us-0.15\vosk-model-small-en-us-0.15"
 
 # ✅ Initialize Vosk Model
@@ -456,7 +457,9 @@ def check_answers(zoho_lead_id):
         print("No student records found.")
         return
 
-    model_path = "C:/Users/angel/Ascencia_Interviews/ascencia_interviews/studentpanel/models/mistral-7b-instruct-v0.2.Q2_K.gguf"
+    # model_path = "C:/Users/angel/Ascencia_Interviews/ascencia_interviews/studentpanel/models/mistral-7b-instruct-v0.2.Q2_K.gguf"
+    model_path = "public_html/studentpanel/models/mistral-7b-instruct-v0.2.Q2_K.gguf"
+    
 
     if not os.path.exists(model_path):
         print("AI model path does not exist.")
@@ -804,7 +807,7 @@ def merge_videos(zoho_lead_id, base_uploads_folder="C:/xampp/htdocs/ascencia_int
                     </body>
                     </html>
                 """,
-            recipient=["abdullah@angel-portal.com"],
+            recipient=["ankita@angel-portal.com"],
             # cc=["admin@example.com", "hr@example.com"]  # CC recipients
         )
         return f"video_id: {video_id}"  
