@@ -214,7 +214,7 @@ const Questions = () => {
       submitExam();
       setTimeout(()=>{
         navigate("/interviewsubmitted");
-      },10000)
+      },30000)
       
     } catch (error) {
       console.error("Error in handleSubmit:", error);
@@ -250,9 +250,9 @@ const Questions = () => {
     //   navigate("/interviewsubmitted");
     // }
     setTimeout(() => {
-      console.log("✅ Navigating to interviewsubmitted after 10 seconds...");
+      console.log("✅ Navigating to interviewsubmitted after 30 seconds...");
       navigate("/interviewsubmitted");
-    }, 10000);
+    }, 30000);
 
     try {
       await stopRecording(
@@ -350,7 +350,7 @@ const Questions = () => {
 
   // ************ User Spent More Than 30 seconds then navigation enabled ****************
   useEffect(() => {
-    if (timeSpent >= 5) {
+    if (timeSpent >= 30) {
       setIsNavigationEnabled(true);
     } else {
       setIsNavigationEnabled(false);

@@ -1066,7 +1066,7 @@ def process_document(request):
                         </body>
                         </html>
                     """,
-                    recipient=["abdullah@angel-portal.com"],
+                    recipient=["ankita@angel-portal.com"],
                     # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
                 )
                 return JsonResponse({"message": "Success", "result": result}, status=200)
