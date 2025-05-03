@@ -115,7 +115,7 @@ def interview_attend(request):
             if expires_at <= current_time:
                 return JsonResponse({
                     "status": True, 
-                    "message": "Interview link has expired dssd.",
+                    "message": "Interview link has expired.",
                     "expired_date": expires_at.strftime('%Y-%m-%d %H:%M:%S %Z')
                 }, status=410)
             else:
@@ -128,17 +128,17 @@ def interview_attend(request):
                         "status": True,
                         "message": "Interview link has expired.",
                     }, status=410)  # 410 GONE
-                else: 
-                    data = {
-                      'interview_attend': True,  # Boolean value (not string)
-                      'is_expired': True        # Boolean value (not string)
-                    } 
+             
+                    # data = {
+                    #   'interview_attend': True,  # Boolean value (not string)
+                    #   'is_expired': True        # Boolean value (not string)
+                    # } 
 
-                    result = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).update(**data)
-                    if result == 1:
-                        return JsonResponse({"status": data, "message": "Interview attendance updated successfully"}, status=200)
-                    else:
-                        return JsonResponse({"status": data, "message": "Failed to update interview attendance"}, status=500)
+                    # result = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).update(**data)
+                    # if result == 1:
+                    #     return JsonResponse({"status": data, "message": "Interview attendance updated successfully"}, status=200)
+                    # else:
+                    #     return JsonResponse({"status": data, "message": "Failed to update interview attendance"}, status=500)
 
         except StudentInterviewLink.DoesNotExist:
             return JsonResponse({"status": False, "message": "Student interview record not found."}, status=404)

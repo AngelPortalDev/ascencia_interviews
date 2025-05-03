@@ -341,6 +341,13 @@ def interview_add_video_path(request):
             }
             
             result = save_data(StudentInterviewAnswers, data_to_save)
+
+            data = {
+                'interview_attend': True,  # Boolean value (not string)
+                'is_expired': True        # Boolean value (not string)
+            } 
+
+            result_student = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).update(**data)
             async_task(analyze_video(video_path,question_id,zoho_lead_id,last_question_id))
             # print(r'result:', result)
 
@@ -919,7 +926,7 @@ def analyze_video(video_path,question_id,zoho_lead_id,last_question_id):
            
             if int(last_question_id) == int(question_id) and grammar_results.get('grammar_accuracy', 0.0) > 0.0:
                 async_task(merge_videos(zoho_lead_id))
-                async_task(check_answers(zoho_lead_id))
+                # async_task(check_answers(zoho_lead_id))
                 # async_task("studentpanel.views.interview_process.merge_videos",zoho_lead_id)
                 # async_task("studentpanel.views.interview_analyze.check_answers",zoho_lead_id)
                 # print(async_task(check_answers("5204268000112707003")))
