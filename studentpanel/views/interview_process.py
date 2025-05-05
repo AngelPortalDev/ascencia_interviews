@@ -128,7 +128,7 @@ def interview_attend(request):
                         "status": True,
                         "message": "Interview link has expired.",
                     }, status=410)  # 410 GONE
-             
+                else:
                     # data = {
                     #   'interview_attend': True,  # Boolean value (not string)
                     #   'is_expired': True        # Boolean value (not string)
@@ -138,7 +138,7 @@ def interview_attend(request):
                     # if result == 1:
                     #     return JsonResponse({"status": data, "message": "Interview attendance updated successfully"}, status=200)
                     # else:
-                    #     return JsonResponse({"status": data, "message": "Failed to update interview attendance"}, status=500)
+                    return JsonResponse({"status": data, "message": "Interview attendance updated successfully"}, status=200)
 
         except StudentInterviewLink.DoesNotExist:
             return JsonResponse({"status": False, "message": "Student interview record not found."}, status=404)
