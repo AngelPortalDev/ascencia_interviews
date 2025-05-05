@@ -11,7 +11,7 @@ from django_q.tasks import async_task
 
 
 def get_uploads_folder():
-    project_root = os.path.abspath(os.path.join(os.path.dirname(_file_), "../../"))
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
     uploads_folder = os.path.join(project_root, "uploads", "interview_videos")
     return uploads_folder.replace("\\", "/")
 
@@ -107,7 +107,7 @@ def merge_videos(zoho_lead_id):
         student.bunny_stream_video_id = video_id
         student.save()
 
-        url = f"{settings.ADMIN_BASE_URL}/adminpanel/student/{zoho_lead_id}/"
+        url = f"{settings.ADMIN_BASE_URL}/uploads/interview_videos/{zoho_lead_id}/merge_videos.webm"
 
         send_email(
             subject="Interview Process Completed",
