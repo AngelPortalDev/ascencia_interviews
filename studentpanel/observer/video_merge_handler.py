@@ -103,26 +103,50 @@ def merge_videos(zoho_lead_id):
         subprocess.run(merge_command, shell=True, check=True)
 
         video_id = upload_to_bunnystream(output_path)
-        student = Students.objects.get(zoho_lead_id=zoho_lead_id)
-        student.bunny_stream_video_id = video_id
-        student.save()
+        # student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        # student.bunny_stream_video_id = video_id
+        # student.save()
 
         url = f"{settings.ADMIN_BASE_URL}/uploads/interview_videos/{zoho_lead_id}/merge_videos.webm"
 
         send_email(
             subject="Interview Process Completed",
             message=f"""
-                <html>
-                <body>
-                    <h2>Interview Process Completed</h2>
-                    <p>The interview process has been successfully completed.</p>
-                    <p><a href="{url}">Check Interview Video</a></p>
-                </body>
-                </html>
-            """,
-            recipient=["ankita@angel-portal.com"]
+                    <html>
+                    <body>
+                         <table role="presentation" cellspacing="0" cellpadding="0" width="100%">
+                            <tr>
+                                <td align="center">
+                                    <div class="email-container">
+                                        <!-- Logo Header -->
+                                        <div class="header">
+                                            <img src="One.png" alt="Company Logo">
+                                        </div>
+                                         <img src="{{ STATIC_URL }}img/email_template_icon/doc_verified.png" alt="Document Verified" class="email-logo"/>
+                                        <!-- Main Content -->
+                                        <h2>Interview Process Completed</h2>
+                                        <p>Dear User,</p>
+                                        <p>The interview process has been successfully completed.</p>
+                                        <p>Please review the interview video using the button below:</p>
+                                        <!-- CTA Button -->
+                                        <div class="btn-container">
+                                            <a href="{{ url }}" class="btn">Check Interview Video</a>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                        
+                    </body>
+                    </html>
+                """,
+            recipient=["ankita@angel-portal.com"],
+            # cc=["admin@example.com", "hr@example.com"]  # CC recipients
         )
 
+        student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        student.bunny_stream_video_id = video_id
+        student.save()
         return f"video_id: {video_id}"
 
     except subprocess.CalledProcessError as e:
