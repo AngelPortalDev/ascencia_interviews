@@ -214,7 +214,7 @@ const Questions = () => {
       submitExam();
       setTimeout(()=>{
         navigate("/interviewsubmitted");
-      },30000)
+      },50000)
       
     } catch (error) {
       console.error("Error in handleSubmit:", error);

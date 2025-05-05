@@ -348,8 +348,8 @@ def interview_add_video_path(request):
             } 
 
             result_student = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).update(**data)
-            async_task(analyze_video(video_path,question_id,zoho_lead_id,last_question_id))
-            # print(r'result:', result)
+            # async_task(analyze_video(video_path,question_id,zoho_lead_id,last_question_id))
+        
 
             if result['status']:
                 return JsonResponse({"status": True, "message": "Student updated successfully!"}, status=200)
