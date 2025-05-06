@@ -583,7 +583,7 @@ def process_document(request):
                           
                                         <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box; margin:0 auto;">
                                             <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
-                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style" style="height: 40px; width: auto; margin-bottom: 10px;">
+                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Malta" class="logo_style" style="height: 40px; width: auto; margin-bottom: 10px;">
                                             </div>
                                             <img src="https://ascencia-interview.com/static/img/email_template_icon/doc_rejected.png" 
                                                 alt="Document Rejected" class="email_logo_lead" style="width: 50%; display: block; margin: 20px auto;"/>
@@ -699,7 +699,7 @@ def process_document(request):
                         
                                         <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box; margin:0 auto;">
                                             <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
-                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style" style="height: 40px; width: auto; margin-bottom: 10px;">
+                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Malta" class="logo_style" style="height: 40px; width: auto; margin-bottom: 10px;">
                                             </div>
                                             <img src="https://ascencia-interview.com/static/img/email_template_icon/doc_rejected.png" 
                                                 alt="Document Rejected" class="email_logo_lead" style="width: 50%; display: block; margin: 20px auto;"/>
@@ -838,7 +838,7 @@ def process_document(request):
                                           
                                                     <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box; margin:0 auto;">
                                                         <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
-                                                            <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" style="height: 40px; width: auto; margin-bottom: 10px;"/>
+                                                            <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Malta" style="height: 40px; width: auto; margin-bottom: 10px;"/>
                                                         </div>
                                                          <img src="https://ascencia-interview.com/static/img/email_template_icon/notification.png" alt="Zoho Lead Update" class="email-logo" style="width: 50%; display: block; margin: 20px auto;"/>
                                                             <h2 style="color: #2c3e50; text-align: center;">Zoho Lead Update Notification</h2>
@@ -934,7 +934,7 @@ def process_document(request):
                                 
                                             <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box; margin:0 auto;">
                                                 <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
-                                                    <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.svg" alt="Company Logo" class="logo_style" style="height: 40px; width: auto; margin-bottom: 10px;">
+                                                    <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Company Logo" class="logo_style" style="height: 40px; width: auto; margin-bottom: 10px;">
                                                 </div>
                                                 <img src="https://ascencia-interview.com/static/img/email_template_icon/doc_verified.png" alt="Document Verified" class="email-logo" class="email_logo_lead" style="width: 50%; display: block; margin: 20px auto;"/>
                                                 <h2 style="color: #2c3e50; text-align: center;">Document Verification Completed</h2>
@@ -1050,7 +1050,7 @@ def process_document(request):
                            
                                         <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box; margin:0 auto;">
                                             <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
-                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style" style="height: 40px; width: auto; margin-bottom: 10px;">
+                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Malta" class="logo_style" style="height: 40px; width: auto; margin-bottom: 10px;">
                                             </div>
                                             <img src="https://ascencia-interview.com/static/img/email_template_icon/doc_rejected.png" 
                                                 alt="Document Rejected" class="email_logo_lead" style="width: 50%; display: block; margin: 20px auto;"/>

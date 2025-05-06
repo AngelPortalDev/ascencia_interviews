@@ -214,7 +214,7 @@ const Questions = () => {
       submitExam();
       setTimeout(()=>{
         navigate("/interviewsubmitted");
-      },50000)
+      },60000)
       
     } catch (error) {
       console.error("Error in handleSubmit:", error);
@@ -252,7 +252,7 @@ const Questions = () => {
     setTimeout(() => {
       console.log("✅ Navigating to interviewsubmitted after 30 seconds...");
       navigate("/interviewsubmitted");
-    }, 30000);
+    }, 60000);
 
     try {
       await stopRecording(

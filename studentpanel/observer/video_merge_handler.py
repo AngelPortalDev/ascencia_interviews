@@ -103,44 +103,47 @@ def merge_videos(zoho_lead_id):
         subprocess.run(merge_command, shell=True, check=True)
 
         video_id = upload_to_bunnystream(output_path)
+        print(video_id)
         # student = Students.objects.get(zoho_lead_id=zoho_lead_id)
         # student.bunny_stream_video_id = video_id
         # student.save()
 
         url = f"{settings.ADMIN_BASE_URL}/uploads/interview_videos/{zoho_lead_id}/merge_videos.webm"
+        video_path = f"/home/ascenciaintervie/public_html/uploads/interview_videos/{zoho_lead_id}/merge_videos.webm"
 
         send_email(
             subject="Interview Process Completed",
             message=f"""
                     <html>
-                    <body>
-                         <table role="presentation" cellspacing="0" cellpadding="0" width="100%">
-                            <tr>
-                                <td align="center">
-                                    <div class="email-container">
-                                        <!-- Logo Header -->
-                                        <div class="header">
-                                            <img src="One.png" alt="Company Logo">
-                                        </div>
-                                         <img src="{{ STATIC_URL }}img/email_template_icon/doc_verified.png" alt="Document Verified" class="email-logo"/>
-                                        <!-- Main Content -->
-                                        <h2>Interview Process Completed</h2>
-                                        <p>Dear User,</p>
-                                        <p>The interview process has been successfully completed.</p>
-                                        <p>Please review the interview video using the button below:</p>
-                                        <!-- CTA Button -->
-                                        <div class="btn-container">
-                                            <a href="{{ url }}" class="btn">Check Interview Video</a>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                        </table>
-                        
+                      <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+                        <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box;margin:0 auto">
+                            
+                            <!-- Logo Header -->
+                            <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
+                            <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Company Logo" style="height: 40px; width: auto; margin-bottom: 10px;">
+                            </div>
+
+                            <!-- Illustration -->
+                            <img src="https://ascencia-interview.com/static/img/email_template_icon/interviewcomplete.png" alt="Document Verified" style="width: 50%; display: block; margin: 20px auto;" />
+
+                            <!-- Heading -->
+                            <h2 style="color: #2c3e50; text-align: center;">Interview Process Completed</h2>
+
+                            <!-- Content -->
+                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Dear User,</p>
+                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">The interview process has been successfully completed.</p>
+                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Please review the interview video using the button below:</p>
+
+                            <!-- Button -->
+                            <div style="text-align: center;">
+                            <a href="{url}" style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: center;">Check Interview Video</a>
+                            </div>
+                        </div>
                     </body>
                     </html>
                 """,
             recipient=["ankita@angel-portal.com"],
+            attachments=[video_path]
             # cc=["admin@example.com", "hr@example.com"]  # CC recipients
         )
 
@@ -167,4 +170,7 @@ def handle_student_interview_answer_save(sender, instance, created, **kwargs):
         if int(last_question_id) == int(question_id):
             last_5_answers = sender.objects.filter(zoho_lead_id=zoho_lead_id).order_by('-created_at')[:5]
             if last_5_answers.count() == 5:
+                print("Exactly 5 answers found, triggering video merge.")
                 async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead_id)
+            else:
+                print(f"Only {last_5_answers.count()} answers found. Waiting for more.")
