@@ -581,7 +581,7 @@ def process_document(request):
                         </head>
                         <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
                           
-                                        <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box;">
+                                        <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box; margin:0 auto;">
                                             <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
                                                 <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style" style="height: 40px; width: auto; margin-bottom: 10px;">
                                             </div>
@@ -697,7 +697,7 @@ def process_document(request):
                         </head>
                         <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
                         
-                                        <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box;">
+                                        <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box; margin:0 auto;">
                                             <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
                                                 <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style" style="height: 40px; width: auto; margin-bottom: 10px;">
                                             </div>
@@ -836,7 +836,7 @@ def process_document(request):
                                         </head>
                                         <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;margin:0 auto;">
                                           
-                                                    <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box;">
+                                                    <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box; margin:0 auto;">
                                                         <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
                                                             <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" style="height: 40px; width: auto; margin-bottom: 10px;"/>
                                                         </div>
@@ -932,7 +932,7 @@ def process_document(request):
                             </head>
                             <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
                                 
-                                            <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box;">
+                                            <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box; margin:0 auto;">
                                                 <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
                                                     <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.svg" alt="Company Logo" class="logo_style" style="height: 40px; width: auto; margin-bottom: 10px;">
                                                 </div>
@@ -1048,7 +1048,7 @@ def process_document(request):
                         </head>
                         <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
                            
-                                        <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box;">
+                                        <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box; margin:0 auto;">
                                             <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
                                                 <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.svg" alt="Ascencia Malta" class="logo_style" style="height: 40px; width: auto; margin-bottom: 10px;">
                                             </div>
