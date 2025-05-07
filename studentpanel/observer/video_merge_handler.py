@@ -85,6 +85,7 @@ def merge_videos(zoho_lead_id):
     output_path = os.path.join(uploads_folder, output_filename).replace("\\", "/")
     logging.info("uploads_folder: %s", uploads_folder)
     logging.info("output_filename: %s", output_filename)
+    logging.info("output_path check: %s", output_path)
 
     for video in video_files:
         logging.info("video_list: %s", video)
@@ -114,12 +115,15 @@ def merge_videos(zoho_lead_id):
     logging.info("target_format path target_format list_file_path: %s", list_file_path)
 
     if target_format == "webm":
+        logging.info("enter it: %s", "webm")
         merge_command = f'ffmpeg -f concat -safe 0 -i "{list_file_path}" -c:v libvpx-vp9 -b:v 1M -c:a libopus "{output_path}"'
+        logging.info("merge_command webm : %s", merge_command)
     elif target_format == "mp4":
         merge_command = f'ffmpeg -f concat -safe 0 -i "{list_file_path}" -map 0:v -map 0:a -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -movflags +faststart "{output_path}"'
     elif target_format == "mov":
         merge_command = f'ffmpeg -f concat -safe 0 -i "{list_file_path}" -c:v prores -c:a pcm_s16le "{output_path}"'
     else:
+        logging.info("Unsupported format: %s", target_format)
         return f"Unsupported format: {target_format}"
 
     try:
