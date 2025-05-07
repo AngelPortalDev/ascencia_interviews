@@ -17,6 +17,8 @@ def get_uploads_folder():
 
 
 def convert_video(input_path, output_path, target_format):
+    print("output_path:", output_path)
+    print("target_format path:", target_format)
     if target_format == "webm":
         command = f'ffmpeg -i "{input_path}" -c:v libvpx-vp9 -b:v 1M -c:a libopus "{output_path}"'
     elif target_format == "mp4":
@@ -75,11 +77,16 @@ def merge_videos(zoho_lead_id):
     list_file_path = os.path.join(uploads_folder, "video_list.txt").replace("\\", "/")
     output_filename = f"merged_video.{target_format}"
     output_path = os.path.join(uploads_folder, output_filename).replace("\\", "/")
+    print("uploads_folder:", uploads_folder)
+    print("output_filename:", output_filename)
+    print("target_format:", target_format)
 
     for video in video_files:
+        print("video_list:", video)
         input_path = os.path.join(uploads_folder, video).replace("\\", "/")
+        print("input_path:", input_path)
         output_path_converted = os.path.join(uploads_folder, f"{os.path.splitext(video)[0]}_converted.{target_format}").replace("\\", "/")
-
+        print("output_path_converted:", output_path_converted)
         if not video.endswith(f".{target_format}"):
             convert_video(input_path, output_path_converted, target_format)
             converted_files.append(output_path_converted)
@@ -103,6 +110,7 @@ def merge_videos(zoho_lead_id):
         subprocess.run(merge_command, shell=True, check=True)
 
         video_id = upload_to_bunnystream(output_path)
+        print("video_id",video_id)
         # student = Students.objects.get(zoho_lead_id=zoho_lead_id)
         # student.bunny_stream_video_id = video_id
         # student.save()
@@ -130,7 +138,7 @@ def merge_videos(zoho_lead_id):
                                         <p>Please review the interview video using the button below:</p>
                                         <!-- CTA Button -->
                                         <div class="btn-container">
-                                            <a href="{{ url }}" class="btn">Check Interview Video</a>
+                                            <a href="{ url }" class="btn">Check Interview Video</a>
                                         </div>
                                     </div>
                                 </td>
