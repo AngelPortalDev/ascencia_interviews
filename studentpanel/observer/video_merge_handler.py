@@ -12,13 +12,15 @@ from django_q.tasks import async_task
 
 def get_uploads_folder():
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+    print(r'project_root:', project_root)    
     uploads_folder = os.path.join(project_root, "uploads", "interview_videos")
+    print(r'uploads folder text :', uploads_folder)
     return uploads_folder.replace("\\", "/")
 
 
 def convert_video(input_path, output_path, target_format):
-    print("output_path:", output_path)
-    print("target_format path:", target_format)
+    print(r'output_path:', output_path)
+    print(r'target_format path:', target_format)
     if target_format == "webm":
         command = f'ffmpeg -i "{input_path}" -c:v libvpx-vp9 -b:v 1M -c:a libopus "{output_path}"'
     elif target_format == "mp4":
@@ -62,6 +64,7 @@ def upload_to_bunnystream(video_path):
 
 def merge_videos(zoho_lead_id):
     uploads_folder = os.path.join(get_uploads_folder(), zoho_lead_id)
+    print(r'uploads_folder:', uploads_folder)
 
     if not os.path.exists(uploads_folder):
         return f"Error: Folder {uploads_folder} does not exist."
@@ -71,22 +74,23 @@ def merge_videos(zoho_lead_id):
         return f"Error: No video files found in {uploads_folder}."
 
     first_video_ext = os.path.splitext(video_files[0])[1][1:].lower()
+    print(r'first_video_ext:', first_video_ext)
     target_format = first_video_ext
+    print(r'target_format:', target_format)
 
     converted_files = []
     list_file_path = os.path.join(uploads_folder, "video_list.txt").replace("\\", "/")
     output_filename = f"merged_video.{target_format}"
     output_path = os.path.join(uploads_folder, output_filename).replace("\\", "/")
-    print("uploads_folder:", uploads_folder)
-    print("output_filename:", output_filename)
-    print("target_format:", target_format)
+    print(r'uploads_folder:', uploads_folder)
+    print(r'output_filename:', output_filename)
 
     for video in video_files:
-        print("video_list:", video)
+        print(r'video_list:', video)
         input_path = os.path.join(uploads_folder, video).replace("\\", "/")
-        print("input_path:", input_path)
+        print(r'input_path:', input_path)
         output_path_converted = os.path.join(uploads_folder, f"{os.path.splitext(video)[0]}_converted.{target_format}").replace("\\", "/")
-        print("output_path_converted:", output_path_converted)
+        print(r'output_path_converted:', output_path_converted)
         if not video.endswith(f".{target_format}"):
             convert_video(input_path, output_path_converted, target_format)
             converted_files.append(output_path_converted)
@@ -110,7 +114,7 @@ def merge_videos(zoho_lead_id):
         subprocess.run(merge_command, shell=True, check=True)
 
         video_id = upload_to_bunnystream(output_path)
-        print("video_id",video_id)
+        print(r'video_id',video_id)
         # student = Students.objects.get(zoho_lead_id=zoho_lead_id)
         # student.bunny_stream_video_id = video_id
         # student.save()
@@ -163,16 +167,19 @@ def merge_videos(zoho_lead_id):
 
 @receiver(post_save, sender=StudentInterviewAnswers)
 def handle_student_interview_answer_save(sender, instance, created, **kwargs):
+    print(r'Created',"created")
     if created:
-        print("Observer Triggered")
+        print(r'Observer Triggered',"triggered")
         last_question_id = instance.last_question_id
-        print("Last Question ID:", last_question_id)
+        print(r'Last Question ID:', last_question_id)
         question_id = instance.question_id
-        print("Question ID:", question_id)
+        print(r'Question ID:', question_id)
         zoho_lead_id = instance.zoho_lead_id
-        print("Zoho Lead ID:", zoho_lead_id)
+        print(r'Zoho Lead ID:', zoho_lead_id)
 
         if int(last_question_id) == int(question_id):
+            print(r'last_question_id:', last_question_id)
             last_5_answers = sender.objects.filter(zoho_lead_id=zoho_lead_id).order_by('-created_at')[:5]
+            print(r'last_5_answers_count:', last_5_answers)
             if last_5_answers.count() == 5:
                 async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead_id)
