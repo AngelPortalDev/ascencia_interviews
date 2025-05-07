@@ -93,14 +93,25 @@ def merge_videos(zoho_lead_id):
         output_path_converted = os.path.join(uploads_folder, f"{os.path.splitext(video)[0]}_converted.{target_format}").replace("\\", "/")
         logging.info("output_path_converted: %s", output_path_converted)
         if not video.endswith(f".{target_format}"):
+            logging.info("target_format path video: %s", target_format)
             convert_video(input_path, output_path_converted, target_format)
+            logging.info("ends with : %s", "end with")
+
             converted_files.append(output_path_converted)
+            logging.info("target_format path video input_path output: %s", output_path_converted)
+
         else:
+            logging.info("target_format path video input_path: %s", input_path)
+
             converted_files.append(input_path)
 
     with open(list_file_path, "w") as f:
         for video in converted_files:
             f.write(f"file '{video}'\n")
+            logging.info("target_format path video list: %s", video)
+
+    logging.info("target_format path target_format list: %s", target_format)
+    logging.info("target_format path target_format list_file_path: %s", list_file_path)
 
     if target_format == "webm":
         merge_command = f'ffmpeg -f concat -safe 0 -i "{list_file_path}" -c:v libvpx-vp9 -b:v 1M -c:a libopus "{output_path}"'
@@ -112,6 +123,8 @@ def merge_videos(zoho_lead_id):
         return f"Unsupported format: {target_format}"
 
     try:
+        logging.info("merge_command: %s", merge_command)
+        
         subprocess.run(merge_command, shell=True, check=True)
 
         video_id = upload_to_bunnystream(output_path)
