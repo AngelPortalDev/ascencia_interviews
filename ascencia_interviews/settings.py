@@ -240,7 +240,7 @@ Q_CLUSTER = {
     "name": "DjangoQCluster",
     "workers": 6,  # Slightly fewer workers to avoid overwhelming the system
     "timeout": 600,  # Adjusted timeout to 10 minutes (matches your task duration)
-    "retry": 300,  # Retry failed tasks after 5 minutes (gives time to resolve issues)
+    "retry": 900,  # Retry failed tasks after 5 minutes (gives time to resolve issues)
     "queue_limit": 200,  # Increased queue size to handle more tasks
     "bulk": 10,  # Processes 3 tasks at a time for balanced load
     "orm": "default",  # Use Django ORM for task management

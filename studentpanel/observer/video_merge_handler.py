@@ -8,19 +8,20 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from studentpanel.models.student_interview_answer import StudentInterviewAnswers
 from django_q.tasks import async_task
+import logging
 
-
+logging.basicConfig(level=logging.INFO)
 def get_uploads_folder():
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
-    print(r'project_root:', project_root)    
+    logging.info("project_root: %s", project_root)
     uploads_folder = os.path.join(project_root, "uploads", "interview_videos")
-    print(r'uploads folder text :', uploads_folder)
+    logging.info("uploads folder text: %s", uploads_folder)
     return uploads_folder.replace("\\", "/")
 
 
 def convert_video(input_path, output_path, target_format):
-    print(r'output_path:', output_path)
-    print(r'target_format path:', target_format)
+    logging.info("output_path: %s", output_path)
+    logging.info("target_format path: %s", target_format)
     if target_format == "webm":
         command = f'ffmpeg -i "{input_path}" -c:v libvpx-vp9 -b:v 1M -c:a libopus "{output_path}"'
     elif target_format == "mp4":
@@ -64,7 +65,7 @@ def upload_to_bunnystream(video_path):
 
 def merge_videos(zoho_lead_id):
     uploads_folder = os.path.join(get_uploads_folder(), zoho_lead_id)
-    print(r'uploads_folder:', uploads_folder)
+    logging.info("uploads_folder: %s", uploads_folder)
 
     if not os.path.exists(uploads_folder):
         return f"Error: Folder {uploads_folder} does not exist."
@@ -74,23 +75,23 @@ def merge_videos(zoho_lead_id):
         return f"Error: No video files found in {uploads_folder}."
 
     first_video_ext = os.path.splitext(video_files[0])[1][1:].lower()
-    print(r'first_video_ext:', first_video_ext)
+    logging.info("first_video_ext: %s", first_video_ext)
     target_format = first_video_ext
-    print(r'target_format:', target_format)
+    logging.info("target_format: %s", target_format)
 
     converted_files = []
     list_file_path = os.path.join(uploads_folder, "video_list.txt").replace("\\", "/")
     output_filename = f"merged_video.{target_format}"
     output_path = os.path.join(uploads_folder, output_filename).replace("\\", "/")
-    print(r'uploads_folder:', uploads_folder)
-    print(r'output_filename:', output_filename)
+    logging.info("uploads_folder: %s", uploads_folder)
+    logging.info("output_filename: %s", output_filename)
 
     for video in video_files:
-        print(r'video_list:', video)
+        logging.info("video_list: %s", video)
         input_path = os.path.join(uploads_folder, video).replace("\\", "/")
-        print(r'input_path:', input_path)
+        logging.info("input_path: %s", input_path)
         output_path_converted = os.path.join(uploads_folder, f"{os.path.splitext(video)[0]}_converted.{target_format}").replace("\\", "/")
-        print(r'output_path_converted:', output_path_converted)
+        logging.info("output_path_converted: %s", output_path_converted)
         if not video.endswith(f".{target_format}"):
             convert_video(input_path, output_path_converted, target_format)
             converted_files.append(output_path_converted)
@@ -114,7 +115,7 @@ def merge_videos(zoho_lead_id):
         subprocess.run(merge_command, shell=True, check=True)
 
         video_id = upload_to_bunnystream(output_path)
-        print(r'video_id',video_id)
+        logging.info("video_id: %s", video_id)
         # student = Students.objects.get(zoho_lead_id=zoho_lead_id)
         # student.bunny_stream_video_id = video_id
         # student.save()
@@ -167,15 +168,15 @@ def merge_videos(zoho_lead_id):
 
 @receiver(post_save, sender=StudentInterviewAnswers)
 def handle_student_interview_answer_save(sender, instance, created, **kwargs):
-    print(r'Created',"created")
+    logging.info("Created: %s", "Created")
     if created:
-        print(r'Observer Triggered',"triggered")
+        logging.info("Observer Triggered: %s", "triggered")
         last_question_id = instance.last_question_id
-        print(r'Last Question ID:', last_question_id)
+        logging.info("Last Question ID: %s", last_question_id)
         question_id = instance.question_id
-        print(r'Question ID:', question_id)
+        logging.info("Question ID: %s", question_id)
         zoho_lead_id = instance.zoho_lead_id
-        print(r'Zoho Lead ID:', zoho_lead_id)
+        logging.info("Zoho Lead ID: %s", zoho_lead_id)
 
         if int(last_question_id) == int(question_id):
             print(r'last_question_id:', last_question_id)
