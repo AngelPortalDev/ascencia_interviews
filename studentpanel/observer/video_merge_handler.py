@@ -36,26 +36,35 @@ def convert_video(input_path, output_path, target_format):
 
 def upload_to_bunnystream(video_path):
     video_name = os.path.basename(video_path)
+    logging.info("video_name: %s", video_name)
+    logging.info("bunny stream library id: %s", settings.BUNNY_STREAM_LIBRARY_ID)
+    logging.info("bunny stream library api key : %s", settings.BUNNY_STREAM_API_KEY)
 
     create_url = f"https://video.bunnycdn.com/library/{settings.BUNNY_STREAM_LIBRARY_ID}/videos"
     headers = {
         "AccessKey": settings.BUNNY_STREAM_API_KEY,
         "Content-Type": "application/json"
     }
+    logging.info("bunny stream library create_url : %s", create_url)
 
     response = requests.post(create_url, json={"title": video_name}, headers=headers)
+    logging.info("bunny stream library response : %s", response)
     video_id = response.json().get("guid")
+    logging.info("bunny stream library video_id : %s", video_id)
     if not video_id:
         return "Error: Video GUID not received."
 
     upload_url = f"https://video.bunnycdn.com/library/{settings.BUNNY_STREAM_LIBRARY_ID}/videos/{video_id}"
+    logging.info("bunny stream library upload_url : %s", upload_url)
     headers = {
         "AccessKey": settings.BUNNY_STREAM_API_KEY,
         "Content-Type": "application/octet-stream"
     }
 
     with open(video_path, "rb") as video_file:
+        logging.info("bunny stream library video_file : %s", video_file)
         upload_response = requests.put(upload_url, headers=headers, data=video_file)
+        logging.info("bunny stream library upload_response : %s", upload_response)
 
     if upload_response.status_code != 201:
         return f"Error uploading video: {upload_response.text}"
