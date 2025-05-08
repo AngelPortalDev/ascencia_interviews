@@ -51,7 +51,8 @@ INSTALLED_APPS = [
     'django_extensions',
     'commands',
     'django_q',
-    'studentpanel.apps.StudentpanelConfig'
+    
+
 ]
 
 MIDDLEWARE = [
