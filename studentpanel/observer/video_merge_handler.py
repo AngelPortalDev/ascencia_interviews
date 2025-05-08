@@ -140,8 +140,8 @@ def merge_videos(zoho_lead_id):
         
         subprocess.run(merge_command, shell=True, check=True)
 
-        video_id = upload_to_bunnystream(output_path)
-        logging.info("video_id: %s", video_id)
+        # video_id = upload_to_bunnystream(output_path)
+        # logging.info("video_id: %s", video_id)
         # student = Students.objects.get(zoho_lead_id=zoho_lead_id)
         # student.bunny_stream_video_id = video_id
         # student.save()
@@ -183,10 +183,10 @@ def merge_videos(zoho_lead_id):
             # cc=["admin@example.com", "hr@example.com"]  # CC recipients
         )
 
-        student = Students.objects.get(zoho_lead_id=zoho_lead_id)
-        student.bunny_stream_video_id = video_id
-        student.save()
-        return f"video_id: {video_id}"
+        # student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        # student.bunny_stream_video_id = video_id
+        # student.save()
+        return f"video_id: Done"
 
     except subprocess.CalledProcessError as e:
         return f"Error merging videos: {e}"
