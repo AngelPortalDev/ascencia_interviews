@@ -125,7 +125,7 @@ def merge_videos(zoho_lead_id):
 
     if target_format == "webm":
         logging.info("enter it: %s", "webm")
-        merge_command = f'ffmpeg -f concat -safe 0 -i "{list_file_path}" -c:v libvpx-vp9 -b:v 1M -c:a libopus "{output_path}"'
+        merge_command = f'ffmpeg -err_detect ignore_err -f concat -safe 0 -i "{list_file_path}" -c:v libvpx-vp9 -b:v 1M -c:a libopus "{output_path}"'
         logging.info("merge_command webm : %s", merge_command)
     elif target_format == "mp4":
         merge_command = f'ffmpeg -f concat -safe 0 -i "{list_file_path}" -map 0:v -map 0:a -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -movflags +faststart "{output_path}"'
@@ -139,6 +139,9 @@ def merge_videos(zoho_lead_id):
         logging.info("merge_command: %s", merge_command)
         
         subprocess.run(merge_command, shell=True, check=True)
+
+        logging.info("merge_command subprocess: %s", merge_command)
+
 
         # video_id = upload_to_bunnystream(output_path)
         # logging.info("video_id: %s", video_id)
@@ -189,24 +192,25 @@ def merge_videos(zoho_lead_id):
         return f"video_id: Done"
 
     except subprocess.CalledProcessError as e:
+        logging.info("error subprocess: %s", "test error")
         return f"Error merging videos: {e}"
 
 
 @receiver(post_save, sender=StudentInterviewAnswers)
 def handle_student_interview_answer_save(sender, instance, created, **kwargs):
-    logging.info("Created: %s", "Created")
+    # logging.info("Created: %s", "Created")
     if created:
-        logging.info("Observer Triggered: %s", "triggered")
-        last_question_id = instance.last_question_id
-        logging.info("Last Question ID: %s", last_question_id)
-        question_id = instance.question_id
-        logging.info("Question ID: %s", question_id)
+        # logging.info("Observer Triggered: %s", "triggered")
+        # last_question_id = instance.last_question_id
+        # logging.info("Last Question ID: %s", last_question_id)
+        # question_id = instance.question_id
+        # logging.info("Question ID: %s", question_id)
         zoho_lead_id = instance.zoho_lead_id
         logging.info("Zoho Lead ID: %s", zoho_lead_id)
 
-        if int(last_question_id) == int(question_id):
-            print(r'last_question_id:', last_question_id)
-            last_5_answers = sender.objects.filter(zoho_lead_id=zoho_lead_id).order_by('-created_at')[:5]
-            print(r'last_5_answers_count:', last_5_answers)
-            if last_5_answers.count() == 5:
-                async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead_id)
+        # if int(last_question_id) == int(question_id):
+            # print(r'last_question_id:', last_question_id)
+        last_5_answers = sender.objects.filter(zoho_lead_id=zoho_lead_id).order_by('-created_at')[:5]
+        print(r'last_5_answers_count:', last_5_answers)
+        # if last_5_answers.count() == 5:
+        async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead_id)
