@@ -6,6 +6,6 @@ class StudentpanelConfig(AppConfig):
     name = 'studentpanel'
     verbose_name = 'Student Panel'  # Optional: A human-readable name for the app
 
-def ready(self):
+    def ready(self):    
         import studentpanel.observer.video_merge_handler  # Ensures signals are registered
  

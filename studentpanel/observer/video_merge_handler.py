@@ -198,19 +198,28 @@ def merge_videos(zoho_lead_id):
 
 @receiver(post_save, sender=StudentInterviewAnswers)
 def handle_student_interview_answer_save(sender, instance, created, **kwargs):
-    # logging.info("Created: %s", "Created")
     if created:
-        # logging.info("Observer Triggered: %s", "triggered")
-        # last_question_id = instance.last_question_id
-        # logging.info("Last Question ID: %s", last_question_id)
-        # question_id = instance.question_id
-        # logging.info("Question ID: %s", question_id)
+        # Run your custom logic here when a new StudentInterviewAnswer is created
+        print(f'New answer created: {instance}')
         zoho_lead_id = instance.zoho_lead_id
-        logging.info("Zoho Lead ID: %s", zoho_lead_id)
-
-        # if int(last_question_id) == int(question_id):
-            # print(r'last_question_id:', last_question_id)
         last_5_answers = sender.objects.filter(zoho_lead_id=zoho_lead_id).order_by('-created_at')[:5]
-        print(r'last_5_answers_count:', last_5_answers)
-        # if last_5_answers.count() == 5:
         async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead_id)
+    else:
+        # Handle updates to existing answers
+        print(f'Answer updated: {instance}')
+    # logging.info("Created: %s", "Created")
+    # if created:
+    #     # logging.info("Observer Triggered: %s", "triggered")
+    #     # last_question_id = instance.last_question_id
+    #     # logging.info("Last Question ID: %s", last_question_id)
+    #     # question_id = instance.question_id
+    #     # logging.info("Question ID: %s", question_id)
+    #     zoho_lead_id = instance.zoho_lead_id
+    #     logging.info("Zoho Lead ID: %s", zoho_lead_id)
+
+    #     # if int(last_question_id) == int(question_id):
+    #         # print(r'last_question_id:', last_question_id)
+    #     last_5_answers = sender.objects.filter(zoho_lead_id=zoho_lead_id).order_by('-created_at')[:5]
+    #     print(r'last_5_answers_count:', last_5_answers)
+    #     # if last_5_answers.count() == 5:
+    #     async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead_id)
