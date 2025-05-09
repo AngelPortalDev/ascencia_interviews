@@ -129,7 +129,7 @@ def merge_videos(zoho_lead_id):
 
     if target_format == "webm":
         logging.info("enter it: %s", "webm")
-        merge_command = f'ffmpeg -err_detect ignore_err -f concat -safe 0 -i "{list_file_path}" -c:v libvpx-vp9 -b:v 1M -c:a libopus "{output_path}"'
+        merge_command = f'ffmpeg -err_detect ignore_err -f concat -safe 0 -i "{list_file_path}" -c:v libvpx-vp9 -b:v 10M -c:a libopus "{output_path}"'
         logging.info("merge_command webm : %s", merge_command)
     elif target_format == "mp4":
         merge_command = f'ffmpeg -f concat -safe 0 -i "{list_file_path}" -map 0:v -map 0:a -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -movflags +faststart "{output_path}"'
@@ -145,7 +145,7 @@ def merge_videos(zoho_lead_id):
         subprocess.run(merge_command, shell=True, check=True)
 
         logging.info("merge_command subprocess: %s", merge_command)
-
+   
 
         # video_id = upload_to_bunnystream(output_path)
         # logging.info("video_id: %s", video_id)
@@ -180,7 +180,7 @@ def merge_videos(zoho_lead_id):
 
                             <!-- Button -->
                             <div style="text-align: center;">
-                            <a href="{{ url }}" style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: center;">Check Interview Video</a>
+                            <a href="{url}" style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: center;">Check Interview Video</a>
                             </div>
                         </div>
                     </body>
