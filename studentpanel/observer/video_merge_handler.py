@@ -79,7 +79,11 @@ def merge_videos(zoho_lead_id):
     if not os.path.exists(uploads_folder):
         return f"Error: Folder {uploads_folder} does not exist."
 
-    video_files = [f for f in os.listdir(uploads_folder) if f.endswith((".webm", ".mp4", ".mov"))]
+    video_files = sorted(
+        [f for f in os.listdir(uploads_folder) if f.endswith((".webm", ".mp4", ".mov"))],
+        key=lambda x: os.path.getctime(os.path.join(uploads_folder, x))
+    )
+
     if not video_files:
         return f"Error: No video files found in {uploads_folder}."
 
@@ -164,7 +168,7 @@ def merge_videos(zoho_lead_id):
                             </div>
 
                             <!-- Illustration -->
-                            <img src=""https://ascencia-interview.com/static/img/email_template_icon/interviewcomplete.png" alt="Document Verified" style="width: 50%; display: block; margin: 20px auto;" />
+                            <img src="https://ascencia-interview.com/static/img/email_template_icon/interviewcomplete.png" alt="Document Verified" style="width: 50%; display: block; margin: 20px auto;" />
 
                             <!-- Heading -->
                             <h2 style="color: #2c3e50; text-align: center;">Interview Process Completed</h2>
@@ -203,7 +207,11 @@ def handle_student_interview_answer_save(sender, instance, created, **kwargs):
         print(f'New answer created: {instance}')
         zoho_lead_id = instance.zoho_lead_id
         last_5_answers = sender.objects.filter(zoho_lead_id=zoho_lead_id).order_by('-created_at')[:5]
-        async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead_id)
+        print(r'last_5_answers_count:', last_5_answers)
+        if last_5_answers.count() == 5:
+            print(r'last_5_answers_count text:', last_5_answers.count())
+        # async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead_id)
+            async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead_id)
     else:
         # Handle updates to existing answers
         print(f'Answer updated: {instance}')
