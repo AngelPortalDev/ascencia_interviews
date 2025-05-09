@@ -350,7 +350,7 @@ const Questions = () => {
 
   // ************ User Spent More Than 30 seconds then navigation enabled ****************
   useEffect(() => {
-    if (timeSpent >= 30) {
+    if (timeSpent >= 5) {
       setIsNavigationEnabled(true);
     } else {
       setIsNavigationEnabled(false);
