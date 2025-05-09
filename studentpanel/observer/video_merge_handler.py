@@ -168,7 +168,7 @@ def merge_videos(zoho_lead_id):
                             </div>
 
                             <!-- Illustration -->
-                            <img src=""https://ascencia-interview.com/static/img/email_template_icon/interviewcomplete.png" alt="Document Verified" style="width: 50%; display: block; margin: 20px auto;" />
+                            <img src="https://ascencia-interview.com/static/img/email_template_icon/interviewcomplete.png" alt="Document Verified" style="width: 50%; display: block; margin: 20px auto;" />
 
                             <!-- Heading -->
                             <h2 style="color: #2c3e50; text-align: center;">Interview Process Completed</h2>
