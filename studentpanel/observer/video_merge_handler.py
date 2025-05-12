@@ -9,7 +9,8 @@ from django.dispatch import receiver
 from studentpanel.models.student_interview_answer import StudentInterviewAnswers
 from django_q.tasks import async_task
 import logging
-
+from django.core.mail import EmailMultiAlternatives
+import mimetypes
 logging.basicConfig(level=logging.INFO)
 def get_uploads_folder():
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
@@ -129,7 +130,7 @@ def merge_videos(zoho_lead_id):
 
     if target_format == "webm":
         logging.info("enter it: %s", "webm")
-        merge_command = f'ffmpeg -err_detect ignore_err -f concat -safe 0 -i "{list_file_path}" -c:v libvpx-vp9 -b:v 10M -c:a libopus "{output_path}"'
+        merge_command = f'ffmpeg -err_detect ignore_err -f concat -safe 0 -i "{list_file_path}" -c:v libvpx-vp9 -b:v 15M -c:a libopus "{output_path}"'
         logging.info("merge_command webm : %s", merge_command)
     elif target_format == "mp4":
         merge_command = f'ffmpeg -f concat -safe 0 -i "{list_file_path}" -map 0:v -map 0:a -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -movflags +faststart "{output_path}"'
@@ -153,42 +154,76 @@ def merge_videos(zoho_lead_id):
         # student.bunny_stream_video_id = video_id
         # student.save()
 
-        url = f"{settings.ADMIN_BASE_URL}/uploads/interview_videos/{zoho_lead_id}/merge_videos.webm"
-
-        send_email(
-            subject="Interview Process Completed",
-            message=f"""
-                    <html>
-                    <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
-                        <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box;margin:0 auto">
-                            
-                            <!-- Logo Header -->
-                            <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
-                            <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Company Logo" style="height: 40px; width: auto; margin-bottom: 10px;">
-                            </div>
-
-                            <!-- Illustration -->
-                            <img src="https://ascencia-interview.com/static/img/email_template_icon/interviewcomplete.png" alt="Document Verified" style="width: 50%; display: block; margin: 20px auto;" />
-
-                            <!-- Heading -->
-                            <h2 style="color: #2c3e50; text-align: center;">Interview Process Completed</h2>
-
-                            <!-- Content -->
-                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Dear User,</p>
-                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">The interview process has been successfully completed.</p>
-                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Please review the interview video using the button below:</p>
-
-                            <!-- Button -->
-                            <div style="text-align: center;">
-                            <a href="{url}" style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: center;">Check Interview Video</a>
-                            </div>
-                        </div>
-                    </body>
-                    </html>
-                """,
-            recipient=["ankita@angel-portal.com"],
-            # cc=["admin@example.com", "hr@example.com"]  # CC recipients
+        # Email configuration
+        video_path = os.path.join(
+            "/home/ascenciaintervie/public_html/uploads/interview_videos",
+            zoho_lead_id,
+            "merged_video.webm"
         )
+
+        # Email configuration
+        subject = "Interview Process Completed"
+        recipient = ["ankita@angel-portal.com"]
+        from_email = "ankita@angel-portal.com"
+        url = video_path  # or your public URL if available
+
+        html_content = f"""
+        <html>
+            <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+                <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box;margin:0 auto">
+                    
+                    <!-- Logo Header -->
+                    <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
+                    <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Company Logo" style="height: 40px; width: auto; margin-bottom: 10px;">
+                    </div>
+
+                    <!-- Illustration -->
+                    <img src="https://ascencia-interview.com/static/img/email_template_icon/interviewcomplete.png" alt="Document Verified" style="width: 50%; display: block; margin: 20px auto;" />
+
+                    <!-- Heading -->
+                    <h2 style="color: #2c3e50; text-align: center;">Interview Process Completed</h2>
+
+                    <!-- Content -->
+                    <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Dear User,</p>
+                    <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">The interview process has been successfully completed.</p>
+                    <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">The interview video is attached. Please review.</p>
+
+                </div>
+            </body>
+        </html>
+        """
+        # Create the email object
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body="Interview process complete. Please view the attached video or click the button.",
+            from_email=from_email,
+            to=recipient,
+        )
+
+        # Attach HTML version
+        email.attach_alternative(html_content, "text/html")
+        print(r"html_content",html_content)
+
+        # Check and attach the video
+        if os.path.exists(video_path):
+            file_size = os.path.getsize(video_path)
+            if file_size < 25 * 1024 * 1024:  # < 25MB
+                print(r"filesize",file_size)
+                with open(video_path, "rb") as f:
+                    mime_type, _ = mimetypes.guess_type(video_path)
+                    email.attach("interview_video.webm", f.read(), mime_type or "application/octet-stream")
+                    print(r"Mime Type",mime_type)
+
+                    logging.info("Video attached successfully.")
+            else:
+                print(r"dfsf","check video")
+                logging.warning("Video is too large to attach. Send only the link.")
+        else:
+            print(r"dfsf","file not found")
+            logging.error(f"File not found: {video_path}")
+
+        # Send email
+        email.send()
 
         # student = Students.objects.get(zoho_lead_id=zoho_lead_id)
         # student.bunny_stream_video_id = video_id
