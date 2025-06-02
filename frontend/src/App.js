@@ -29,6 +29,7 @@ function App() {
   // useEffect(() => {
   //   localStorage.setItem("hasAgreed", hasAgreed);
   // }, [hasAgreed]);
+  
 
   return (
 
