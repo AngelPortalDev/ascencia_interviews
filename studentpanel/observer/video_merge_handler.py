@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.INFO)
 def get_uploads_folder():
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
     logging.info("project_root: %s", project_root)
-    uploads_folder = os.path.join(project_root, "uploads", "interview_videos")
+    uploads_folder = os.path.join(project_root,"static","uploads", "interview_videos")
     logging.info("uploads folder text: %s", uploads_folder)
     return uploads_folder.replace("\\", "/")
 
@@ -67,11 +67,12 @@ def upload_to_bunnystream(video_path):
         upload_response = requests.put(upload_url, headers=headers, data=video_file)
         logging.info("bunny stream library upload_response : %s", upload_response)
 
-    if upload_response.status_code != 201:
-        return f"Error uploading video: {upload_response.text}"
+    if upload_response.status_code == 201:
+         return f"Error uploading video: {upload_response.text}"
+    else:
+        return video_id
 
-    return video_id
-
+    # return video_id
 
 def merge_videos(zoho_lead_id):
     uploads_folder = os.path.join(get_uploads_folder(), zoho_lead_id)
@@ -148,13 +149,21 @@ def merge_videos(zoho_lead_id):
         logging.info("merge_command subprocess: %s", merge_command)
    
 
-        # video_id = upload_to_bunnystream(output_path)
-        # logging.info("video_id: %s", video_id)
-        # student = Students.objects.get(zoho_lead_id=zoho_lead_id)
-        # student.bunny_stream_video_id = video_id
-        # student.save()
+        video_id = upload_to_bunnystream(output_path)
+        logging.info("video_id: %s", video_id)
+        student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        student.bunny_stream_video_id = video_id
+        student.save()
 
         # Email configuration
+        # video_path = os.path.join(
+        #     "/home/ascenciaintervie/public_html/uploads/interview_videos",
+        #     zoho_lead_id,
+        #     "merged_video.webm"
+        # )
+
+
+
         video_path = os.path.join(
             "/home/ascenciaintervie/public_html/uploads/interview_videos",
             zoho_lead_id,
@@ -165,7 +174,9 @@ def merge_videos(zoho_lead_id):
         subject = "Interview Process Completed"
         recipient = ["ankita@angel-portal.com"]
         from_email = "ankita@angel-portal.com"
-        url = video_path  # or your public URL if available
+        # url = video_path  # or your public URL if available
+        url = f"https://video.bunnycdn.com/play/{settings.BUNNY_STREAM_LIBRARY_ID}/{video_id}"
+
 
         html_content = f"""
         <html>
@@ -186,9 +197,15 @@ def merge_videos(zoho_lead_id):
                     <!-- Content -->
                     <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Dear User,</p>
                     <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">The interview process has been successfully completed.</p>
-                    <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">The interview video is attached. Please review.</p>
-
+                    <!-- <p style="color: #555; font-size: 16px; line-h eight: 1.6; text-align: center;">The interview video is attached. Please review.</p>
+                    
+                    <!--change for link -->
+                    <!-- Watch Video Button -->
+                    <div style="text-align: center; margin-top: 30px;">
+                        <a href="{url}" target="_blank" style="background-color: #007bff; color: white; padding: 12px 25px; font-size: 16px; text-decoration: none; border-radius: 5px;">Watch Video</a>
+                    </div>
                 </div>
+                
             </body>
         </html>
         """
@@ -225,9 +242,9 @@ def merge_videos(zoho_lead_id):
         # Send email
         email.send()
 
-        # student = Students.objects.get(zoho_lead_id=zoho_lead_id)
-        # student.bunny_stream_video_id = video_id
-        # student.save()
+        student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        student.bunny_stream_video_id = video_id
+        student.save()
         return f"video_id: Done"
 
     except subprocess.CalledProcessError as e:
@@ -245,8 +262,9 @@ def handle_student_interview_answer_save(sender, instance, created, **kwargs):
         print(r'last_5_answers_count:', last_5_answers)
         if last_5_answers.count() == 5:
             print(r'last_5_answers_count text:', last_5_answers.count())
-        # async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead_id)
             async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead_id)
+            # async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead_id)
+            # async_task(merge_videos, zoho_lead_id)
     else:
         # Handle updates to existing answers
         print(f'Answer updated: {instance}')
@@ -266,3 +284,21 @@ def handle_student_interview_answer_save(sender, instance, created, **kwargs):
     #     print(r'last_5_answers_count:', last_5_answers)
     #     # if last_5_answers.count() == 5:
     #     async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead_id)
+
+
+
+
+# add celery code 
+
+
+# @receiver(post_save, sender=StudentInterviewAnswers)
+# def handle_student_interview_answer_save(sender, instance, created, **kwargs):
+#     if created:
+#         print(f'New answer created: {instance}')
+#         zoho_lead_id = instance.zoho_lead_id
+#         last_5_answers = sender.objects.filter(zoho_lead_id=zoho_lead_id).order_by('-created_at')[:5]
+#         if last_5_answers.count() == 5:
+#             print(f'[SIGNAL] Triggering Celery merge task for: {zoho_lead_id}')
+#             merge_videos_task.delay(str(zoho_lead_id))  # Ensure it's serializable
+#     else:
+#         print(f'Answer updated: {instance}')
