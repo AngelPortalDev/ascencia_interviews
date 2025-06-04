@@ -15,6 +15,7 @@ from django_q.tasks import async_task
 from django.utils import timezone
 from datetime import datetime
 import pytz
+# from studentpanel.tasks import merge_videos_task 
 # from .serializers import QuestionSerializer
 # from .serializers import QuestionSerializer
 # @csrf_exempt
@@ -94,7 +95,7 @@ def interview_attend(request):
         try:
             # Decode the zoho_lead_id
             zoho_lead_id = base64.b64decode(zoho_lead_id_encoded).decode("utf-8")
-            print(zoho_lead_id)
+            # print(zoho_lead_id)
             
             # Fetch student interview record
             student_data = StudentInterviewLink.objects.get(zoho_lead_id=zoho_lead_id)
@@ -158,7 +159,8 @@ def interview_attend(request):
 
 def handle_uploaded_file(file,zoho_lead_id):
 
-    upload_dir = os.path.join(settings.STUDENT_UPLOAD, 'uploads', 'interview_videos', zoho_lead_id)
+    # upload_dir = os.path.join(settings.STUDENT_UPLOAD, 'uploads', 'interview_videos', zoho_lead_id)
+    upload_dir = os.path.join('static', 'uploads', 'interview_videos', zoho_lead_id)
     os.makedirs(upload_dir, exist_ok=True)
     file_path = os.path.join(upload_dir, file.name)
     with open(file_path, 'wb+') as destination:
@@ -187,6 +189,33 @@ def interview_video_upload(request):
     
     return JsonResponse({'error': 'No file part in the request'}, status=400)
 
+
+# @csrf_exempt
+# def interview_video_upload(request):
+#     if request.method == 'POST' and 'file' in request.FILES:
+#         file = request.FILES['file']
+#         encoded_zoho_lead_id = request.POST.get('zoho_lead_id')
+
+#         try:
+#             zoho_lead_id = base64.b64decode(encoded_zoho_lead_id).decode("utf-8")
+#         except Exception as e:
+#             return JsonResponse({"error": f"Failed to decode Base64: {str(e)}"}, status=400)
+
+#         file_path = handle_uploaded_file(file, zoho_lead_id)
+
+#         # Count videos in directory
+#         folder_path = os.path.join(settings.STUDENT_UPLOAD, 'uploads', 'interview_videos', zoho_lead_id)
+#         video_count = len([f for f in os.listdir(folder_path) if f.endswith('.mp4')])
+#         print(video_count)
+
+#         # Trigger merge only when 5 videos are uploaded
+#         if video_count == 5:
+#             print("Triggering Celery task")
+#             merge_videos_task.delay(zoho_lead_id)
+
+#         return JsonResponse({'message': 'File successfully uploaded', 'file_path': file_path})
+    
+#     return JsonResponse({'error': 'No file part in the request'}, status=400)
 
 
 
