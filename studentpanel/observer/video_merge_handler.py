@@ -98,6 +98,9 @@ def merge_videos(zoho_lead_id):
     list_file_path = os.path.join(uploads_folder, "video_list.txt").replace("\\", "/")
     output_filename = f"merged_video.{target_format}"
     output_path = os.path.join(uploads_folder, output_filename).replace("\\", "/")
+    # FFMPEG_PATH = '/home/YOUR_CPANEL_USERNAME/ffmpeg/ffmpeg'
+    # FFMPEG_PATH = 'C:/ffmpeg/bin/ffmpeg.exe'
+    FFMPEG_PATH = '/usr/bin/ffmpeg'
     logging.info("uploads_folder: %s", uploads_folder)
     logging.info("output_filename: %s", output_filename)
     logging.info("output_path check: %s", output_path)
@@ -129,14 +132,36 @@ def merge_videos(zoho_lead_id):
     logging.info("target_format path target_format list: %s", target_format)
     logging.info("target_format path target_format list_file_path: %s", list_file_path)
 
+    # if target_format == "webm":
+    #     logging.info("enter it: %s", "webm")
+    #     merge_command = f'ffmpeg -err_detect ignore_err -f concat -safe 0 -i "{list_file_path}" -c:v libvpx-vp9 -b:v 15M -c:a libopus "{output_path}"'
+    #     logging.info("merge_command webm : %s", merge_command)
+    # elif target_format == "mp4":
+    #     merge_command = f'ffmpeg -f concat -safe 0 -i "{list_file_path}" -map 0:v -map 0:a -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -movflags +faststart "{output_path}"'
+    # elif target_format == "mov":
+    #     merge_command = f'ffmpeg -f concat -safe 0 -i "{list_file_path}" -c:v prores -c:a pcm_s16le "{output_path}"'
+    # else:
+    #     logging.info("Unsupported format: %s", target_format)
+    #     return f"Unsupported format: {target_format}"
+
+    
+    
     if target_format == "webm":
-        logging.info("enter it: %s", "webm")
-        merge_command = f'ffmpeg -err_detect ignore_err -f concat -safe 0 -i "{list_file_path}" -c:v libvpx-vp9 -b:v 15M -c:a libopus "{output_path}"'
-        logging.info("merge_command webm : %s", merge_command)
+        merge_command = (
+            f'{FFMPEG_PATH} -f concat -safe 0 -i "{list_file_path}" '
+            f'-c:v libvpx-vp9 -b:v 1M -c:a libopus "{output_path}"'
+        )
     elif target_format == "mp4":
-        merge_command = f'ffmpeg -f concat -safe 0 -i "{list_file_path}" -map 0:v -map 0:a -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -movflags +faststart "{output_path}"'
+        merge_command = (
+            f'{FFMPEG_PATH} -f concat -safe 0 -i "{list_file_path}" '
+            f'-map 0:v -map 0:a -c:v libx264 -preset veryfast -crf 28 '
+            f'-vf scale=640:-2 -c:a aac -b:a 96k -movflags +faststart "{output_path}"'
+        )
     elif target_format == "mov":
-        merge_command = f'ffmpeg -f concat -safe 0 -i "{list_file_path}" -c:v prores -c:a pcm_s16le "{output_path}"'
+        merge_command = (
+            f'{FFMPEG_PATH} -f concat -safe 0 -i "{list_file_path}" '
+            f'-c:v prores -c:a pcm_s16le "{output_path}"'
+        )
     else:
         logging.info("Unsupported format: %s", target_format)
         return f"Unsupported format: {target_format}"
@@ -165,14 +190,15 @@ def merge_videos(zoho_lead_id):
 
 
         video_path = os.path.join(
-            "/home/ascenciaintervie/public_html/uploads/interview_videos",
+            "/home/ascenciaintervie/public_html/static/uploads/interview_videos",
+            # "C:/xampp/htdocs/vaibhav/ascencia_interviews/static/uploads/interview_videos",
             zoho_lead_id,
             "merged_video.webm"
         )
 
         # Email configuration
         subject = "Interview Process Completed"
-        recipient = ["ankita@angel-portal.com"]
+        recipient = ["vaibhav@angel-portal.com"]
         from_email = "ankita@angel-portal.com"
         # url = video_path  # or your public URL if available
         url = f"https://video.bunnycdn.com/play/{settings.BUNNY_STREAM_LIBRARY_ID}/{video_id}"
