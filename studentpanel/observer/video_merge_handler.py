@@ -99,8 +99,8 @@ def merge_videos(zoho_lead_id):
     output_filename = f"merged_video.{target_format}"
     output_path = os.path.join(uploads_folder, output_filename).replace("\\", "/")
     # FFMPEG_PATH = '/home/YOUR_CPANEL_USERNAME/ffmpeg/ffmpeg'
-    FFMPEG_PATH = 'C:/ffmpeg/bin/ffmpeg.exe'
-    # FFMPEG_PATH = '/usr/bin/ffmpeg'
+    # FFMPEG_PATH = 'C:/ffmpeg/bin/ffmpeg.exe'
+    FFMPEG_PATH = '/usr/bin/ffmpeg'
     logging.info("uploads_folder: %s", uploads_folder)
     logging.info("output_filename: %s", output_filename)
     logging.info("output_path check: %s", output_path)
