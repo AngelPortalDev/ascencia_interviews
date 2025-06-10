@@ -30,7 +30,8 @@ from django.utils.timezone import now
 from datetime import timedelta
 from adminpanel.utils import send_email
 from django.conf import settings
-
+import os
+from django.views.generic import View
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
@@ -486,6 +487,7 @@ def process_document(request):
             serialized_prediction = serialize_field(vars(prediction))
 
             data = {"prediction": {"fields": serialized_prediction}, "program": program}
+            # print("data prediction:",data)
 
             # Name similarity check
             mindee_first_name = data["prediction"]["fields"]["fields"].get("first_name", "").strip().lower()
@@ -499,6 +501,8 @@ def process_document(request):
                 student.mindee_verification_status = "Completed"
                 student.edu_doc_verification_status = "rejected"
                 student.verification_failed_reason = "Name Not Matched"
+
+                print("verification_failed_reason",student.verification_failed_reason)
                 student.save()
                 # if update_zoho_lead(crm_id, zoho_lead_id, update_data):
                 #     print("Lead updated successfully")
@@ -602,7 +606,7 @@ def process_document(request):
                         </body>
                         </html>
                     """,
-                    recipient=["ankita@angel-portal.com"],
+                    recipient=["vaibhav@angel-portal.com"],
                     # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
                 )
                 return JsonResponse({"message": "Success", "result": False}, status=200)
@@ -717,7 +721,7 @@ def process_document(request):
                         </body>
                         </html>
                     """,
-                    recipient=["ankita@angel-portal.com"],
+                    recipient=["vaibhav@angel-portal.com"],
                     # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
                 )
 
@@ -855,7 +859,7 @@ def process_document(request):
                                     
                                 </html>
                             """,
-                        recipient=["ankita@angel-portal.com"],
+                        recipient=["vaibhav@angel-portal.com"],
                         # cc=["admin@example.com", "hr@example.com"]  # CC recipients
                     )
 
@@ -952,13 +956,15 @@ def process_document(request):
                             </body>
                             </html>
                         """,
-                        recipient=["ankita@angel-portal.com"],
+                        recipient=["vaibhav@angel-portal.com"],
                         # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
                     )
                     
                     print("Lead updated successfully")
+                    return JsonResponse({"message": "Success", "result": True}, status=200)
                 else:
                     print("Lead update failed")
+                    return JsonResponse({"error": "Zoho update failed"}, status=500)
             else:
                 update_data = {"Interview_Process": "First Round Interview Hold"}
                 
@@ -1067,7 +1073,7 @@ def process_document(request):
                         </body>
                         </html>
                     """,
-                    recipient=["ankita@angel-portal.com"],
+                    recipient=["vaibhav@angel-portal.com"],
                     # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
                 )
                 return JsonResponse({"message": "Success", "result": result}, status=200)
@@ -1117,3 +1123,14 @@ def fetch_interview_questions(request, crm_id):
     
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
+class FrontendAppView(View):
+    def get(self, request):
+        try:
+            with open(os.path.join(settings.BASE_DIR, 'frontend', 'build', 'index.html'), encoding='utf-8') as f:
+                return HttpResponse(f.read())
+        except FileNotFoundError:
+            return HttpResponse(
+                "React build index.html not found! Please build your React app.",
+                status=501,
+            )
