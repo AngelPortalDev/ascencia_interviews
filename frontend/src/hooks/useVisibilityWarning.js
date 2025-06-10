@@ -25,7 +25,11 @@ const useVisibilityWarning = () => {
             position: "top-center",
             autoClose: 3000,
             hideProgressBar: true,
-            onClose: () => navigate("/interviewsubmitted"),
+            onClose: () =>{
+              localStorage.clear();
+              sessionStorage.clear();
+              navigate("/interviewsubmitted");
+            } 
           });
         }
       }

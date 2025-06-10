@@ -61,6 +61,7 @@ const Questions = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const [showUploading, setShowUploading] = useState(false);
+  const toastId = useRef(null);
 
   // usePageReloadSubmit(
   //   videoRef,
@@ -138,6 +139,37 @@ const Questions = () => {
   useEffect(() => {
     fetchQuestions();
   }, []);
+
+  // 10 sec popup implement
+
+useEffect(() => {
+    if (countdown <= 10 && countdown >= 1) {
+        if (!toastId.current) {
+            toastId.current = toast.warn(`You have only ${countdown} seconds left!`, {
+                position: "top-center",
+                autoClose: false,
+                hideProgressBar: true,
+            });
+        } else {
+            toast.update(toastId.current, {
+                render: `You have only ${countdown} seconds left!`,
+            });
+        }
+
+        if (countdown === 1 && toastId.current) {
+            setTimeout(() => {
+                toast.dismiss(toastId.current);
+                toastId.current = null;
+            }, 900);
+        }
+
+    } else if (countdown === 0 && toastId.current) {
+        toastId.current = null;
+    }
+}, [countdown]);
+
+
+
 
   // ************* Get First Question id *********
 
@@ -219,6 +251,8 @@ const Questions = () => {
       // if (isInterviewSubmitted) {
         localStorage.setItem("interviewSubmitted", "true");
         // submitExam(); // if this sends final answers or flags interview as done
+        localStorage.clear();
+        sessionStorage.clear();
         navigate("/interviewsubmitted");
       // }
     } catch (error) {
@@ -282,6 +316,8 @@ const Questions = () => {
             console.log("✅ All done. Navigating to /interviewsubmitted...");
             localStorage.setItem("interviewSubmitted", "true");
             submitExam();
+            localStorage.clear();
+            sessionStorage.clear();
             navigate("/interviewsubmitted");
           } else {
             console.error("Upload failed or incomplete:", response);
@@ -319,8 +355,10 @@ useEffect(() => {
         console.log("last question reach...")
         setTimeout(() => {
             console.log("🟢 Timeout executed");
-            localStorage.setItem("interviewSubmitted", "true");
+            // localStorage.setItem("interviewSubmitted", "true");
             // submitExam();
+            localStorage.clear();
+            sessionStorage.clear();
             setLoading(false);
             navigate("/interviewsubmitted");
         }, 25000);
@@ -574,6 +612,8 @@ useEffect(() => {
       window.history.pushState(null, null, window.location.href);
     } else {
       // If user confirms, allow navigation (or handle as needed)
+      localStorage.clear();
+      sessionStorage.clear();
       window.location.href = "/interviewsubmitted";
     }
   };
