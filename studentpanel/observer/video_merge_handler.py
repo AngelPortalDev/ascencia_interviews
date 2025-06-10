@@ -99,8 +99,8 @@ def merge_videos(zoho_lead_id):
     output_filename = f"merged_video.{target_format}"
     output_path = os.path.join(uploads_folder, output_filename).replace("\\", "/")
     # FFMPEG_PATH = '/home/YOUR_CPANEL_USERNAME/ffmpeg/ffmpeg'
-    # FFMPEG_PATH = 'C:/ffmpeg/bin/ffmpeg.exe'
-    FFMPEG_PATH = '/usr/bin/ffmpeg'
+    FFMPEG_PATH = 'C:/ffmpeg/bin/ffmpeg.exe'
+    # FFMPEG_PATH = '/usr/bin/ffmpeg'
     logging.info("uploads_folder: %s", uploads_folder)
     logging.info("output_filename: %s", output_filename)
     logging.info("output_path check: %s", output_path)
@@ -168,12 +168,8 @@ def merge_videos(zoho_lead_id):
 
     try:
         logging.info("merge_command: %s", merge_command)
-        
         subprocess.run(merge_command, shell=True, check=True)
-
         logging.info("merge_command subprocess: %s", merge_command)
-   
-
         video_id = upload_to_bunnystream(output_path)
         logging.info("video_id: %s", video_id)
         student = Students.objects.get(zoho_lead_id=zoho_lead_id)
@@ -271,6 +267,17 @@ def merge_videos(zoho_lead_id):
         student = Students.objects.get(zoho_lead_id=zoho_lead_id)
         student.bunny_stream_video_id = video_id
         student.save()
+        # add for completed interview process with send mail link
+        try:
+            for file in os.listdir(uploads_folder):
+                file_path = os.path.join(uploads_folder, file)
+                if os.path.isfile(file_path) and file_path.endswith((".webm", ".mp4", ".mov", ".txt")):
+                    os.remove(file_path)
+            logging.info("All video and temp files deleted from uploads folder: %s", uploads_folder)
+        except Exception as cleanup_error:
+            logging.warning("Failed to clean up uploads folder: %s", cleanup_error)
+
+
         return f"video_id: Done"
 
     except subprocess.CalledProcessError as e:
@@ -284,10 +291,10 @@ def handle_student_interview_answer_save(sender, instance, created, **kwargs):
         # Run your custom logic here when a new StudentInterviewAnswer is created
         print(f'New answer created: {instance}')
         zoho_lead_id = instance.zoho_lead_id
-        last_5_answers = sender.objects.filter(zoho_lead_id=zoho_lead_id).order_by('-created_at')[:5]
-        print(r'last_5_answers_count:', last_5_answers)
-        if last_5_answers.count() == 5:
-            print(r'last_5_answers_count text:', last_5_answers.count())
+        last_6_answers = sender.objects.filter(zoho_lead_id=zoho_lead_id).order_by('-created_at')[:6]
+        print(r'last_6_answers_count:', last_6_answers)
+        if last_6_answers.count() == 6:
+            print(r'last_6_answers_count text:', last_6_answers.count())
             async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead_id)
             # async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead_id)
             # async_task(merge_videos, zoho_lead_id)
