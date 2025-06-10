@@ -1,3 +1,5 @@
+/* eslint-disable no-lone-blocks */
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, {
   useState,
   useEffect,
@@ -21,11 +23,11 @@ import {
   stopRecording,
   setupMediaStream,
 } from "../utils/recording.js";
-import {interviewAddVideoPath} from '../utils/fileUpload.js';
+import { interviewAddVideoPath } from "../utils/fileUpload.js";
 import usePageReloadSubmit from "../hooks/usePageReloadSubmit.js";
 import AI_LOGO from "../assest/AI_LOGO.png";
 import Logo from "../assest/Logo.svg";
-import usePageUnloadHandler from '../hooks/usePageUnloadHandler.js';
+import usePageUnloadHandler from "../hooks/usePageUnloadHandler.js";
 // import useBackSubmitHandler from '../hooks/useBackSubmitHandler.js';
 
 const Questions = () => {
@@ -55,6 +57,10 @@ const Questions = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isFirstQuestionSet, setIsFirstQuestionSet] = useState(false);
   const [loading, setLoading] = useState(false);
+  const swiperRef = useRef(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const [showUploading, setShowUploading] = useState(false);
 
   // usePageReloadSubmit(
   //   videoRef,
@@ -102,18 +108,16 @@ const Questions = () => {
   
     const timer = setInterval(() => {
       setCountdown((prev) => {
-        if (prev > 0) {
-          sessionStorage.setItem("countdown", prev - 1); // Save countdown progress
-          return prev - 1;
-        } else {
+        if (prev === 1) {
           clearInterval(timer);
           return 0;
         }
+        return prev - 1;
       });
     }, 1000);
-  
+
     return () => clearInterval(timer);
-  }, []);
+  }, [isRecording, currentQuestionIndex]);
 
   useEffect(() => {
     // Store time spent and question index
@@ -127,15 +131,13 @@ const Questions = () => {
     const storedQuestionIndex = sessionStorage.getItem("currentQuestionIndex");
   
     if (storedTimeSpent) setTimeSpent(parseInt(storedTimeSpent, 10));
-    if (storedQuestionIndex) setCurrentQuestionIndex(parseInt(storedQuestionIndex, 10));
+    if (storedQuestionIndex)
+      setCurrentQuestionIndex(parseInt(storedQuestionIndex, 10));
   }, []);
-  
 
   useEffect(() => {
     fetchQuestions();
   }, []);
-
-
 
   // ************* Get First Question id *********
 
@@ -153,6 +155,7 @@ const Questions = () => {
         recordedChunksRef,
         recordedAudioChunksRef,
         setIsRecording,
+        setCountdown,
         setVideoFilePath,
         setAudioFilePath,
         // student_id,
@@ -197,6 +200,7 @@ const Questions = () => {
               recordedChunksRef,
               recordedAudioChunksRef,
               setIsRecording,
+              setCountdown,
               setVideoFilePath,
               setAudioFilePath,
               zoho_lead_id,
@@ -211,11 +215,12 @@ const Questions = () => {
       );
       console.log("last_question_id",last_question_id);
       // localStorage.setItem("interviewSubmitted", "true");
-      submitExam();
-      setTimeout(()=>{
+      // submitExam();
+      // if (isInterviewSubmitted) {
+        localStorage.setItem("interviewSubmitted", "true");
+        // submitExam(); // if this sends final answers or flags interview as done
         navigate("/interviewsubmitted");
-      },60000)
-      
+      // }
     } catch (error) {
       console.error("Error in handleSubmit:", error);
     } finally {
@@ -231,30 +236,23 @@ const Questions = () => {
     navigate,
   ]);
 
-
   const handleSubmitNew = useCallback(async () => {
-    setLoading(true);
+    setLoading(true); // Show loading spinner
+
     const newQuestionId = getQuestions[currentQuestionIndex]?.encoded_id;
+    console.log("newQuestionId", newQuestionId);
     if (!newQuestionId) {
       console.error("Error: newQuestionId is undefined or invalid.");
+      setLoading(false);
       return;
     }
-  
+
     if (newQuestionId !== activeQuestionId) {
       setActiveQuestionId(newQuestionId);
     }
 
-    // const response = await interviewAddVideoPath(videoFilePath, audioFilePath,zoho_lead_id,newQuestionId,last_question_id);
-    // console.log("response studnet",response.status);
-    // if(response.status === true && newQuestionId === last_question_id){
-    //   navigate("/interviewsubmitted");
-    // }
-    setTimeout(() => {
-      console.log("✅ Navigating to interviewsubmitted after 30 seconds...");
-      navigate("/interviewsubmitted");
-    }, 60000);
-
     try {
+      // Wait for recording to stop and trigger upload
       await stopRecording(
         videoRef,
         mediaRecorderRef,
@@ -266,33 +264,35 @@ const Questions = () => {
         zoho_lead_id,
         activeQuestionId,
         last_question_id,
-        () => {
-          try {
-            startRecording(
-              videoRef,
-              mediaRecorderRef,
-              audioRecorderRef,
-              recordedChunksRef,
-              recordedAudioChunksRef,
-              setIsRecording,
-              setVideoFilePath,
-              setAudioFilePath,
-              zoho_lead_id,
-              newQuestionId,
-              last_question_id
-            );
-          } catch (err) {
-            console.error("Failed to start recording:", err);
+        async () => {
+          // ✅ Call API to upload final video/audio
+          const response = await interviewAddVideoPath(
+            videoFilePath,
+            audioFilePath,
+            zoho_lead_id,
+            newQuestionId,
+            last_question_id
+          );
+
+          console.log("Final response after last question:", response);
+          console.log("newQuestionId", newQuestionId);
+          console.log("last_question_id", last_question_id);
+
+          if (newQuestionId === last_question_id) {
+            console.log("✅ All done. Navigating to /interviewsubmitted...");
+            localStorage.setItem("interviewSubmitted", "true");
+            submitExam();
+            navigate("/interviewsubmitted");
+          } else {
+            console.error("Upload failed or incomplete:", response);
+            // optionally show an error screen or retry
           }
-        },
+        }
       );
-      localStorage.setItem("interviewSubmitted", "true");
-      submitExam();
-      navigate("/interviewsubmitted");
     } catch (error) {
-      console.error("Error in handleSubmit:", error);
+      console.error("Error in handleSubmitNew:", error);
     } finally {
-      setLoading(false);
+      setLoading(false); // Hide loading only after all operations
     }
   }, [
     activeQuestionId,
@@ -306,32 +306,106 @@ const Questions = () => {
     navigate,
   ]);
 
-
-
   // ************* Handle Countdown *************
-  useEffect(() => {
-    if (countdown > 0) {
-      // Decrement countdown
-      const timer = setInterval(() => {
-        setCountdown((prev) => prev - 1);
-      }, 1000);
-      return () => clearInterval(timer); 
-    } else {
-      // When countdown reaches zero, handle transition to next question
-      if (currentQuestionIndex < getQuestions.length - 1) {
-        setCurrentQuestionIndex((prev) => {
-          const nextIndex = prev + 1; // Move to the next question
-          setActiveQuestionId(getQuestions[nextIndex]?.encoded_id); // Update the active question ID
-          return nextIndex; // Return the updated index
-        });
-        setCountdown(60); // Reset the countdown for the next question
+useEffect(() => {
+  const handleNextQuestion = async () => {
+    const currentQId = getQuestions[currentQuestionIndex]?.encoded_id;
+    const isLastQuestion = currentQId === last_question_id;
+
+    if (countdown === 0) {
+      if (isLastQuestion) {
+        // ✅ Final question logic
+        setLoading(true);
+        console.log("last question reach...")
+        setTimeout(() => {
+            console.log("🟢 Timeout executed");
+            localStorage.setItem("interviewSubmitted", "true");
+            // submitExam();
+            setLoading(false);
+            navigate("/interviewsubmitted");
+        }, 25000);
+
+        await stopRecording(
+          videoRef,
+          mediaRecorderRef,
+          audioRecorderRef,
+          recordedChunksRef,
+          recordedAudioChunksRef,
+          setVideoFilePath,
+          setAudioFilePath,
+          zoho_lead_id,
+          currentQId,
+          last_question_id,
+          async () => {
+             console.log("🟢 Inside final callback");
+            
+          }
+        );
       } else {
-        // Last question reached, stop media and submit the exam
-        // stopMediaStream();
-        handleSubmitNew();
+        // ⏭️ Not last question logic
+        setShowUploading(true);
+        try {
+          await stopRecording(
+            videoRef,
+            mediaRecorderRef,
+            audioRecorderRef,
+            recordedChunksRef,
+            recordedAudioChunksRef,
+            setVideoFilePath,
+            setAudioFilePath,
+            zoho_lead_id,
+            currentQId,
+            last_question_id,
+            async () => {
+              const nextIndex = currentQuestionIndex + 1;
+              const nextQId = getQuestions[nextIndex]?.encoded_id;
+
+              await startRecording(
+                videoRef,
+                mediaRecorderRef,
+                audioRecorderRef,
+                recordedChunksRef,
+                recordedAudioChunksRef,
+                setIsRecording,
+                setCountdown,
+                setVideoFilePath,
+                setAudioFilePath,
+                zoho_lead_id,
+                nextQId,
+                last_question_id
+              );
+
+              setCurrentQuestionIndex(nextIndex);
+              setActiveQuestionId(nextQId);
+              setCountdown(60);
+            }
+          );
+        } catch (err) {
+          console.error("Transition error:", err);
+        } finally {
+          setShowUploading(false);
+        }
       }
     }
-  }, [countdown, currentQuestionIndex, getQuestions, handleSubmitNew]);
+  };
+
+  handleNextQuestion();
+}, [
+  countdown,
+  currentQuestionIndex,
+  getQuestions,
+  videoRef,
+  mediaRecorderRef,
+  audioRecorderRef,
+  recordedChunksRef,
+  recordedAudioChunksRef,
+  setVideoFilePath,
+  setAudioFilePath,
+  zoho_lead_id,
+  last_question_id,
+  submitExam,
+  navigate,
+]);
 
 
   const formatTime = (time) => {
@@ -394,7 +468,7 @@ const Questions = () => {
         setAudioFilePath,
         zoho_lead_id,
         activeQuestionId,
-        last_question_id ,
+        last_question_id,
         () => {
           try {
             startRecording(
@@ -404,6 +478,7 @@ const Questions = () => {
               recordedChunksRef,
               recordedAudioChunksRef,
               setIsRecording,
+              setCountdown,
               setVideoFilePath,
               setAudioFilePath,
               zoho_lead_id,
@@ -413,15 +488,15 @@ const Questions = () => {
           } catch (err) {
             console.error("Failed to start recording:", err);
           }
-        },
+        }
       );
-      console.log("last_question_id below",last_question_id)
+      console.log("last_question_id below", last_question_id);
       // console.log("srcObject Video",videoRef.current.srcObject
 
       // Reset countdown
       setCountdown(60);
     },
-    [activeQuestionId, getQuestions, zoho_lead_id, last_question_id,videoRef]
+    [activeQuestionId, getQuestions, zoho_lead_id, last_question_id, videoRef]
   );
 
   // Prevent unnecessary re-renders of InterviewPlayer
@@ -441,7 +516,6 @@ const Questions = () => {
     ),
     [activeQuestionId, zoho_lead_id, last_question_id]
   );
- 
 
   const handleTimeSpent = () => {
     // Increment time spent on current question
@@ -485,7 +559,6 @@ const Questions = () => {
     }
   }, [zoho_lead_id]);
 
-
   // Go back button via back button browser
 
   window.history.pushState(null, null, window.location.href);
@@ -495,7 +568,7 @@ const Questions = () => {
     const userConfirmed = window.confirm(
       "Are you sure you want to leave this page? Your interview process will not be saved..."
     );
-  
+
     if (!userConfirmed) {
       // If user cancels, push the current state again to block navigation
       window.history.pushState(null, null, window.location.href);
@@ -504,9 +577,27 @@ const Questions = () => {
       window.location.href = "/interviewsubmitted";
     }
   };
-  
 
-  
+  {
+    showUploading && (
+      <div
+        style={{
+          position: "fixed",
+          top: "20px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          backgroundColor: "#333",
+          color: "#fff",
+          padding: "10px 20px",
+          borderRadius: "5px",
+          zIndex: 9999,
+        }}
+      >
+        ⏳ Uploading Answer... Please wait.
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div>
@@ -558,27 +649,28 @@ const Questions = () => {
       </div>
 
       {/* Main Layout */}
-      <div className="relative px-8 pt-8 lg:px-16">
+      <div className="relative px-4 pt-4 sm:px-8 sm:pt-8 lg:px-16">
         {/* Swiper for questions */}
         <Swiper
+          onSwiper={(swiper) => (swiperRef.current = swiper)}
           pagination={{
             type: "fraction",
-            renderFraction: (currentClass, totalClass) => (
-              <span>
-                <span className={currentClass}></span> /{" "}
-                <span className={totalClass}></span>
-              </span>
-            ),
+            renderFraction: (currentClass, totalClass) =>
+              `<span class="${currentClass}"></span> / <span class="${totalClass}"></span>`,
           }}
           navigation={isNavigationEnabled}
           allowSlidePrev={false}
           modules={[Pagination, Navigation, Autoplay]}
           className="mySwiper"
+          style={{ minHeight: "200px" }}
           autoplay={{
             delay: 60000,
             disableOnInteraction: false,
           }}
-          onSlideChange={(swiper) => handleQuestionChange(swiper)} // Pass swiper here
+          onSlideChange={(swiper) => {
+            setCurrentIndex(swiper.activeIndex);
+            handleQuestionChange(swiper); // if needed
+          }} // Pass swiper here
           allowTouchMove={false}
         >
           {getQuestions.map((questionItem, index) => {
@@ -612,6 +704,25 @@ const Questions = () => {
             );
           })}
         </Swiper>
+        {currentIndex !== getQuestions.length - 1 && (
+          <div className="flex justify-end gap-3 mt-4">
+            {/* <button
+                  onClick={() => swiperRef.current?.slideNext()} // replace swiperRef with your actual swiper instance
+                  className="bg-gray-200 text-black px-4 py-2 rounded hover:bg-gray-300 text-sm font-medium"
+                >
+                  Skip
+                </button> */}
+            <button
+              onClick={() => {
+                swiperRef.current?.slideNext();
+                handleQuestionChange(swiperRef.current);
+              }}
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm font-medium"
+            >
+              Next
+            </button>
+          </div>
+        )}
 
         {/* Grid Layout for User Info and Video */}
         <div className="grid grid-cols-12 gap-0  h-full sm:gap-8">

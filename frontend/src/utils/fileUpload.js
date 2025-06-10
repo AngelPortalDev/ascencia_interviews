@@ -12,11 +12,20 @@ export const uploadFile = async (blob, filename,zoho_lead_id,question_id,last_qu
   if (isUploading) return;  //  Duplicate Execution
   isUploading = true;
 
+
+  const isInterviewSubmitted = question_id === last_question_id;
+  console.log('question_id',question_id);
+  
+  console.log('last_question_id',last_question_id);
+  console.log('isInterviewSubmitted',isInterviewSubmitted);
+
   const formData = new FormData();
   formData.append("file", blob, filename);
   formData.append("zoho_lead_id",btoa(zoho_lead_id));
   formData.append("last_question_id",last_question_id);
-
+  formData.append("is_interview_submitted", isInterviewSubmitted);
+  console.log("isInterviewSubmitted",isInterviewSubmitted);
+  
   try {
     const response = await axios.post(
       `${process.env.REACT_APP_API_BASE_URL}interveiw-section/interview-video-upload/`,
@@ -33,7 +42,7 @@ export const uploadFile = async (blob, filename,zoho_lead_id,question_id,last_qu
         }
       }
     );
-    // console.log("Respnse for Video",response);
+     console.log("✅ Upload Success Response:", response.data);
     if (response.data.file_path) {
       const videoFilePath = response.data.file_path;
       const audioFilePath = response.data.audio_path || videoFilePath; // If no separate audio, use video path
@@ -67,7 +76,7 @@ export const downloadFile = (blob, filename) => {
 
 // Analyze Video
 let isAnalyzing = false; 
-export const interviewAddVideoPath = async (videoFilePath, audioFilePath,zoho_lead_id,question_id,last_question_id) => {
+export const interviewAddVideoPath = async (videoFilePath, audioFilePath,zoho_lead_id,question_id,last_question_id,isInterviewSubmitted) => {
   // if (!videoFilePath || !audioFilePath) {
   //   throw new Error("Video or audio path is missing.");
   if (isAnalyzing) {
@@ -76,13 +85,15 @@ export const interviewAddVideoPath = async (videoFilePath, audioFilePath,zoho_le
   isAnalyzing = true;
   // }
   console.log(zoho_lead_id,"test student");
-  console.log(question_id,"test question");
+  console.log(question_id,"test question........................");
+  console.log("isInterviewSubmitted add video path",isInterviewSubmitted)
   const formData = new FormData();
   formData.append("video_path", videoFilePath);
   formData.append("audio_path", audioFilePath); 
   formData.append("zoho_lead_id", btoa(zoho_lead_id));
   formData.append("question_id", btoa(question_id));
   formData.append("last_question_id", btoa(last_question_id));
+  formData.append("is_interview_submitted", isInterviewSubmitted);
   try {
     const response = await axios.post(
       `${process.env.REACT_APP_API_BASE_URL}interveiw-section/interview-add-video-path/`,
@@ -95,7 +106,6 @@ export const interviewAddVideoPath = async (videoFilePath, audioFilePath,zoho_le
     );
 
      console.log("Video path upload started successfully:", response.data);
-
 
 
 
@@ -132,7 +142,7 @@ export const interviewAddVideoPath = async (videoFilePath, audioFilePath,zoho_le
     //   console.log("📩 onTranscription Called with:", responseVideoStore);
     // } 
     console.log("Video analysis started successfully:", response.data);
-    return response.data
+    return response.data;
   } catch (error) {
     console.error("Error analyzing video:", error);
   }finally {

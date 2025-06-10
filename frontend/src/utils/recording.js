@@ -8,13 +8,21 @@ export const startRecording = async (
   recordedChunksRef,
   recordedAudioChunksRef,
   setIsRecording,
+  setCountdown,
   setVideoFilePath,
   setAudioFilePath,
   zoho_lead_id,
   question_id,
   last_question_id
 ) => {
+  // console.log("question_id 111",question_id)
+  // console.log("🔥 Inside stopRecording, last_question_id:", last_question_id);
+  // console.log("🔥 Type of last_question_id:", typeof last_question_id);
   try {
+  // console.log("question_id 222",question_id);
+   setIsRecording(true);
+   setCountdown(60);
+
     const stream = await navigator.mediaDevices.getUserMedia({
       video: true,
       audio: { noiseSuppression: false, echoCancellation: false },
@@ -63,6 +71,9 @@ export const stopRecording = (
   question_id,
   last_question_id
 ) => {
+    const capturedQuestionId = question_id;
+  console.log("question_id 333",capturedQuestionId)
+
   return new Promise((resolve, reject) => { 
     let videoUploaded = false;
     let audioUploaded = false;
@@ -71,20 +82,24 @@ export const stopRecording = (
 
     const checkCompletion = () => {
       if (videoUploaded && audioUploaded) {
-        // console.log("✅ Both video and audio uploaded successfully.");
-        resolve({ videoPath, audioPath });  // ✅ Now resolves properly
+        resolve({ videoPath, audioPath });  
       }
     };
 
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.onstop = async () => {
+         console.log("⏹️ Stopped video recording for question:", capturedQuestionId);
+          console.log("📦 Video chunks size:", recordedChunksRef.current.length);
         // console.log("🎥 Stopping video recording...");
         const videoBlob = new Blob(recordedChunksRef.current, { type: "video/webm" });
-        const fileNameVideo = `interview_video_${zoho_lead_id}_${question_id}_${new Date().toISOString().replace(/:/g, "-").split(".")[0]}.webm`;
+        const fileNameVideo = `interview_video_${zoho_lead_id}_${capturedQuestionId}_${new Date().toISOString().replace(/:/g, "-").split(".")[0]}.webm`;
 
         try {
-          videoPath = await uploadFile(videoBlob, fileNameVideo, zoho_lead_id, question_id, last_question_id);
+          videoPath = await uploadFile(videoBlob, fileNameVideo, zoho_lead_id, capturedQuestionId, last_question_id,true);
+          console.log('question_id in recording',capturedQuestionId)
+          console.log('last_question_id in recording',last_question_id)
+
           // console.log("📤 Video uploaded. Path:", videoPath);
           setVideoFilePath(videoPath);
           videoUploaded = true;
@@ -104,12 +119,18 @@ export const stopRecording = (
     if (audioRecorderRef.current) {
       audioRecorderRef.current.stop();
       audioRecorderRef.current.onstop = async () => {
+        console.log("⏹️ Stopped audio recording for question:", capturedQuestionId);
+
+        console.log("📦 Audio chunks size:", recordedAudioChunksRef.current.length);
+
         // console.log("🎤 Stopping audio recording...");
         const audioBlob = new Blob(recordedAudioChunksRef.current, { type: "audio/webm" });
-        const fileNameAudio = `interview_audio_${zoho_lead_id}_${question_id}_${new Date().toISOString().replace(/:/g, "-").split(".")[0]}.webm`;
+        const fileNameAudio = `interview_audio_${zoho_lead_id}_${capturedQuestionId}_${new Date().toISOString().replace(/:/g, "-").split(".")[0]}.webm`;
 
         try {
-          audioPath = await uploadFile(audioBlob, fileNameAudio, zoho_lead_id, question_id, last_question_id);
+          audioPath = await uploadFile(audioBlob, fileNameAudio, zoho_lead_id, capturedQuestionId, last_question_id,true);
+            console.log('question_id in recording audio',capturedQuestionId)
+          console.log('last_question_id in recording audio',last_question_id)
           // console.log("📤 Audio uploaded. Path:", audioPath);
           setAudioFilePath(audioPath);
           audioUploaded = true;

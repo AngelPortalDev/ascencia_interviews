@@ -22,7 +22,7 @@ const usePageUnloadHandler = () => {
         sessionStorage.removeItem("isPageRefreshing");
         submitExam();
         // sessionStorage.setItem("isInterviewSubmitted", "true");
-        window.location.href = "/interviewsubmitted";
+        window.location.href = "/frontend/interviewsubmitted";
       }
     };
 
@@ -30,13 +30,13 @@ const usePageUnloadHandler = () => {
       sessionStorage.removeItem("isPageRefreshing");
       // sessionStorage.setItem("isInterviewSubmitted", "true");
       submitExam();
-      window.location.href = "/interviewsubmitted";
+      window.location.href = "/frontend/interviewsubmitted";
     }
 
     // if (window.location.pathname === "/interviewsubmitted") {
     //   sessionStorage.setItem("isInterviewSubmitted", "true");
     // }
-    console.log("current path",window.location.pathname);
+    // console.log("current path",window.location.pathname);
 
     // Add event listeners
     window.addEventListener("beforeunload", handleBeforeUnload);
