@@ -22,6 +22,8 @@ const usePageUnloadHandler = () => {
         sessionStorage.removeItem("isPageRefreshing");
         submitExam();
         // sessionStorage.setItem("isInterviewSubmitted", "true");
+        localStorage.clear();
+        sessionStorage.clear();
         window.location.href = "/frontend/interviewsubmitted";
       }
     };
@@ -30,6 +32,8 @@ const usePageUnloadHandler = () => {
       sessionStorage.removeItem("isPageRefreshing");
       // sessionStorage.setItem("isInterviewSubmitted", "true");
       submitExam();
+      localStorage.clear();
+      sessionStorage.clear();
       window.location.href = "/frontend/interviewsubmitted";
     }
 
