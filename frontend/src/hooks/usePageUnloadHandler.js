@@ -23,7 +23,9 @@ const usePageUnloadHandler = () => {
         submitExam();
         // sessionStorage.setItem("isInterviewSubmitted", "true");
         localStorage.clear();
-        sessionStorage.clear();
+        // sessionStorage.clear();
+        sessionStorage.removeItem("timeSpent");
+        sessionStorage.removeItem("currentQuestionIndex");
         window.location.href = "/frontend/interviewsubmitted";
       }
     };
@@ -33,7 +35,9 @@ const usePageUnloadHandler = () => {
       // sessionStorage.setItem("isInterviewSubmitted", "true");
       submitExam();
       localStorage.clear();
-      sessionStorage.clear();
+      // sessionStorage.clear();
+      sessionStorage.removeItem("timeSpent");
+      sessionStorage.removeItem("currentQuestionIndex");
       window.location.href = "/frontend/interviewsubmitted";
     }
 
