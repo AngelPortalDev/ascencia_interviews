@@ -11,8 +11,13 @@ import threading
 from queue import Queue
 from django.conf import settings
 from django_q.tasks import async_task
-
-
+from studentpanel.models.interview_link import StudentInterviewLink
+from django.utils.timezone import now
+from django.utils.timezone import localtime
+import pytz
+from adminpanel.utils import send_email
+import base64
+from datetime import timedelta
 
 process_queue = Queue()
 lock = threading.Lock()
@@ -70,9 +75,6 @@ class APIDataFetcher:
                         f"fileId={file_Id}&module=Leads&parentId={publisher.zoho_lead_id}&id={attachment_Id}"
                         f"&name={encoded_file_name}&downLoadMode=pdfViewPlugin"
                     )
-
-                    print(r'file_url:', file_url)
-
                     # process_queue.put((file_url, publisher, API_TOKEN))
                     # process_documents()
                     # if zoho_lead_id in ['5204268000112707003', '5204268000116210079']:
@@ -184,8 +186,6 @@ def process_documents_task(file_url, publisher, API_TOKEN):
         process_response = requests.post(process_api_url, files=files, data=data)
 
         # Log the response status and content for debugging
-        print(f"Response Status Code: {process_response.status_code}")
-        print(f"Response Content: {process_response.text}")  # This will show the raw response body
 
         # Check if the response is JSON
         if process_response.status_code == 200:
@@ -204,6 +204,9 @@ def process_documents_task(file_url, publisher, API_TOKEN):
     time.sleep(5)  # Optional delay
 
 
+def encode_base64(data):
+    """Encodes data in Base64 format (URL-safe)."""
+    return base64.urlsafe_b64encode(str(data).encode()).decode()
 
 
 @receiver(post_save, sender=Students)
@@ -212,10 +215,154 @@ def student_created_observer(sender, instance, created, **kwargs):
         print(f"A new student was created: {instance}")
     else:
         print(f"A student was updated: {instance}")
+    
+    zoho_lead_id = instance.zoho_lead_id
+    try:
 
-    api_observer = APIDataFetcher()
+        student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        studentLinkStatus = StudentInterviewLink.objects.get(zoho_lead_id=zoho_lead_id)
+        if studentLinkStatus.interview_attend == 1:
+            interview_link_send_count = 2
+            encoded_zoho_lead_id = encode_base64(zoho_lead_id)
+            print("ZOHO LEAD ID",interview_link_send_count)
 
-    if instance.edu_doc_verification_status == 'Unverified' or (
-        instance.edu_doc_verification_status == 'rejected' and instance.interview_link_send_count < 2 and instance.mindee_verification_status != 'Completed'
-    ):
-        api_observer.notify(instance) 
+            encoded_interview_link_send_count = encode_base64(interview_link_send_count)
+            print("ZOHO LEAD ID DSFS",encoded_interview_link_send_count)
+
+            interview_url = f'{settings.ADMIN_BASE_URL}/frontend/interview_panel/{encoded_zoho_lead_id}/{encoded_interview_link_send_count}'
+            print(interview_url)
+            new_interview_link = StudentInterviewLink.objects.create(
+                zoho_lead_id=zoho_lead_id,
+                interview_link=interview_url,
+                interview_attend=0,
+                expires_at=now() + timedelta(hours=72)
+            )
+            print(new_interview_link)
+            student_name = f"{student.first_name} {student.last_name}"
+            student_email = student.email
+
+            interview_start = studentLinkStatus.created_at
+            interview_end = studentLinkStatus.expires_at
+
+            # Convert to Asia/Calcutta timezone
+            tz = pytz.timezone("Europe/Malta")
+            interview_start_local = localtime(interview_start).astimezone(tz)
+            interview_end_local = localtime(interview_end).astimezone(tz)
+
+            # Format the datetime
+            formatted_start = interview_start_local.strftime("%d %b %Y - %I:%M %p (Europe/Malta)")
+            formatted_end = interview_end_local.strftime("%d %b %Y - %I:%M %p (Europe/Malta)")
+
+            print("Start Date and time:", formatted_start)
+            print("End Date and time:", formatted_end)
+            send_email(
+                subject="Interview Invitation for Student Interview",
+                message=f"""
+                <html>
+                    <head>
+                        <style>
+                            body {{
+                                background-color: #f4f4f4;
+                                font-family: Tahoma, sans-serif;
+                                margin: 0;
+                                padding: 40px 20px;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                min-height: 100vh;
+                            }}
+                            .email-container {{
+                                background: #ffffff;
+                                max-width: 600px;
+                                width: 100%;
+                                padding: 30px 25px;
+                                border-radius: 10px;
+                                box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+                                border: 1px solid #ddd;
+                                box-sizing: border-box;
+                                margin: 0 auto;
+                            }}
+                            .header {{
+                                text-align: center;
+                                margin-bottom: 20px;
+                                border-bottom: 1px solid #eee;
+                            }}
+                            .header img {{
+                                height: 40px;
+                                width: auto;
+                                margin-bottom: 10px;
+                            }}
+                            .email-logo {{
+                                width: 50%;
+                                display: block;
+                                margin: 20px auto;
+                            }}
+                            h2 {{
+                                color: #2c3e50;
+                                text-align: center;
+                            }}
+                            p {{
+                                color: #555;
+                                font-size: 16px;
+                                line-height: 1.6;
+                                text-align: left;
+                            }}
+                            .goInterviewbtnStyle {{
+                                display: inline-block;
+                                background: #db2777;
+                                color: #ffffff;
+                                text-decoration: none;
+                                padding: 12px 20px;
+                                border-radius: 5px;
+                                font-weight: bold;
+                                margin: 20px auto 10px;
+                                text-align: center;
+                            }}
+                            .goInterviewbtnStyle:hover {{
+                                background-color: #0056b3;
+                                color:#fff;
+                            }}
+                            @media only screen and (max-width: 600px) {{
+                                .email-logo {{
+                                    width: 80% !important;
+                                }}
+                            }}
+                        </style>
+                    </head>
+                    <body>
+                        <div class="email-container">
+                            <div class="header">
+                                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Malta" />
+                            </div>
+                            <img src="https://ascencia-interview.com/static/img/email_template_icon/notification.png" alt="Interview Invitation" class="email-logo" />
+                                                        
+                            <p>Dear Student,</p>
+                            
+                            <p>We are pleased to invite you to participate in the following interview:</p>
+                            
+                            <p><b>Interview Details:</b></p>
+                            <p><b>Interviewer name:</b>{student_name},</p>
+                            <p><b>Start Date and time:</b>{formatted_start}</p>
+                            <p><b>End Date and time:</b>{formatted_end}</p>
+                            
+                            <p>Please note that you can access the interview only between the start and end times mentioned above.</p>
+                            
+                            <a href="{interview_url}" style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: center;">Start Interview</a>
+
+                            <p>Best regards,<br/>Ascencia Malta</p>
+                        </div>
+                    </body>
+                </html>
+                """,
+                recipient=["vaibhav@angel-portal.com"],
+            )
+
+                            # student.save()
+    except StudentInterviewLink.DoesNotExist:
+          
+        api_observer = APIDataFetcher()
+
+        if instance.edu_doc_verification_status == 'Unverified' or (
+            instance.edu_doc_verification_status == 'rejected' and instance.interview_link_send_count < 2 and instance.mindee_verification_status != 'Completed'
+        ):
+            api_observer.notify(instance) 
