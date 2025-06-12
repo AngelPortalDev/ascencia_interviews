@@ -188,7 +188,7 @@ def merge_videos(zoho_lead_id):
 
         video_path = os.path.join(
             "/home/ascenciaintervie/public_html/static/uploads/interview_videos",
-            # "C:/xampp/htdocs/vaibhav/ascencia_interviews/static/uploads/interview_videos",
+            #  "C:/xampp/htdocs/vaibhav/ascencia_interviews/static/uploads/interview_videos",
             zoho_lead_id,
             "merged_video.webm"
         )
@@ -204,6 +204,14 @@ def merge_videos(zoho_lead_id):
         student_name = f"{student.first_name} {student.last_name}"
         student_email = student.email
         student_zoho_lead_id = student.zoho_lead_id
+
+        email = student.student_manager_email.strip().lower()
+        student_manager = User.objects.filter(email__iexact=email).first()
+        student_manager_name = ''
+        if student_manager:  
+            student_manager_name = f"{student_manager.first_name} {student_manager.last_name}".strip()
+            print(f"student_manager_name: {student_manager_name}")
+
         html_content = f"""
         <html>
             <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
@@ -221,16 +229,16 @@ def merge_videos(zoho_lead_id):
                     <h2 style="color: #2c3e50; text-align: center;">Interview Process Submitted</h2>
 
                     <!-- Content -->
-                    <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">Dear User</p>
+                    <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">Dear <b>{student_manager_name}<b>,</p>
 
                     <!-- <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">The interview process has been successfully completed.</p> -->
                     <!-- <p style="color: #555; font-size: 16px; line-h eight: 1.6; text-align: left;">The interview video is attached. Please review.</p> -->
                     
                     <!-- Content -->
-                    <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;"><strong>Student Details</strong></p>
-                    <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">Dear {student_name},</p>
+                    <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;"><b>Student Details:</b></p>
+                    <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">Name: {student_name},</p>
                     <p style="color: #555; font-size: 14px; text-align: left;">Email: {student_email}</p>
-                    <p style="color: #555; font-size: 14px; text-align: left;">Email: {student_zoho_lead_id}</p>
+                    <p style="color: #555; font-size: 14px; text-align: left;">Zoho Lead Id: {student_zoho_lead_id}</p>
 
 
                     <!--change for link -->
@@ -294,8 +302,8 @@ def merge_videos(zoho_lead_id):
 
          # Delete StudentInterviewAnswers after processing
         deleted_count, _ = StudentInterviewAnswers.objects.filter(zoho_lead_id=zoho_lead_id).delete()
+        delted_student_interview = Students.objects.filter(zoho_lead_id=zoho_lead_id).update(interview_process='')
         logging.info("Deleted %s StudentInterviewAnswers entries for zoho_lead_id: %s", deleted_count, zoho_lead_id)
-
 
 
         return f"video_id: Done"

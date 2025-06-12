@@ -723,6 +723,10 @@ def process_document(request):
                                               <div style="text-align: left;">
                                                 <a href="https://ascencia-interview.com/studentmanagerpanel/student/{zoho_lead_id}/" class="btn" style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: left;">View Rejection Details</a>
                                               </div>
+                                               <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left; margin-top: 30px;">
+                                                    Best regards,<br/>Ascencia Malta
+                                                </p>
+                                            </div>
                                     
                         </body>
                         </html>
@@ -746,6 +750,7 @@ def process_document(request):
                     student.verification_failed_reason = ""
                     student.is_interview_link_sent = True
                     student.interview_link_send_count += 1
+                    student.interview_process = "Second_Round_Interview"
                     student.save()
 
                     encoded_zoho_lead_id = encode_base64(zoho_lead_id)
@@ -755,6 +760,7 @@ def process_document(request):
                     interview_link, created = StudentInterviewLink.objects.update_or_create(
                         zoho_lead_id=zoho_lead_id,
                         defaults={
+                            "interview_link_count" : encoded_interview_link_send_count,
                             "interview_link": interview_url,
                             "expires_at": now() + timedelta(hours=72),
                         }
@@ -878,6 +884,9 @@ def process_document(request):
                                                   <div style="text-align: left;">
                                                     <a href="https://ascencia-interview.com/studentmanagerpanel/student/{zoho_lead_id}/" class="btn" style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: center;">View Verification Details</a>
                                                   </div>
+                                                  <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left; margin-top: 30px;">
+                                                    Best regards,<br/>Ascencia Malta
+                                                </p>
                                             </div>
                                        
                             </body>

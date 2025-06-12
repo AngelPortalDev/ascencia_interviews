@@ -41,6 +41,8 @@ from adminpanel.common_imports import save_data
 from difflib import SequenceMatcher
 from fuzzywuzzy import fuzz
 from datetime import datetime
+from django.core.mail import EmailMultiAlternatives
+import mimetypes
 
 # ✅ Paths (Update as per your system)
 # FFMPEG_PATH = r"C:\ffmpeg-2025-02-20-git-bc1a3bfd2c-full_build\bin\ffmpeg.exe"
@@ -329,8 +331,13 @@ def interview_add_video_path(request):
         question_id = data.get('question_id')
         zoho_lead_id = data.get('zoho_lead_id')
         last_question_id=data.get('last_question_id')
+        last_question_id=data.get('last_question_id')
+        encoded_interview_link_send_count=data.get('encoded_interview_link_send_count')
 
-        try:
+        # student_data_list = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id)
+        # for student_data in student_data_list:
+
+        try:       
             zoho_lead_id = base64.b64decode(zoho_lead_id).decode("utf-8")
             question_id = base64.b64decode(question_id).decode("utf-8")
             last_question_id = base64.b64decode(last_question_id).decode("utf-8")
@@ -347,14 +354,17 @@ def interview_add_video_path(request):
                 'is_expired': True        # Boolean value (not string)
             } 
 
-            result_student = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).update(**data)
+            result_student = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id,interview_link_count=encoded_interview_link_send_count).update(**data)
+            print(result)
             # async_task(analyze_video(video_path,question_id,zoho_lead_id,last_question_id))
-        
-
-            if result['status']:
+            if result_student > 0:
                 return JsonResponse({"status": True, "message": "Student updated successfully!"}, status=200)
             else:
-                return JsonResponse({"status": False, "error": result.get('error', "Failed to update the student.")}, status=400)
+                return JsonResponse({"status": False, "error": "No student record was updated."}, status=400)
+            # if result_student['status']:
+            # return JsonResponse({"status": True, "message": "Student updated successfully!"}, status=200)
+            # else:
+            #     return JsonResponse({"status": False, "error": result.get('error', "Failed to update the student.")}, status=400)
 
         except Exception as e:
             return JsonResponse({"status": False, "error": str(e)}, status=500)
@@ -714,117 +724,172 @@ def convert_video(input_path, output_path, target_format):
 def get_uploads_folder():
     """Returns the absolute path to the 'uploads' folder in the project root."""
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))  # Go two levels up
-    uploads_folder = os.path.join(project_root, "uploads/interview_videos")  # Point to the correct uploads folder
+    uploads_folder = os.path.join(project_root, "static/uploads/interview_videos")  # Point to the correct uploads folder
+    # uploads_folder = os.path.join(project_root,"static","uploads", "interview_videos")
     return uploads_folder.replace("\\", "/")  # Normalize path
 
 
-def merge_videos(zoho_lead_id, base_uploads_folder="C:/xampp/htdocs/ascencia_interviews/uploads/interview_videos"):
+def merge_videos(zoho_lead_id):
     """ Merges all videos in the lead's folder into a single file of the detected format. """
     # uploads_folder = os.path.join(base_uploads_folder, zoho_lead_id).replace("\\", "/")
 
     uploads_folder = os.path.join(get_uploads_folder(), zoho_lead_id)
+    print("analyze",uploads_folder)
+    logging.info("uploads_folder: %s", uploads_folder)
 
-    # Check if the folder exists
     if not os.path.exists(uploads_folder):
         return f"Error: Folder {uploads_folder} does not exist."
 
-    video_files = [f for f in os.listdir(uploads_folder) if f.endswith((".webm", ".mp4", ".mov"))]
-    
+    video_files = sorted(
+        [f for f in os.listdir(uploads_folder) if f.endswith((".webm", ".mp4", ".mov"))],
+        key=lambda x: os.path.getctime(os.path.join(uploads_folder, x))
+    )
+
     if not video_files:
         return f"Error: No video files found in {uploads_folder}."
 
-    # Detect the format from the first video file
-    first_video_ext = os.path.splitext(video_files[0])[1][1:]  # Extract extension without the dot
-    target_format = first_video_ext.lower()  # Normalize format (webm, mp4, mov)
+    first_video_ext = os.path.splitext(video_files[0])[1][1:].lower()
+    logging.info("first_video_ext: %s", first_video_ext)
+    target_format = first_video_ext
+    logging.info("target_format: %s", target_format)
 
     converted_files = []
     list_file_path = os.path.join(uploads_folder, "video_list.txt").replace("\\", "/")
     output_filename = f"merged_video.{target_format}"
     output_path = os.path.join(uploads_folder, output_filename).replace("\\", "/")
+    logging.info("uploads_folder: %s", uploads_folder)
+    logging.info("output_filename: %s", output_filename)
+    logging.info("output_path check: %s", output_path)
 
-    # Convert all videos to the detected format
     for video in video_files:
+        logging.info("video_list: %s", video)
         input_path = os.path.join(uploads_folder, video).replace("\\", "/")
+        logging.info("input_path: %s", input_path)
         output_path_converted = os.path.join(uploads_folder, f"{os.path.splitext(video)[0]}_converted.{target_format}").replace("\\", "/")
-
-        if not video.endswith(f".{target_format}"):  # Convert only if needed
+        logging.info("output_path_converted: %s", output_path_converted)
+        if not video.endswith(f".{target_format}"):
+            logging.info("target_format path video: %s", target_format)
             convert_video(input_path, output_path_converted, target_format)
+            logging.info("ends with : %s", "end with")
+
             converted_files.append(output_path_converted)
+            logging.info("target_format path video input_path output: %s", output_path_converted)
         else:
+            logging.info("target_format path video input_path: %s", input_path)
             converted_files.append(input_path)
 
-    # Create video list file
     with open(list_file_path, "w") as f:
         for video in converted_files:
             f.write(f"file '{video}'\n")
+            logging.info("target_format path video list: %s", video)
 
-    # Select correct encoding based on target format
+    logging.info("target_format path target_format list: %s", target_format)
+    logging.info("target_format path target_format list_file_path: %s", list_file_path)
+
     if target_format == "webm":
-        merge_command = f'ffmpeg -f concat -safe 0 -i "{list_file_path}" -c:v libvpx-vp9 -b:v 1M -c:a libopus "{output_path}"'
+        logging.info("enter it: %s", "webm")
+        merge_command = f'ffmpeg -err_detect ignore_err -f concat -safe 0 -i "{list_file_path}" -c:v libvpx-vp9 -b:v 15M -c:a libopus "{output_path}"'
+        logging.info("merge_command webm : %s", merge_command)
     elif target_format == "mp4":
         merge_command = f'ffmpeg -f concat -safe 0 -i "{list_file_path}" -map 0:v -map 0:a -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -movflags +faststart "{output_path}"'
     elif target_format == "mov":
         merge_command = f'ffmpeg -f concat -safe 0 -i "{list_file_path}" -c:v prores -c:a pcm_s16le "{output_path}"'
     else:
+        logging.info("Unsupported format: %s", target_format)
         return f"Unsupported format: {target_format}"
 
-    # Merge videos with re-encoding
     try:
-        subprocess.run(merge_command, shell=True, check=True)
-        # Check size and compress if needed
-        # if os.path.getsize(output_path) > (19 * 1024 * 1024):
-        #     return compress_video(output_path, output_path)
-
-        video_id = upload_to_bunnystream(output_path)
-
-        student = Students.objects.get(zoho_lead_id=zoho_lead_id)
-        student.bunny_stream_video_id = video_id
-        student.save()
+        logging.info("merge_command: %s", merge_command)
         
-        url = f"{settings.ADMIN_BASE_URL}/adminpanel/student/{zoho_lead_id}/"
-        # student manager
-        send_email(
-            subject="Interview Process Completed",
-            message=f"""
-                    <html>
-                  <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
-                        <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box;margin:0 auto">
-                            
-                            <!-- Logo Header -->
-                            <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
-                            <img src="One.png" alt="Company Logo" style="height: 40px; width: auto; margin-bottom: 10px;">
-                            </div>
+        subprocess.run(merge_command, shell=True, check=True)
 
-                            <!-- Illustration -->
-                            <img src="{{ STATIC_URL }}img/email_template_icon/interviewcomplete.png" alt="Document Verified" style="width: 50%; display: block; margin: 20px auto;" />
+        logging.info("merge_command subprocess: %s", merge_command)
+   
 
-                            <!-- Heading -->
-                            <h2 style="color: #2c3e50; text-align: center;">Interview Process Completed</h2>
+        # video_id = upload_to_bunnystream(output_path)
+        # logging.info("video_id: %s", video_id)
+        # student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        # student.bunny_stream_video_id = video_id
+        # student.save()
 
-                            <!-- Content -->
-                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Dear User,</p>
-                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">The interview process has been successfully completed.</p>
-                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Please review the interview video using the button below:</p>
-
-                            <!-- Button -->
-                            <div style="text-align: center;">
-                            <a href="{{ url }}" style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: center;">Check Interview Video</a>
-                            </div>
-                        </div>
-                    </body>
-                    </html>
-                """,
-            recipient=["ankita@angel-portal.com"],
-            # cc=["admin@example.com", "hr@example.com"]  # CC recipients
+        # Email configuration
+        video_path = os.path.join(
+            "/home/ascenciaintervie/public_html/static/uploads/interview_videos",
+            zoho_lead_id,
+            "merged_video.webm"
         )
-        return f"video_id: {video_id}"  
+
+        # Email configuration
+        subject = "Interview Process Completed"
+        recipient = ["ankita@angel-portal.com"]
+        from_email = "ankita@angel-portal.com"
+        url = video_path  # or your public URL if available
+
+        html_content = f"""
+        <html>
+            <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+                <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box;margin:0 auto">
+                    
+                    <!-- Logo Header -->
+                    <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
+                    <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Company Logo" style="height: 40px; width: auto; margin-bottom: 10px;">
+                    </div>
+
+                    <!-- Illustration -->
+                    <img src="https://ascencia-interview.com/static/img/email_template_icon/interviewcomplete.png" alt="Document Verified" style="width: 50%; display: block; margin: 20px auto;" />
+
+                    <!-- Heading -->
+                    <h2 style="color: #2c3e50; text-align: center;">Interview Process Completed</h2>
+
+                    <!-- Content -->
+                    <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Dear User,</p>
+                    <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">The interview process has been successfully completed.</p>
+                    <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">The interview video is attached. Please review.</p>
+
+                </div>
+            </body>
+        </html>
+        """
+        # Create the email object
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body="Interview process complete. Please view the attached video or click the button.",
+            from_email=from_email,
+            to=recipient,
+        )
+
+        # Attach HTML version
+        email.attach_alternative(html_content, "text/html")
+        print(r"html_content",html_content)
+
+        # Check and attach the video
+        if os.path.exists(video_path):
+            file_size = os.path.getsize(video_path)
+            if file_size < 25 * 1024 * 1024:  # < 25MB
+                print(r"filesize",file_size)
+                with open(video_path, "rb") as f:
+                    mime_type, _ = mimetypes.guess_type(video_path)
+                    email.attach("interview_video.webm", f.read(), mime_type or "application/octet-stream")
+                    print(r"Mime Type",mime_type)
+
+                    logging.info("Video attached successfully.")
+            else:
+                print(r"dfsf","check video")
+                logging.warning("Video is too large to attach. Send only the link.")
+        else:
+            print(r"dfsf","file not found")
+            logging.error(f"File not found: {video_path}")
+
+        # Send email
+        email.send()
+        return f"video_id: done"  
         return f"Merged video saved at: {output_path}"  
     except subprocess.CalledProcessError as e:
         return f"Error merging videos: {e}"
     
 # Example usage
 # zoho_lead_id = "5204268000112707003"
-# print(merge_videos(zoho_lead_id))
+# 
 
 def delete_video(request, zoho_lead_id):
     # BUNNY_STREAM_API_KEY = "e31364b4-b2f4-4221-aac3bd5d34e5-6769-4f29"  # Replace with your actual Library Key
@@ -878,17 +943,17 @@ def analyze_video(video_path,question_id,zoho_lead_id,last_question_id):
         # except Exception as e:
         #     return JsonResponse({"error": f"Failed to decode Base64: {str(e)}"}, status=400)
         # Extract audio
-        extracted_audio = extract_audio(video_path,zoho_lead_id,question_id)
-        if not extracted_audio:
-            return JsonResponse({"error": "Audio extraction failed"}, status=500)
+        # extracted_audio = extract_audio(video_path,zoho_lead_id,question_id)
+        # if not extracted_audio:
+        #     return JsonResponse({"error": "Audio extraction failed"}, status=500)
 
         try:
-            transcribed_text = transcribe_audio(extracted_audio)
-            print(transcribed_text)
-            sentiment_analysis = analyze_sentiment(transcribed_text)
-            print(sentiment_analysis)
-            grammar_results = check_grammar(transcribed_text)
-            print(grammar_results)
+            # transcribed_text = transcribe_audio(extracted_audio)
+            # print(transcribed_text)
+            # sentiment_analysis = analyze_sentiment(transcribed_text)
+            # print(sentiment_analysis)
+            # grammar_results = check_grammar(transcribed_text)
+            # print(grammar_results)
 
             # print(grammar_results)
             # print(sentiment_analysis)
@@ -903,29 +968,32 @@ def analyze_video(video_path,question_id,zoho_lead_id,last_question_id):
             # print(grammar_results['grammar_accuracy'])
             # print(last_question_id)
 
-            try:
-                check_answer_add = student_interview_answers(
-                    zoho_lead_id,
-                    question_id,
-                    transcribed_text,
-                    sentiment_analysis['sentiment_score'],
-                    sentiment_analysis['subjectivity'],
-                    sentiment_analysis['confidence_level'],
-                    grammar_results['grammar_accuracy'],
-                    last_question_id
-                )
-                print("Function executed successfully:", check_answer_add)
-            except Exception as e:
-                print("Error in function:", str(e))
+            # try:
+            #     check_answer_add = student_interview_answers(
+            #         zoho_lead_id,
+            #         question_id,
+            #         transcribed_text,
+            #         sentiment_analysis['sentiment_score'],
+            #         sentiment_analysis['subjectivity'],
+            #         sentiment_analysis['confidence_level'],
+            #         grammar_results['grammar_accuracy'],
+            #         last_question_id
+            #     )
+            #     print("Function executed successfully:", check_answer_add)
+            # except Exception as e:
+            #     print("Error in function:", str(e))
 
-            # async_task(check_answers("5204268000112707003"))
-            print(r"test sdfdsfs:",last_question_id)
-            print(r"test sdfdsfs asd:",zoho_lead_id)
-            print(r"test sdfdsfs asd:",question_id)
+            # # async_task(check_answers("5204268000112707003"))
+            # print(r"test sdfdsfs:",last_question_id)
+            # print(r"test sdfdsfs asd:",zoho_lead_id)
+            # print(r"test sdfdsfs asd:",question_id)
+            print(question_id)
+            print(last_question_id)
 
            
             if int(last_question_id) == int(question_id):
-                async_task(merge_videos(zoho_lead_id))
+                print("test")
+                # async_task(merge_videos(zoho_lead_id))
                 # async_task(check_answers(zoho_lead_id))
                 # async_task("studentpanel.views.interview_process.merge_videos",zoho_lead_id)
                 # async_task("studentpanel.views.interview_analyze.check_answers",zoho_lead_id)
@@ -953,9 +1021,9 @@ def analyze_video(video_path,question_id,zoho_lead_id,last_question_id):
 
                     #
             return JsonResponse({
-                "transcription": transcribed_text,
-                "sentiment": sentiment_analysis,
-                "grammar_results": grammar_results,
+                # "transcription": transcribed_text,
+                # "sentiment": sentiment_analysis,
+                # "grammar_results": grammar_results,
                 "status": "success",
                 "question_id": question_id,
                 "zoho_lead_id": zoho_lead_id,
@@ -968,7 +1036,8 @@ def analyze_video(video_path,question_id,zoho_lead_id,last_question_id):
     # return JsonResponse({"error": "Invalid request"}, status=400)
 
 
-# print(async_task(check_answers('5204268000112707003'))) 
+# print(async_task(merge_videos('5204268000112707003'))) 
+
 # print(async_task(analyze_video(
 #         r"C:\Users\angel\Ascencia_Interviews\ascencia_interviews\uploads\interview_videos\5204268000112707003\interview_video_5204268000112707003_2_2025-03-19T12-35-51.webm",
 #         '1',
