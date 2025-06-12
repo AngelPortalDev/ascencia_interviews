@@ -44,7 +44,9 @@ const Questions = () => {
   // const { student_id } = useParams(); // Get encoded student_id from URL
   const location = useLocation();
   const encoded_zoho_lead_id = location.state?.encoded_zoho_lead_id || null;
+  const encoded_interview_link_send_count = location?.state?.encoded_interview_link_send_count || null;
   const zoho_lead_id = atob(encoded_zoho_lead_id);
+  // console.log('encoded_interview_link_send_count',encoded_interview_link_send_count)
 
   //  // Recording State & Refs
   const [videoFilePath, setVideoFilePath] = useState(null);
@@ -61,6 +63,7 @@ const Questions = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const [showUploading, setShowUploading] = useState(false);
+  const toastId = useRef(null);
 
   // usePageReloadSubmit(
   //   videoRef,
@@ -139,6 +142,40 @@ const Questions = () => {
     fetchQuestions();
   }, []);
 
+  // 10 sec popup implement
+
+useEffect(() => {
+  if (loading) {
+    return;
+  }
+    if (countdown <= 10 && countdown >= 1) {
+        if (!toastId.current) {
+            toastId.current = toast.warn(`You have only ${countdown} seconds left!`, {
+                position: "top-center",
+                autoClose: false,
+                hideProgressBar: true,
+            });
+        } else {
+            toast.update(toastId.current, {
+                render: `You have only ${countdown} seconds left!`,
+            });
+        }
+
+        if (countdown === 1 && toastId.current) {
+            setTimeout(() => {
+                toast.dismiss(toastId.current);
+                toastId.current = null;
+            }, 900);
+        }
+
+    } else if (countdown === 0 && toastId.current) {
+        toastId.current = null;
+    }
+}, [countdown]);
+
+
+
+
   // ************* Get First Question id *********
 
   useEffect(() => {
@@ -161,10 +198,11 @@ const Questions = () => {
         // student_id,
         zoho_lead_id,
         firstQuestion.encoded_id,
-        last_question_id
+        last_question_id,
+        encoded_interview_link_send_count
       );
     }
-  }, [getQuestions, isFirstQuestionSet, last_question_id, zoho_lead_id]);
+  }, [getQuestions, isFirstQuestionSet, last_question_id, zoho_lead_id,encoded_interview_link_send_count]);
 
 
   const handleSubmit = useCallback(async () => {
@@ -191,6 +229,7 @@ const Questions = () => {
         zoho_lead_id,
         activeQuestionId,
         last_question_id,
+        encoded_interview_link_send_count,
         () => {
           try {
             startRecording(
@@ -205,7 +244,8 @@ const Questions = () => {
               setAudioFilePath,
               zoho_lead_id,
               newQuestionId,
-              last_question_id
+              last_question_id,
+              encoded_interview_link_send_count,
             );
           } catch (err) {
             console.error("Failed to start recording:", err);
@@ -219,6 +259,8 @@ const Questions = () => {
       // if (isInterviewSubmitted) {
         localStorage.setItem("interviewSubmitted", "true");
         // submitExam(); // if this sends final answers or flags interview as done
+        localStorage.clear();
+        sessionStorage.clear();
         navigate("/interviewsubmitted");
       // }
     } catch (error) {
@@ -234,6 +276,7 @@ const Questions = () => {
     submitExam,
     zoho_lead_id,
     navigate,
+    encoded_interview_link_send_count
   ]);
 
   const handleSubmitNew = useCallback(async () => {
@@ -282,6 +325,8 @@ const Questions = () => {
             console.log("✅ All done. Navigating to /interviewsubmitted...");
             localStorage.setItem("interviewSubmitted", "true");
             submitExam();
+            localStorage.clear();
+            sessionStorage.clear();
             navigate("/interviewsubmitted");
           } else {
             console.error("Upload failed or incomplete:", response);
@@ -319,8 +364,10 @@ useEffect(() => {
         console.log("last question reach...")
         setTimeout(() => {
             console.log("🟢 Timeout executed");
-            localStorage.setItem("interviewSubmitted", "true");
+            // localStorage.setItem("interviewSubmitted", "true");
             // submitExam();
+            localStorage.clear();
+            sessionStorage.clear();
             setLoading(false);
             navigate("/interviewsubmitted");
         }, 25000);
@@ -336,6 +383,7 @@ useEffect(() => {
           zoho_lead_id,
           currentQId,
           last_question_id,
+          encoded_interview_link_send_count,
           async () => {
              console.log("🟢 Inside final callback");
             
@@ -356,6 +404,7 @@ useEffect(() => {
             zoho_lead_id,
             currentQId,
             last_question_id,
+            encoded_interview_link_send_count,
             async () => {
               const nextIndex = currentQuestionIndex + 1;
               const nextQId = getQuestions[nextIndex]?.encoded_id;
@@ -372,7 +421,8 @@ useEffect(() => {
                 setAudioFilePath,
                 zoho_lead_id,
                 nextQId,
-                last_question_id
+                last_question_id,
+                encoded_interview_link_send_count
               );
 
               setCurrentQuestionIndex(nextIndex);
@@ -405,6 +455,7 @@ useEffect(() => {
   last_question_id,
   submitExam,
   navigate,
+  encoded_interview_link_send_count
 ]);
 
 
@@ -469,6 +520,7 @@ useEffect(() => {
         zoho_lead_id,
         activeQuestionId,
         last_question_id,
+        encoded_interview_link_send_count,
         () => {
           try {
             startRecording(
@@ -483,7 +535,8 @@ useEffect(() => {
               setAudioFilePath,
               zoho_lead_id,
               newQuestionId,
-              last_question_id
+              last_question_id,
+              encoded_interview_link_send_count
             );
           } catch (err) {
             console.error("Failed to start recording:", err);
@@ -496,7 +549,7 @@ useEffect(() => {
       // Reset countdown
       setCountdown(60);
     },
-    [activeQuestionId, getQuestions, zoho_lead_id, last_question_id, videoRef]
+    [activeQuestionId, getQuestions, zoho_lead_id, last_question_id, videoRef,encoded_interview_link_send_count]
   );
 
   // Prevent unnecessary re-renders of InterviewPlayer
@@ -512,9 +565,10 @@ useEffect(() => {
         audioRecorderRef={audioRecorderRef}
         recordedChunksRef={recordedChunksRef}
         recordedAudioChunksRef={recordedAudioChunksRef}
+        encoded_interview_link_send_count={encoded_interview_link_send_count}
       />
     ),
-    [activeQuestionId, zoho_lead_id, last_question_id]
+    [activeQuestionId, zoho_lead_id, last_question_id,encoded_interview_link_send_count]
   );
 
   const handleTimeSpent = () => {
@@ -574,6 +628,8 @@ useEffect(() => {
       window.history.pushState(null, null, window.location.href);
     } else {
       // If user confirms, allow navigation (or handle as needed)
+      localStorage.clear();
+      sessionStorage.clear();
       window.location.href = "/interviewsubmitted";
     }
   };

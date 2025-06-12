@@ -77,11 +77,11 @@ const Home = () => {
           <div className="hidden sm:mb-8 sm:flex sm:justify-center">
           </div>
           <div className="text-center">
-            <h1 className="text-balance text-4xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
-                AI-powered Interview Assistant
+            <h1 className="text-balance text-3xl font-semibold tracking-tight text-gray-900 sm:text-4xl">
+                Our AI-Interview Platform Simplifies Enrollment for Education
             </h1>
             <p className="mt-8 text-pretty text-lg font-medium text-gray-500 sm:text-xl/8">
-            Our AI-powered platform helps you prepare for job interviews by simulating real-life scenarios, providing feedback, and enhancing your interview skills.
+            Our AI-Interview platform is designed to make your educational journey smoother and more efficient. With automated features and user-friendly tools, it streamlines the enrollment process, allowing you to focus on what matters most—your education.
 
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">

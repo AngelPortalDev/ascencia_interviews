@@ -2,6 +2,7 @@ import os
 import subprocess
 import requests
 from django.conf import settings
+from django.contrib.auth.models import User
 from studentpanel.models.interview_process_model import Students
 from adminpanel.utils import send_email
 from django.db.models.signals import post_save
@@ -187,7 +188,7 @@ def merge_videos(zoho_lead_id):
 
         video_path = os.path.join(
             "/home/ascenciaintervie/public_html/static/uploads/interview_videos",
-            # "C:/xampp/htdocs/vaibhav/ascencia_interviews/static/uploads/interview_videos",
+            #  "C:/xampp/htdocs/vaibhav/ascencia_interviews/static/uploads/interview_videos",
             zoho_lead_id,
             "merged_video.webm"
         )
@@ -199,6 +200,17 @@ def merge_videos(zoho_lead_id):
         # url = video_path  # or your public URL if available
         url = f"https://video.bunnycdn.com/play/{settings.BUNNY_STREAM_LIBRARY_ID}/{video_id}"
 
+        student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        student_name = f"{student.first_name} {student.last_name}"
+        student_email = student.email
+        student_zoho_lead_id = student.zoho_lead_id
+
+        email = student.student_manager_email.strip().lower()
+        student_manager = User.objects.filter(email__iexact=email).first()
+        student_manager_name = ''
+        if student_manager:  
+            student_manager_name = f"{student_manager.first_name} {student_manager.last_name}".strip()
+            print(f"student_manager_name: {student_manager_name}")
 
         html_content = f"""
         <html>
@@ -214,18 +226,29 @@ def merge_videos(zoho_lead_id):
                     <img src="https://ascencia-interview.com/static/img/email_template_icon/interviewcomplete.png" alt="Document Verified" style="width: 50%; display: block; margin: 20px auto;" />
 
                     <!-- Heading -->
-                    <h2 style="color: #2c3e50; text-align: center;">Interview Process Completed</h2>
+                    <h2 style="color: #2c3e50; text-align: center;">Interview Process Submitted</h2>
 
                     <!-- Content -->
-                    <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Dear User,</p>
-                    <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">The interview process has been successfully completed.</p>
-                    <!-- <p style="color: #555; font-size: 16px; line-h eight: 1.6; text-align: center;">The interview video is attached. Please review.</p>
+                    <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">Dear <b>{student_manager_name}<b>,</p>
+
+                    <!-- <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">The interview process has been successfully completed.</p> -->
+                    <!-- <p style="color: #555; font-size: 16px; line-h eight: 1.6; text-align: left;">The interview video is attached. Please review.</p> -->
                     
+                    <!-- Content -->
+                    <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;"><b>Student Details:</b></p>
+                    <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">Name: {student_name},</p>
+                    <p style="color: #555; font-size: 14px; text-align: left;">Email: {student_email}</p>
+                    <p style="color: #555; font-size: 14px; text-align: left;">Zoho Lead Id: {student_zoho_lead_id}</p>
+
+
                     <!--change for link -->
                     <!-- Watch Video Button -->
-                    <div style="text-align: center; margin-top: 30px;">
+                    <div style="text-align: left; margin-top: 30px;">
                         <a href="{url}" target="_blank" style="background-color: #007bff; color: white; padding: 12px 25px; font-size: 16px; text-decoration: none; border-radius: 5px;">Watch Video</a>
                     </div>
+                    <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left; margin-top: 30px;">
+                                                    Best regards,<br/>Ascencia Malta
+                                                </p>
                 </div>
                 
             </body>
@@ -276,6 +299,11 @@ def merge_videos(zoho_lead_id):
             logging.info("All video and temp files deleted from uploads folder: %s", uploads_folder)
         except Exception as cleanup_error:
             logging.warning("Failed to clean up uploads folder: %s", cleanup_error)
+
+         # Delete StudentInterviewAnswers after processing
+        deleted_count, _ = StudentInterviewAnswers.objects.filter(zoho_lead_id=zoho_lead_id).delete()
+        delted_student_interview = Students.objects.filter(zoho_lead_id=zoho_lead_id).update(interview_process='')
+        logging.info("Deleted %s StudentInterviewAnswers entries for zoho_lead_id: %s", deleted_count, zoho_lead_id)
 
 
         return f"video_id: Done"

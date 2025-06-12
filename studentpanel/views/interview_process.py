@@ -88,7 +88,8 @@ def interview_attend(request):
     if request.method == 'POST':
         data = request.POST
         zoho_lead_id_encoded = data.get('zoho_lead_id')
-
+        encoded_interview_link_send_count= data.get('encoded_interview_link_send_count')
+        print("encoded_interview_link_send_count",encoded_interview_link_send_count)
         if not zoho_lead_id_encoded:
             return JsonResponse({"error": "Student ID is required"}, status=400)
 
@@ -97,49 +98,47 @@ def interview_attend(request):
             zoho_lead_id = base64.b64decode(zoho_lead_id_encoded).decode("utf-8")
             # print(zoho_lead_id)
             
-            # Fetch student interview record
-            student_data = StudentInterviewLink.objects.get(zoho_lead_id=zoho_lead_id)
-            data = {
-                'is_expired': student_data.is_expired,
-                'expires_at' : student_data.expires_at,
-                'interview_attend':student_data.interview_attend,
-            }
-            
-            expires_at = data['expires_at']
-            if timezone.is_naive(expires_at):
-                expires_at = timezone.make_aware(expires_at, timezone.get_current_timezone())
+            student_data_list = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id)
 
-            # Get current aware datetime
-            current_time = timezone.now()
+            for student_data in student_data_list:
+                if encoded_interview_link_send_count == student_data.interview_link_count:
+
+                    expires_at = student_data.expires_at
+                    if timezone.is_naive(expires_at):
+                        expires_at = timezone.make_aware(expires_at, timezone.get_current_timezone())
+
+                    # Get current aware datetime
+                    current_time = timezone.now()
 
             # Check if the interview link has expired
-            if expires_at <= current_time:
-                return JsonResponse({
-                    "status": True, 
-                    "message": "Interview link has expired.",
-                    "expired_date": expires_at.strftime('%Y-%m-%d %H:%M:%S %Z')
-                }, status=410)
-            else:
-                # Update interview attendance and expiration status
-                interview_attend = data['interview_attend']
-                # Check if interview link is expired
-                if interview_attend == 1:
-                    expired_date = data['interview_attend']
-                    return JsonResponse({
-                        "status": True,
-                        "message": "Interview link has expired.",
-                    }, status=410)  # 410 GONE
-                else:
-                    # data = {
-                    #   'interview_attend': True,  # Boolean value (not string)
-                    #   'is_expired': True        # Boolean value (not string)
-                    # } 
+                    if expires_at <= current_time:
+                        return JsonResponse({
+                            "status": True, 
+                            "message": "Interview link has expired.",
+                            "expired_date": expires_at.strftime('%Y-%m-%d %H:%M:%S %Z')
+                        }, status=410)
+                    else:
+                        # Update interview attendance and expiration status
+                        interview_attend = student_data.interview_attend
+                        # Check if interview link is expired
+                        if interview_attend == 1:
+                            expired_date = student_data.interview_attend
+                            return JsonResponse({   
+                                "status": True,
+                                "message": "Interview link has expired.",
+                            }, status=410) 
+                             # 410 GONE
+                        else:
+                            # data = {
+                            #   'interview_attend': True,  # Boolean value (not string)
+                            #   'is_expired': True        # Boolean value (not string)
+                            # } 
 
-                    # result = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).update(**data)
-                    # if result == 1:
-                    #     return JsonResponse({"status": data, "message": "Interview attendance updated successfully"}, status=200)
-                    # else:
-                    return JsonResponse({"status": data, "message": "Interview attendance updated successfully"}, status=200)
+                            # result = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).update(**data)
+                            # if result == 1:
+                            #     return JsonResponse({"status": data, "message": "Interview attendance updated successfully"}, status=200)
+                            # else:
+                            return JsonResponse({"status": "success", "message": "Interview attendance updated successfully"}, status=200)
 
         except StudentInterviewLink.DoesNotExist:
             return JsonResponse({"status": False, "message": "Student interview record not found."}, status=404)

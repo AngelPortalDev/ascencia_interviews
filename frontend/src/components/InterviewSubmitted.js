@@ -36,7 +36,7 @@ const InterviewSubmitted = () => {
       <div className="submitted-content">
         <h1 className="submitted-title">✔</h1>
         <p className="submitted-message">Thank you for your submission!</p>
-        <p className="submitted-subtext">Redirecting you shortly...</p>
+        <p className="submitted-subtext">Thank you for completing the interview. Your result will be provided within 48 hours.</p>
         {/* <a href="/" className="bg-[rgb(219,39,131)] text-white rounded-md text-sm px-4 py-2 md:text-lg md:px-6 md:py-3">
                 Go Back to Home
         </a> */}

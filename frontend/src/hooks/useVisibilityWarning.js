@@ -20,12 +20,16 @@ const useVisibilityWarning = () => {
           hideProgressBar: true,
         });
 
-        if (warningCount >= 200) {
+        if (warningCount >= 3) {
           toast.error("Interview auto-submitted due to rule violation.", {
             position: "top-center",
             autoClose: 3000,
             hideProgressBar: true,
-            onClose: () => navigate("/"),
+            onClose: () =>{
+              localStorage.clear();
+              sessionStorage.clear();
+              navigate("/interviewsubmitted");
+            } 
           });
         }
       }
