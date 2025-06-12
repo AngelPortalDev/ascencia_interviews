@@ -26,6 +26,8 @@ class Students(models.Model):
     intake_month = models.CharField(max_length=100, null=True, blank=True)
     zoho_lead_id = models.CharField(max_length=100, unique=True, null=False)
     crm_id = models.CharField(max_length=225, null=True, blank=False)
+    interview_process = models.CharField(max_length=225,null=True,blank=True)
+
     # institute_id = models.ForeignKey(
     #     Institute, 
     #     on_delete=models.CASCADE, 
