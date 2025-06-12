@@ -7,8 +7,7 @@ const Home = () => {
 
   const { encoded_zoho_lead_id,encoded_interview_link_send_count } = useParams(); // Get encoded student_id from URL
   // console.log("encoded_zoho_lead_id",encoded_zoho_lead_id)
-  const isLoading = useInterviewLinkStatus(encoded_zoho_lead_id);
-
+  const isLoading = useInterviewLinkStatus(encoded_zoho_lead_id,encoded_interview_link_send_count);
   if (isLoading) {
     return <div>
       <section class="dots-container">
