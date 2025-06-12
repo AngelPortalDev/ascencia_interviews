@@ -44,7 +44,9 @@ const Questions = () => {
   // const { student_id } = useParams(); // Get encoded student_id from URL
   const location = useLocation();
   const encoded_zoho_lead_id = location.state?.encoded_zoho_lead_id || null;
+  const encoded_interview_link_send_count = location?.state?.encoded_interview_link_send_count || null;
   const zoho_lead_id = atob(encoded_zoho_lead_id);
+  // console.log('encoded_interview_link_send_count',encoded_interview_link_send_count)
 
   //  // Recording State & Refs
   const [videoFilePath, setVideoFilePath] = useState(null);
@@ -193,10 +195,11 @@ useEffect(() => {
         // student_id,
         zoho_lead_id,
         firstQuestion.encoded_id,
-        last_question_id
+        last_question_id,
+        encoded_interview_link_send_count
       );
     }
-  }, [getQuestions, isFirstQuestionSet, last_question_id, zoho_lead_id]);
+  }, [getQuestions, isFirstQuestionSet, last_question_id, zoho_lead_id,encoded_interview_link_send_count]);
 
 
   const handleSubmit = useCallback(async () => {
@@ -223,6 +226,7 @@ useEffect(() => {
         zoho_lead_id,
         activeQuestionId,
         last_question_id,
+        encoded_interview_link_send_count,
         () => {
           try {
             startRecording(
@@ -237,7 +241,8 @@ useEffect(() => {
               setAudioFilePath,
               zoho_lead_id,
               newQuestionId,
-              last_question_id
+              last_question_id,
+              encoded_interview_link_send_count,
             );
           } catch (err) {
             console.error("Failed to start recording:", err);
@@ -268,6 +273,7 @@ useEffect(() => {
     submitExam,
     zoho_lead_id,
     navigate,
+    encoded_interview_link_send_count
   ]);
 
   const handleSubmitNew = useCallback(async () => {
@@ -374,6 +380,7 @@ useEffect(() => {
           zoho_lead_id,
           currentQId,
           last_question_id,
+          encoded_interview_link_send_count,
           async () => {
              console.log("🟢 Inside final callback");
             
@@ -394,6 +401,7 @@ useEffect(() => {
             zoho_lead_id,
             currentQId,
             last_question_id,
+            encoded_interview_link_send_count,
             async () => {
               const nextIndex = currentQuestionIndex + 1;
               const nextQId = getQuestions[nextIndex]?.encoded_id;
@@ -410,7 +418,8 @@ useEffect(() => {
                 setAudioFilePath,
                 zoho_lead_id,
                 nextQId,
-                last_question_id
+                last_question_id,
+                encoded_interview_link_send_count
               );
 
               setCurrentQuestionIndex(nextIndex);
@@ -443,6 +452,7 @@ useEffect(() => {
   last_question_id,
   submitExam,
   navigate,
+  encoded_interview_link_send_count
 ]);
 
 
@@ -507,6 +517,7 @@ useEffect(() => {
         zoho_lead_id,
         activeQuestionId,
         last_question_id,
+        encoded_interview_link_send_count,
         () => {
           try {
             startRecording(
@@ -521,7 +532,8 @@ useEffect(() => {
               setAudioFilePath,
               zoho_lead_id,
               newQuestionId,
-              last_question_id
+              last_question_id,
+              encoded_interview_link_send_count
             );
           } catch (err) {
             console.error("Failed to start recording:", err);
@@ -534,7 +546,7 @@ useEffect(() => {
       // Reset countdown
       setCountdown(60);
     },
-    [activeQuestionId, getQuestions, zoho_lead_id, last_question_id, videoRef]
+    [activeQuestionId, getQuestions, zoho_lead_id, last_question_id, videoRef,encoded_interview_link_send_count]
   );
 
   // Prevent unnecessary re-renders of InterviewPlayer
@@ -550,9 +562,10 @@ useEffect(() => {
         audioRecorderRef={audioRecorderRef}
         recordedChunksRef={recordedChunksRef}
         recordedAudioChunksRef={recordedAudioChunksRef}
+        encoded_interview_link_send_count={encoded_interview_link_send_count}
       />
     ),
-    [activeQuestionId, zoho_lead_id, last_question_id]
+    [activeQuestionId, zoho_lead_id, last_question_id,encoded_interview_link_send_count]
   );
 
   const handleTimeSpent = () => {

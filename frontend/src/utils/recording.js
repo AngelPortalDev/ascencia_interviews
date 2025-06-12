@@ -13,9 +13,11 @@ export const startRecording = async (
   setAudioFilePath,
   zoho_lead_id,
   question_id,
-  last_question_id
+  last_question_id,
+  encoded_interview_link_send_count
 ) => {
   // console.log("question_id 111",question_id)
+  // console.log("last_question_id",last_question_id);
   // console.log("🔥 Inside stopRecording, last_question_id:", last_question_id);
   // console.log("🔥 Type of last_question_id:", typeof last_question_id);
   try {
@@ -69,10 +71,11 @@ export const stopRecording = (
   setAudioFilePath,
   zoho_lead_id,
   question_id,
-  last_question_id
+  last_question_id,
+  encoded_interview_link_send_count,
 ) => {
     const capturedQuestionId = question_id;
-  console.log("question_id 333",capturedQuestionId)
+  // console.log("encoded_interview_link_send_counttttttttttttttttttttttt",encoded_interview_link_send_count)
 
   return new Promise((resolve, reject) => { 
     let videoUploaded = false;
@@ -96,7 +99,7 @@ export const stopRecording = (
         const fileNameVideo = `interview_video_${zoho_lead_id}_${capturedQuestionId}_${new Date().toISOString().replace(/:/g, "-").split(".")[0]}.webm`;
 
         try {
-          videoPath = await uploadFile(videoBlob, fileNameVideo, zoho_lead_id, capturedQuestionId, last_question_id,true);
+          videoPath = await uploadFile(videoBlob, fileNameVideo, zoho_lead_id, capturedQuestionId, last_question_id,encoded_interview_link_send_count,true);
           console.log('question_id in recording',capturedQuestionId)
           console.log('last_question_id in recording',last_question_id)
 
