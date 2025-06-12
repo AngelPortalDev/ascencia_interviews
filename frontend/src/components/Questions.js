@@ -145,6 +145,9 @@ const Questions = () => {
   // 10 sec popup implement
 
 useEffect(() => {
+  if (loading) {
+    return;
+  }
     if (countdown <= 10 && countdown >= 1) {
         if (!toastId.current) {
             toastId.current = toast.warn(`You have only ${countdown} seconds left!`, {
