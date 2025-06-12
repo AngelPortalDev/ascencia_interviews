@@ -26,8 +26,7 @@ class StudentInterviewLink(models.Model):
         choices=[(tag.value, tag.value) for tag in InterviewResult], 
         null=True
     )
-
-
+    interview_link_count = models.CharField(max_length=50,null=True,blank=True)
     def save(self, *args, **kwargs):
         """Ensure expiration logic is applied before saving."""
         if self.expires_at <= now():

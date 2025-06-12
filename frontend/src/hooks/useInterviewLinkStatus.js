@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-const useInterviewLinkStatus = (encoded_zoho_lead_id) => {
+const useInterviewLinkStatus = (encoded_zoho_lead_id,encoded_interview_link_send_count) => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -12,6 +12,8 @@ const useInterviewLinkStatus = (encoded_zoho_lead_id) => {
 
       const formData = new FormData();
       formData.append("zoho_lead_id", encoded_zoho_lead_id);
+      formData.append("encoded_interview_link_send_count", encoded_interview_link_send_count);
+
 
       try {
         const response = await axios.post(
