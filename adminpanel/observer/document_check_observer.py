@@ -4,6 +4,7 @@ import os
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from studentpanel.models.interview_process_model import Students
+from studentpanel.models.student_Interview_status import Student_Interview
 from urllib.parse import quote
 from studentpanel.utils.ZohoAuth import ZohoAuth
 import time
@@ -262,166 +263,179 @@ def student_created_observer(sender, instance, created, **kwargs):
     try:
         
         student = Students.objects.get(zoho_lead_id=zoho_lead_id)
-        if not student.interview_process:
-            print(student.interview_process)
-            studentLinkStatus = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id)
-            if studentLinkStatus.count() <= 1:
-                print(studentLinkStatus.count())
+        try: 
+            student_interview = Student_Interview.objects.get(zoho_lead_id=zoho_lead_id)
 
-                for student_data in studentLinkStatus:
+            if not student_interview.interview_process:
+                print(student.interview_process)
+                studentLinkStatus = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id)
+                if studentLinkStatus.count() <= 1:
+                    print(studentLinkStatus.count())
 
-                    update_data = {"Interview_Process": "Second Round Interview"}
-                    print(update_data)
-                    print(zoho_lead_id)
-                    if update_zoho_lead(student.crm_id, zoho_lead_id, update_data):
-                        print(studentLinkStatus.count())
+                    for student_data in studentLinkStatus:
 
-                        if student_data.interview_attend == 1:
-                            print("zoho_lead_id",zoho_lead_id)
+                        update_data = {"Interview_Process": "Second Round Interview"}
+                        print(update_data)
+                        print(zoho_lead_id)
+                        if update_zoho_lead(student.crm_id, zoho_lead_id, update_data):
+                            print(studentLinkStatus.count())
 
-                            interview_link_send_count = 2
-                            encoded_zoho_lead_id = encode_base64(zoho_lead_id)
-                            print("ZOHO LEAD ID",interview_link_send_count)
+                            if student_data.interview_attend == 1:
+                                print("zoho_lead_id",zoho_lead_id)
 
-                            encoded_interview_link_send_count = encode_base64(interview_link_send_count)
-                            print("ZOHO LEAD ID DSFS",encoded_interview_link_send_count)
+                                interview_link_send_count = 2
+                                encoded_zoho_lead_id = encode_base64(zoho_lead_id)
+                                print("ZOHO LEAD ID",interview_link_send_count)
 
-                            interview_url = f'{settings.ADMIN_BASE_URL}/frontend/interview_panel/{encoded_zoho_lead_id}/{encoded_interview_link_send_count}'
-                            print(interview_url)
-                            new_interview_link = StudentInterviewLink.objects.create(
-                                zoho_lead_id=zoho_lead_id,
-                                interview_link=interview_url,
-                                interview_attend=0,
-                                expires_at=now() + timedelta(hours=72),
-                                interview_link_count = encoded_interview_link_send_count
-                            )
+                                encoded_interview_link_send_count = encode_base64(interview_link_send_count)
+                                print("ZOHO LEAD ID DSFS",encoded_interview_link_send_count)
 
-                            student.is_interview_link_sent = True
-                            student.interview_link_send_count = 2
-                            student.interview_process = "Second_Round_Interview"
-                            student.save()
+                                interview_url = f'{settings.ADMIN_BASE_URL}/frontend/interview_panel/{encoded_zoho_lead_id}/{encoded_interview_link_send_count}'
+                                print(interview_url)
+                                new_interview_link = StudentInterviewLink.objects.create(
+                                    zoho_lead_id=zoho_lead_id,
+                                    interview_link=interview_url,
+                                    interview_attend=0,
+                                    expires_at=now() + timedelta(hours=72),
+                                    interview_link_count = encoded_interview_link_send_count
+                                )
 
-                            print(new_interview_link)
-                            student_name = f"{student.first_name} {student.last_name}"
-                            student_email = student.email
+                                student.is_interview_link_sent = True
+                                student.interview_link_send_count = 2
+                                # student.interview_process = "Second_Round_Interview"
+                                student.save()
 
-                            interview_start = student_data.created_at
-                            interview_end = student_data.expires_at
+                                # # Update all required fields in Student_Interview model
+                                student_interview.zoho_lead_id = zoho_lead_id
+                                # student_interview.student_id = student
+                                print("Student Id",)
+                                student_interview.interview_process = "Second_Round_Interview"
+                                student_interview.save()
 
-                            # Convert to Asia/Calcutta timezone
-                            tz = pytz.timezone("Europe/Malta")
-                            interview_start_local = localtime(interview_start).astimezone(tz)
-                            interview_end_local = localtime(interview_end).astimezone(tz)
 
-                            # Format the datetime
-                            formatted_start = interview_start_local.strftime("%d %b %Y - %I:%M %p (Europe/Malta)")
-                            formatted_end = interview_end_local.strftime("%d %b %Y - %I:%M %p (Europe/Malta)")
+                                print(new_interview_link)
+                                student_name = f"{student.first_name} {student.last_name}"
+                                student_email = student.email
 
-                            print("Start Date and time:", formatted_start)
-                            print("End Date and time:", formatted_end)
-                            send_email(
-                                subject="Interview Invitation for Student Interview",
-                                message=f"""
-                                <html>
-                                    <head>
-                                        <style>
-                                            body {{
-                                                background-color: #f4f4f4;
-                                                font-family: Tahoma, sans-serif;
-                                                margin: 0;
-                                                padding: 40px 20px;
-                                                display: flex;
-                                                justify-content: center;
-                                                align-items: center;
-                                                min-height: 100vh;
-                                            }}
-                                            .email-container {{
-                                                background: #ffffff;
-                                                max-width: 600px;
-                                                width: 100%;
-                                                padding: 30px 25px;
-                                                border-radius: 10px;
-                                                box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-                                                border: 1px solid #ddd;
-                                                box-sizing: border-box;
-                                                margin: 0 auto;
-                                            }}
-                                            .header {{
-                                                text-align: center;
-                                                margin-bottom: 20px;
-                                                border-bottom: 1px solid #eee;
-                                            }}
-                                            .header img {{
-                                                height: 40px;
-                                                width: auto;
-                                                margin-bottom: 10px;
-                                            }}
-                                            .email-logo {{
-                                                width: 50%;
-                                                display: block;
-                                                margin: 20px auto;
-                                            }}
-                                            h2 {{
-                                                color: #2c3e50;
-                                                text-align: center;
-                                            }}
-                                            p {{
-                                                color: #555;
-                                                font-size: 16px;
-                                                line-height: 1.6;
-                                                text-align: left;
-                                            }}
-                                            .goInterviewbtnStyle {{
-                                                display: inline-block;
-                                                background: #db2777;
-                                                color: #ffffff;
-                                                text-decoration: none;
-                                                padding: 12px 20px;
-                                                border-radius: 5px;
-                                                font-weight: bold;
-                                                margin: 20px auto 10px;
-                                                text-align: center;
-                                            }}
-                                            .goInterviewbtnStyle:hover {{
-                                                background-color: #0056b3;
-                                                color:#fff;
-                                            }}
-                                            @media only screen and (max-width: 600px) {{
-                                                .email-logo {{
-                                                    width: 80% !important;
+                                interview_start = student_data.created_at
+                                interview_end = student_data.expires_at
+
+                                # Convert to Asia/Calcutta timezone
+                                tz = pytz.timezone("Europe/Malta")
+                                interview_start_local = localtime(interview_start).astimezone(tz)
+                                interview_end_local = localtime(interview_end).astimezone(tz)
+
+                                # Format the datetime
+                                formatted_start = interview_start_local.strftime("%d %b %Y - %I:%M %p (Europe/Malta)")
+                                formatted_end = interview_end_local.strftime("%d %b %Y - %I:%M %p (Europe/Malta)")
+
+                                print("Start Date and time:", formatted_start)
+                                print("End Date and time:", formatted_end)
+                                send_email(
+                                    subject="Interview Invitation for Student Interview",
+                                    message=f"""
+                                    <html>
+                                        <head>
+                                            <style>
+                                                body {{
+                                                    background-color: #f4f4f4;
+                                                    font-family: Tahoma, sans-serif;
+                                                    margin: 0;
+                                                    padding: 40px 20px;
+                                                    display: flex;
+                                                    justify-content: center;
+                                                    align-items: center;
+                                                    min-height: 100vh;
                                                 }}
-                                            }}
-                                        </style>
-                                    </head>
-                                    <body>
-                                        <div class="email-container">
-                                            <div class="header">
-                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Malta" />
-                                            </div>
-                                            <img src="https://ascencia-interview.com/static/img/email_template_icon/notification.png" alt="Interview Invitation" class="email-logo" />
-                                                                        
-                                            <p>Dear Student,</p>
-                                            
-                                            <p>We are pleased to invite you to participate in the following interview:</p>
-                                            
-                                            <p><b>Interview Details:</b></p>
-                                            <p><b>Interviewer name:</b>{student_name},</p>
-                                            <p><b>Start Date and time:</b>{formatted_start}</p>
-                                            <p><b>End Date and time:</b>{formatted_end}</p>
-                                            
-                                            <p>Please note that you can access the interview only between the start and end times mentioned above.</p>
-                                            
-                                            <a href="{interview_url}" style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: center;">Start Interview</a>
+                                                .email-container {{
+                                                    background: #ffffff;
+                                                    max-width: 600px;
+                                                    width: 100%;
+                                                    padding: 30px 25px;
+                                                    border-radius: 10px;
+                                                    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+                                                    border: 1px solid #ddd;
+                                                    box-sizing: border-box;
+                                                    margin: 0 auto;
+                                                }}
+                                                .header {{
+                                                    text-align: center;
+                                                    margin-bottom: 20px;
+                                                    border-bottom: 1px solid #eee;
+                                                }}
+                                                .header img {{
+                                                    height: 40px;
+                                                    width: auto;
+                                                    margin-bottom: 10px;
+                                                }}
+                                                .email-logo {{
+                                                    width: 50%;
+                                                    display: block;
+                                                    margin: 20px auto;
+                                                }}
+                                                h2 {{
+                                                    color: #2c3e50;
+                                                    text-align: center;
+                                                }}
+                                                p {{
+                                                    color: #555;
+                                                    font-size: 16px;
+                                                    line-height: 1.6;
+                                                    text-align: left;
+                                                }}
+                                                .goInterviewbtnStyle {{
+                                                    display: inline-block;
+                                                    background: #db2777;
+                                                    color: #ffffff;
+                                                    text-decoration: none;
+                                                    padding: 12px 20px;
+                                                    border-radius: 5px;
+                                                    font-weight: bold;
+                                                    margin: 20px auto 10px;
+                                                    text-align: center;
+                                                }}
+                                                .goInterviewbtnStyle:hover {{
+                                                    background-color: #0056b3;
+                                                    color:#fff;
+                                                }}
+                                                @media only screen and (max-width: 600px) {{
+                                                    .email-logo {{
+                                                        width: 80% !important;
+                                                    }}
+                                                }}
+                                            </style>
+                                        </head>
+                                        <body>
+                                            <div class="email-container">
+                                                <div class="header">
+                                                    <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Malta" />
+                                                </div>
+                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/notification.png" alt="Interview Invitation" class="email-logo" />
+                                                                            
+                                                <p>Dear Student,</p>
+                                                
+                                                <p>We are pleased to invite you to participate in the following interview:</p>
+                                                
+                                                <p><b>Interview Details:</b></p>
+                                                <p><b>Interviewer name:</b>{student_name},</p>
+                                                <p><b>Start Date and time:</b>{formatted_start}</p>
+                                                <p><b>End Date and time:</b>{formatted_end}</p>
+                                                
+                                                <p>Please note that you can access the interview only between the start and end times mentioned above.</p>
+                                                
+                                                <a href="{interview_url}" style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: center;">Start Interview</a>
 
-                                            <p>Best regards,<br/>Ascencia Malta</p>
-                                        </div>
-                                    </body>
-                                </html>
-                                """,
-                                recipient=["vaibhav@angel-portal.com"],
-                            )
+                                                <p>Best regards,<br/>Ascencia Malta</p>
+                                            </div>
+                                        </body>
+                                    </html>
+                                    """,
+                                    recipient=["vaibhav@angel-portal.com"],
+                                )
 
                                 # student.save()
+        except Student_Interview.DoesNotExist:
+            print("Student_Interview entry does not exist")
     finally:
         print("zoho_lead_id dsfsd",zoho_lead_id)
         

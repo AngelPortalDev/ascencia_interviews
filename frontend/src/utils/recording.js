@@ -18,7 +18,7 @@ export const startRecording = async (
 ) => {
   // console.log("question_id 111",question_id)
   // console.log("last_question_id",last_question_id);
-  // console.log("🔥 Inside stopRecording, last_question_id:", last_question_id);
+  // console.log("🔥 encoded_interview_link_send_count:", encoded_interview_link_send_count);
   // console.log("🔥 Type of last_question_id:", typeof last_question_id);
   try {
   // console.log("question_id 222",question_id);
@@ -75,7 +75,11 @@ export const stopRecording = (
   encoded_interview_link_send_count,
 ) => {
     const capturedQuestionId = question_id;
-  // console.log("encoded_interview_link_send_counttttttttttttttttttttttt",encoded_interview_link_send_count)
+    const captureLastQuestionId = last_question_id
+  // console.log("encoded_interview_link_send_countttt",encoded_interview_link_send_count);
+  // console.log("capturedQuestionId",capturedQuestionId);
+  // console.log("🔍 In stopRecording - typeof last_question_id:", typeof captureLastQuestionId, captureLastQuestionId);
+
 
   return new Promise((resolve, reject) => { 
     let videoUploaded = false;
@@ -92,16 +96,16 @@ export const stopRecording = (
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.onstop = async () => {
-         console.log("⏹️ Stopped video recording for question:", capturedQuestionId);
-          console.log("📦 Video chunks size:", recordedChunksRef.current.length);
+        //  console.log("⏹️ Stopped video recording for question:", capturedQuestionId);
+        //   console.log("📦 captureLastQuestionId:", captureLastQuestionId);
         // console.log("🎥 Stopping video recording...");
         const videoBlob = new Blob(recordedChunksRef.current, { type: "video/webm" });
         const fileNameVideo = `interview_video_${zoho_lead_id}_${capturedQuestionId}_${new Date().toISOString().replace(/:/g, "-").split(".")[0]}.webm`;
 
         try {
-          videoPath = await uploadFile(videoBlob, fileNameVideo, zoho_lead_id, capturedQuestionId, last_question_id,encoded_interview_link_send_count,true);
-          console.log('question_id in recording',capturedQuestionId)
-          console.log('last_question_id in recording',last_question_id)
+          videoPath = await uploadFile(videoBlob, fileNameVideo, zoho_lead_id, capturedQuestionId, captureLastQuestionId,encoded_interview_link_send_count,true);
+          // console.log('question_id in recording',capturedQuestionId)
+          console.log('last_question_id in recording',captureLastQuestionId)
 
           // console.log("📤 Video uploaded. Path:", videoPath);
           setVideoFilePath(videoPath);
@@ -122,7 +126,8 @@ export const stopRecording = (
     if (audioRecorderRef.current) {
       audioRecorderRef.current.stop();
       audioRecorderRef.current.onstop = async () => {
-        console.log("⏹️ Stopped audio recording for question:", capturedQuestionId);
+        // console.log("⏹️ Stopped audio recording for question:", capturedQuestionId);
+        // console.log("🔍 Audio section - typeof last_question_id:", typeof captureLastQuestionId, captureLastQuestionId);
 
         console.log("📦 Audio chunks size:", recordedAudioChunksRef.current.length);
 
@@ -131,9 +136,9 @@ export const stopRecording = (
         const fileNameAudio = `interview_audio_${zoho_lead_id}_${capturedQuestionId}_${new Date().toISOString().replace(/:/g, "-").split(".")[0]}.webm`;
 
         try {
-          audioPath = await uploadFile(audioBlob, fileNameAudio, zoho_lead_id, capturedQuestionId, last_question_id,true);
-            console.log('question_id in recording audio',capturedQuestionId)
-          console.log('last_question_id in recording audio',last_question_id)
+          audioPath = await uploadFile(audioBlob, fileNameAudio, zoho_lead_id, capturedQuestionId, captureLastQuestionId,true);
+          //   console.log('question_id in recording audio',capturedQuestionId)
+          // console.log('last_question_id in recording audio',captureLastQuestionId)
           // console.log("📤 Audio uploaded. Path:", audioPath);
           setAudioFilePath(audioPath);
           audioUploaded = true;

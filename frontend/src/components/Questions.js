@@ -384,10 +384,6 @@ useEffect(() => {
           currentQId,
           last_question_id,
           encoded_interview_link_send_count,
-          async () => {
-             console.log("🟢 Inside final callback");
-            
-          }
         );
       } else {
         // ⏭️ Not last question logic
@@ -404,8 +400,7 @@ useEffect(() => {
             zoho_lead_id,
             currentQId,
             last_question_id,
-            encoded_interview_link_send_count,
-            async () => {
+            encoded_interview_link_send_count)
               const nextIndex = currentQuestionIndex + 1;
               const nextQId = getQuestions[nextIndex]?.encoded_id;
 
@@ -428,8 +423,7 @@ useEffect(() => {
               setCurrentQuestionIndex(nextIndex);
               setActiveQuestionId(nextQId);
               setCountdown(60);
-            }
-          );
+          
         } catch (err) {
           console.error("Transition error:", err);
         } finally {

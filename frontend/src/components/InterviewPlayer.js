@@ -7,7 +7,7 @@ import { interviewAddVideoPath } from "../utils/fileUpload.js";
 import useVisibilityWarning from "../hooks/useVisibilityWarning.js";
 
 
-const InterviewPlayer = ({onTranscription,zoho_lead_id,question_id,last_question_id,videoRef,mediaRecorderRef,audioRecorderRef,recordedChunksRef,recordedAudioChunksRef}) => {
+const InterviewPlayer = ({videoRef,mediaRecorderRef,audioRecorderRef,recordedChunksRef,recordedAudioChunksRef,zoho_lead_id,question_id,last_question_id,encoded_interview_link_send_count,}) => {
   const [isRecording, setIsRecording] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [answerScore, setAnswerScore] = useState(null);
@@ -134,7 +134,8 @@ const InterviewPlayer = ({onTranscription,zoho_lead_id,question_id,last_question
         setAudioFilePath,
         zoho_lead_id,
         question_id,
-        last_question_id
+        last_question_id,
+        encoded_interview_link_send_count,
       );
     };
   
@@ -154,8 +155,8 @@ const InterviewPlayer = ({onTranscription,zoho_lead_id,question_id,last_question
         setAudioFilePath,
         zoho_lead_id,
         question_id,
-        startNewRecording,
-        last_question_id
+        last_question_id,
+        encoded_interview_link_send_count,
       );
     }, 60000); // 10 seconds per question
   

@@ -36,7 +36,7 @@ from django.utils.timezone import localtime
 import pytz
 # Configure logging
 logging.basicConfig(level=logging.INFO)
-
+from studentpanel.models.student_Interview_status import Student_Interview
 
 
 ZOHO_API_BASE_URL = "https://www.zohoapis.com/crm/v7"
@@ -750,12 +750,13 @@ def process_document(request):
                     student.verification_failed_reason = ""
                     student.is_interview_link_sent = True
                     student.interview_link_send_count += 1
-                    student.interview_process = "Second_Round_Interview"
-                    student.save()
+                    # student.interview_process = "Second_Round_Interview"
+                    student.save()                   
 
                     encoded_zoho_lead_id = encode_base64(zoho_lead_id)
                     encoded_interview_link_send_count = encode_base64(student.interview_link_send_count)
                     interview_url = f'{settings.ADMIN_BASE_URL}/frontend/interview_panel/{encoded_zoho_lead_id}/{encoded_interview_link_send_count}'
+                    print(interview_url)
                     
                     interview_link, created = StudentInterviewLink.objects.update_or_create(
                         zoho_lead_id=zoho_lead_id,
@@ -766,7 +767,7 @@ def process_document(request):
                         }
                     )
 
-                    student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+                    # student = Students.objects.get(zoho_lead_id=zoho_lead_id)
                     student_name = f"{student.first_name} {student.last_name}"
                     student_email = student.email
                     student_zoho_lead_id = student.zoho_lead_id
@@ -775,6 +776,18 @@ def process_document(request):
                     interview_start = studentLinkStatus.created_at
                     interview_end = studentLinkStatus.expires_at
 
+
+                    try:
+                        student_interview_status = Student_Interview.objects.get(zoho_lead_id=zoho_lead_id)
+                        student_interview_status.interview_process="Second_Round_Interview"
+                        student_interview_status.save()
+                    except Student_Interview.DoesNotExist:
+                        student_interview = Student_Interview.objects.create(
+                            zoho_lead_id=zoho_lead_id,
+                            # student_id=student,
+                            interview_process="Second_Round_Interview"
+                        )
+                                    
 
                     # Convert to Asia/Calcutta timezone
                     tz = pytz.timezone("Europe/Malta")
