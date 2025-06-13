@@ -32,8 +32,8 @@ export const startRecording = async (
 
     // Video recording setup
     mediaRecorderRef.current = new MediaRecorder(stream, {
-      audioBitsPerSecond: 128000,
-      videoBitsPerSecond: 2500000,
+     audioBitsPerSecond: 64000,
+      videoBitsPerSecond: 1500000,
       type: "video/webm;codecs=vp8,opus",
     });
 
