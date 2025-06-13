@@ -12,6 +12,7 @@ from django_q.tasks import async_task
 import logging
 from django.core.mail import EmailMultiAlternatives
 import mimetypes
+from studentpanel.models.student_Interview_status import Student_Interview
 logging.basicConfig(level=logging.INFO)
 def get_uploads_folder():
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
@@ -188,7 +189,7 @@ def merge_videos(zoho_lead_id):
 
         video_path = os.path.join(
             "/home/ascenciaintervie/public_html/static/uploads/interview_videos",
-            #  "C:/xampp/htdocs/vaibhav/ascencia_interviews/static/uploads/interview_videos",
+            # "C:/xampp/htdocs/vaibhav/ascencia_interviews/static/uploads/interview_videos",
             zoho_lead_id,
             "merged_video.webm"
         )
@@ -302,7 +303,7 @@ def merge_videos(zoho_lead_id):
 
          # Delete StudentInterviewAnswers after processing
         deleted_count, _ = StudentInterviewAnswers.objects.filter(zoho_lead_id=zoho_lead_id).delete()
-        delted_student_interview = Students.objects.filter(zoho_lead_id=zoho_lead_id).update(interview_process='')
+        delted_student_interview = Student_Interview.objects.filter(zoho_lead_id=zoho_lead_id).update(interview_process='')
         logging.info("Deleted %s StudentInterviewAnswers entries for zoho_lead_id: %s", deleted_count, zoho_lead_id)
 
 
