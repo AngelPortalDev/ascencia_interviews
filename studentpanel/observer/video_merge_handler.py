@@ -13,7 +13,9 @@ import logging
 from django.core.mail import EmailMultiAlternatives
 import mimetypes
 from studentpanel.models.student_Interview_status import Student_Interview
+import time
 logging.basicConfig(level=logging.INFO)
+import uuid
 def get_uploads_folder():
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
     logging.info("project_root: %s", project_root)
@@ -23,10 +25,16 @@ def get_uploads_folder():
 
 
 def convert_video(input_path, output_path, target_format):
+    # FFMPEG_PATH = 'C:/ffmpeg/bin/ffmpeg.exe'
+    FFMPEG_PATH = '/usr/bin/ffmpeg'
     logging.info("output_path: %s", output_path)
     logging.info("target_format path: %s", target_format)
     if target_format == "webm":
-        command = f'ffmpeg -i "{input_path}" -c:v libvpx-vp9 -b:v 1M -c:a libopus "{output_path}"'
+        command = (
+        f'{FFMPEG_PATH} -y -i "{input_path}" '
+        f'-vf scale=640:-2 -r 25 -c:v libvpx-vp9 -b:v 1M '
+        f'-c:a libopus -ar 48000 -ac 2 "{output_path}"'
+    )
     elif target_format == "mp4":
         command = f'ffmpeg -i "{input_path}" -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -movflags +faststart "{output_path}"'
     elif target_format == "mov":
@@ -73,6 +81,40 @@ def upload_to_bunnystream(video_path):
          return f"Error uploading video: {upload_response.text}"
     else:
         return video_id
+    
+def wait_for_complete_files(folder, min_files=1, stable_duration=5, timeout=30):
+    start = time.time()
+    last_sizes = {}
+    stable_start = None
+
+    while time.time() - start < timeout:
+        video_files = [
+            f for f in os.listdir(folder)
+            if f.endswith((".webm", ".mp4", ".mov"))
+        ]
+
+        if len(video_files) < min_files:
+            time.sleep(1)
+            continue
+
+        current_sizes = {
+            f: os.path.getsize(os.path.join(folder, f))
+            for f in video_files
+        }
+
+        if current_sizes == last_sizes:
+            if stable_start is None:
+                stable_start = time.time()
+            elif time.time() - stable_start >= stable_duration:
+                return sorted(video_files, key=lambda x: os.path.getctime(os.path.join(folder, x)))
+        else:
+            stable_start = None
+
+        last_sizes = current_sizes
+        time.sleep(1)
+
+    raise TimeoutError(f"Files not stable in {folder} after {timeout} seconds.")
+
 
     # return video_id
 
@@ -82,6 +124,18 @@ def merge_videos(zoho_lead_id):
 
     if not os.path.exists(uploads_folder):
         return f"Error: Folder {uploads_folder} does not exist."
+    
+    output_filename = "merged_video.webm"
+    output_path = os.path.join(uploads_folder, output_filename).replace("\\", "/")
+    if os.path.exists(output_path):
+        logging.info("Merge already completed for this lead. Skipping...")
+        return "Merge already completed. Skipping..."
+    
+    try:
+        video_files = wait_for_complete_files(uploads_folder, min_files=1, stable_duration=5, timeout=30)
+    except TimeoutError as e:
+        return str(e)
+
 
     video_files = sorted(
         [f for f in os.listdir(uploads_folder) if f.endswith((".webm", ".mp4", ".mov"))],
@@ -113,23 +167,50 @@ def merge_videos(zoho_lead_id):
         logging.info("input_path: %s", input_path)
         output_path_converted = os.path.join(uploads_folder, f"{os.path.splitext(video)[0]}_converted.{target_format}").replace("\\", "/")
         logging.info("output_path_converted: %s", output_path_converted)
-        if not video.endswith(f".{target_format}"):
-            logging.info("target_format path video: %s", target_format)
-            convert_video(input_path, output_path_converted, target_format)
-            logging.info("ends with : %s", "end with")
+        # if not video.endswith(f".{target_format}"):
+        #     # logging.info("target_format path video: %s", target_format)
+        #     # convert_video(input_path, output_path_converted, target_format)
+        #     # logging.info("ends with : %s", "end with")
 
-            converted_files.append(output_path_converted)
-            logging.info("target_format path video input_path output: %s", output_path_converted)
+        #     # converted_files.append(output_path_converted)
+        #     # logging.info("target_format path video input_path output: %s", output_path_converted)
+        #     ext = os.path.splitext(video)[1][1:].lower()
+        #     if ext != target_format:
+        #         # Make filename unique to avoid overwrite
+        #         unique_id = uuid.uuid4().hex[:6]
+        #         converted_name = f"{os.path.splitext(video)[0]}_{unique_id}_converted.{target_format}"
+        #         converted_path = os.path.join(uploads_folder, converted_name).replace("\\", "/")
+        #         logging.info("Converting: %s -> %s", input_path, converted_path)
+        #         convert_video(input_path, converted_path, target_format)
+        #         converted_files.append(converted_path)
+        #     else:
+        #         converted_files.append(input_path)
 
-        else:
-            logging.info("target_format path video input_path: %s", input_path)
+        # else:
+        #     logging.info("target_format path video input_path: %s", input_path)
 
-            converted_files.append(input_path)
+        #     converted_files.append(input_path)
+
+                # Always normalize, regardless of extension
+        unique_id = uuid.uuid4().hex[:6]
+        converted_name = f"{os.path.splitext(video)[0]}_{unique_id}_converted.{target_format}"
+        converted_path = os.path.join(uploads_folder, converted_name).replace("\\", "/")
+        logging.info("Converting: %s -> %s", input_path, converted_path)
+        convert_video(input_path, converted_path, target_format)
+        converted_files.append(converted_path)
+
 
     with open(list_file_path, "w") as f:
-        for video in converted_files:
-            f.write(f"file '{video}'\n")
-            logging.info("target_format path video list: %s", video)
+        for video_path in converted_files:
+            if os.path.exists(video_path):  # Only include if file exists
+                f.write(f"file '{video_path}'\n")
+            else:
+                logging.warning("File does not exist, skipping in list: %s", video_path)
+
+
+    with open(list_file_path, "r") as debug_file:
+        logging.info("video_list.txt contents:\n%s", debug_file.read())
+
 
     logging.info("target_format path target_format list: %s", target_format)
     logging.info("target_format path target_format list_file_path: %s", list_file_path)
@@ -150,7 +231,7 @@ def merge_videos(zoho_lead_id):
     
     if target_format == "webm":
         merge_command = (
-            f'{FFMPEG_PATH} -f concat -safe 0 -i "{list_file_path}" '
+          f'{FFMPEG_PATH} -fflags +genpts -err_detect ignore_err -f concat -safe 0 -i "{list_file_path}" '
             f'-c:v libvpx-vp9 -b:v 1M -c:a libopus "{output_path}"'
         )
     elif target_format == "mp4":
@@ -323,6 +404,7 @@ def handle_student_interview_answer_save(sender, instance, created, **kwargs):
         last_6_answers = sender.objects.filter(zoho_lead_id=zoho_lead_id).order_by('-created_at')[:6]
         print(r'last_6_answers_count:', last_6_answers)
         if last_6_answers.count() == 6:
+            time.sleep(10)
             print(r'last_6_answers_count text:', last_6_answers.count())
             async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead_id)
             # async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead_id)
