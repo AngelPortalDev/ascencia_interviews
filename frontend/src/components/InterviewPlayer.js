@@ -182,7 +182,7 @@ const InterviewPlayer = ({videoRef,mediaRecorderRef,audioRecorderRef,recordedChu
         autoPlay
         playsInline
         muted
-        style={{borderRadius: "10%", height:'250px', width:'250px',objectFit:'cover', display:'flex', justifyItems:'center',margin:'0 auto' }}
+        style={{ display:'block', margin:'0 auto', borderRadius:'10px'}}
       ></video>
 
       {/* Scrolling Questions */}
