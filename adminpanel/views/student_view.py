@@ -5,7 +5,7 @@ from adminpanel.common_imports import *
 from studentpanel.models.interview_process_model import Students
 from datetime import datetime
 import calendar
-
+from django.conf import settings
 
 
 @csrf_exempt  # Disable CSRF for webhooks
@@ -146,5 +146,6 @@ def student_detail(request, zoho_lead_id):
     return render(request, "student/student_detail.html", {
         "student": student,
         "show_breadcrumb": True,
-        "breadcrumb_items": breadcrumb_items
+        "breadcrumb_items": breadcrumb_items,
+        "BUNNY_STREAM_LIBRARY_ID": settings.BUNNY_STREAM_LIBRARY_ID
     })

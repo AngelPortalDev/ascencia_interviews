@@ -82,6 +82,7 @@ class APIDataFetcher:
                     if publisher.mindee_verification_status != 'Inprogress':
                         # publisher.mindee_verification_status = 'Inprogress'
                         # publisher.save(update_fields=['mindee_verification_status']) 
+                        time.sleep(10)
                         async_task("adminpanel.observer.document_check_observer.process_documents_task", file_url, publisher, API_TOKEN)
 
 
@@ -430,7 +431,7 @@ def student_created_observer(sender, instance, created, **kwargs):
                                         </body>
                                     </html>
                                     """,
-                                    recipient=["vaibhav@angel-portal.com"],
+                                    recipient=["chetan@angel-portal.com"],
                                 )
 
                                 # student.save()

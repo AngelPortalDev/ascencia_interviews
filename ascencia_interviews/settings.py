@@ -220,8 +220,8 @@ EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587 
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
-EMAIL_HOST_USER = "ankita@angel-portal.com"
-EMAIL_HOST_PASSWORD = "hztmgxknumenllhp"
+EMAIL_HOST_USER = "vaibhav@angel-portal.com"
+EMAIL_HOST_PASSWORD = "fxtllxzluuyxtwvv"
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 

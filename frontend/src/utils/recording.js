@@ -29,13 +29,13 @@ export const startRecording = async (
       video: true,
       audio: { noiseSuppression: false, echoCancellation: false },
     });
-
+    
     // Video recording setup
     mediaRecorderRef.current = new MediaRecorder(stream, {
-     audioBitsPerSecond: 32000,
-      videoBitsPerSecond: 1000000,
-      type: "video/webm;codecs=vp8,opus",
-    });
+  mimeType: "video/webm;codecs=vp8,opus",  // Explicitly request vp8
+  audioBitsPerSecond: 32000,
+  videoBitsPerSecond: 1000000,
+});
 
     mediaRecorderRef.current.ondataavailable = (event) => {
       if (event.data.size > 0) recordedChunksRef.current.push(event.data);
