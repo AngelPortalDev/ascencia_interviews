@@ -124,7 +124,7 @@ def generate_question_video(text, output_path, duration=2):
     safe_text = text.replace(":", r'\:').replace("?", r'\?').replace("'", "").replace('"', "")
     drawtext = (
     f"drawtext=fontfile={font_path}:"
-    f"text='{safe_text}':fontcolor=white:fontsize=24:x=(w-text_w)/2:y=(h-text_h)/2"
+    f"text='{safe_text}':fontcolor=white:fontsize=14:x=(w-text_w)/2:y=(h-text_h)/2"
     )
     print("drawtext",drawtext)
 
@@ -249,12 +249,16 @@ def merge_videos(zoho_lead_id):
     # Get answers and questions
     answers = StudentInterviewAnswers.objects.filter(
     zoho_lead_id=zoho_lead_id
-    ).order_by("created_at")[:6]
+    ).order_by("created_at")[:6]  # Limit to 6 max if required
 
-    questions = CommonQuestion.active_objects.all().order_by("created_at")[:6]
+    answer_count = answers.count()
+    if answer_count == 0:
+        return f"No answers found for lead ID {zoho_lead_id}."
 
-    if answers.count() != 6 or questions.count() != 6:
-        return f"Error: Expected 6 answers and 6 questions for lead ID {zoho_lead_id}"
+    questions = CommonQuestion.active_objects.all().order_by("id")[:answer_count]
+
+    if questions.count() < answer_count:
+        return f"Not enough questions to match {answer_count} answers for lead ID {zoho_lead_id}."
 
     video_files = []
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
