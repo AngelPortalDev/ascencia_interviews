@@ -14,8 +14,11 @@ from django.core.mail import EmailMultiAlternatives
 import mimetypes
 from studentpanel.models.student_Interview_status import Student_Interview
 import time
+from adminpanel.models.common_question import CommonQuestion
 logging.basicConfig(level=logging.INFO)
 import uuid
+import json
+
 def get_uploads_folder():
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
     logging.info("project_root: %s", project_root)
@@ -31,10 +34,16 @@ def convert_video(input_path, output_path, target_format):
     logging.info("target_format path: %s", target_format)
     if target_format == "webm":
         command = (
-        f'{FFMPEG_PATH} -y -i "{input_path}" '
-        f'-vf scale=640:-2 -r 25 -c:v libvpx-vp9 -b:v 1M '
-        f'-c:a libopus -ar 48000 -ac 2 "{output_path}"'
-    )
+            f'{FFMPEG_PATH} -y -i "{input_path}" '
+            f'-vf scale=640:480 -r 30 -pix_fmt yuv420p '
+            f'-c:v libvpx -b:v 1M -quality good -cpu-used 4 '
+            f'-qmin 10 -qmax 42 '
+            f'-c:a libopus -application voip -b:a 96k -vbr on '
+            f'-movflags faststart -avoid_negative_ts make_zero '
+            f'"{output_path}"'
+        )
+
+
     elif target_format == "mp4":
         command = f'ffmpeg -i "{input_path}" -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -movflags +faststart "{output_path}"'
     elif target_format == "mov":
@@ -82,6 +91,63 @@ def upload_to_bunnystream(video_path):
     else:
         return video_id
     
+def get_duration(file_path):
+    FFMPEG_PROBE = '/usr/bin/ffprobe'
+    # FFMPEG_PROBE = "C:/ffmpeg/bin/ffprobe.exe"
+    cmd = [
+        FFMPEG_PROBE, "-v", "error",
+        "-show_entries", "format=duration",
+        "-of", "default=noprint_wrappers=1:nokey=1",
+        file_path
+    ]
+    try:
+        output = subprocess.check_output(cmd, stderr=subprocess.DEVNULL, timeout=10)
+        duration_str = output.decode().strip()
+        if not duration_str or duration_str.lower() == 'n/a':
+            raise ValueError("Duration not available")
+        duration = float(duration_str)
+        return duration
+    except Exception as e:
+        logging.warning(f"Duration check failed for {file_path}: {e}. Using fallback duration 2.0s")
+        return 2.0
+
+    
+    
+def generate_question_video(text, output_path, duration=2):
+    # FFMPEG_PATH = r"C:\ffmpeg\bin\ffmpeg.exe"  # raw string avoids escaping
+    FFMPEG_PATH = '/usr/bin/ffmpeg'
+    # font_path = "C\\\\:/Windows/Fonts/arial.ttf"
+    font_path = "/usr/share/fonts/dejavu/DejaVuSans.ttf"
+
+
+      # ✅ Escape special characters properly for FFmpeg
+    safe_text = text.replace(":", r'\:').replace("?", r'\?').replace("'", "").replace('"', "")
+    drawtext = (
+    f"drawtext=fontfile={font_path}:"
+    f"text='{safe_text}':fontcolor=white:fontsize=24:x=(w-text_w)/2:y=(h-text_h)/2"
+    )
+    print("drawtext",drawtext)
+
+    command = (
+        f'"{FFMPEG_PATH}" '
+        f'-f lavfi -i color=c=black:s=640x360:d={duration} '
+        f'-f lavfi -i anullsrc=channel_layout=stereo:sample_rate=48000 '
+        f'-shortest -vf "{drawtext}" '
+        f'-c:v libvpx -b:v 1M -c:a libopus -ar 48000 -ac 2 '
+        f'-f webm -y "{output_path}"'
+    )
+
+
+    logging.info("Running FFmpeg command:\n%s", command)
+
+    try:
+        subprocess.run(command, shell=True, check=True)
+    except subprocess.CalledProcessError as e:
+        logging.error("FFmpeg failed to generate VP8+Opus question video: %s", e)
+        raise
+
+
+    
 def wait_for_complete_files(folder, min_files=1, stable_duration=5, timeout=30):
     start = time.time()
     last_sizes = {}
@@ -116,7 +182,51 @@ def wait_for_complete_files(folder, min_files=1, stable_duration=5, timeout=30):
     raise TimeoutError(f"Files not stable in {folder} after {timeout} seconds.")
 
 
-    # return video_id
+    # return video_i
+def get_codecs(video_path):
+    # FFMPEG_PROBE = 'C:/ffmpeg/bin/ffprobe.exe'
+    FFMPEG_PROBE = '/usr/bin/ffprobe'
+
+    cmd_video = [
+        FFMPEG_PROBE, '-v', 'error',
+        '-select_streams', 'v:0', '-show_entries', 'stream=codec_name',
+        '-of', 'json', video_path
+    ]
+    result_video = subprocess.run(cmd_video, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    video_codec = json.loads(result_video.stdout)["streams"][0]["codec_name"].lower()
+
+    cmd_audio = [
+        FFMPEG_PROBE, '-v', 'error',
+        '-select_streams', 'a:0', '-show_entries', 'stream=codec_name',
+        '-of', 'json', video_path
+    ]
+    result_audio = subprocess.run(cmd_audio, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    audio_codec = json.loads(result_audio.stdout)["streams"][0]["codec_name"].lower()
+
+    return video_codec, audio_codec
+
+
+def is_video_valid(video_path):
+    # FFMPEG_PROBE = 'C:/ffmpeg/bin/ffprobe.exe'
+    FFMPEG_PROBE = '/usr/bin/ffprobe'
+    try:
+        cmd = [
+            FFMPEG_PROBE, "-v", "error",
+            "-select_streams", "v:0",
+            "-show_entries", "stream=avg_frame_rate,duration",
+            "-of", "default=noprint_wrappers=1:nokey=1",
+            video_path
+        ]
+        output = subprocess.check_output(cmd, stderr=subprocess.DEVNULL, timeout=5)
+        avg_fps, duration = output.decode().strip().splitlines()
+
+        if avg_fps in ("0/0", "", "N/A") or duration in ("N/A", "", None):
+            return False
+        return True
+    except Exception as e:
+        logging.warning(f"Invalid video structure, will re-encode: {video_path} | Error: {e}")
+        return False
+
 
 def merge_videos(zoho_lead_id):
     uploads_folder = os.path.join(get_uploads_folder(), zoho_lead_id)
@@ -136,23 +246,52 @@ def merge_videos(zoho_lead_id):
     except TimeoutError as e:
         return str(e)
 
+    # Get answers and questions
+    answers = StudentInterviewAnswers.objects.filter(
+    zoho_lead_id=zoho_lead_id
+    ).order_by("created_at")[:6]
 
-    video_files = sorted(
-        [f for f in os.listdir(uploads_folder) if f.endswith((".webm", ".mp4", ".mov"))],
-        key=lambda x: os.path.getctime(os.path.join(uploads_folder, x))
-    )
+    questions = CommonQuestion.active_objects.all().order_by("created_at")[:6]
+
+    if answers.count() != 6 or questions.count() != 6:
+        return f"Error: Expected 6 answers and 6 questions for lead ID {zoho_lead_id}"
+
+    video_files = []
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+
+    for i, (answer, question) in enumerate(zip(answers, questions), start=1):
+        question_filename = f"question_{i}.webm"
+        question_path = os.path.join(uploads_folder, question_filename).replace("\\", "/")
+
+        answer_path = os.path.join(project_root, answer.video_path).replace("\\", "/")
+        if not os.path.exists(answer_path):
+            return f"Missing answer file: {answer_path}"
+
+        # answer_duration = get_duration(answer_path)
+        question_duration = 2.0
+
+        if not os.path.exists(question_path):
+            generate_question_video(f"Q{i}: {question.question}", question_path, duration=question_duration)
+
+
+        video_files.append(question_path)
+        video_files.append(answer_path)
+
+
+
+
 
     if not video_files:
         return f"Error: No video files found in {uploads_folder}."
+    target_format = "webm"
 
-    first_video_ext = os.path.splitext(video_files[0])[1][1:].lower()
-    logging.info("first_video_ext: %s", first_video_ext)
-    target_format = first_video_ext
-    logging.info("target_format: %s", target_format)
 
     converted_files = []
     list_file_path = os.path.join(uploads_folder, "video_list.txt").replace("\\", "/")
-    output_filename = f"merged_video.{target_format}"
+
+    output_filename = "merged_video.webm"
+
+
     output_path = os.path.join(uploads_folder, output_filename).replace("\\", "/")
     # FFMPEG_PATH = '/home/YOUR_CPANEL_USERNAME/ffmpeg/ffmpeg'
     # FFMPEG_PATH = 'C:/ffmpeg/bin/ffmpeg.exe'
@@ -163,7 +302,8 @@ def merge_videos(zoho_lead_id):
 
     for video in video_files:
         logging.info("video_list: %s", video)
-        input_path = os.path.join(uploads_folder, video).replace("\\", "/")
+        # input_path = os.path.join(uploads_folder, video).replace("\\", "/")
+        input_path = video 
         logging.info("input_path: %s", input_path)
         output_path_converted = os.path.join(uploads_folder, f"{os.path.splitext(video)[0]}_converted.{target_format}").replace("\\", "/")
         logging.info("output_path_converted: %s", output_path_converted)
@@ -192,13 +332,38 @@ def merge_videos(zoho_lead_id):
         #     converted_files.append(input_path)
 
                 # Always normalize, regardless of extension
-        unique_id = uuid.uuid4().hex[:6]
-        converted_name = f"{os.path.splitext(video)[0]}_{unique_id}_converted.{target_format}"
-        converted_path = os.path.join(uploads_folder, converted_name).replace("\\", "/")
-        logging.info("Converting: %s -> %s", input_path, converted_path)
-        convert_video(input_path, converted_path, target_format)
-        converted_files.append(converted_path)
+        try:
+            video_codec, audio_codec = get_codecs(input_path)
+            logging.info("Codecs - Video: %s, Audio: %s", video_codec, audio_codec)
+        except Exception as e:
+            logging.warning("Could not read codecs, force conversion: %s", e)
+            video_codec, audio_codec = None, None
 
+        needs_conversion = True
+        if (
+                target_format == "webm" and
+                video_codec == "vp8" and
+                audio_codec == "opus" and
+                is_video_valid(input_path)
+            ):
+                needs_conversion = False
+        elif target_format == "mp4" and video_codec == "h264" and audio_codec in ["aac", "mp3"]:
+            needs_conversion = False
+        elif target_format == "mov" and video_codec == "prores":
+            needs_conversion = False
+        
+        logging.info(f"Checking: {input_path} | Video Codec: {video_codec} | Audio Codec: {audio_codec}")
+
+        if needs_conversion:
+            unique_id = uuid.uuid4().hex[:6]
+            converted_name = f"{os.path.splitext(video)[0]}_{unique_id}_converted.{target_format}"
+            converted_path = os.path.join(uploads_folder, converted_name).replace("\\", "/")
+            logging.info("Converting: %s -> %s", input_path, converted_path)
+            convert_video(input_path, converted_path, target_format)
+            converted_files.append(converted_path)
+        else:
+            logging.info("No conversion needed for: %s", input_path)
+            converted_files.append(input_path)
 
     with open(list_file_path, "w") as f:
         for video_path in converted_files:
@@ -231,9 +396,13 @@ def merge_videos(zoho_lead_id):
     
     if target_format == "webm":
         merge_command = (
-          f'{FFMPEG_PATH} -fflags +genpts -err_detect ignore_err -f concat -safe 0 -i "{list_file_path}" '
-            f'-c:v libvpx-vp9 -b:v 1M -c:a libopus "{output_path}"'
-        )
+        f'{FFMPEG_PATH} -f concat -safe 0 -i "{list_file_path}" '
+        f'-c:v libvpx -b:v 1M -r 30 -pix_fmt yuv420p '
+        f'-c:a libopus -ar 48000 -ac 2 '
+        f'-movflags faststart -avoid_negative_ts make_zero '
+        f'"{output_path}"'
+    )
+
     elif target_format == "mp4":
         merge_command = (
             f'{FFMPEG_PATH} -f concat -safe 0 -i "{list_file_path}" '
@@ -277,8 +446,8 @@ def merge_videos(zoho_lead_id):
 
         # Email configuration
         subject = "Interview Process Completed"
-        recipient = ["vaibhav@angel-portal.com"]
-        from_email = "ankita@angel-portal.com"
+        recipient = ["chetan@angel-portal.com"]
+        from_email = "vaibhav@angel-portal.com"
         # url = video_path  # or your public URL if available
         url = f"https://video.bunnycdn.com/play/{settings.BUNNY_STREAM_LIBRARY_ID}/{video_id}"
 
@@ -311,7 +480,7 @@ def merge_videos(zoho_lead_id):
                     <h2 style="color: #2c3e50; text-align: center;">Interview Process Submitted</h2>
 
                     <!-- Content -->
-                    <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">Dear <b>{student_manager_name}<b>,</p>
+                    <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">Dear <b>{student_manager_name}</b>,</p>
 
                     <!-- <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">The interview process has been successfully completed.</p> -->
                     <!-- <p style="color: #555; font-size: 16px; line-h eight: 1.6; text-align: left;">The interview video is attached. Please review.</p> -->

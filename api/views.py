@@ -612,7 +612,7 @@ def process_document(request):
                         </body>
                         </html>
                     """,
-                    recipient=["vaibhav@angel-portal.com"],
+                    recipient=["chetan@angel-portal.com"],
                     # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
                 )
                 return JsonResponse({"message": "Success", "result": False}, status=200)
@@ -731,7 +731,7 @@ def process_document(request):
                         </body>
                         </html>
                     """,
-                    recipient=["vaibhav@angel-portal.com"],
+                    recipient=["chetan@angel-portal.com"],
                     # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
                 )
 
@@ -905,7 +905,7 @@ def process_document(request):
                             </body>
                             </html>
                         """,
-                        recipient=["vaibhav@angel-portal.com"],
+                        recipient=["chetan@angel-portal.com"],
                         # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
                     )
                     # 3. Then: Send Zoho Lead Update Notification email
@@ -1012,7 +1012,7 @@ def process_document(request):
                                 </body>
                             </html>
                             """,
-                            recipient=["vaibhav@angel-portal.com"],
+                            recipient=["chetan@angel-portal.com"],
                         )
 
                     
@@ -1129,7 +1129,7 @@ def process_document(request):
                         </body>
                         </html>
                     """,
-                    recipient=["vaibhav@angel-portal.com"],
+                    recipient=["chetan@angel-portal.com"],
                     # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
                 )
                 return JsonResponse({"message": "Success", "result": result}, status=200)
