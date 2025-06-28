@@ -14,7 +14,7 @@ const useVisibilityWarning = () => {
         warningCount++;
         localStorage.setItem("tabSwitchWarning", warningCount);
 
-        showWarningToast(`Tab switching detected. Further violations may result in disqualification.`, {
+        showWarningToast(`Warning ${warningCount}/3: Tab switch detected.`, {
           position: "top-center",
           autoClose: 3000,
           hideProgressBar: true,

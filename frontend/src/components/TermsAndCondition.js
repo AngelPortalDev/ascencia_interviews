@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate,useParams,useLocation } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import PropTypes from "prop-types";
 import { usePermission } from "../context/PermissionContext.js";
 
@@ -7,13 +7,15 @@ const TermsAndCondition = () => {
   const location = useLocation();
   const [isAgreed, setIsAgreed] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isPolicyAgreed, setIsPolicyAgreed] = useState(false);
+  const [errorMessagePolicy, setErrorMessagePolicy] = useState("");
   const navigate = useNavigate();
 
-  const {acceptTerms} = usePermission();
+  const { acceptTerms } = usePermission();
 
   const encoded_zoho_lead_id = location.state?.encoded_zoho_lead_id || null;
-  const encoded_interview_link_send_count = location.state?.encoded_interview_link_send_count || null;
-
+  const encoded_interview_link_send_count =
+    location.state?.encoded_interview_link_send_count || null;
 
   const handleCheckboxChange = () => {
     setIsAgreed(!isAgreed);
@@ -21,22 +23,31 @@ const TermsAndCondition = () => {
       setErrorMessage("");
     }
   };
+  const handleCheckboxPolicy = () => {
+    setIsPolicyAgreed(!isPolicyAgreed);
+    if (errorMessagePolicy) {
+      setErrorMessagePolicy("");
+    }
+  };
 
   const handleSubmit = () => {
     if (!isAgreed) {
       setErrorMessage("You must agree to the terms and conditions to proceed.");
-    }
-    else{
+    } else if (!isPolicyAgreed) {
+      setErrorMessagePolicy("You must agree to the GDPR policy to proceed.");
+    } else {
       acceptTerms();
-      // navigate(`/permissions/${encoded_zoho_lead_id}`);  // Navigate dynamically
-      navigate("/permissions", { state: { encoded_zoho_lead_id,encoded_interview_link_send_count } }); 
+      // navigate(/permissions/${encoded_zoho_lead_id});  // Navigate dynamically
+      navigate("/permissions", {
+        state: { encoded_zoho_lead_id, encoded_interview_link_send_count },
+      });
     }
   };
-  useEffect(()=>{
-    if(encoded_zoho_lead_id == null){
-    setTimeout(()=>navigate("/expired"),0) ;
+  useEffect(() => {
+    if (encoded_zoho_lead_id == null) {
+      setTimeout(() => navigate("/expired"), 0);
     }
-  },[encoded_zoho_lead_id,navigate])
+  }, [encoded_zoho_lead_id, navigate]);
   if (encoded_zoho_lead_id == null) return null;
 
   return (
@@ -72,7 +83,8 @@ const TermsAndCondition = () => {
                   1. Introduction
                 </p>
                 <p>
-                By clicking on 'I agree,' you accept EAscencia Business School’s Terms and Conditions.
+                  By clicking on 'I agree,' you accept EAscencia Business
+                  School’s Terms and Conditions.
                 </p>
               </section>
               <section>
@@ -109,7 +121,6 @@ const TermsAndCondition = () => {
                   according to our Privacy Policy.
                 </p>
               </section>
-            
             </div>
 
             <div className="mt-10 flex items-center justify-start gap-x-6">
@@ -132,13 +143,33 @@ const TermsAndCondition = () => {
 
             <p className="text-red-500 text-sm mt-2">{errorMessage}</p>
 
-            <div className="mt-10 flex items-center justify-center">
-                <button
-                  onClick={handleSubmit}
-                  className="rounded-md bg-pink-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-pink-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            <div className="mt-5 flex items-center justify-start gap-x-6">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="agree"
+                  checked={isPolicyAgreed}
+                  onChange={handleCheckboxPolicy}
+                  className="mr-2 h-5 w-5 border-gray-300 rounded text-blue-600 focus:ring-blue-500"
+                />
+                <label
+                  htmlFor="agree"
+                  className="text-sm font-semibold text-gray-900"
                 >
-                  Continue
-                </button>
+                  Please accept GDPR policy
+                </label>
+              </div>
+            </div>
+
+            <p className="text-red-500 text-sm mt-2">{errorMessagePolicy}</p>
+
+            <div className="mt-10 flex items-center justify-center">
+              <button
+                onClick={handleSubmit}
+                className="rounded-md bg-pink-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-pink-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              >
+                Continue
+              </button>
             </div>
           </div>
         </div>
