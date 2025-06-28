@@ -28,11 +28,25 @@ export const startRecording = async (
     const stream = await navigator.mediaDevices.getUserMedia({
       video: true,
       audio: { noiseSuppression: false, echoCancellation: false },
+      // audio:true
     });
     
+if (videoRef.current) {
+  videoRef.current.srcObject = stream;
+}
+
     // Video recording setup
-    mediaRecorderRef.current = new MediaRecorder(stream, {
-  mimeType: "video/webm;codecs=vp8,opus",  // Explicitly request vp8
+//     mediaRecorderRef.current = new MediaRecorder(stream, {
+//   mimeType: "video/webm;codecs=vp8,opus",  // Explicitly request vp8
+//   audioBitsPerSecond: 32000,
+//   videoBitsPerSecond: 1000000,
+// });
+const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
+  ? "video/webm;codecs=vp8,opus"
+  : "video/webm";
+
+mediaRecorderRef.current = new MediaRecorder(stream, {
+  mimeType,
   audioBitsPerSecond: 32000,
   videoBitsPerSecond: 1000000,
 });
@@ -49,10 +63,15 @@ export const startRecording = async (
       mimeType: "audio/webm",
     });
 
-    audioRecorderRef.current.ondataavailable = (event) => {
-      if (event.data.size > 0) recordedAudioChunksRef.current.push(event.data);
-    };
-    audioRecorderRef.current.start();
+
+    mediaRecorderRef.current.onerror = (e) => {
+  console.error("❌ MediaRecorder error:", e.error);
+};
+
+    // audioRecorderRef.current.ondataavailable = (event) => {
+    //   if (event.data.size > 0) recordedAudioChunksRef.current.push(event.data);
+    // };
+    // audioRecorderRef.current.start();
 
     if (videoRef.current) videoRef.current.srcObject = stream;
     setIsRecording(true);

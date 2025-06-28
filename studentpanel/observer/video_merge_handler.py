@@ -459,6 +459,7 @@ def merge_videos(zoho_lead_id):
         student_name = f"{student.first_name} {student.last_name}"
         student_email = student.email
         student_zoho_lead_id = student.zoho_lead_id
+        student_program = student.program 
 
         email = student.student_manager_email.strip().lower()
         student_manager = User.objects.filter(email__iexact=email).first()
@@ -494,6 +495,7 @@ def merge_videos(zoho_lead_id):
                     <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">Name: {student_name},</p>
                     <p style="color: #555; font-size: 14px; text-align: left;">Email: {student_email}</p>
                     <p style="color: #555; font-size: 14px; text-align: left;">Zoho Lead Id: {student_zoho_lead_id}</p>
+                    <p style="color: #555; font-size: 14px; text-align: left;">Student Program: {student_program}</p>
 
 
                     <!--change for link -->

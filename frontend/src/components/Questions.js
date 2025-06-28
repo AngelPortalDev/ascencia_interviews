@@ -469,7 +469,7 @@ useEffect(() => {
 
   // ************ User Spent More Than 30 seconds then navigation enabled ****************
   useEffect(() => {
-    if (timeSpent >= 5) {
+    if (timeSpent >= 10) {
       setIsNavigationEnabled(true);
     } else {
       setIsNavigationEnabled(false);
@@ -486,6 +486,10 @@ useEffect(() => {
       if (!swiper) {
         console.error("Error: swiper is undefined.");
         return;
+      }
+      if (toastId.current) {
+        toast.dismiss(toastId.current);
+        toastId.current = null;
       }
 
       const newQuestionIndex = swiper.activeIndex;
@@ -730,7 +734,7 @@ useEffect(() => {
                 className="bg-white p-6 rounded-lg shadow-lg text-black position-relative"
               >
                 <p className="text-base sm:text-lg">{questionItem.question}</p>
-                {index === getQuestions.length - 1 && (
+                {index === getQuestions.length - 1 && timeSpent >= 10 && (
                   <button
                     onClick={handleSubmit}
                     disabled={loading}
@@ -762,15 +766,17 @@ useEffect(() => {
                 >
                   Skip
                 </button> */}
-            <button
-              onClick={() => {
-                swiperRef.current?.slideNext();
-                handleQuestionChange(swiperRef.current);
-              }}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm font-medium"
-            >
-              Next
-            </button>
+            {timeSpent >= 10 && (
+              <button
+                onClick={() => {
+                  swiperRef.current?.slideNext();
+                  handleQuestionChange(swiperRef.current);
+                }}
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm font-medium"
+              >
+                Next
+              </button>
+            )}
           </div>
         )}
 
