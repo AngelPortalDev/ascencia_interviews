@@ -49,7 +49,7 @@
     <div class="row mt-3">
 
         <!-- Total Students Card -->
-        <div class="col-lg-4 col-xxl-2 col-md-4 col-sm-6 mb-4">
+        <div class="col-lg-3 col-md-6 col-sm-12 mb-4">
           <div class="card shadow-md border-0 rounded-3 card1 dashboardCard">
             <div class="card-body text-white text-center py-4">
               <i class="bx bx-user-circle fs-1 mb-3" style="color:#20c2e9; background:#e4f7fc; padding:5px;border-radius:10px"></i>
@@ -61,7 +61,7 @@
         </div>
     
         <!-- Verified Students -->
-        <div class="col-lg-4 col-xxl-2 col-md-4 col-sm-6 mb-4">
+        <div class="col-lg-3 col-md-6 col-sm-12 mb-4">
           <div class="card shadow-md border-0 rounded-3 card3 dashboardCard">
             <div class="card-body text-white text-center py-4">
               <i class="bx bx-check-circle fs-1 mb-3" style="color:#696cff; background:#e7e7ff; padding:5px;border-radius:10px"></i>
@@ -73,7 +73,7 @@
         </div>
     
         <!-- Rejected Students -->
-        <div class="col-lg-4 col-xxl-2 col-md-4 col-sm-6 mb-4">
+        <div class="col-lg-3 col-md-6 col-sm-12 mb-4">
           <div class="card shadow-md border-0 rounded-3 card3 dashboardCard">
             <div class="card-body text-white text-center py-4" style="">
               <i class="bx bx-x-circle fs-1 mb-3" style="color:#ff3a29; background:#ffe7e5; padding:5px; border-radius:10px"></i>
@@ -85,7 +85,7 @@
         </div>
     
         <!-- Pending Interviews -->
-        <div class="col-lg-4 col-xxl-2 col-md-4 col-sm-6 mb-4">
+        <div class="col-lg-3 col-md-6 col-sm-12 mb-4">
           <div class="card shadow-md border-0 rounded-3 card2 dashboardCard" >
             <div class="card-body text-white text-center py-4">
               <i class="bx bx-hourglass fs-1 mb-3" style="color:#ffab00; background:#fff2d6; padding:5px;border-radius:10px"></i> 
@@ -97,28 +97,28 @@
         </div>
 
         <!-- Pass Students -->
-        <div class="col-lg-4 col-xxl-2 col-md-4 col-sm-6 mb-4">
+        {% comment %} <div class="col-lg-4 col-xxl-2 col-md-4 col-sm-6 mb-4">
           <div class="card shadow-md border-0 rounded-3 card4 dashboardCard" >
             <div class="card-body text-white text-center py-4">
               <i class="bx bx-check-circle fs-1 mb-3" style="color:#4caf50; background:#e7ffe5; padding:5px;border-radius:10px"></i>
               <h5 class="card-title">Pass Students</h5>
-              <h3 class="card-text">{{pass_students_count}}</h3>
+              <h3 class="card-text">{{pass_students_count}}</h3> {% endcomment %}
               {% comment %} <p class="text-muted">Pending follow-ups</p> {% endcomment %}
-            </div>
+            {% comment %} </div>
           </div>
-        </div>
+        </div> {% endcomment %}
         
         <!-- Fail Students -->
-        <div class="col-lg-4 col-xxl-2 col-md-4 col-sm-6 mb-4">
+        {% comment %} <div class="col-lg-4 col-xxl-2 col-md-4 col-sm-6 mb-4">
           <div class="card shadow-md border-0 rounded-3 card4 dashboardCard" >
             <div class="card-body text-white text-center py-4">
               <i class="bx bx-error-circle fs-1 mb-3" style="color:#ff9800; background:#fff3e0; padding:5px; border-radius:10px"></i>
               <h5 class="card-title">Fail Students</h5>
-              <h3 class="card-text">{{fail_students_count}}</h3>
+              <h3 class="card-text">{{fail_students_count}}</h3> {% endcomment %}
               {% comment %} <p class="text-muted">Pending follow-ups</p> {% endcomment %}
-            </div>
+            {% comment %} </div>
           </div>
-        </div>
+        </div> {% endcomment %}
         
     
       </div>
@@ -139,7 +139,7 @@
             <th>Student Name</th>
             <th>Email ID</th>
             <th>Course Applied</th>
-            <th>Interview Status</th>
+            {% comment %} <th>Interview Status</th> {% endcomment %}
             <th>Manager Assigned</th>
             <th>Actions</th>
           </tr>
@@ -161,14 +161,14 @@
                 {% comment %} <td>
                   <span class="badge bg-label-primary me-1">{{ student.interview_status }}</span>
                 </td> {% endcomment %}
-                <td>
+                {% comment %} <td>
                   <span class="badge 
                     {% if student.interview_status == 'Pass' %} bg-label-success 
                     {% elif student.interview_status == 'Fail' %} bg-label-danger 
                     {% else %} bg-label-primary {% endif %} me-1">
                     {{ student.interview_status }}
                   </span>
-                </td>
+                </td> {% endcomment %}
                 <td>{{ student.student.student_manager_email }}</td>
                 
                 <td class="d-flex align-items-center">

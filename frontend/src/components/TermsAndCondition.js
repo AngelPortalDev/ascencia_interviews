@@ -147,13 +147,13 @@ const TermsAndCondition = () => {
               <div className="flex items-center">
                 <input
                   type="checkbox"
-                  id="agree"
+                  id="agreepolicy"
                   checked={isPolicyAgreed}
                   onChange={handleCheckboxPolicy}
                   className="mr-2 h-5 w-5 border-gray-300 rounded text-blue-600 focus:ring-blue-500"
                 />
                 <label
-                  htmlFor="agree"
+                  htmlFor="agreepolicy"
                   className="text-sm font-semibold text-gray-900"
                 >
                   Please accept GDPR policy

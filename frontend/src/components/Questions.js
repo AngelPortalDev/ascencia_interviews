@@ -73,7 +73,7 @@ const Questions = () => {
   //   recordedAudioChunksRef
   // );
 
-  usePageUnloadHandler();
+  usePageUnloadHandler(zoho_lead_id,encoded_interview_link_send_count);
   const navigate = useNavigate();
   const { submitExam } = usePermission();
   const last_question_id =
@@ -261,7 +261,9 @@ useEffect(() => {
         // submitExam(); // if this sends final answers or flags interview as done
         localStorage.clear();
         sessionStorage.clear();
-        navigate("/interviewsubmitted");
+        // navigate("/interviewsubmitted");
+        navigate(`/interviewsubmitted?lead=${zoho_lead_id}&link=${encoded_interview_link_send_count}`);
+
       // }
     } catch (error) {
       console.error("Error in handleSubmit:", error);
@@ -327,7 +329,9 @@ useEffect(() => {
             submitExam();
             localStorage.clear();
             sessionStorage.clear();
-            navigate("/interviewsubmitted");
+            // navigate("/interviewsubmitted");
+          navigate(`/interviewsubmitted?lead=${zoho_lead_id}&link=${encoded_interview_link_send_count}`);
+            
           } else {
             console.error("Upload failed or incomplete:", response);
             // optionally show an error screen or retry
@@ -369,7 +373,9 @@ useEffect(() => {
             localStorage.clear();
             sessionStorage.clear();
             setLoading(false);
-            navigate("/interviewsubmitted");
+            // navigate("/interviewsubmitted");
+        navigate(`/interviewsubmitted?lead=${zoho_lead_id}&link=${encoded_interview_link_send_count}`);
+
         }, 25000);
 
         await stopRecording(
@@ -628,7 +634,10 @@ useEffect(() => {
       // If user confirms, allow navigation (or handle as needed)
       localStorage.clear();
       sessionStorage.clear();
-      window.location.href = "/interviewsubmitted";
+      // window.location.href = "/interviewsubmitted";
+      console.log("Reload page")
+      window.location.href = `/interviewsubmitted?lead=${zoho_lead_id}&link=${encoded_interview_link_send_count}`;
+
     }
   };
 
