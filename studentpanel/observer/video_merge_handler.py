@@ -13,6 +13,7 @@ import logging
 from django.core.mail import EmailMultiAlternatives
 import mimetypes
 from studentpanel.models.student_Interview_status import Student_Interview
+from studentpanel.models.interview_link import StudentInterviewLink
 import time
 from adminpanel.models.common_question import CommonQuestion
 logging.basicConfig(level=logging.INFO)
@@ -263,21 +264,37 @@ def merge_videos(zoho_lead_id):
     video_files = []
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 
-    for i, (answer, question) in enumerate(zip(answers, questions), start=1):
-        question_filename = f"question_{i}.webm"
+    # for i, (answer, question) in enumerate(zip(answers, questions), start=1):
+    #     question_filename = f"question_{i}.webm"
+    #     question_path = os.path.join(uploads_folder, question_filename).replace("\\", "/")
+
+    #     answer_path = os.path.join(project_root, answer.video_path).replace("\\", "/")
+    #     if not os.path.exists(answer_path):
+    #         return f"Missing answer file: {answer_path}"
+
+    #     # answer_duration = get_duration(answer_path)
+    #     question_duration = 2.0
+
+    #     if not os.path.exists(question_path):
+    #         generate_question_video(f"Q{i}: {question.question}", question_path, duration=question_duration)
+
+
+    #     video_files.append(question_path)
+    #     video_files.append(answer_path)
+    for answer in answers:
+        question = CommonQuestion.active_objects.filter(id=answer.question_id).first()
+        if not question:
+            return f"Question not found for answer ID {answer.id} with question_id={answer.question_id}"
+
+        question_filename = f"question_{question.id}.webm"
         question_path = os.path.join(uploads_folder, question_filename).replace("\\", "/")
 
         answer_path = os.path.join(project_root, answer.video_path).replace("\\", "/")
-        if not os.path.exists(answer_path):
-            return f"Missing answer file: {answer_path}"
-
-        # answer_duration = get_duration(answer_path)
-        question_duration = 2.0
 
         if not os.path.exists(question_path):
-            generate_question_video(f"Q{i}: {question.question}", question_path, duration=question_duration)
+            generate_question_video(f"Q{question.id}: {question.question}", question_path, duration=2.0)
 
-
+        # Now question_{real_id}.webm matches answer.question_id
         video_files.append(question_path)
         video_files.append(answer_path)
 
@@ -578,15 +595,15 @@ def handle_student_interview_answer_save(sender, instance, created, **kwargs):
         zoho_lead_id = instance.zoho_lead_id
         last_6_answers = sender.objects.filter(zoho_lead_id=zoho_lead_id).order_by('-created_at')[:6]
         print(r'last_6_answers_count:', last_6_answers)
-        if last_6_answers.count() == 6:
-            time.sleep(10)
-            print(r'last_6_answers_count text:', last_6_answers.count())
-            async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead_id)
-            # async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead_id)
-            # async_task(merge_videos, zoho_lead_id)
-    else:
-        # Handle updates to existing answers
-        print(f'Answer updated: {instance}')
+    #     if last_6_answers.count() == 6:
+    #         time.sleep(10)
+    #         print(r'last_6_answers_count text:', last_6_answers.count())
+    #         async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead_id)
+    #         # async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead_id)
+    #         # async_task(merge_videos, zoho_lead_id)
+    # else:
+    #     # Handle updates to existing answers
+    #     print(f'Answer updated: {instance}')
     # logging.info("Created: %s", "Created")
     # if created:
     #     # logging.info("Observer Triggered: %s", "triggered")

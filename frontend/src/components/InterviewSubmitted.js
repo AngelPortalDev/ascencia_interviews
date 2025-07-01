@@ -1,8 +1,15 @@
 import { useEffect,useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useLocation } from "react-router-dom";
+import axios from "axios";
 
 const InterviewSubmitted = () => {
   const navigate = useNavigate();
+    const { search } = useLocation();
+  const params = new URLSearchParams(search);
+  const zoho_lead_id = params.get("lead");
+  const interview_link_count  = params.get("link");
+  console.log("zoho_lead_id",zoho_lead_id)
+  console.log("interview_link_count",interview_link_count )
  const videoRef = useRef(null);
   useEffect(() => {
 
@@ -30,6 +37,42 @@ const InterviewSubmitted = () => {
     }
   }, []);
 
+//   useEffect(() => {
+//   const wasAutoSubmitted = localStorage.getItem("interviewSubmitted") === "true";
+//   console.log("📝 Was auto-submitted due to tab switching?", wasAutoSubmitted);
+// }, []);
+
+
+ useEffect(() => {
+    const sendFinalInterviewSubmission = async () => {
+      if (!zoho_lead_id) {
+        console.warn("❌ No zoho_lead_id found");
+        return;
+      }
+
+      try {
+        const response = await axios.post(
+          `${process.env.REACT_APP_API_BASE_URL}submit_interview/`,
+          {
+            zoho_lead_id,
+            interview_link_count: interview_link_count || "",
+            is_interview_submitted: true,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        console.log("✅ Interview submitted:", response.data);
+      } catch (error) {
+        console.error("❌ API submission failed:", error);
+      }
+    };
+
+    sendFinalInterviewSubmission();
+  }, [zoho_lead_id, interview_link_count]);
 
   return (
     <div className="submitted-container">

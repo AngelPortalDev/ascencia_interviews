@@ -1,5 +1,6 @@
 from django.urls import path
 from django.urls import path, include
+from studentpanel.views.interview_submit import submit_interview
 
 # studentpanel settings
 from studentpanel.views.interview_process import (
@@ -49,5 +50,6 @@ urlpatterns = [
     path('interview_panel/<str:student_id>/', TemplateView.as_view(template_name='index.html')),
     path('terms-and-conditions/', TemplateView.as_view(template_name='index.html')),
     path('permissions/', TemplateView.as_view(template_name='index.html')),
-    path('interview-player/<str:student_id>/', TemplateView.as_view(template_name='index.html')),    
+    path('interview-player/<str:student_id>/', TemplateView.as_view(template_name='index.html')),  
+    path("submit_interview/", submit_interview, name="submit_interview"),
 ]

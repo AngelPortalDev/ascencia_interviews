@@ -169,7 +169,7 @@ const InterviewPlayer = ({videoRef,mediaRecorderRef,audioRecorderRef,recordedChu
   };
 
   // Switch Tab Warning
-  useVisibilityWarning();
+  useVisibilityWarning(zoho_lead_id, encoded_interview_link_send_count);
 
   return (
     <div>
