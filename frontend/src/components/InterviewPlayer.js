@@ -13,8 +13,10 @@ const InterviewPlayer = ({videoRef,mediaRecorderRef,audioRecorderRef,recordedChu
   const [answerScore, setAnswerScore] = useState(null);
   const [videoFilePath, setVideoFilePath] = useState(null);
   const [audioFilePath, setAudioFilePath] = useState(null);
+  console.log("zoho_lead_idcxgxf",btoa(zoho_lead_id));
+  const encoded_zoho_lead_id = btoa(zoho_lead_id)
   // const videoRef = useRef(null);
-  // const mediaRecorderRef = useRef(null);
+  // const mediaRecorderRef = useRef(null);gbfxc g
   // const recordedChunksRef = useRef([]);
   // const audioRecorderRef = useRef(null);
   // const recordedAudioChunksRef = useRef([]);
@@ -169,7 +171,7 @@ const InterviewPlayer = ({videoRef,mediaRecorderRef,audioRecorderRef,recordedChu
   };
 
   // Switch Tab Warning
-  useVisibilityWarning(zoho_lead_id, encoded_interview_link_send_count);
+  useVisibilityWarning(encoded_zoho_lead_id, encoded_interview_link_send_count);
 
   return (
     <div>

@@ -46,6 +46,10 @@ const Questions = () => {
   const encoded_zoho_lead_id = location.state?.encoded_zoho_lead_id || null;
   const encoded_interview_link_send_count = location?.state?.encoded_interview_link_send_count || null;
   const zoho_lead_id = atob(encoded_zoho_lead_id);
+  const safe_encoded_zoho_lead_id = encoded_zoho_lead_id || sessionStorage.getItem("zoho_lead_id");
+const safe_encoded_interview_link_send_count = encoded_interview_link_send_count || sessionStorage.getItem("interview_link_count");
+
+  
   // console.log('encoded_interview_link_send_count',encoded_interview_link_send_count)
 
   //  // Recording State & Refs
@@ -73,7 +77,22 @@ const Questions = () => {
   //   recordedAudioChunksRef
   // );
 
-  usePageUnloadHandler(zoho_lead_id,encoded_interview_link_send_count);
+  // usePageUnloadHandler(encodedLead, encodedLink);
+
+
+
+  useEffect(() => {
+  if (safe_encoded_zoho_lead_id) {
+    sessionStorage.setItem("zoho_lead_id", safe_encoded_zoho_lead_id);
+  }
+  if (safe_encoded_interview_link_send_count) {
+    sessionStorage.setItem("interview_link_count", safe_encoded_interview_link_send_count);
+  }
+}, [safe_encoded_zoho_lead_id, safe_encoded_interview_link_send_count]);
+
+usePageUnloadHandler(safe_encoded_zoho_lead_id, safe_encoded_interview_link_send_count);
+
+  // usePageUnloadHandler(encoded_zoho_lead_id,encoded_interview_link_send_count);
   const navigate = useNavigate();
   const { submitExam } = usePermission();
   const last_question_id =
@@ -262,7 +281,7 @@ useEffect(() => {
         localStorage.clear();
         sessionStorage.clear();
         // navigate("/interviewsubmitted");
-        navigate(`/interviewsubmitted?lead=${zoho_lead_id}&link=${encoded_interview_link_send_count}`);
+        navigate(`/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`);
 
       // }
     } catch (error) {
@@ -330,7 +349,7 @@ useEffect(() => {
             localStorage.clear();
             sessionStorage.clear();
             // navigate("/interviewsubmitted");
-          navigate(`/interviewsubmitted?lead=${zoho_lead_id}&link=${encoded_interview_link_send_count}`);
+          navigate(`/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`);
             
           } else {
             console.error("Upload failed or incomplete:", response);
@@ -374,7 +393,7 @@ useEffect(() => {
             sessionStorage.clear();
             setLoading(false);
             // navigate("/interviewsubmitted");
-        navigate(`/interviewsubmitted?lead=${zoho_lead_id}&link=${encoded_interview_link_send_count}`);
+        navigate(`/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`);
 
         }, 25000);
 
@@ -475,7 +494,7 @@ useEffect(() => {
 
   // ************ User Spent More Than 30 seconds then navigation enabled ****************
   useEffect(() => {
-    if (timeSpent >= 10) {
+    if (timeSpent >= 30) {
       setIsNavigationEnabled(true);
     } else {
       setIsNavigationEnabled(false);
@@ -636,7 +655,7 @@ useEffect(() => {
       sessionStorage.clear();
       // window.location.href = "/interviewsubmitted";
       console.log("Reload page")
-      window.location.href = `/interviewsubmitted?lead=${zoho_lead_id}&link=${encoded_interview_link_send_count}`;
+      window.location.href = `/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`;
 
     }
   };
@@ -743,7 +762,7 @@ useEffect(() => {
                 className="bg-white p-6 rounded-lg shadow-lg text-black position-relative"
               >
                 <p className="text-base sm:text-lg">{questionItem.question}</p>
-                {index === getQuestions.length - 1 && timeSpent >= 10 && (
+                {index === getQuestions.length - 1 && timeSpent >= 30 && (
                   <button
                     onClick={handleSubmit}
                     disabled={loading}
@@ -775,7 +794,7 @@ useEffect(() => {
                 >
                   Skip
                 </button> */}
-            {timeSpent >= 10 && (
+            {timeSpent >= 30 && (
               <button
                 onClick={() => {
                   swiperRef.current?.slideNext();

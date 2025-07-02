@@ -6,10 +6,13 @@ const InterviewSubmitted = () => {
   const navigate = useNavigate();
     const { search } = useLocation();
   const params = new URLSearchParams(search);
-  const zoho_lead_id = params.get("lead");
-  const interview_link_count  = params.get("link");
+  // const zoho_lead_id = params.get("lead");
+  // const interview_link_count  = params.get("link");
+  const zoho_lead_id = params.get("lead") || sessionStorage.getItem("zoho_lead_id");
+const interview_link_count  = params.get("link") || sessionStorage.getItem("interview_link_count");
+
   console.log("zoho_lead_id",zoho_lead_id)
-  console.log("interview_link_count",interview_link_count )
+  console.log("interview_link_count",interview_link_count)
  const videoRef = useRef(null);
   useEffect(() => {
 
@@ -66,6 +69,9 @@ const InterviewSubmitted = () => {
         );
 
         console.log("✅ Interview submitted:", response.data);
+        localStorage.clear();
+      sessionStorage.clear();
+
       } catch (error) {
         console.error("❌ API submission failed:", error);
       }
