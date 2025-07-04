@@ -27,6 +27,12 @@ class StudentInterviewLink(models.Model):
         null=True
     )
     interview_link_count = models.CharField(max_length=50,null=True,blank=True)
+    assigned_question_ids = models.CharField(
+    max_length=255,
+    null=True,
+    blank=True,
+    help_text="Comma-separated IDs of assigned CommonQuestion rows"
+)
     def save(self, *args, **kwargs):
         """Ensure expiration logic is applied before saving."""
         if self.expires_at <= now():

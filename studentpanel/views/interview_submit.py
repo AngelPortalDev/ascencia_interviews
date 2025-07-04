@@ -51,12 +51,7 @@ def submit_interview(request):
             print("Decoded zoho_lead_id:", zoho_lead_id)
             if is_submitted:
                 # Trigger async merge
-                async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead_id)
-                # Mark interview as attended and expired
-                StudentInterviewLink.objects.filter(
-                    zoho_lead_id=zoho_lead_id,
-                    interview_link_count=interview_link_count
-                ).update(interview_attend=True, is_expired=True)
+                async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead_id,interview_link_count)
             return JsonResponse({"status": "merge triggered"}, status=200)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)

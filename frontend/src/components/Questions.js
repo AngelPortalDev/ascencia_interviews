@@ -32,6 +32,7 @@ import usePageUnloadHandler from "../hooks/usePageUnloadHandler.js";
 
 const Questions = () => {
   const [countdown, setCountdown] = useState(60);
+  const [endCountdown,setEndcountdwn] = useState(30);
   // const [userData, setUserData] = useState(null);
   const [getQuestions, setQuestions] = useState([]);
   const [navigationTime, setNavigationTime] = useState(0);
@@ -102,24 +103,55 @@ usePageUnloadHandler(safe_encoded_zoho_lead_id, safe_encoded_interview_link_send
   // console.log("LastQuestion id", last_question_id);
 
   // ***********  Fetch QUestions ***********
-  const fetchQuestions = async () => {
-    try {
-      const res = await Axios.get(
-        `${process.env.REACT_APP_API_BASE_URL}interveiw-section/interview-questions/`
-      );
+  // const fetchQuestions = async () => {
+  //   try {
+  //     const res = await Axios.get(
+  //       `${process.env.REACT_APP_API_BASE_URL}interveiw-section/interview-questions/`
+  //     );
  
-      if (res.data && res.data.questions && res.data.questions.length > 0) {
+  //     if (res.data && res.data.questions && res.data.questions.length > 0) {
+  //       setQuestions(res.data.questions);
+  //       setActiveQuestionId(res.data.questions[0].encoded_id);
+  //     } else {
+  //       console.warn("No questions found in the response.");
+  //       setQuestions([]); // Ensure state is updated with an empty array
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching questions:", error);
+  //   }
+  // };
+
+  const fetchInterviewQuestions = async () => {
+  const formData = new FormData();
+  formData.append("zoho_lead_id", safe_encoded_zoho_lead_id);
+  formData.append("interview_link_count",safe_encoded_interview_link_send_count);
+
+    try {
+      const res = await Axios.post(
+        `${process.env.REACT_APP_API_BASE_URL}interveiw-section/interview-questions/`,
+        {
+          zoho_lead_id: safe_encoded_zoho_lead_id,
+          interview_link_count: safe_encoded_interview_link_send_count
+        },
+        {
+          headers: {
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      console.log("data",res.data)
+
+      if (res.data && res.data.questions) {
         setQuestions(res.data.questions);
-        setActiveQuestionId(res.data.questions[0].encoded_id);
+        setActiveQuestionId(res.data.questions[0].question_id); // or encoded_id
       } else {
         console.warn("No questions found in the response.");
-        setQuestions([]); // Ensure state is updated with an empty array
       }
     } catch (error) {
-      console.error("Error fetching questions:", error);
+      console.error("Error fetching interview questions:", error);
     }
   };
-
   // Store countdown in the sessionstorage for resuem resume
   useEffect(() => {
     // Retrieve countdown value from sessionStorage on load
@@ -158,7 +190,8 @@ usePageUnloadHandler(safe_encoded_zoho_lead_id, safe_encoded_interview_link_send
   }, []);
 
   useEffect(() => {
-    fetchQuestions();
+    // fetchQuestions();
+    fetchInterviewQuestions();
   }, []);
 
   // 10 sec popup implement
@@ -227,6 +260,7 @@ useEffect(() => {
   const handleSubmit = useCallback(async () => {
     setLoading(true);
     const newQuestionId = getQuestions[currentQuestionIndex]?.encoded_id;
+    const isLastQuestion = newQuestionId === last_question_id;
     if (!newQuestionId) {
       console.error("Error: newQuestionId is undefined or invalid.");
       return;
@@ -272,23 +306,30 @@ useEffect(() => {
         }
         
       );
-      console.log("last_question_id",last_question_id);
+      // console.log("last_question_id",last_question_id);
       // localStorage.setItem("interviewSubmitted", "true");
       // submitExam();
       // if (isInterviewSubmitted) {
         localStorage.setItem("interviewSubmitted", "true");
-        // submitExam(); // if this sends final answers or flags interview as done
-        localStorage.clear();
-        sessionStorage.clear();
-        // navigate("/interviewsubmitted");
-        navigate(`/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`);
+        if(isLastQuestion){
+          setLoading(true);
+          setTimeout(()=>{
+            localStorage.clear();
+            sessionStorage.clear();
+            setLoading(false);
+            navigate(`/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`);
+          },30000);
+        }else{
+          setLoading(false);
+        }
 
       // }
     } catch (error) {
       console.error("Error in handleSubmit:", error);
-    } finally {
-      setLoading(false);
-    }
+    } 
+    // finally {
+    //   setLoading(false);
+    // }
   }, [
     activeQuestionId,
     getQuestions,
@@ -395,7 +436,7 @@ useEffect(() => {
             // navigate("/interviewsubmitted");
         navigate(`/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`);
 
-        }, 25000);
+        }, 30000);
 
         await stopRecording(
           videoRef,
@@ -680,15 +721,31 @@ useEffect(() => {
     );
   }
 
+useEffect(() => {
+    if (loading && endCountdown > 0) {
+      const timer = setInterval(() => {
+        setEndcountdwn((prev) => prev - 1);
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [loading, endCountdown]);
+
   if (loading) {
     return (
       <div>
         <section class="dots-container">
+          {/* <div class="dot"></div>
           <div class="dot"></div>
           <div class="dot"></div>
           <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
+          <div class="dot"></div> */}
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-800">
+                Please wait, your interview will end in {endCountdown} second{endCountdown !== 1 ? "s" : ""}...
+            </h3><br/>
+            <p className="text-sm text-red-600 mt-1 font-medium">
+              Do not refresh or close the tab.
+            </p>
         </section>
       </div>
     );
@@ -813,7 +870,8 @@ useEffect(() => {
           <div
             className="col-span-12 md:col-span-9 bg-white p-2 rounded-xl  text-black  mt-2 sm:mt-0 "
             style={{ display: "hidden" }}
-          ></div>
+          >
+          </div>
           <div className="col-span-12 md:col-span-3 bg-white p-2 rounded-xl  text-black interviewPlayer">
             {interviewPlayerMemo}
           </div>

@@ -15,6 +15,8 @@ from django_q.tasks import async_task
 from django.utils import timezone
 from datetime import datetime
 import pytz
+import random
+import json
 # from studentpanel.tasks import merge_videos_task 
 # from .serializers import QuestionSerializer
 # from .serializers import QuestionSerializer
@@ -231,22 +233,97 @@ def interview_video_upload(request):
 # def index(request):
 #     return render('http://localhost:3000/home')
 
+
+
+# @csrf_exempt
+# def interview_questions(request):
+#     try:
+#         questions = CommonQuestion.objects.all()
+#         question_data = [
+#             {
+#                 'question': question.question,
+#                 # 'answer': question.answer,
+#                 'encoded_id': question.id
+#             }
+#             for question in questions
+#         ]
+#         return JsonResponse({'questions': question_data}, status=200)
+#     except Exception as e:
+#         return JsonResponse({'error': str(e)}, status=500)
+
+
+
+def assign_questions_to_interview_link(interview_link, crm_id, count=6):
+    if interview_link.assigned_question_ids:
+        return  # Already assigned
+
+    all_questions = list(CommonQuestion.objects.filter(crm_id=crm_id).order_by('id'))
+    if len(all_questions) < count:
+        raise ValueError("Not enough questions available")
+
+    selected = random.sample(all_questions, count)
+    selected_ids = [str(q.id) for q in selected]
+
+    interview_link.assigned_question_ids = ",".join(selected_ids)
+    interview_link.save()
+
 @csrf_exempt
 def interview_questions(request):
-    try:
-        questions = CommonQuestion.objects.all()
-        question_data = [
-            {
-                'question': question.question,
-                # 'answer': question.answer,
-                'encoded_id': question.id
-            }
-            for question in questions
-        ]
-        return JsonResponse({'questions': question_data}, status=200)
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
     
+    print("Request Body:", request.body)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    encoded_id = data.get('zoho_lead_id')
+    interview_link_count = data.get('interview_link_count')
+
+    if not encoded_id or not interview_link_count:
+        return JsonResponse({'error': 'Missing required fields'}, status=400)
+
+    try:
+        zoho_lead_id = base64.b64decode(encoded_id).decode('utf-8')
+    except Exception as e:
+        return JsonResponse({'error': f'Invalid encoding: {str(e)}'}, status=400)
+
+    try:
+        interview_link = StudentInterviewLink.objects.get(
+            zoho_lead_id=zoho_lead_id,
+            interview_link_count=interview_link_count
+        )
+    except StudentInterviewLink.DoesNotExist:
+        return JsonResponse({'error': 'Interview link not found'}, status=404)
+
+    # Assign 6 random questions if not already assigned
+    if not interview_link.assigned_question_ids:
+        questions = list(CommonQuestion.objects.all())
+        if len(questions) < 6:
+            return JsonResponse({'error': 'Not enough questions available'}, status=400)
+
+        import random
+        selected = random.sample(questions, 6)
+        interview_link.assigned_question_ids = ",".join(str(q.id) for q in selected)
+        interview_link.save()
+
+    # Fetch assigned questions
+    question_ids = list(map(int, interview_link.assigned_question_ids.split(',')))
+    question_objs = CommonQuestion.objects.filter(id__in=question_ids)
+    question_map = {q.id: q.question for q in question_objs}
+
+    ordered_data = [
+    {
+        'encoded_id': qid,
+        'question': question_map[qid]
+    }
+    for qid in question_ids if qid in question_map
+    ]
+
+    return JsonResponse({'questions': ordered_data}, status=200)
+
 
     
 @csrf_exempt

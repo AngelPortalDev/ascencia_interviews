@@ -421,6 +421,7 @@ def student_created_observer(sender, instance, created, **kwargs):
                                                 <p><b>Interviewer name:</b>{student_name},</p>
                                                 <p><b>Start Date and time:</b>{formatted_start}</p>
                                                 <p><b>End Date and time:</b>{formatted_end}</p>
+                                                <p><b>Interview Round:</b>2</p>
                                                 
                                                 <p>Please note that you can access the interview only between the start and end times mentioned above.</p>
                                                 
