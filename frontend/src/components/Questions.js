@@ -103,24 +103,55 @@ usePageUnloadHandler(safe_encoded_zoho_lead_id, safe_encoded_interview_link_send
   // console.log("LastQuestion id", last_question_id);
 
   // ***********  Fetch QUestions ***********
-  const fetchQuestions = async () => {
-    try {
-      const res = await Axios.get(
-        `${process.env.REACT_APP_API_BASE_URL}interveiw-section/interview-questions/`
-      );
+  // const fetchQuestions = async () => {
+  //   try {
+  //     const res = await Axios.get(
+  //       `${process.env.REACT_APP_API_BASE_URL}interveiw-section/interview-questions/`
+  //     );
  
-      if (res.data && res.data.questions && res.data.questions.length > 0) {
+  //     if (res.data && res.data.questions && res.data.questions.length > 0) {
+  //       setQuestions(res.data.questions);
+  //       setActiveQuestionId(res.data.questions[0].encoded_id);
+  //     } else {
+  //       console.warn("No questions found in the response.");
+  //       setQuestions([]); // Ensure state is updated with an empty array
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching questions:", error);
+  //   }
+  // };
+
+  const fetchInterviewQuestions = async () => {
+  const formData = new FormData();
+  formData.append("zoho_lead_id", safe_encoded_zoho_lead_id);
+  formData.append("interview_link_count",safe_encoded_interview_link_send_count);
+
+    try {
+      const res = await Axios.post(
+        `${process.env.REACT_APP_API_BASE_URL}interveiw-section/interview-questions/`,
+        {
+          zoho_lead_id: safe_encoded_zoho_lead_id,
+          interview_link_count: safe_encoded_interview_link_send_count
+        },
+        {
+          headers: {
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      console.log("data",res.data)
+
+      if (res.data && res.data.questions) {
         setQuestions(res.data.questions);
-        setActiveQuestionId(res.data.questions[0].encoded_id);
+        setActiveQuestionId(res.data.questions[0].question_id); // or encoded_id
       } else {
         console.warn("No questions found in the response.");
-        setQuestions([]); // Ensure state is updated with an empty array
       }
     } catch (error) {
-      console.error("Error fetching questions:", error);
+      console.error("Error fetching interview questions:", error);
     }
   };
-
   // Store countdown in the sessionstorage for resuem resume
   useEffect(() => {
     // Retrieve countdown value from sessionStorage on load
@@ -159,7 +190,8 @@ usePageUnloadHandler(safe_encoded_zoho_lead_id, safe_encoded_interview_link_send
   }, []);
 
   useEffect(() => {
-    fetchQuestions();
+    // fetchQuestions();
+    fetchInterviewQuestions();
   }, []);
 
   // 10 sec popup implement

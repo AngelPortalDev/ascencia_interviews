@@ -14,13 +14,13 @@ const useVisibilityWarning = (encoded_zoho_lead_id, encoded_interview_link_send_
         warningCount++;
         localStorage.setItem("tabSwitchWarning", warningCount);
 
-        showWarningToast(`Warning ${warningCount}/3: Tab switch detected.`, {
+        showWarningToast(`Warning ${warningCount}/2: Tab switch detected.`, {
           position: "top-center",
           autoClose: 3000,
           hideProgressBar: true,
         });
 
-        if (warningCount >= 3) {
+        if (warningCount >= 2) {
           toast.error("Interview auto-submitted due to rule violation.", {
             position: "top-center",
             autoClose: 3000,

@@ -43,6 +43,7 @@ from fuzzywuzzy import fuzz
 from datetime import datetime
 from django.core.mail import EmailMultiAlternatives
 import mimetypes
+import shutil
 
 # ✅ Paths (Update as per your system)
 # FFMPEG_PATH = r"C:\ffmpeg-2025-02-20-git-bc1a3bfd2c-full_build\bin\ffmpeg.exe"
@@ -348,24 +349,32 @@ def interview_add_video_path(request):
             }
             
             result = save_data(StudentInterviewAnswers, data_to_save)
+            answer_exists = StudentInterviewAnswers.objects.filter(zoho_lead_id=zoho_lead_id).exists()
+            
+            if answer_exists:
+                data = {
+                    'interview_attend': True,  # Boolean value (not string)
+                    'is_expired': True        # Boolean value (not string)
+                } 
 
-            data = {
-                'interview_attend': True,  # Boolean value (not string)
-                'is_expired': True        # Boolean value (not string)
-            } 
-
-            result_student = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id,interview_link_count=encoded_interview_link_send_count).update(**data)
-            print(result)
-            # async_task(analyze_video(video_path,question_id,zoho_lead_id,last_question_id))
-            if result_student > 0:
-                return JsonResponse({"status": True, "message": "Student updated successfully!"}, status=200)
+                result_student = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id,interview_link_count=encoded_interview_link_send_count).update(**data)
+                print(encoded_interview_link_send_count)
+                print(result)
+                # async_task(analyze_video(video_path,question_id,zoho_lead_id,last_question_id))
+                if result_student > 0:
+                    return JsonResponse({"status": True, "message": "Student updated successfully!"}, status=200)
+                else:
+                    return JsonResponse({"status": False, "error": "No student record was updated."}, status=400)
+                # if result_student['status']:
+                # return JsonResponse({"status": True, "message": "Student updated successfully!"}, status=200)
+                # else:
+                #     return JsonResponse({"status": False, "error": result.get('error', "Failed to update the student.")}, status=400)
             else:
-                return JsonResponse({"status": False, "error": "No student record was updated."}, status=400)
-            # if result_student['status']:
-            # return JsonResponse({"status": True, "message": "Student updated successfully!"}, status=200)
-            # else:
-            #     return JsonResponse({"status": False, "error": result.get('error', "Failed to update the student.")}, status=400)
-
+                return JsonResponse({
+                    "status": False,
+                    "message": "Answer saved, but no entries found to update interview status."
+                }, status=200)
+            
         except Exception as e:
             return JsonResponse({"status": False, "error": str(e)}, status=500)
 
@@ -625,11 +634,6 @@ def check_answers(zoho_lead_id):
 
     except Exception as e:
         logger.error(f"Error in AI evaluation: {e}")
-
-
-
-
-
 
 
 def upload_to_bunnystream(video_path):

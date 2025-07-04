@@ -229,7 +229,7 @@ def is_video_valid(video_path):
         return False
 
 
-def merge_videos(zoho_lead_id):
+def merge_videos(zoho_lead_id,interview_link_count=None):
     uploads_folder = os.path.join(get_uploads_folder(), zoho_lead_id)
     logging.info("uploads_folder: %s", uploads_folder)
 
@@ -248,56 +248,53 @@ def merge_videos(zoho_lead_id):
         return str(e)
 
     # Get answers and questions
-    answers = StudentInterviewAnswers.objects.filter(
-    zoho_lead_id=zoho_lead_id
-    ).order_by("created_at")[:6]  # Limit to 6 max if required
+        # this code for random questions with interviewlink
+    try:
+        interview_link = StudentInterviewLink.objects.get(
+                zoho_lead_id=zoho_lead_id,
+                interview_link_count=interview_link_count
+            )
+    except StudentInterviewLink.DoesNotExist:
+        return f"Interview link not found for zoho_lead_id: {zoho_lead_id}"
 
-    answer_count = answers.count()
-    if answer_count == 0:
+    if not interview_link.assigned_question_ids:
+        return f"No assigned questions for zoho_lead_id: {zoho_lead_id}"
+
+    question_id_list = list(map(int, interview_link.assigned_question_ids.split(",")))
+
+    # ✅ Fetch answer objects in order of submission
+    answers = list(StudentInterviewAnswers.objects.filter(
+        zoho_lead_id=zoho_lead_id
+    ).order_by("created_at")[:len(question_id_list)])
+
+    if not answers:
         return f"No answers found for lead ID {zoho_lead_id}."
 
-    questions = CommonQuestion.active_objects.all().order_by("id")[:answer_count]
+    # ✅ Fetch questions by ID and preserve order from interview_link
+    questions_qs = CommonQuestion.active_objects.filter(id__in=question_id_list)
+    question_map = {q.id: q for q in questions_qs}
+    ordered_questions = [question_map[qid] for qid in question_id_list if qid in question_map]
 
-    if questions.count() < answer_count:
-        return f"Not enough questions to match {answer_count} answers for lead ID {zoho_lead_id}."
+    if len(ordered_questions) < len(answers):
+        return f"Some question IDs are missing from CommonQuestion."
 
-    video_files = []
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+    video_files = []
 
-    # for i, (answer, question) in enumerate(zip(answers, questions), start=1):
-    #     question_filename = f"question_{i}.webm"
-    #     question_path = os.path.join(uploads_folder, question_filename).replace("\\", "/")
-
-    #     answer_path = os.path.join(project_root, answer.video_path).replace("\\", "/")
-    #     if not os.path.exists(answer_path):
-    #         return f"Missing answer file: {answer_path}"
-
-    #     # answer_duration = get_duration(answer_path)
-    #     question_duration = 2.0
-
-    #     if not os.path.exists(question_path):
-    #         generate_question_video(f"Q{i}: {question.question}", question_path, duration=question_duration)
-
-
-    #     video_files.append(question_path)
-    #     video_files.append(answer_path)
-    for answer in answers:
-        question = CommonQuestion.active_objects.filter(id=answer.question_id).first()
-        if not question:
-            return f"Question not found for answer ID {answer.id} with question_id={answer.question_id}"
-
+    # 🔁 Pair each question with its corresponding answer
+    for i, (answer, question) in enumerate(zip(answers, ordered_questions), start=1):
         question_filename = f"question_{question.id}.webm"
         question_path = os.path.join(uploads_folder, question_filename).replace("\\", "/")
-
         answer_path = os.path.join(project_root, answer.video_path).replace("\\", "/")
 
-        if not os.path.exists(question_path):
-            generate_question_video(f"Q{question.id}: {question.question}", question_path, duration=2.0)
+        if not os.path.exists(answer_path):
+            return f"Missing answer file: {answer_path}"
 
-        # Now question_{real_id}.webm matches answer.question_id
+        if not os.path.exists(question_path):
+            generate_question_video(f"{question.question}", question_path, duration=2.0)
+
         video_files.append(question_path)
         video_files.append(answer_path)
-
 
 
 
