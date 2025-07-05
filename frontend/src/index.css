@@ -422,4 +422,9 @@ code {
 .swiper-button-prev:after{
   font-size: 24px !important;
 }
+.logomobile{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 }

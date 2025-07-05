@@ -463,11 +463,7 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
         )
 
         # Email configuration
-        subject = "Interview Process Completed"
-        recipient = ["chetan@angel-portal.com"]
-        from_email = "vaibhav@angel-portal.com"
-        # url = video_path  # or your public URL if available
-        url = f"https://video.bunnycdn.com/play/{settings.BUNNY_STREAM_LIBRARY_ID}/{video_id}"
+        
 
         student = Students.objects.get(zoho_lead_id=zoho_lead_id)
         student_name = f"{student.first_name} {student.last_name}"
@@ -481,6 +477,13 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
         if student_manager:  
             student_manager_name = f"{student_manager.first_name} {student_manager.last_name}".strip()
             print(f"student_manager_name: {student_manager_name}")
+
+
+        subject = "Interview Process Completed"
+        recipient = [student_email]
+        from_email = ''
+        # url = video_path  # or your public URL if available
+        url = f"https://video.bunnycdn.com/play/{settings.BUNNY_STREAM_LIBRARY_ID}/{video_id}"
 
         html_content = f"""
         <html>
@@ -574,6 +577,92 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
          # Delete StudentInterviewAnswers after processing
         deleted_count, _ = StudentInterviewAnswers.objects.filter(zoho_lead_id=zoho_lead_id).delete()
         delted_student_interview = Student_Interview.objects.filter(zoho_lead_id=zoho_lead_id).update(interview_process='')
+
+        # ✅ Send "Thank You" Email to Student
+        send_email(
+            subject="Thank You for Completing Your Interview!",
+            message=f"""
+            <html>
+                <head>
+                    <style>
+                        body {{
+                            background-color: #f4f4f4;
+                            font-family: Tahoma, sans-serif;
+                            margin: 0;
+                            padding: 40px 20px;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            min-height: 100vh;
+                        }}
+                        .email-container {{
+                            background: #ffffff;
+                            max-width: 600px;
+                            width: 100%;
+                            padding: 30px 25px;
+                            border-radius: 10px;
+                            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+                            border: 1px solid #ddd;
+                            box-sizing: border-box;
+                            margin: 0 auto;
+                        }}
+                        .header {{
+                            text-align: center;
+                            margin-bottom: 20px;
+                            border-bottom: 1px solid #eee;
+                        }}
+                        .header img {{
+                            height: 40px;
+                            width: auto;
+                            margin-bottom: 10px;
+                        }}
+                        .email-logo {{
+                            width: 50%;
+                            display: block;
+                            margin: 20px auto;
+                        }}
+                        h2 {{
+                            color: #2c3e50;
+                            text-align: center;
+                        }}
+                        p {{
+                            color: #555;
+                            font-size: 16px;
+                            line-height: 1.6;
+                            text-align: left;
+                        }}
+                        @media only screen and (max-width: 600px) {{
+                            .email-logo {{
+                                width: 80% !important;
+                            }}
+                        }}
+                    </style>
+                </head>
+                <body>
+                    <div class="email-container">
+                        <div class="header">
+                            <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Malta" />
+                        </div>
+                        <img src="https://ascencia-interview.com/static/img/email_template_icon/Thank_you-01.png" alt="Interview Completed" class="email-logo" />
+                        
+                        <h2>Thank You for Completing Your Interview!</h2>
+
+                        <p>Hi <b>{student_name.split()[0]}</b>,</p>
+
+                        <p>Thank you for taking the time to complete your interview. We appreciate your effort and enthusiasm!</p>
+
+                        <p>Your Student Manager will be reviewing your interview details and will get back to you shortly with the next steps. If you have any questions in the meantime, feel free to reply to this email.</p>
+
+                        <p>We’re excited to support you on your journey!</p>
+
+                        <p>Best regards,<br/>
+                        Ascencia Malta</p>
+                    </div>
+                </body>
+            </html>
+            """,
+            recipient=[student_email]
+        )
         logging.info("Deleted %s StudentInterviewAnswers entries for zoho_lead_id: %s", deleted_count, zoho_lead_id)
 
 

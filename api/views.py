@@ -398,6 +398,7 @@ def process_document(request):
         if student_manager:  
             student_manager_name = f"{student_manager.first_name} {student_manager.last_name}".strip()
             print(f"student_manager_name: {student_manager_name}")
+            student_manager_email = student_manager.email
 
         print(f"Received first_name: {zoho_first_name}, last_name: {zoho_last_name}, program: {program}")
 
@@ -612,7 +613,7 @@ def process_document(request):
                         </body>
                         </html>
                     """,
-                    recipient=["chetan@angel-portal.com"],
+                    recipient=[student_manager_email],
                     # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
                 )
                 return JsonResponse({"message": "Success", "result": False}, status=200)
@@ -731,7 +732,7 @@ def process_document(request):
                         </body>
                         </html>
                     """,
-                    recipient=["chetan@angel-portal.com"],
+                    recipient=[student_manager_email],
                     # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
                 )
 
@@ -905,7 +906,7 @@ def process_document(request):
                             </body>
                             </html>
                         """,
-                        recipient=["chetan@angel-portal.com"],
+                        recipient=[student_manager_email],
                         # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
                     )
                     # 3. Then: Send Zoho Lead Update Notification email
@@ -1012,7 +1013,7 @@ def process_document(request):
                                 </body>
                             </html>
                             """,
-                            recipient=["chetan@angel-portal.com"],
+                            recipient=[student_email],
                         )
 
                     
@@ -1129,7 +1130,7 @@ def process_document(request):
                         </body>
                         </html>
                     """,
-                    recipient=["chetan@angel-portal.com"],
+                    recipient=[student_manager_email],
                     # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
                 )
                 return JsonResponse({"message": "Success", "result": result}, status=200)

@@ -733,19 +733,31 @@ useEffect(() => {
 
   if (loading) {
     return (
-      <div>
+      <div style={{padding:'5px 15px'}}>
+        <div className="logomobile">
+            <img src={Logo} alt="AI Software" className="h-16" />
+        </div>
+        
         <section class="dots-container">
           {/* <div class="dot"></div>
           <div class="dot"></div>
           <div class="dot"></div>
           <div class="dot"></div>
           <div class="dot"></div> */}
-            <h3 className="text-lg sm:text-xl font-semibold text-gray-800">
-                Please wait, your interview will end in {endCountdown} second{endCountdown !== 1 ? "s" : ""}...
-            </h3><br/>
-            <p className="text-sm text-red-600 mt-1 font-medium">
-              Do not refresh or close the tab.
-            </p>
+          
+            <div style={{display:'flex', flexDirection:'column', alignItems:'center',padding:'10px'}}>
+            <div>
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-800 text-center">
+                  Please wait, your interview will end in {endCountdown} second{endCountdown !== 1 ? "s" : ""}...
+              </h3>
+            </div>
+            <br/>
+            <div>
+              <p className="text-sm text-red-600 mt-1 font-medium">
+                Do not refresh or close the tab.
+              </p>
+            </div>
+          </div>
         </section>
       </div>
     );
@@ -821,23 +833,25 @@ useEffect(() => {
                 <p className="text-base sm:text-lg">{questionItem.question}</p>
                 {index === getQuestions.length - 1 && timeSpent >= 30 && (
                   <button
-                    onClick={handleSubmit}
-                    disabled={loading}
-                    className="
-                    bg-gradient-to-r from-[#ff80b5] to-[#9089fc] text-white font-semibold 
-                    text-xs md:text-sm 
-                    py-1 px-3 md:py-2 md:px-4 
-                    rounded-xl shadow-lg 
-                    hover:bg-gradient-to-l transition-all
-                    w-auto"
-                    style={{
-                      position: "absolute",
-                      right: "20px",
-                      bottom: "20px",
-                    }}
-                  >
-                    Submit
-                  </button>
+                onClick={handleSubmit}
+                disabled={loading}
+                className="
+                  bg-gradient-to-r from-[#ff80b5] to-[#9089fc] text-white font-semibold 
+                  text-sm md:text-base
+                  py-3 px-5 md:py-2 md:px-4 
+                  rounded-xl shadow-lg 
+                  hover:bg-gradient-to-l transition-all
+                  w-auto
+                "
+                style={{
+                  position: "absolute",
+                  right: "20px",
+                  bottom: "20px",
+                  minWidth: "120px",
+                }}
+              >
+                Submit
+              </button>
                 )}
               </SwiperSlide>
             );

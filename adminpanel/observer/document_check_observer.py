@@ -432,7 +432,7 @@ def student_created_observer(sender, instance, created, **kwargs):
                                         </body>
                                     </html>
                                     """,
-                                    recipient=["chetan@angel-portal.com"],
+                                    recipient=[student_email],
                                 )
 
                                 # student.save()
