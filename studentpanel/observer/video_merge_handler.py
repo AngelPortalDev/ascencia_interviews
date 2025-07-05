@@ -477,10 +477,11 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
         if student_manager:  
             student_manager_name = f"{student_manager.first_name} {student_manager.last_name}".strip()
             print(f"student_manager_name: {student_manager_name}")
+            student_manager_email= student_manager.email
 
 
         subject = "Interview Process Completed"
-        recipient = [student_email]
+        recipient = [student_manager_email]
         from_email = ''
         # url = video_path  # or your public URL if available
         url = f"https://video.bunnycdn.com/play/{settings.BUNNY_STREAM_LIBRARY_ID}/{video_id}"
