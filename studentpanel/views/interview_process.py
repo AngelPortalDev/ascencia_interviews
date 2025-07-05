@@ -252,7 +252,6 @@ def interview_video_upload(request):
 #         return JsonResponse({'error': str(e)}, status=500)
 
 
-
 def assign_questions_to_interview_link(interview_link, crm_id, count=6):
     if interview_link.assigned_question_ids:
         return  # Already assigned
@@ -261,8 +260,19 @@ def assign_questions_to_interview_link(interview_link, crm_id, count=6):
     if len(all_questions) < count:
         raise ValueError("Not enough questions available")
 
-    selected = random.sample(all_questions, count)
-    selected_ids = [str(q.id) for q in selected]
+    # Always pick first 3
+    first_three = all_questions[:3]
+
+    # Randomly pick 3 more from remaining
+    remaining = all_questions[3:]
+    if len(remaining) < 3:
+        raise ValueError("Not enough remaining questions for random selection")
+
+    import random
+    random_three = random.sample(remaining, 3)
+
+    final_questions = first_three + random_three
+    selected_ids = [str(q.id) for q in final_questions]
 
     interview_link.assigned_question_ids = ",".join(selected_ids)
     interview_link.save()
@@ -299,13 +309,30 @@ def interview_questions(request):
         return JsonResponse({'error': 'Interview link not found'}, status=404)
 
     # Assign 6 random questions if not already assigned
+    # if not interview_link.assigned_question_ids:
+    #     questions = list(CommonQuestion.objects.all())
+    #     if len(questions) < 6:
+    #         return JsonResponse({'error': 'Not enough questions available'}, status=400)
+
+    #     import random
+    #     selected = random.sample(questions, 6)
+    #     interview_link.assigned_question_ids = ",".join(str(q.id) for q in selected)
+    #     interview_link.save()
     if not interview_link.assigned_question_ids:
-        questions = list(CommonQuestion.objects.all())
+        questions = list(CommonQuestion.objects.all().order_by('id'))
         if len(questions) < 6:
             return JsonResponse({'error': 'Not enough questions available'}, status=400)
 
+        first_three = questions[:3]
+        remaining = questions[3:]
+
+        if len(remaining) < 3:
+            return JsonResponse({'error': 'Not enough remaining questions for random selection'}, status=400)
+
         import random
-        selected = random.sample(questions, 6)
+        random_three = random.sample(remaining, 3)
+
+        selected = first_three + random_three
         interview_link.assigned_question_ids = ",".join(str(q.id) for q in selected)
         interview_link.save()
 
