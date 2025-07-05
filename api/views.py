@@ -750,7 +750,7 @@ def process_document(request):
                     student.edu_doc_verification_status = "approved"
                     student.verification_failed_reason = ""
                     student.is_interview_link_sent = True
-                    student.interview_link_send_count += 1
+                    student.interview_link_send_count = 1
                     # student.interview_process = "Second_Round_Interview"
                     student.save()                   
 
