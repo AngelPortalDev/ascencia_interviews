@@ -125,7 +125,7 @@ def generate_question_video(text, output_path, duration=2):
     safe_text = text.replace(":", r'\:').replace("?", r'\?').replace("'", "").replace('"', "")
     drawtext = (
     f"drawtext=fontfile={font_path}:"
-    f"text='{safe_text}':fontcolor=white:fontsize=14:x=(w-text_w)/2:y=(h-text_h)/2"
+    f"text='{safe_text}':fontcolor=white:fontsize=12:x=(w-text_w)/2:y=(h-text_h)/2"
     )
     print("drawtext",drawtext)
 
