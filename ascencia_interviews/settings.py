@@ -211,8 +211,8 @@ ADMIN_BASE_URL = "https://ascencia-interview.com"
 # BUNNY_STREAM_API_KEY = "e31364b4-b2f4-4221-aac3bd5d34e5-6769-4f29"  # Replace with your actual Library Key
 # BUNNY_STREAM_LIBRARY_ID = "390607"
 
-BUNNY_STREAM_API_KEY = "df05b566-ff03-480f-8eca7a937318-9c27-4e25"  # Replace with your actual Library Key
-BUNNY_STREAM_LIBRARY_ID = "460368"
+BUNNY_STREAM_API_KEY = "e31364b4-b2f4-4221-aac3bd5d34e5-6769-4f29"  # Replace with your actual Library Key
+BUNNY_STREAM_LIBRARY_ID = "390607"
 
 # Email Settings
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
@@ -220,8 +220,8 @@ EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587 
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
-EMAIL_HOST_USER = "vaibhav@angel-portal.com"
-EMAIL_HOST_PASSWORD = "fxtllxzluuyxtwvv"
+EMAIL_HOST_USER = "info@ascenciamalta.mt"
+EMAIL_HOST_PASSWORD = "uhwpqazcggprbbog"
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
