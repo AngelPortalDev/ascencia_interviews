@@ -64,6 +64,7 @@ const usePageUnloadHandler = (encoded_zoho_lead_id, encoded_interview_link_send_
   // ✅ Save info during unload
   useEffect(() => {
     const handleBeforeUnload = (event) => {
+
       if (encoded_zoho_lead_id && encoded_interview_link_send_count) {
         sessionStorage.setItem("zoho_lead_id", encoded_zoho_lead_id);
         sessionStorage.setItem("interview_link_count", encoded_interview_link_send_count);
@@ -86,14 +87,21 @@ const usePageUnloadHandler = (encoded_zoho_lead_id, encoded_interview_link_send_
     const isRefresh = sessionStorage.getItem("isPageRefreshing") === "true";
     const lead = sessionStorage.getItem("zoho_lead_id");
     const link = sessionStorage.getItem("interview_link_count");
+    // const firstEncodeId = sessionStorage.getItem('first_encoded_id');
+    const currentIndex = parseInt(sessionStorage.getItem("currentQuestionIndex"), 10);
 
     if (isRefresh && lead && link) {
       sessionStorage.removeItem("isPageRefreshing");
       sessionStorage.removeItem("timeSpent");
       sessionStorage.removeItem("currentQuestionIndex");
 
-      submitExam(); // This will submit using the stored IDs
-      navigate(`/frontend/interviewsubmitted?lead=${lead}&link=${link}`);
+       if (currentIndex === 0 || isNaN(currentIndex)) {
+            navigate('/goback');
+          } else {
+            submitExam();
+            navigate(`/interviewsubmitted?lead=${lead}&link=${link}`);
+          }
+   
       // sessionStorage.removeItem("interviewSubmitted");
       // localStorage.clear()
       // sessionStorage.clear()
