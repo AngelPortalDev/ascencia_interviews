@@ -19,6 +19,8 @@ from adminpanel.models.common_question import CommonQuestion
 logging.basicConfig(level=logging.INFO)
 import uuid
 import json
+import whisper
+import warnings
 
 def get_uploads_folder():
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
@@ -53,6 +55,36 @@ def convert_video(input_path, output_path, target_format):
         raise ValueError(f"Unsupported format: {target_format}")
 
     subprocess.run(command, shell=True, check=True)
+
+warnings.filterwarnings("ignore", message="FP16 is not supported on CPU; using FP32 instead")
+
+def transcribe_complete_video(video_path):
+    if not os.path.exists(video_path):
+        print("❌ File not found:", video_path)
+        return None
+
+    print("📦 Loading Whisper model (small, fast)...")
+    model = whisper.load_model("small")
+
+    print("🧠 Transcribing full video...")
+    result = model.transcribe(
+        video_path,
+        language="en",
+        word_timestamps=False,
+        verbose=False,
+        task="transcribe",
+    )
+
+    # Clean output
+    full_text = " ".join(result['text'].strip().split())
+
+    # Save to text file
+    transcript_txt_path = os.path.splitext(video_path)[0] + "_transcript.txt"
+    with open(transcript_txt_path, "w", encoding="utf-8") as f:
+        f.write(full_text)
+
+    print(f"✅ Transcript saved: {transcript_txt_path}")
+    return transcript_txt_path
 
 
 def upload_to_bunnystream(video_path):
@@ -122,7 +154,11 @@ def generate_question_video(text, output_path, duration=2):
 
 
       # ✅ Escape special characters properly for FFmpeg
-    safe_text = text.replace(":", r'\:').replace("?", r'\?').replace("'", "").replace('"', "")
+    #   this only one line Questions
+    # safe_text = text.replace(":", r'\:').replace("?", r'\?').replace("'", "").replace('"', "")
+    # for new line like two line questions 
+    safe_text = text.replace("\n", " ").replace(":", r'\:').replace("?", r'\?').replace("'", "").replace('"', "")
+
     drawtext = (
     f"drawtext=fontfile={font_path}:"
     f"text='{safe_text}':fontcolor=white:fontsize=12:x=(w-text_w)/2:y=(h-text_h)/2"
@@ -440,6 +476,22 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
         logging.info("merge_command: %s", merge_command)
         subprocess.run(merge_command, shell=True, check=True)
         logging.info("merge_command subprocess: %s", merge_command)
+
+        transcript_file_path = transcribe_complete_video(output_path)
+
+        if transcript_file_path and os.path.exists(transcript_file_path):
+            with open(transcript_file_path, "r", encoding="utf-8") as f:
+                transcript_text = f.read()
+                # Save to StudentInterviewLink
+                try:
+                    interview_link.transcript_text = transcript_text
+                    interview_link.save(update_fields=["transcript_text"])
+                    logging.info("✅ Transcript text saved to StudentInterviewLink")
+                except Exception as e:
+                    logging.warning("⚠️ Failed to save transcript to DB: %s", e)
+        else:
+            logging.warning("Transcript generation failed or skipped.")
+
         video_id = upload_to_bunnystream(output_path)
         logging.info("video_id: %s", video_id)
         student = Students.objects.get(zoho_lead_id=zoho_lead_id)

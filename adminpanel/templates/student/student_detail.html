@@ -112,6 +112,30 @@
                     allow="autoplay; encrypted-media" 
                     allowfullscreen>
                 </iframe>  {% endcomment %}
+                <h3 style="
+                  font-size: 22px;
+                  font-weight: bold;
+                  margin-bottom: 12px;
+                  color: #2c3e50;
+                  font-family: 'Segoe UI', sans-serif;">
+                  📄 Interview Transcript
+              </h3>
+
+              <div style="
+                  background: #f9fbfc;
+                  border-left: 6px solid #3498db;
+                  padding: 20px;
+                  border-radius: 10px;
+                  max-height: 400px;
+                  overflow-y: auto;
+                  font-family: 'Segoe UI', 'Roboto', sans-serif;
+                  font-size: 15px;
+                  line-height: 1.6;
+                  color: #2d3436;
+                  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+                  white-space: pre-wrap;">
+                  {{ transcript_text }}
+              </div>
                 <div class="video-container">
                   <iframe
                     src="https://iframe.mediadelivery.net/embed/{{BUNNY_STREAM_LIBRARY_ID}}/{{ student.bunny_stream_video_id }}?autoplay=true"
