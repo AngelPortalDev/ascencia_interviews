@@ -33,6 +33,7 @@ class StudentInterviewLink(models.Model):
     blank=True,
     help_text="Comma-separated IDs of assigned CommonQuestion rows"
 )
+    transcript_text = models.TextField(null=True, blank=True, help_text="Transcript of the merged interview video")
     def save(self, *args, **kwargs):
         """Ensure expiration logic is applied before saving."""
         if self.expires_at <= now():

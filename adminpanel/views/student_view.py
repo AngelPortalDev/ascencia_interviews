@@ -6,7 +6,7 @@ from studentpanel.models.interview_process_model import Students
 from datetime import datetime
 import calendar
 from django.conf import settings
-
+from studentpanel.models.interview_link import StudentInterviewLink
 
 @csrf_exempt  # Disable CSRF for webhooks
 def students_leads_api(request):
@@ -137,6 +137,17 @@ def students_list(request):
 
 def student_detail(request, zoho_lead_id):
     student = get_object_or_404(Students, zoho_lead_id=zoho_lead_id)
+    interview_link = (
+    StudentInterviewLink.objects
+    .filter(zoho_lead_id=zoho_lead_id)
+    .exclude(transcript_text__isnull=True)
+    .exclude(transcript_text__exact="")
+    .order_by("-id")
+    .first()
+    )
+
+    transcript_text = interview_link.transcript_text if interview_link and interview_link.transcript_text else "Transcript not available."
+
     breadcrumb_items = [
         {"name": "Dashboard", "url": reverse('admindashboard')},
         {"name": "Students", "url": reverse('students_list')},
@@ -145,6 +156,7 @@ def student_detail(request, zoho_lead_id):
 
     return render(request, "student/student_detail.html", {
         "student": student,
+        "transcript_text": transcript_text,
         "show_breadcrumb": True,
         "breadcrumb_items": breadcrumb_items,
         "BUNNY_STREAM_LIBRARY_ID": settings.BUNNY_STREAM_LIBRARY_ID
