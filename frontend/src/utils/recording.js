@@ -48,7 +48,7 @@ const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
 mediaRecorderRef.current = new MediaRecorder(stream, {
   mimeType,
   audioBitsPerSecond: 32000,
-  videoBitsPerSecond: 1000000,
+  videoBitsPerSecond: 500000,
 });
 
     mediaRecorderRef.current.ondataavailable = (event) => {

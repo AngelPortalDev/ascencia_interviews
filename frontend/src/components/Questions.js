@@ -71,6 +71,7 @@ const safe_encoded_interview_link_send_count = encoded_interview_link_send_count
 
   const [showUploading, setShowUploading] = useState(false);
   const toastId = useRef(null);
+  const endCountdownStartedRef = useRef(false);
 
   // usePageReloadSubmit(
   //   videoRef,
@@ -330,8 +331,12 @@ useEffect(() => {
       // if (isInterviewSubmitted) {
         localStorage.setItem("interviewSubmitted", "true");
         if(isLastQuestion){
-          setEndcountdwn(30);
-          setLoading(true);
+          if (!endCountdownStartedRef.current) {
+             endCountdownStartedRef.current = true;
+              setEndcountdwn(30);
+              setLoading(true);
+          }
+       
           // setLoading(true);
           // setTimeout(()=>{
           //   localStorage.clear();
@@ -443,9 +448,12 @@ useEffect(() => {
 
     if (countdown === 0) {
       if (isLastQuestion) {
+        if (!endCountdownStartedRef.current) {
+            endCountdownStartedRef.current = true;
+            setEndcountdwn(30);
+            setLoading(true);
         // ✅ Final question logic
-        setEndcountdwn(30);
-        setLoading(true);
+       
         // console.log("last question reach...")
         // setTimeout(() => {
         //     console.log("🟢 Timeout executed");
@@ -472,6 +480,7 @@ useEffect(() => {
           last_question_id,
           encoded_interview_link_send_count,
         );
+      }
       } else {
         // ⏭️ Not last question logic
         setShowUploading(true);
@@ -556,7 +565,7 @@ useEffect(() => {
 
   // ************ User Spent More Than 30 seconds then navigation enabled ****************
   useEffect(() => {
-    if (timeSpent > 30) {
+    if (timeSpent > 3) {
       setIsNavigationEnabled(true);
     } else {
       setIsNavigationEnabled(false);
@@ -862,14 +871,15 @@ useEffect(() => {
                 className="bg-white p-6 rounded-lg shadow-lg text-black position-relative"
               >
                 <p className="text-base sm:text-lg">{questionItem.question}</p>
-                {index === getQuestions.length - 1 && timeSpent > 30 && (
+                {index === getQuestions.length - 1 && timeSpent > 3 && (
                   <button
                 onClick={handleSubmit}
                 disabled={loading}
                 className="
                   bg-gradient-to-r from-[#ff80b5] to-[#9089fc] text-white font-semibold 
-                  text-sm md:text-base
-                  py-3 px-5 md:py-2 md:px-4 
+                  text-base md:text-base
+                  py-3 md:py-2 
+                  px-6 md:px-4  
                   rounded-xl shadow-lg 
                   hover:bg-gradient-to-l transition-all
                   w-auto
@@ -896,7 +906,7 @@ useEffect(() => {
                 >
                   Skip
                 </button> */}
-            {timeSpent > 30 && (
+            {timeSpent > 3 && (
               <button
                 onClick={() => {
                   swiperRef.current?.slideNext();
