@@ -565,7 +565,7 @@ useEffect(() => {
 
   // ************ User Spent More Than 30 seconds then navigation enabled ****************
   useEffect(() => {
-    if (timeSpent > 3) {
+    if (timeSpent > 30) {
       setIsNavigationEnabled(true);
     } else {
       setIsNavigationEnabled(false);
@@ -871,7 +871,7 @@ useEffect(() => {
                 className="bg-white p-6 rounded-lg shadow-lg text-black position-relative"
               >
                 <p className="text-base sm:text-lg">{questionItem.question}</p>
-                {index === getQuestions.length - 1 && timeSpent > 3 && (
+                {index === getQuestions.length - 1 && timeSpent > 30 && (
                   <button
                 onClick={handleSubmit}
                 disabled={loading}
@@ -906,7 +906,7 @@ useEffect(() => {
                 >
                   Skip
                 </button> */}
-            {timeSpent > 3 && (
+            {timeSpent > 30 && (
               <button
                 onClick={() => {
                   swiperRef.current?.slideNext();
