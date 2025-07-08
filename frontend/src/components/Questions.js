@@ -289,6 +289,11 @@ useEffect(() => {
       setActiveQuestionId(newQuestionId);
     }
 
+     if (toastId.current) {
+        toast.dismiss(toastId.current);
+        toastId.current = null;
+      }
+
     try {
       await stopRecording(
         videoRef,
@@ -734,9 +739,15 @@ useEffect(() => {
       if(encoded_zoho_lead_id && encoded_interview_link_send_count){
         localStorage.clear();
         sessionStorage.clear();
-        window.location.href = `/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`;
+        navigate(`/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`);
       }else{
-        navigate('/goback')
+        if (currentIndex === 0 || isNaN(currentIndex)){
+            navigate('/goback')
+        }else{
+            localStorage.clear();
+            sessionStorage.clear();
+          navigate(`/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`);
+        }
       }
     }
   };
@@ -820,10 +831,10 @@ useEffect(() => {
       </div>
 
       {/* Countdown Timer */}
-      <div className="flex justify-between flex-col sm:flex-row px-8 pt-8 sm:pt-4  lg:px-16 items-center">
+      <div className="flex justify-between flex-col sm:flex-row px-8 pt-3 sm:pt-3  lg:px-16 items-center">
         <div>
           <h3 className="text-black text-xl sm:text-2xl mb-2">
-            <img src={Logo} alt="AI Software" className="h-16" />
+            <img src={Logo} alt="AI Software" className="h-12 sm:h-16" />
           </h3>
           {/* <img src={Logo} alt="Not found" style={{width:'200px'}}/> */}
         </div>
@@ -853,7 +864,7 @@ useEffect(() => {
           allowSlidePrev={false}
           modules={[Pagination, Navigation, Autoplay]}
           className="mySwiper"
-          style={{ minHeight: "200px" }}
+          // style={{ minHeight: "200px" }}
           autoplay={{
             delay: 60000,
             disableOnInteraction: false,
@@ -868,7 +879,7 @@ useEffect(() => {
             return (
               <SwiperSlide
                 key={index}
-                className="bg-white p-6 rounded-lg shadow-lg text-black position-relative"
+                className="bg-white pb-6 pt-0 pr-6 pl-6  rounded-lg shadow-lg text-black position-relative"
               >
                 <p className="text-base sm:text-lg">{questionItem.question}</p>
                 {index === getQuestions.length - 1 && timeSpent > 30 && (
@@ -878,17 +889,17 @@ useEffect(() => {
                 className="
                   bg-gradient-to-r from-[#ff80b5] to-[#9089fc] text-white font-semibold 
                   text-base md:text-base
-                  py-3 md:py-2 
-                  px-6 md:px-4  
-                  rounded-xl shadow-lg 
+                  py-1 md:py-2     
+                  px-4 md:px-3  
+                  rounded-xl shadow-2xl
                   hover:bg-gradient-to-l transition-all
                   w-auto
                 "
                 style={{
                   position: "absolute",
-                  right: "20px",
-                  bottom: "20px",
-                  minWidth: "120px",
+                  right: "15px",
+                  bottom: "15px",
+                  minWidth: "100px",
                 }}
               >
                 Submit
@@ -923,14 +934,14 @@ useEffect(() => {
         {/* Grid Layout for User Info and Video */}
         <div className="grid grid-cols-12 gap-0  h-full sm:gap-8">
           <div
-            className="col-span-12 md:col-span-9 bg-white p-2 rounded-xl  text-black  mt-2 sm:mt-0 "
+            className="col-span-12 md:col-span-9 bg-white p-2 rounded-xl  text-black  "
             style={{ display: "hidden" }}
           >
              <DeepgramLiveCaptions
                 setIsListeningReady={setIsListeningReady}
               />
           </div>
-          <div className="col-span-12 md:col-span-3 bg-white p-2 rounded-xl  text-black interviewPlayer">
+          <div className="col-span-12 md:col-span-3 bg-white p-2 rounded-xl pt-0 sm:mt-2 text-black interviewPlayer">
             {interviewPlayerMemo}
           </div>
         </div>

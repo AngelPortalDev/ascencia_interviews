@@ -66,7 +66,7 @@ const TermsAndCondition = () => {
               className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"
             />
           </div>
-          <div className="mx-auto max-w-4xl py-12 sm:py-16 lg:py-16">
+          <div className="mx-auto max-w-4xl py-8 sm:py-12 lg:py-12">
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold text-gray-900 sm:text-3xl leading-tight">
                 Terms and Conditions

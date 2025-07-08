@@ -31,14 +31,14 @@ code {
 .swiper-slide {
   text-align: center;
   font-size: 24px;
-  height: 200px !important;
+  height: 160px !important;
   /* background: #fff; */
 
   /* Center slide text vertically */
   display: flex !important;
   justify-content: center;
   align-items: center;
-  padding: 2rem 3rem !important;
+  padding: 1rem 3rem !important;
   box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.2);
   border-radius: 0px;
   /* border: 1px solid rgb(199, 198, 198) !important; */
@@ -427,4 +427,12 @@ code {
   justify-content: center;
   align-items: center;
 }
+.mainDeepfram{
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+}
+
+.mainDeepfram{
+  padding: 20px;
 }
