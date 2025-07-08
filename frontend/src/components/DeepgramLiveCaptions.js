@@ -130,7 +130,7 @@ const DeepgramLiveCaptions = ({ setIsListeningReady }) => {
   // }
 
   return (
-  <div style={{ padding: 20 }}>
+  <div className="mainDeepfram">
     {status !== "Listening..." ? (
       <div
         style={{
