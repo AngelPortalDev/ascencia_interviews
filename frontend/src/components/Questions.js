@@ -34,6 +34,7 @@ import usePageUnloadHandler from "../hooks/usePageUnloadHandler.js";
 const Questions = () => {
   const [countdown, setCountdown] = useState(60);
   const [endCountdown,setEndcountdwn] = useState(30);
+  const [endCountdownTwo,setEndcountdwnTwo] = useState(30);
   const [isListeningReady, setIsListeningReady] = useState(false);
   // const [userData, setUserData] = useState(null);
   const [getQuestions, setQuestions] = useState([]);
@@ -72,6 +73,7 @@ const safe_encoded_interview_link_send_count = encoded_interview_link_send_count
   const [showUploading, setShowUploading] = useState(false);
   const toastId = useRef(null);
   const endCountdownStartedRef = useRef(false);
+  const endCountdownStartedRefTwo = useRef(false);
 
   // usePageReloadSubmit(
   //   videoRef,
@@ -453,9 +455,9 @@ useEffect(() => {
 
     if (countdown === 0) {
       if (isLastQuestion) {
-        if (!endCountdownStartedRef.current) {
-            endCountdownStartedRef.current = true;
-            setEndcountdwn(30);
+        if (!endCountdownStartedRefTwo.current) {
+            endCountdownStartedRefTwo.current = true;
+            setEndcountdwnTwo(30);
             setLoading(true);
         // ✅ Final question logic
        
@@ -586,6 +588,15 @@ useEffect(() => {
     navigate(`/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`);
   }
 }, [endCountdown, loading]);
+
+ useEffect(() => {
+  if (loading && endCountdownTwo === 0) {
+    localStorage.clear();
+    sessionStorage.clear();
+    setLoading(false);
+    navigate(`/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`);
+  }
+}, [endCountdownTwo, loading]);
 
   useEffect(() => {
     setTimeSpent(0);
@@ -782,6 +793,15 @@ useEffect(() => {
     }
   }, [loading, endCountdown]);
 
+  useEffect(()=>{
+    if(loading && endCountdownTwo>0){
+      const timer = setInterval(()=>{
+        setEndcountdwnTwo((prev) => prev-1);
+      },1000);
+      return ()=> clearInterval(timer);
+    }
+  },[loading,endCountdownTwo]);
+
   if (loading) {
     return (
       <div style={{padding:'10px 20px'}}>
@@ -798,9 +818,16 @@ useEffect(() => {
           
             <div style={{display:'flex', flexDirection:'column', alignItems:'center',padding:'10px'}}>
             <div>
+               {endCountdown > 0 ? (
               <h3 className="text-lg sm:text-xl font-semibold text-gray-800 text-center">
-                  Please wait, your interview will end in {endCountdown} second{endCountdown !== 1 ? "s" : ""}...
+                Please wait, your interview will end in {endCountdown} second{endCountdown !== 1 ? "s" : ""}...
               </h3>
+            ) : endCountdownTwo > 0 ? (
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-800 text-center">
+                Please wait, your interview will end in {endCountdownTwo} second{endCountdownTwo !== 1 ? "s" : ""}...
+              </h3>
+          ) : null}
+              
             </div>
             <br/>
             <div>

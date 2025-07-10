@@ -6,18 +6,32 @@ const DeepgramLiveCaptions = ({ setIsListeningReady }) => {
   const [transcript, setTranscript] = useState("");
   const [interimTranscript, setInterimTranscript] = useState("");
   const [status, setStatus] = useState("");
-  // const [loading, setLoading] = useState(true);
 
   const wsRef = useRef(null);
   const recorderRef = useRef(null);
   const streamRef = useRef(null);
   const clearTimerRef = useRef(null);
   const pingIntervalRef = useRef(null);
+  const intentionallyStopped = useRef(false);
+  const intentionallyClosed = useRef(false);
 
   const cleanup = () => {
-    recorderRef.current?.stop();
-    wsRef.current?.close();
-    streamRef.current?.getTracks().forEach((track) => track.stop());
+    // Set flags BEFORE stop/close to avoid triggering reconnect
+    intentionallyClosed.current = true;
+    intentionallyStopped.current = true;
+
+    if (recorderRef.current) {
+      recorderRef.current.stop();
+    }
+
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.close();
+    }
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+    }
+
     clearTimeout(clearTimerRef.current);
     clearInterval(pingIntervalRef.current);
   };
@@ -44,13 +58,14 @@ const DeepgramLiveCaptions = ({ setIsListeningReady }) => {
       wsRef.current = ws;
 
       ws.onopen = () => {
+        // Reset flags once ready
+        intentionallyClosed.current = false;
+        intentionallyStopped.current = false;
         console.log("WebSocket connected");
         setStatus("Listening...");
         setIsListeningReady(true);
-        // setLoading(false);
-        mediaRecorder.start(200);
+        mediaRecorder.start(250);
 
-        // Send ping to keep connection alive
         pingIntervalRef.current = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ event: "ping" }));
@@ -80,14 +95,26 @@ const DeepgramLiveCaptions = ({ setIsListeningReady }) => {
         console.error("WebSocket error:", err);
         setStatus("Error: reconnecting...");
         cleanup();
-        setTimeout(startTranscription, 1500); // Try again after a short delay
+        setTimeout(() => {
+          intentionallyClosed.current = false;
+          intentionallyStopped.current = false;
+          startTranscription();
+        }, 1500);
       };
 
       ws.onclose = () => {
-        console.warn("WebSocket closed, attempting reconnection...");
-        setStatus("");
-        cleanup();
-        setTimeout(startTranscription, 1500);
+        if (!intentionallyClosed.current) {
+          console.warn("WebSocket closed, attempting reconnection...");
+          setStatus("");
+          cleanup();
+          setTimeout(() => {
+            intentionallyClosed.current = false;
+            intentionallyStopped.current = false;
+            startTranscription();
+          }, 1500);
+        } else {
+          console.log("WebSocket closed intentionally.");
+        }
       };
 
       mediaRecorder.ondataavailable = (ev) => {
@@ -97,9 +124,11 @@ const DeepgramLiveCaptions = ({ setIsListeningReady }) => {
       };
 
       mediaRecorder.onstop = () => {
-        console.warn("MediaRecorder stopped unexpectedly. Restarting...");
-        if (ws.readyState === WebSocket.OPEN) {
-          mediaRecorder.start(200);
+        if (!intentionallyStopped.current) {
+          console.warn("MediaRecorder stopped unexpectedly. Restarting...");
+          if (ws.readyState === WebSocket.OPEN) {
+            mediaRecorder.start(200);
+          }
         }
       };
     } catch (err) {
@@ -117,76 +146,67 @@ const DeepgramLiveCaptions = ({ setIsListeningReady }) => {
     };
   }, [startTranscription]);
 
-  // if (loading) {
-  //   return (
-  //     <section class="dots-container">
-  //       <div class="dot"></div>
-  //       <div class="dot"></div>
-  //       <div class="dot"></div>
-  //       <div class="dot"></div>
-  //       <div class="dot"></div>
-  //     </section>
-  //   );
-  // }
-
   return (
-  <div className="mainDeepfram">
-    {status !== "Listening..." ? (
-      <div
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100vw",
-          height: "100vh",
-          backgroundColor: "#fff",
-          zIndex: 9999,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          fontFamily: "Arial, sans-serif",
-        }}
->
-  <section className="dots-container">
-    <div className="dot"></div>
-    <div className="dot"></div>
-    <div className="dot"></div>
-    <div className="dot"></div>
-    <div className="dot"></div>
-  </section>
-  <p style={{ marginTop: "12px", color: "#666", fontSize: "16px" }}>{status}</p>
-</div>
-
-    ) : (
-      <>
-        <div style={{ fontSize: 16, color: "#777" }}>{status}</div>
-
-        {!transcript && !interimTranscript && (
-          <p style={{ fontStyle: "italic", color: "#aaa" }}>Waiting for speech...</p>
-        )}
-
+    <div className="mainDeepfram">
+      {status !== "Listening..." ? (
         <div
           style={{
-            borderRadius: "10px",
-            padding: "16px",
-            fontSize: "18px",
-            lineHeight: "1.5",
-            color: "#333",
-            maxWidth: "700px",
-            marginTop: "20px",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "#fff",
+            zIndex: 9999,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
             fontFamily: "Arial, sans-serif",
-            minHeight: "60px",
           }}
         >
-          {transcript}
-          <span style={{ opacity: 0.5 }}>{interimTranscript}</span>
+          <section className="dots-container">
+            <div className="dot"></div>
+            <div className="dot"></div>
+            <div className="dot"></div>
+            <div className="dot"></div>
+            <div className="dot"></div>
+          </section>
+          <p style={{ marginTop: "12px", color: "#666", fontSize: "16px" }}>
+            {status}
+          </p>
         </div>
-      </>
-    )}
-  </div>
-);
+      ) : (
+        <>
+          <div style={{ fontSize: 16, color: "#777" }}>{status}</div>
 
+          {!transcript && !interimTranscript && (
+            <p style={{ fontStyle: "italic", color: "#aaa" }}>
+              Waiting for speech...
+            </p>
+          )}
+
+          <div
+            style={{
+              borderRadius: "10px",
+              padding: "16px",
+              fontSize: "18px",
+              lineHeight: "1.5",
+              color: "#333",
+              maxWidth: "700px",
+              marginTop: "20px",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+              fontFamily: "Arial, sans-serif",
+              minHeight: "60px",
+            }}
+          >
+            {transcript}
+            <span style={{ opacity: 0.5 }}>{interimTranscript}</span>
+          </div>
+        </>
+      )}
+    </div>
+  );
 };
+
 export default DeepgramLiveCaptions;
