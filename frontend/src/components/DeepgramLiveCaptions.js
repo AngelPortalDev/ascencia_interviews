@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 
 const apiKey = process.env.REACT_APP_DEEPGRAM_API_KEY;
 
-const DeepgramLiveCaptions = ({ setIsListeningReady }) => {
+const DeepgramLiveCaptions = () => {
   const [transcript, setTranscript] = useState("");
   const [interimTranscript, setInterimTranscript] = useState("");
   const [status, setStatus] = useState("");
@@ -16,7 +16,6 @@ const DeepgramLiveCaptions = ({ setIsListeningReady }) => {
   const intentionallyClosed = useRef(false);
 
   const cleanup = () => {
-    // Set flags BEFORE stop/close to avoid triggering reconnect
     intentionallyClosed.current = true;
     intentionallyStopped.current = true;
 
@@ -38,7 +37,7 @@ const DeepgramLiveCaptions = ({ setIsListeningReady }) => {
 
   const startTranscription = useCallback(async () => {
     if (!apiKey) {
-      alert("Deepgram API key is missing. Check your .env file.");
+      console.error("Deepgram API key is missing.");
       return;
     }
 
@@ -58,13 +57,11 @@ const DeepgramLiveCaptions = ({ setIsListeningReady }) => {
       wsRef.current = ws;
 
       ws.onopen = () => {
-        // Reset flags once ready
         intentionallyClosed.current = false;
         intentionallyStopped.current = false;
         console.log("WebSocket connected");
-        setStatus("Listening...");
-        setIsListeningReady(true);
-        mediaRecorder.start(250);
+        // setStatus("Listening...");
+        mediaRecorder.start(200);
 
         pingIntervalRef.current = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
@@ -75,6 +72,7 @@ const DeepgramLiveCaptions = ({ setIsListeningReady }) => {
 
       ws.onmessage = (evt) => {
         const msg = JSON.parse(evt.data);
+        // console.log("msg",msg);
         const alt = msg.channel?.alternatives?.[0];
         if (alt?.transcript) {
           if (msg.is_final) {
@@ -92,8 +90,8 @@ const DeepgramLiveCaptions = ({ setIsListeningReady }) => {
       };
 
       ws.onerror = (err) => {
-        console.error("WebSocket error:", err);
-        setStatus("Error: reconnecting...");
+        console.warn("WebSocket error:", err);
+        // setStatus("Disconnected");
         cleanup();
         setTimeout(() => {
           intentionallyClosed.current = false;
@@ -104,8 +102,8 @@ const DeepgramLiveCaptions = ({ setIsListeningReady }) => {
 
       ws.onclose = () => {
         if (!intentionallyClosed.current) {
-          console.warn("WebSocket closed, attempting reconnection...");
-          setStatus("");
+          console.warn("WebSocket closed unexpectedly.");
+          // setStatus("Disconnected");
           cleanup();
           setTimeout(() => {
             intentionallyClosed.current = false;
@@ -125,7 +123,7 @@ const DeepgramLiveCaptions = ({ setIsListeningReady }) => {
 
       mediaRecorder.onstop = () => {
         if (!intentionallyStopped.current) {
-          console.warn("MediaRecorder stopped unexpectedly. Restarting...");
+          console.warn("MediaRecorder stopped unexpectedly.");
           if (ws.readyState === WebSocket.OPEN) {
             mediaRecorder.start(200);
           }
@@ -133,7 +131,7 @@ const DeepgramLiveCaptions = ({ setIsListeningReady }) => {
       };
     } catch (err) {
       console.error("Error starting transcription:", err);
-      setStatus("Failed to initialize");
+      // setStatus("Initialization failed");
     }
   }, []);
 
@@ -141,51 +139,23 @@ const DeepgramLiveCaptions = ({ setIsListeningReady }) => {
     startTranscription();
 
     return () => {
-      console.log("Transcription cleanup on unmount");
+      console.log("Cleaning up transcription on unmount");
       cleanup();
     };
   }, [startTranscription]);
 
   return (
     <div className="mainDeepfram">
-      {status !== "Listening..." ? (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            backgroundColor: "#fff",
-            zIndex: 9999,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            fontFamily: "Arial, sans-serif",
-          }}
-        >
-          <section className="dots-container">
-            <div className="dot"></div>
-            <div className="dot"></div>
-            <div className="dot"></div>
-            <div className="dot"></div>
-            <div className="dot"></div>
-          </section>
-          <p style={{ marginTop: "12px", color: "#666", fontSize: "16px" }}>
-            {status}
-          </p>
+      {/* Optional: Show a status message if not connected */}
+      {/* {status !== "Listening..." && status !== "" && (
+        <div style={{ fontSize: 14, color: "orange", marginBottom: 8 }}>
+          {status}
         </div>
-      ) : (
-        <>
-          <div style={{ fontSize: 16, color: "#777" }}>{status}</div>
+      )} */}
 
-          {!transcript && !interimTranscript && (
-            <p style={{ fontStyle: "italic", color: "#aaa" }}>
-              Waiting for speech...
-            </p>
-          )}
-
+      {/* Captions Display */}
+      <div>
+          <h4>Listening...</h4>
           <div
             style={{
               borderRadius: "10px",
@@ -194,7 +164,7 @@ const DeepgramLiveCaptions = ({ setIsListeningReady }) => {
               lineHeight: "1.5",
               color: "#333",
               maxWidth: "700px",
-              marginTop: "20px",
+              marginTop: "10px",
               boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
               fontFamily: "Arial, sans-serif",
               minHeight: "60px",
@@ -203,8 +173,8 @@ const DeepgramLiveCaptions = ({ setIsListeningReady }) => {
             {transcript}
             <span style={{ opacity: 0.5 }}>{interimTranscript}</span>
           </div>
-        </>
-      )}
+      </div>
+     
     </div>
   );
 };

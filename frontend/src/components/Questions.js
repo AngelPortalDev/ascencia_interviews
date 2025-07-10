@@ -35,7 +35,7 @@ const Questions = () => {
   const [countdown, setCountdown] = useState(60);
   const [endCountdown,setEndcountdwn] = useState(30);
   const [endCountdownTwo,setEndcountdwnTwo] = useState(30);
-  const [isListeningReady, setIsListeningReady] = useState(false);
+  // const [isListeningReady, setIsListeningReady] = useState(false);
   // const [userData, setUserData] = useState(null);
   const [getQuestions, setQuestions] = useState([]);
   const [navigationTime, setNavigationTime] = useState(0);
@@ -164,35 +164,35 @@ const safe_encoded_interview_link_send_count = encoded_interview_link_send_count
       setCountdown(parseInt(storedCountdown, 10)); // Restore countdown
     }
   
-    // const timer = setInterval(() => {
-    //   setCountdown((prev) => {
-    //     if (prev === 1) {
-    //       clearInterval(timer);
-    //       return 0;
-    //     }
-    //     return prev - 1;
-    //   });
-    // }, 1000);
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev === 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
 
-    // return () => clearInterval(timer);
+    return () => clearInterval(timer);
   }, [isRecording, currentQuestionIndex]);
 
   // for match websocket & question timer 
-   useEffect(() => {
-  if (!isListeningReady) return;
+//    useEffect(() => {
+//   // if (!isListeningReady) return;
 
-  const timer = setInterval(() => {
-    setCountdown((prev) => {
-      if (prev <= 1) {
-        clearInterval(timer);
-        return 0;
-      }
-      return prev - 1;
-    });
-  }, 1000);
+//   const timer = setInterval(() => {
+//     setCountdown((prev) => {
+//       if (prev <= 1) {
+//         clearInterval(timer);
+//         return 0;
+//       }
+//       return prev - 1;
+//     });
+//   }, 1000);
 
-  return () => clearInterval(timer);
-}, [isListeningReady, currentQuestionIndex]);
+//   return () => clearInterval(timer);
+// }, [currentQuestionIndex]);
 
   useEffect(() => {
     // Store time spent and question index
@@ -965,7 +965,6 @@ useEffect(() => {
             style={{ display: "hidden" }}
           >
              <DeepgramLiveCaptions
-                setIsListeningReady={setIsListeningReady}
               />
           </div>
           <div className="col-span-12 md:col-span-3 bg-white p-2 rounded-xl pt-0 sm:mt-2 text-black interviewPlayer">
