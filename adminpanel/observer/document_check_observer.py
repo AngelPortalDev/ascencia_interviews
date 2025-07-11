@@ -185,17 +185,7 @@ def process_documents_task(publisher, API_TOKEN):
 
     try:
         # Send the request
-        # process_response = requests.post(process_api_url, files=files, data=data)
-        cert_path = os.path.abspath("C:/xampp/htdocs/vaibhav/ascencia_interviews/cert.pem")
-
-        process_response = requests.post(
-            process_api_url,
-            # files=files,
-            data=data,
-            verify=cert_path  # ✅ using the correct cert with SAN
-        )
-
-
+        process_response = requests.post(process_api_url,data=data)
         # Log the response status and content for debugging
 
         # Check if the response is JSON
