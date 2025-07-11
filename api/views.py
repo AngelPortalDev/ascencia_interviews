@@ -378,36 +378,41 @@ def process_document(request):
     if request.method != "POST":
         return JsonResponse({"error": "Only POST requests are allowed"}, status=405)
 
+    # try:
+    # Retrieve form data
     try:
-        # Retrieve form data
-        uploaded_file = request.FILES.get("document")
+        # uploaded_file = request.FILES.get("document")
         zoho_first_name = request.POST.get("first_name", "").strip()
         zoho_last_name = request.POST.get("last_name", "").strip()
         program = request.POST.get("program", "").strip()
         zoho_lead_id = request.POST.get("zoho_lead_id", "").strip()
         crm_id = request.POST.get("crm_id", "").strip()
         API_TOKEN = request.POST.get("API_TOKEN", "")
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
 
-        student = Students.objects.get(zoho_lead_id=zoho_lead_id)
-        student.mindee_verification_status = "Inprogress"
-        student.save()
+    student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+    # student.mindee_verification_status = "Inprogress"
+    # student.save()
 
-        email = student.student_manager_email.strip().lower()
-        student_manager = User.objects.filter(email__iexact=email).first()
-        student_manager_name = ''
-        if student_manager:  
-            student_manager_name = f"{student_manager.first_name} {student_manager.last_name}".strip()
-            print(f"student_manager_name: {student_manager_name}")
-            student_manager_email = student_manager.email
+    email = student.student_manager_email.strip().lower()
+    student_manager = User.objects.filter(email__iexact=email).first()
+    student_manager_name = ''
+    if student_manager:  
+        student_manager_name = f"{student_manager.first_name} {student_manager.last_name}".strip()
+        print(f"student_manager_name: {student_manager_name}")
+        student_manager_email = student_manager.email
 
-        print(f"Received first_name: {zoho_first_name}, last_name: {zoho_last_name}, program: {program}")
+    print(f"Received first_name: {zoho_first_name}, last_name: {zoho_last_name}, program: {program}")
 
-        if not uploaded_file:
-            student = Students.objects.get(zoho_lead_id=zoho_lead_id)
-            student.verification_failed_reason = "No document uploaded"
-            student.mindee_verification_status = "Completed"
-            student.save()
-            return JsonResponse({"error": "No document uploaded"}, status=400)
+        # second comment
+
+        # if not uploaded_file:
+        #     student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        #     student.verification_failed_reason = "No document uploaded"
+        #     student.mindee_verification_status = "Completed"
+        #     student.save()
+        #     return JsonResponse({"error": "No document uploaded"}, status=400)
 
         # Validate file name
         # filename = re.search(r"&name=([^&]+)", uploaded_file.name.lower())
@@ -426,39 +431,43 @@ def process_document(request):
         #     return JsonResponse({"error": "Invalid file. Passport, CV, and Resume files are not allowed."}, status=400)
 
         # Construct URL
-        url = f"https://crm.zoho.com/crm/org771809603/{uploaded_file}"
-        query_params = parse_qs(urlparse(url).query)
+        # [REMOVED] Skipping Zoho CRM attachment parsing and document download
+        # third commented
 
-        # Extract parent_id and file_id
-        parent_id, file_id = query_params.get("parentId", [""])[0], query_params.get("id", [""])[0]
-        file_url = f"https://www.zohoapis.com/crm/v7/Leads/{parent_id}/Attachments/{file_id}"
+        # url = f"https://crm.zoho.com/crm/org771809603/{uploaded_file}"
+        # query_params = parse_qs(urlparse(url).query)
 
-        # Download the file
-        headers = {"Authorization": f"Zoho-oauthtoken {API_TOKEN}", "User-Agent": "Mozilla/5.0"}
-        response = requests.get(file_url, headers=headers, allow_redirects=True)
+        # # Extract parent_id and file_id
+        # parent_id, file_id = query_params.get("parentId", [""])[0], query_params.get("id", [""])[0]
+        # file_url = f"https://www.zohoapis.com/crm/v7/Leads/{parent_id}/Attachments/{file_id}"
 
-        if response.status_code != 200:
-            student = Students.objects.get(zoho_lead_id=zoho_lead_id)
-            student.verification_failed_reason = "Failed to download file"
-            student.mindee_verification_status = "Completed"
-            student.save()
-            return JsonResponse({"error": f"Failed to download file, Status Code: {response.status_code}"}, status=400)
+        # # Download the file
+        # headers = {"Authorization": f"Zoho-oauthtoken {API_TOKEN}", "User-Agent": "Mozilla/5.0"}
+        # response = requests.get(file_url, headers=headers, allow_redirects=True)
+
+        # if response.status_code != 200:
+        #     student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        #     student.verification_failed_reason = "Failed to download file"
+        #     student.mindee_verification_status = "Completed"
+        #     student.save()
+        #     return JsonResponse({"error": f"Failed to download file, Status Code: {response.status_code}"}, status=400)
 
         # Save the downloaded file temporarily
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
-            temp_file.write(response.content)
-            temp_file_path = temp_file.name
+    # with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
+    #     temp_file.write(response.content)
+    #     temp_file_path = temp_file.name
 
-        print(f"File downloaded and saved at: {temp_file_path}")
+    # print(f"File downloaded and saved at: {temp_file_path}")
 
+        # 4th comment
         # Validate MIME type
-        mime_type = uploaded_file.content_type
-        if mime_type not in ["application/pdf", "image/png", "image/jpeg", "image/jpg"]:
-            student = Students.objects.get(zoho_lead_id=zoho_lead_id)
-            student.verification_failed_reason = "Invalid file type. Only PDF, PNG, JPG, and JPEG files are supported."
-            student.mindee_verification_status = "Completed"
-            student.save()
-            return JsonResponse({"error": "Invalid file type. Only PDF, PNG, JPG, and JPEG files are supported."}, status=400)
+        # mime_type = uploaded_file.content_type
+        # if mime_type not in ["application/pdf", "image/png", "image/jpeg", "image/jpg"]:
+        #     student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        #     student.verification_failed_reason = "Invalid file type. Only PDF, PNG, JPG, and JPEG files are supported."
+        #     student.mindee_verification_status = "Completed"
+        #     student.save()
+        #     return JsonResponse({"error": "Invalid file type. Only PDF, PNG, JPG, and JPEG files are supported."}, status=400)
 
         # Extract text
         # extracted_text = (
@@ -482,531 +491,533 @@ def process_document(request):
         #     return JsonResponse({"message": "Error", "is_education_certificate": False}, status=200)
 
         # Process document with Mindee
-        try:
-            input_doc = mindee_client.source_from_path(temp_file_path)
-            result: AsyncPredictResponse = mindee_client.enqueue_and_parse(product.GeneratedV1, input_doc, endpoint=my_endpoint)
 
-            prediction = result.document.inference.prediction
-            serialized_prediction = serialize_field(vars(prediction))
+        # 5 th comment
+        # try:
+            # input_doc = mindee_client.source_from_path(temp_file_path)
+            # result: AsyncPredictResponse = mindee_client.enqueue_and_parse(product.GeneratedV1, input_doc, endpoint=my_endpoint)
 
-            data = {"prediction": {"fields": serialized_prediction}, "program": program}
-            # print("data prediction:",data)
+            # prediction = result.document.inference.prediction
+            # serialized_prediction = serialize_field(vars(prediction))
 
-            # Name similarity check
-            mindee_first_name = data["prediction"]["fields"]["fields"].get("first_name", "").strip().lower()
-            mindee_last_name = data["prediction"]["fields"]["fields"].get("last_name", "").strip().lower()
-            zoho_full_name, mindee_full_name = f"{zoho_first_name} {zoho_last_name}".lower(), f"{mindee_first_name} {mindee_last_name}".lower()
+            # data = {"prediction": {"fields": serialized_prediction}, "program": program}
+            # # print("data prediction:",data)
 
-            if name_match_ratio(zoho_full_name, mindee_full_name) < 0.70:
-                update_data = {"Interview_Process": "First Round Interview Hold"}
+            # # Name similarity check
+            # mindee_first_name = data["prediction"]["fields"]["fields"].get("first_name", "").strip().lower()
+            # mindee_last_name = data["prediction"]["fields"]["fields"].get("last_name", "").strip().lower()
+            # zoho_full_name, mindee_full_name = f"{zoho_first_name} {zoho_last_name}".lower(), f"{mindee_first_name} {mindee_last_name}".lower()
+
+            # if name_match_ratio(zoho_full_name, mindee_full_name) < 0.70:
+            #     update_data = {"Interview_Process": "First Round Interview Hold"}
                 
-                student = Students.objects.get(zoho_lead_id=zoho_lead_id)
-                student.mindee_verification_status = "Completed"
-                student.edu_doc_verification_status = "rejected"
-                student.verification_failed_reason = "Name Not Matched"
+            #     student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+            #     student.mindee_verification_status = "Completed"
+            #     student.edu_doc_verification_status = "rejected"
+            #     student.verification_failed_reason = "Name Not Matched"
 
-                print("verification_failed_reason",student.verification_failed_reason)
-                student.save()
-                # if update_zoho_lead(crm_id, zoho_lead_id, update_data):
-                #     print("Lead updated successfully")
-                # else:
-                #     print("Lead update failed")
+            #     print("verification_failed_reason",student.verification_failed_reason)
+            #     student.save()
+            #     # if update_zoho_lead(crm_id, zoho_lead_id, update_data):
+            #     #     print("Lead updated successfully")
+            #     # else:
+            #     #     print("Lead update failed")
                 
-                # Student Manager Notification Email (Document Rejected)
-                send_email(
-                    subject="Document Verification Rejected",
-                    message=f"""
-                        <html>
-                        <head>
-                            <style>
-                                body {{
-                                    font-family: Tahoma !important;
-                                    background-color: #f4f4f4;
-                                    padding: 20px;
-                                    text-align: left;
-                                }}
-                                .email-container {{
-                                    max-width: 600px;
-                                    margin: auto;
-                                    background: #ffffff;
-                                    padding: 20px;
-                                    border-radius: 8px;
-                                    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-                                    border: 1px solid #ddd;
-                                }}
-                                .header {{
-                                    text-align: center;
-                                    padding-bottom: 20px;
-                                    border-bottom: 1px solid #ddd;
-                                }}
-                                .header img {{
-                                    max-width: 150px;
-                                    display:flex;
-                                    margin:0 auto;
-                                }}
-                                h2 {{
-                                    color: #c0392b;  /* Red color for rejection */
-                                }}
-                                p {{
-                                    color: #555555;
-                                    font-size: 16px;
-                                    line-height: 1.6;
-                                }}
-                                .btn {{
-                                    display: inline-block;
-                                    background: #c0392b;  /* Red button */
-                                    color: #FFFFFF;
-                                    text-decoration: none;
-                                    padding: 10px 20px;
-                                    border-radius: 5px;
-                                    font-weight: bold;
-                                    margin-top: 10px;
-                                }}
-                                .btn:hover {{
-                                    background: #a93226;
-                                    color: #FFFFFF;
-                                }}
-                                .email-logo {{
-                                    max-width: 300px;
-                                    height: auto;
-                                    width: 100%;
-                                    margin-bottom: 20px;
-                                    display: flex;
-                                    justify-content: center;
-                                    margin: 0 auto;
-                                }}
-                                .logo_style{{
-                                    height:40px;
-                                    width:auto;
-                                }}
-                                @media only screen and (max-width: 600px) {{
-                                                .email_logo_lead {{
-                                                    width: 100% !important;
-                                                }}
-                                        }}
-                            </style>
-                        </head>
-                        <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+            #     # Student Manager Notification Email (Document Rejected)
+            #     send_email(
+            #         subject="Document Verification Rejected",
+            #         message=f"""
+            #             <html>
+            #             <head>
+            #                 <style>
+            #                     body {{
+            #                         font-family: Tahoma !important;
+            #                         background-color: #f4f4f4;
+            #                         padding: 20px;
+            #                         text-align: left;
+            #                     }}
+            #                     .email-container {{
+            #                         max-width: 600px;
+            #                         margin: auto;
+            #                         background: #ffffff;
+            #                         padding: 20px;
+            #                         border-radius: 8px;
+            #                         box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            #                         border: 1px solid #ddd;
+            #                     }}
+            #                     .header {{
+            #                         text-align: center;
+            #                         padding-bottom: 20px;
+            #                         border-bottom: 1px solid #ddd;
+            #                     }}
+            #                     .header img {{
+            #                         max-width: 150px;
+            #                         display:flex;
+            #                         margin:0 auto;
+            #                     }}
+            #                     h2 {{
+            #                         color: #c0392b;  /* Red color for rejection */
+            #                     }}
+            #                     p {{
+            #                         color: #555555;
+            #                         font-size: 16px;
+            #                         line-height: 1.6;
+            #                     }}
+            #                     .btn {{
+            #                         display: inline-block;
+            #                         background: #c0392b;  /* Red button */
+            #                         color: #FFFFFF;
+            #                         text-decoration: none;
+            #                         padding: 10px 20px;
+            #                         border-radius: 5px;
+            #                         font-weight: bold;
+            #                         margin-top: 10px;
+            #                     }}
+            #                     .btn:hover {{
+            #                         background: #a93226;
+            #                         color: #FFFFFF;
+            #                     }}
+            #                     .email-logo {{
+            #                         max-width: 300px;
+            #                         height: auto;
+            #                         width: 100%;
+            #                         margin-bottom: 20px;
+            #                         display: flex;
+            #                         justify-content: center;
+            #                         margin: 0 auto;
+            #                     }}
+            #                     .logo_style{{
+            #                         height:40px;
+            #                         width:auto;
+            #                     }}
+            #                     @media only screen and (max-width: 600px) {{
+            #                                     .email_logo_lead {{
+            #                                         width: 100% !important;
+            #                                     }}
+            #                             }}
+            #                 </style>
+            #             </head>
+            #             <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
                           
-                                        <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box; margin:0 auto;">
-                                            <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
-                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Malta" class="logo_style" style="height: 40px; width: auto; margin-bottom: 10px;">
-                                            </div>
-                                            <img src="https://ascencia-interview.com/static/img/email_template_icon/doc_rejected.png" 
-                                                alt="Document Rejected" class="email_logo_lead" style="width: 50%; display: block; margin: 20px auto;"/>
+            #                             <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box; margin:0 auto;">
+            #                                 <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
+            #                                     <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Malta" class="logo_style" style="height: 40px; width: auto; margin-bottom: 10px;">
+            #                                 </div>
+            #                                 <img src="https://ascencia-interview.com/static/img/email_template_icon/doc_rejected.png" 
+            #                                     alt="Document Rejected" class="email_logo_lead" style="width: 50%; display: block; margin: 20px auto;"/>
                                          
-                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">Dear <span style="font-weight:bold">{student_manager_name},</span></p>
-                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">The document verification process for <strong>{zoho_full_name}</strong> has been <strong>rejected</strong>.</p>
+            #                                 <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">Dear <span style="font-weight:bold">{student_manager_name},</span></p>
+            #                                 <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">The document verification process for <strong>{zoho_full_name}</strong> has been <strong>rejected</strong>.</p>
                                             
-                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;"><strong>Next Steps:</strong> Please review the reason for rejection and ask the student to re-upload the correct documents.</p>
+            #                                 <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;"><strong>Next Steps:</strong> Please review the reason for rejection and ask the student to re-upload the correct documents.</p>
                                             
-                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">Click below to review rejection details:</p>
-                                              <div style="text-align: left;">
-                                                <a href="https://ascencia-interview.com/studentmanagerpanel/student/{zoho_lead_id}/" class="btn" style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: left;">View Rejection Details</a>
-                                              </div>
-                                              <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left; margin-top: 30px;">
-                                                    Best regards,<br/>Ascencia Malta
-                                                </p>
-                                        </div>
+            #                                 <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">Click below to review rejection details:</p>
+            #                                   <div style="text-align: left;">
+            #                                     <a href="https://ascencia-interview.com/studentmanagerpanel/student/{zoho_lead_id}/" class="btn" style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: left;">View Rejection Details</a>
+            #                                   </div>
+            #                                   <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left; margin-top: 30px;">
+            #                                         Best regards,<br/>Ascencia Malta
+            #                                     </p>
+            #                             </div>
                                         
                                     
-                        </body>
-                        </html>
-                    """,
-                    recipient=[student_manager_email],
-                    # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
-                )
-                return JsonResponse({"message": "Success", "result": False}, status=200)
+            #             </body>
+            #             </html>
+            #         """,
+            #         recipient=["vaibhav@angel-portal.com"],
+            #         # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
+            #     )
+            #     return JsonResponse({"message": "Success", "result": False}, status=200)
 
-            # Completion check
-            if not data["prediction"]["fields"]["fields"].get("completion_remark"):
-                update_data = {"Interview_Process": "First Round Interview Hold"}
+            # # Completion check
+            # if not data["prediction"]["fields"]["fields"].get("completion_remark"):
+            #     update_data = {"Interview_Process": "First Round Interview Hold"}
                 
-                student = Students.objects.get(zoho_lead_id=zoho_lead_id)
-                student.mindee_verification_status = "Completed"
-                student.edu_doc_verification_status = "rejected"
-                student.verification_failed_reason = "Criteria not matched"
-                student.save()
-                if update_zoho_lead(crm_id, zoho_lead_id, update_data):
-                    print("Lead updated successfully")
-                else:
-                    print("Lead update failed")
+            #     student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+            #     student.mindee_verification_status = "Completed"
+            #     student.edu_doc_verification_status = "rejected"
+            #     student.verification_failed_reason = "Criteria not matched"
+            #     student.save()
+            #     if update_zoho_lead(crm_id, zoho_lead_id, update_data):
+            #         print("Lead updated successfully")
+            #     else:
+            #         print("Lead update failed")
 
 
-                # Student Manager Notification Email (Document Rejected)
-                send_email(
-                    subject="Document Verification Rejected",
-                    message=f"""
-                        <html>
-                        <head>
-                            <style>
-                                body {{
-                                    font-family: Tahoma !important;
-                                    background-color: #f4f4f4;
-                                    padding: 20px;
-                                    text-align: left;
-                                }}
-                                .email-container {{
-                                    max-width: 600px;
-                                    margin: auto;
-                                    background: #ffffff;
-                                    padding: 20px;
-                                    border-radius: 8px;
-                                    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-                                    border: 1px solid #ddd;
-                                }}
-                                .header {{
-                                    text-align: center;
-                                    padding-bottom: 20px;
-                                    border-bottom: 1px solid #ddd;
-                                }}
-                                .header img {{
-                                    max-width: 150px;
-                                    display:flex;
-                                    margin:0 auto;
-                                }}
-                                h2 {{
-                                    color: #c0392b;  /* Red color for rejection */
-                                }}
-                                p {{
-                                    color: #555555;
-                                    font-size: 16px;
-                                    line-height: 1.6;
-                                }}
-                                .btn {{
-                                    display: inline-block;
-                                    background: #c0392b;  /* Red button */
-                                    color: #ffffff;
-                                    text-decoration: none;
-                                    padding: 10px 20px;
-                                    border-radius: 5px;
-                                    font-weight: bold;
-                                    margin-top: 10px;
-                                }}
-                                .btn:hover {{
-                                    background: #a93226;
-                                }}
-                                .logo_style{{
-                                    height:40px;
-                                    width:auto;
-                                }}
-                                .email-logo {{
-                                    max-width: 300px;
-                                    height: auto;
-                                    width: 100%;
-                                    margin-bottom: 20px;
-                                    display: flex;
-                                    justify-content: center;
-                                    margin: 0 auto;
-                                }}
-                                @media only screen and (max-width: 600px) {{
-                                                .email_logo_lead {{
-                                                    width: 100% !important;
-                                                }}
-                                        }}
-                            </style>
-                        </head>
-                        <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+            #     # Student Manager Notification Email (Document Rejected)
+            #     send_email(
+            #         subject="Document Verification Rejected",
+            #         message=f"""
+            #             <html>
+            #             <head>
+            #                 <style>
+            #                     body {{
+            #                         font-family: Tahoma !important;
+            #                         background-color: #f4f4f4;
+            #                         padding: 20px;
+            #                         text-align: left;
+            #                     }}
+            #                     .email-container {{
+            #                         max-width: 600px;
+            #                         margin: auto;
+            #                         background: #ffffff;
+            #                         padding: 20px;
+            #                         border-radius: 8px;
+            #                         box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            #                         border: 1px solid #ddd;
+            #                     }}
+            #                     .header {{
+            #                         text-align: center;
+            #                         padding-bottom: 20px;
+            #                         border-bottom: 1px solid #ddd;
+            #                     }}
+            #                     .header img {{
+            #                         max-width: 150px;
+            #                         display:flex;
+            #                         margin:0 auto;
+            #                     }}
+            #                     h2 {{
+            #                         color: #c0392b;  /* Red color for rejection */
+            #                     }}
+            #                     p {{
+            #                         color: #555555;
+            #                         font-size: 16px;
+            #                         line-height: 1.6;
+            #                     }}
+            #                     .btn {{
+            #                         display: inline-block;
+            #                         background: #c0392b;  /* Red button */
+            #                         color: #ffffff;
+            #                         text-decoration: none;
+            #                         padding: 10px 20px;
+            #                         border-radius: 5px;
+            #                         font-weight: bold;
+            #                         margin-top: 10px;
+            #                     }}
+            #                     .btn:hover {{
+            #                         background: #a93226;
+            #                     }}
+            #                     .logo_style{{
+            #                         height:40px;
+            #                         width:auto;
+            #                     }}
+            #                     .email-logo {{
+            #                         max-width: 300px;
+            #                         height: auto;
+            #                         width: 100%;
+            #                         margin-bottom: 20px;
+            #                         display: flex;
+            #                         justify-content: center;
+            #                         margin: 0 auto;
+            #                     }}
+            #                     @media only screen and (max-width: 600px) {{
+            #                                     .email_logo_lead {{
+            #                                         width: 100% !important;
+            #                                     }}
+            #                             }}
+            #                 </style>
+            #             </head>
+            #             <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
                         
-                                        <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box; margin:0 auto;">
-                                            <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
-                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Malta" class="logo_style" style="height: 40px; width: auto; margin-bottom: 10px;">
-                                            </div>
-                                            <img src="https://ascencia-interview.com/static/img/email_template_icon/doc_rejected.png" 
-                                                alt="Document Rejected" class="email_logo_lead" style="width: 50%; display: block; margin: 20px auto;"/>
-                                            <h2 style="color: #2c3e50; text-align: center;">Document Verification Rejected</h2>
-                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">Dear <span style="font-weight:bold">{student_manager_name},</span></p>
-                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">The document verification process for <strong>{zoho_full_name}</strong> has been <strong>rejected</strong>.</p>
+            #                             <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box; margin:0 auto;">
+            #                                 <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
+            #                                     <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Malta" class="logo_style" style="height: 40px; width: auto; margin-bottom: 10px;">
+            #                                 </div>
+            #                                 <img src="https://ascencia-interview.com/static/img/email_template_icon/doc_rejected.png" 
+            #                                     alt="Document Rejected" class="email_logo_lead" style="width: 50%; display: block; margin: 20px auto;"/>
+            #                                 <h2 style="color: #2c3e50; text-align: center;">Document Verification Rejected</h2>
+            #                                 <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">Dear <span style="font-weight:bold">{student_manager_name},</span></p>
+            #                                 <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">The document verification process for <strong>{zoho_full_name}</strong> has been <strong>rejected</strong>.</p>
                                             
-                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;"><strong>Next Steps:</strong> Please review the reason for rejection and ask the student to re-upload the correct documents.</p>
+            #                                 <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;"><strong>Next Steps:</strong> Please review the reason for rejection and ask the student to re-upload the correct documents.</p>
                                             
-                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">Click below to review rejection details:</p>
-                                              <div style="text-align: left;">
-                                                <a href="https://ascencia-interview.com/studentmanagerpanel/student/{zoho_lead_id}/" class="btn" style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: left;">View Rejection Details</a>
-                                              </div>
-                                               <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left; margin-top: 30px;">
-                                                    Best regards,<br/>Ascencia Malta
-                                                </p>
-                                            </div>
+            #                                 <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">Click below to review rejection details:</p>
+            #                                   <div style="text-align: left;">
+            #                                     <a href="https://ascencia-interview.com/studentmanagerpanel/student/{zoho_lead_id}/" class="btn" style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: left;">View Rejection Details</a>
+            #                                   </div>
+            #                                    <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left; margin-top: 30px;">
+            #                                         Best regards,<br/>Ascencia Malta
+            #                                     </p>
+            #                                 </div>
                                     
-                        </body>
-                        </html>
-                    """,
-                    recipient=[student_manager_email],
-                    # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
-                )
+            #             </body>
+            #             </html>
+            #         """,
+            #         recipient=["vaibhav@angel-portal.com"],
+            #         # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
+            #     )
 
-                return JsonResponse({"message": "Success", "result": False}, status=200)
+            #     return JsonResponse({"message": "Success", "result": False}, status=200)
 
-            result = check_eligibility(data)
+            # result = check_eligibility(data)
             
 
-            if result:
-                update_data = {"Interview_Process": "Second Round Interview"}
+            # if result:
+    update_data = {"Interview_Process": "Second Round Interview"}
 
-                if update_zoho_lead(crm_id, zoho_lead_id, update_data):
-                    student = Students.objects.get(zoho_lead_id=zoho_lead_id)
-                    student.mindee_verification_status = "Completed"
-                    student.edu_doc_verification_status = "approved"
-                    student.verification_failed_reason = ""
-                    student.is_interview_link_sent = True
-                    student.interview_link_send_count = 1
-                    # student.interview_process = "Second_Round_Interview"
-                    student.save()                   
+    if update_zoho_lead(crm_id, zoho_lead_id, update_data):
+        student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        student.mindee_verification_status = "Completed"
+        student.edu_doc_verification_status = "approved"
+        student.verification_failed_reason = ""
+        student.is_interview_link_sent = True
+        student.interview_link_send_count = 1
+        # student.interview_process = "Second_Round_Interview"
+        student.save()                   
 
-                    encoded_zoho_lead_id = encode_base64(zoho_lead_id)
-                    encoded_interview_link_send_count = encode_base64(student.interview_link_send_count)
-                    interview_url = f'{settings.ADMIN_BASE_URL}/frontend/interview_panel/{encoded_zoho_lead_id}/{encoded_interview_link_send_count}'
-                    print(interview_url)
+        encoded_zoho_lead_id = encode_base64(zoho_lead_id)
+        encoded_interview_link_send_count = encode_base64(student.interview_link_send_count)
+        interview_url = f'{settings.ADMIN_BASE_URL}/frontend/interview_panel/{encoded_zoho_lead_id}/{encoded_interview_link_send_count}'
+        print(interview_url)
+        
+        interview_link, created = StudentInterviewLink.objects.update_or_create(
+            zoho_lead_id=zoho_lead_id,
+            defaults={
+                "interview_link_count" : encoded_interview_link_send_count,
+                "interview_link": interview_url,
+                "expires_at": now() + timedelta(hours=72),
+            }
+        )
+
+        # student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        student_name = f"{student.first_name} {student.last_name}"
+        student_email = student.email
+        student_zoho_lead_id = student.zoho_lead_id
+
+        studentLinkStatus = StudentInterviewLink.objects.get(zoho_lead_id=zoho_lead_id)
+        interview_start = studentLinkStatus.created_at
+        interview_end = studentLinkStatus.expires_at
+
+
+        try:
+            student_interview_status = Student_Interview.objects.get(zoho_lead_id=zoho_lead_id)
+            student_interview_status.interview_process="Second_Round_Interview"
+            student_interview_status.save()
+        except Student_Interview.DoesNotExist:
+            student_interview = Student_Interview.objects.create(
+                zoho_lead_id=zoho_lead_id,
+                # student_id=student,
+                interview_process="Second_Round_Interview"
+            )
+                        
+
+        # Convert to Asia/Calcutta timezone
+        tz = pytz.timezone("Europe/Malta")
+        interview_start_local = localtime(interview_start).astimezone(tz)
+        interview_end_local = localtime(interview_end).astimezone(tz)
+
+        # Format the datetime
+        formatted_start = interview_start_local.strftime("%d %b %Y - %I:%M %p (Europe/Malta)")
+        formatted_end = interview_end_local.strftime("%d %b %Y - %I:%M %p (Europe/Malta)")
+
+        print("Start Date and time:", formatted_start)
+        print("End Date and time:", formatted_end)
+        # interview_link = StudentInterviewLink.objects.create(
+        #     zoho_lead_id=zoho_lead_id,
+        #     interview_link=interview_url,
+        #     expires_at=now() + timedelta(hours=72)
+        # )
+        
+        # send_email(interview_url, zoho_full_name, 'student@manager.com')
+        
+        # 2. First: Send document verification & interview email
+        # Student Manager Notification Email
+        # send_email(
+        #     subject="Document Verification & Interview Link",
+        #     message=f"""
+        #         <html>
+        #         <head>
+        #             <style>
+        #                 body {{
+        #                     font-family: Tahoma !important;
+        #                     background-color: #f4f4f4;
+        #                     padding: 20px;
+        #                     text-align: left;
+        #                 }}
+        #                 .email-container {{
+        #                     max-width: 600px;
+        #                     margin: auto;
+        #                     background: #ffffff;
+        #                     padding: 20px;
+        #                     border-radius: 8px;
+        #                     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        #                 }}
+        #                 .header {{
+        #                     text-align: center;
+        #                     padding-bottom: 20px;
+        #                     border-bottom: 1px solid #ddd; 
+        #                 }}
+        #                 .header img {{
+        #                     max-width: 150px;
+        #                 }}
+        #                 h2 {{
+        #                     color: #2c3e50;
+        #                 }}
+        #                 p {{
+        #                     color: #555555;
+        #                     font-size: 16px;
+        #                     line-height: 1.6;
+        #                 }}
+        #                 .btn {{
+        #                     display: inline-block;
+        #                     background: #db2777;
+        #                     color: #FFFFFF;
+        #                     text-decoration: none;
+        #                     padding: 10px 20px;
+        #                     border-radius: 5px;
+        #                     font-weight: bold;
+        #                     margin-top: 10px;
+        #                 }}
+        #                 .btn:hover {{
+        #                     background: #0056b3;
+        #                     color: #FFFFFF;
+        #                 }}
+        #                 .email-logo {{
+        #                     max-width: 300px;
+        #                     height: auto;
+        #                     width: 100%;
+        #                     margin-bottom: 20px;
+        #                     display: flex;
+        #                     justify-content: center;
+        #                     margin: 0 auto;
+        #                 }}
+        #                 .logo_style{{
+        #                     height:40px;
+        #                     width:auto;
+        #                 }}
+        #                 @media only screen and (max-width: 600px) {{
+        #                             .email_logo_lead {{
+        #                                 width: 100% !important;
+        #                             }}
+        #                     }}
+        #             </style>
+        #         </head>
+        #         <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
                     
-                    interview_link, created = StudentInterviewLink.objects.update_or_create(
-                        zoho_lead_id=zoho_lead_id,
-                        defaults={
-                            "interview_link_count" : encoded_interview_link_send_count,
-                            "interview_link": interview_url,
-                            "expires_at": now() + timedelta(hours=72),
-                        }
-                    )
-
-                    # student = Students.objects.get(zoho_lead_id=zoho_lead_id)
-                    student_name = f"{student.first_name} {student.last_name}"
-                    student_email = student.email
-                    student_zoho_lead_id = student.zoho_lead_id
-
-                    studentLinkStatus = StudentInterviewLink.objects.get(zoho_lead_id=zoho_lead_id)
-                    interview_start = studentLinkStatus.created_at
-                    interview_end = studentLinkStatus.expires_at
-
-
-                    try:
-                        student_interview_status = Student_Interview.objects.get(zoho_lead_id=zoho_lead_id)
-                        student_interview_status.interview_process="Second_Round_Interview"
-                        student_interview_status.save()
-                    except Student_Interview.DoesNotExist:
-                        student_interview = Student_Interview.objects.create(
-                            zoho_lead_id=zoho_lead_id,
-                            # student_id=student,
-                            interview_process="Second_Round_Interview"
-                        )
+        #                         <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box; margin:0 auto;">
+        #                             <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
+        #                                 <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Company Logo" class="logo_style" style="height: 40px; width: auto; margin-bottom: 10px;">
+        #                             </div>
+        #                             <img src="https://ascencia-interview.com/static/img/email_template_icon/doc_verified.png" alt="Document Verified" class="email-logo" class="email_logo_lead" style="width: 50%; display: block; margin: 20px auto;"/>
+        #                             <h2 style="color: #2c3e50; text-align: center;">Document Verification Completed</h2>
+        #                             <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">Dear <span style="font-weight:bold">{student_manager_name},</span></p>
+        #                             <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">The document verification process for <strong>{zoho_full_name}</strong> has been successfully completed.</p>
                                     
-
-                    # Convert to Asia/Calcutta timezone
-                    tz = pytz.timezone("Europe/Malta")
-                    interview_start_local = localtime(interview_start).astimezone(tz)
-                    interview_end_local = localtime(interview_end).astimezone(tz)
-
-                    # Format the datetime
-                    formatted_start = interview_start_local.strftime("%d %b %Y - %I:%M %p (Europe/Malta)")
-                    formatted_end = interview_end_local.strftime("%d %b %Y - %I:%M %p (Europe/Malta)")
-
-                    print("Start Date and time:", formatted_start)
-                    print("End Date and time:", formatted_end)
-                    # interview_link = StudentInterviewLink.objects.create(
-                    #     zoho_lead_id=zoho_lead_id,
-                    #     interview_link=interview_url,
-                    #     expires_at=now() + timedelta(hours=72)
-                    # )
-                    
-                    # send_email(interview_url, zoho_full_name, 'student@manager.com')
-                    
-                    # 2. First: Send document verification & interview email
-                    # Student Manager Notification Email
-                    send_email(
-                        subject="Document Verification & Interview Link",
-                        message=f"""
-                            <html>
-                            <head>
-                                <style>
-                                    body {{
-                                        font-family: Tahoma !important;
-                                        background-color: #f4f4f4;
-                                        padding: 20px;
-                                        text-align: left;
-                                    }}
-                                    .email-container {{
-                                        max-width: 600px;
-                                        margin: auto;
-                                        background: #ffffff;
-                                        padding: 20px;
-                                        border-radius: 8px;
-                                        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-                                    }}
-                                    .header {{
-                                        text-align: center;
-                                        padding-bottom: 20px;
-                                        border-bottom: 1px solid #ddd; 
-                                    }}
-                                    .header img {{
-                                        max-width: 150px;
-                                    }}
-                                    h2 {{
-                                        color: #2c3e50;
-                                    }}
-                                    p {{
-                                        color: #555555;
-                                        font-size: 16px;
-                                        line-height: 1.6;
-                                    }}
-                                    .btn {{
-                                        display: inline-block;
-                                        background: #db2777;
-                                        color: #FFFFFF;
-                                        text-decoration: none;
-                                        padding: 10px 20px;
-                                        border-radius: 5px;
-                                        font-weight: bold;
-                                        margin-top: 10px;
-                                    }}
-                                    .btn:hover {{
-                                        background: #0056b3;
-                                        color: #FFFFFF;
-                                    }}
-                                    .email-logo {{
-                                        max-width: 300px;
-                                        height: auto;
-                                        width: 100%;
-                                        margin-bottom: 20px;
-                                        display: flex;
-                                        justify-content: center;
-                                        margin: 0 auto;
-                                    }}
-                                    .logo_style{{
-                                        height:40px;
-                                        width:auto;
-                                    }}
-                                    @media only screen and (max-width: 600px) {{
-                                                .email_logo_lead {{
-                                                    width: 100% !important;
-                                                }}
-                                        }}
-                                </style>
-                            </head>
-                            <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
-                                
-                                            <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box; margin:0 auto;">
-                                                <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
-                                                    <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Company Logo" class="logo_style" style="height: 40px; width: auto; margin-bottom: 10px;">
-                                                </div>
-                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/doc_verified.png" alt="Document Verified" class="email-logo" class="email_logo_lead" style="width: 50%; display: block; margin: 20px auto;"/>
-                                                <h2 style="color: #2c3e50; text-align: center;">Document Verification Completed</h2>
-                                                <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">Dear <span style="font-weight:bold">{student_manager_name},</span></p>
-                                                <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">The document verification process for <strong>{zoho_full_name}</strong> has been successfully completed.</p>
-                                                
-                                                <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;"><strong>Next Step:</strong> The student is now eligible for the interview process.</p>
-                                                
-                                                <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">Click below to review verification details:</p>
-                                                  <div style="text-align: left;">
-                                                    <a href="https://ascencia-interview.com/studentmanagerpanel/student/{zoho_lead_id}/" class="btn" style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: center;">View Verification Details</a>
-                                                  </div>
-                                                  <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left; margin-top: 30px;">
-                                                    Best regards,<br/>Ascencia Malta
-                                                </p>
-                                            </div>
-                                       
-                            </body>
-                            </html>
-                        """,
-                        recipient=[student_manager_email],
-                        # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
-                    )
-                    # 3. Then: Send Zoho Lead Update Notification email
-                    # student
-                    
-                    send_email(
-                            subject="Interview Invitation for Student Interview",
-                            message=f"""
-                            <html>
-                                <head>
-                                    <style>
-                                        body {{
-                                            background-color: #f4f4f4;
-                                            font-family: Tahoma, sans-serif;
-                                            margin: 0;
-                                            padding: 40px 20px;
-                                            display: flex;
-                                            justify-content: center;
-                                            align-items: center;
-                                            min-height: 100vh;
-                                        }}
-                                        .email-container {{
-                                            background: #ffffff;
-                                            max-width: 600px;
-                                            width: 100%;
-                                            padding: 30px 25px;
-                                            border-radius: 10px;
-                                            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-                                            border: 1px solid #ddd;
-                                            box-sizing: border-box;
-                                            margin: 0 auto;
-                                        }}
-                                        .header {{
-                                            text-align: center;
-                                            margin-bottom: 20px;
-                                            border-bottom: 1px solid #eee;
-                                        }}
-                                        .header img {{
-                                            height: 40px;
-                                            width: auto;
-                                            margin-bottom: 10px;
-                                        }}
-                                        .email-logo {{
-                                            width: 50%;
-                                            display: block;
-                                            margin: 20px auto;
-                                        }}
-                                        h2 {{
-                                            color: #2c3e50;
-                                            text-align: center;
-                                        }}
-                                        p {{
-                                            color: #555;
-                                            font-size: 16px;
-                                            line-height: 1.6;
-                                            text-align: left;
-                                        }}
-                                        .goInterviewbtnStyle {{
-                                            display: inline-block;
-                                            background: #db2777;
-                                            color: #fff;
-                                            text-decoration: none;
-                                            padding: 12px 20px;
-                                            border-radius: 5px;
-                                            font-weight: bold;
-                                            margin: 20px auto 10px;
-                                            text-align: center;
-                                        }}
-                                        .goInterviewbtnStyle:hover {{
-                                            background-color: #0056b3;
-                                            color:#fff;
-                                        }}
-                                        @media only screen and (max-width: 600px) {{
-                                            .email-logo {{
-                                                width: 80% !important;
-                                            }}
-                                        }}
-                                    </style>
-                                </head>
-                                <body>
-                                    <div class="email-container">
-                                        <div class="header">
-                                            <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Malta" />
-                                        </div>
-                                        <img src="https://ascencia-interview.com/static/img/email_template_icon/notification.png" alt="Interview Invitation" class="email-logo" />
-                                        
-                                        <h2>Interview Invitation for Student Interview  {student_name},</h2>
-                                        
-                                        <p>Dear Student,</p>
-                                        
-                                        <p>We are pleased to invite you to participate in the following interview:</p>
-                                        
-                                        <p><b>Interview Details:</b></p>
-                                        <p><b>Interviewer name:</b>{student_name},</p>
-                                        <p><b>Start Date and time:</b>{formatted_start}</p>
-                                        <p><b>End Date and time:</b>{formatted_end}</p>
-                                        
-                                        <p>Please note that you can access the interview only between the start and end times mentioned above.</p>
-                                        
-                                        <a href="{interview_url}" style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: center;">Start Interview</a>
+        #                             <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;"><strong>Next Step:</strong> The student is now eligible for the interview process.</p>
+                                    
+        #                             <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left;">Click below to review verification details:</p>
+        #                                 <div style="text-align: left;">
+        #                                 <a href="https://ascencia-interview.com/studentmanagerpanel/student/{zoho_lead_id}/" class="btn" style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: center;">View Verification Details</a>
+        #                                 </div>
+        #                                 <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left; margin-top: 30px;">
+        #                                 Best regards,<br/>Ascencia Malta
+        #                             </p>
+        #                         </div>
+                            
+        #         </body>
+        #         </html>
+        #     """,
+        #     recipient=["vaibhav@angel-portal.com"],
+        #     # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
+        # )
+        # 3. Then: Send Zoho Lead Update Notification email
+        # student
+        
+        send_email(
+                subject="Interview Invitation for Student Interview",
+                message=f"""
+                <html>
+                    <head>
+                        <style>
+                            body {{
+                                background-color: #f4f4f4;
+                                font-family: Tahoma, sans-serif;
+                                margin: 0;
+                                padding: 40px 20px;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                min-height: 100vh;
+                            }}
+                            .email-container {{
+                                background: #ffffff;
+                                max-width: 600px;
+                                width: 100%;
+                                padding: 30px 25px;
+                                border-radius: 10px;
+                                box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+                                border: 1px solid #ddd;
+                                box-sizing: border-box;
+                                margin: 0 auto;
+                            }}
+                            .header {{
+                                text-align: center;
+                                margin-bottom: 20px;
+                                border-bottom: 1px solid #eee;
+                            }}
+                            .header img {{
+                                height: 40px;
+                                width: auto;
+                                margin-bottom: 10px;
+                            }}
+                            .email-logo {{
+                                width: 50%;
+                                display: block;
+                                margin: 20px auto;
+                            }}
+                            h2 {{
+                                color: #2c3e50;
+                                text-align: center;
+                            }}
+                            p {{
+                                color: #555;
+                                font-size: 16px;
+                                line-height: 1.6;
+                                text-align: left;
+                            }}
+                            .goInterviewbtnStyle {{
+                                display: inline-block;
+                                background: #db2777;
+                                color: #fff;
+                                text-decoration: none;
+                                padding: 12px 20px;
+                                border-radius: 5px;
+                                font-weight: bold;
+                                margin: 20px auto 10px;
+                                text-align: center;
+                            }}
+                            .goInterviewbtnStyle:hover {{
+                                background-color: #0056b3;
+                                color:#fff;
+                            }}
+                            @media only screen and (max-width: 600px) {{
+                                .email-logo {{
+                                    width: 80% !important;
+                                }}
+                            }}
+                        </style>
+                    </head>
+                    <body>
+                        <div class="email-container">
+                            <div class="header">
+                                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Malta" />
+                            </div>
+                            <img src="https://ascencia-interview.com/static/img/email_template_icon/notification.png" alt="Interview Invitation" class="email-logo" />
+                            
+                            <h2>Interview Invitation for Student Interview  {student_name},</h2>
+                            
+                            <p>Dear Student,</p>
+                            
+                            <p>We are pleased to invite you to participate in the following interview:</p>
+                            
+                            <p><b>Interview Details:</b></p>
+                            <p><b>Interviewer name:</b>{student_name},</p>
+                            <p><b>Start Date and time:</b>{formatted_start}</p>
+                            <p><b>End Date and time:</b>{formatted_end}</p>
+                            
+                            <p>Please note that you can access the interview only between the start and end times mentioned above.</p>
+                            
+                            <a href="{interview_url}" style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: center;">Start Interview</a>
 
                                         <p>Best regards,<br/>Ascencia Malta</p>
                                     </div>
@@ -1016,139 +1027,139 @@ def process_document(request):
                             recipient=[student_email],
                         )
 
+        
+        print("Lead updated successfully")
+        return JsonResponse({"message": "Success", "result": True}, status=200)
+    else:
+        print("Lead update failed")
+        return JsonResponse({"error": "Zoho update failed"}, status=500)
+# else:
+    #     update_data = {"Interview_Process": "First Round Interview Hold"}
+        
+    #     student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+    #     student.mindee_verification_status = "Completed"
+    #     student.edu_doc_verification_status = "rejected"
+    #     student.verification_failed_reason = "Criteria not matched"
+    #     student.save()
+    #     if update_zoho_lead(crm_id, zoho_lead_id, update_data):
+    #         print("Lead updated successfully")
+    #     else:
+    #         print("Lead update failed")
+
+    #     # Student Manager Notification Email (Document Rejected)
+    #     send_email(
+    #         subject="Document Verification Rejected",
+    #         message=f"""
+    #             <html>
+    #             <head>
+    #                 <style>
+    #                     body {{
+    #                         font-family: Tahoma !important;
+    #                         background-color: #f4f4f4;
+    #                         padding: 20px;
+    #                         text-align: left;
+    #                     }}
+    #                     .email-container {{ 
+    #                         max-width: 600px;
+    #                         margin: auto;
+    #                         background: #ffffff;
+    #                         padding: 20px;
+    #                         border-radius: 8px;
+    #                         box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    #                         border: 1px solid #ddd;
+    #                     }}
+    #                     .header {{
+    #                         text-align: center;
+    #                         padding-bottom: 20px;
+    #                         border-bottom: 1px solid #ddd;
+    #                     }}
+    #                     .header img {{
+    #                         max-width: 150px;
+    #                         display:flex;
+    #                         margin:0 auto;
+    #                     }}
+    #                     h2 {{
+    #                         color: #c0392b;  /* Red color for rejection */
+    #                     }}
+    #                     p {{
+    #                         color: #555555;
+    #                         font-size: 16px;
+    #                         line-height: 1.6;
+    #                     }}
+    #                     .btn {{
+    #                         display: inline-block;
+    #                         background: #c0392b;  /* Red button */
+    #                         color: #FFFFFF;
+    #                         text-decoration: none;
+    #                         padding: 10px 20px;
+    #                         border-radius: 5px;
+    #                         font-weight: bold;
+    #                         margin-top: 10px;
+    #                     }}
+    #                     .btn:hover {{
+    #                         background: #a93226;
+    #                         color: #FFFFFF;
+    #                     }}
+    #                     .email-logo {{
+    #                         max-width: 300px;
+    #                         height: auto;
+    #                         width: 100%;
+    #                         margin-bottom: 20px;
+    #                         display: flex;
+    #                         justify-content: center;
+    #                         margin: 0 auto;
+    #                     }}
+    #                     .logo_style{{
+    #                         height:40px;
+    #                         width:auto;
+    #                     }}
+    #                     @media only screen and (max-width: 600px) {{
+    #                                         .email_logo_lead {{
+    #                                             width: 100% !important;
+    #                                         }}
+    #                                 }}
+    #                 </style>
+    #             </head>
+    #             <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
                     
-                    print("Lead updated successfully")
-                    return JsonResponse({"message": "Success", "result": True}, status=200)
-                else:
-                    print("Lead update failed")
-                    return JsonResponse({"error": "Zoho update failed"}, status=500)
-            else:
-                update_data = {"Interview_Process": "First Round Interview Hold"}
-                
-                student = Students.objects.get(zoho_lead_id=zoho_lead_id)
-                student.mindee_verification_status = "Completed"
-                student.edu_doc_verification_status = "rejected"
-                student.verification_failed_reason = "Criteria not matched"
-                student.save()
-                if update_zoho_lead(crm_id, zoho_lead_id, update_data):
-                    print("Lead updated successfully")
-                else:
-                    print("Lead update failed")
-
-                # Student Manager Notification Email (Document Rejected)
-                send_email(
-                    subject="Document Verification Rejected",
-                    message=f"""
-                        <html>
-                        <head>
-                            <style>
-                                body {{
-                                    font-family: Tahoma !important;
-                                    background-color: #f4f4f4;
-                                    padding: 20px;
-                                    text-align: left;
-                                }}
-                                .email-container {{ 
-                                    max-width: 600px;
-                                    margin: auto;
-                                    background: #ffffff;
-                                    padding: 20px;
-                                    border-radius: 8px;
-                                    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-                                    border: 1px solid #ddd;
-                                }}
-                                .header {{
-                                    text-align: center;
-                                    padding-bottom: 20px;
-                                    border-bottom: 1px solid #ddd;
-                                }}
-                                .header img {{
-                                    max-width: 150px;
-                                    display:flex;
-                                    margin:0 auto;
-                                }}
-                                h2 {{
-                                    color: #c0392b;  /* Red color for rejection */
-                                }}
-                                p {{
-                                    color: #555555;
-                                    font-size: 16px;
-                                    line-height: 1.6;
-                                }}
-                                .btn {{
-                                    display: inline-block;
-                                    background: #c0392b;  /* Red button */
-                                    color: #FFFFFF;
-                                    text-decoration: none;
-                                    padding: 10px 20px;
-                                    border-radius: 5px;
-                                    font-weight: bold;
-                                    margin-top: 10px;
-                                }}
-                                .btn:hover {{
-                                    background: #a93226;
-                                    color: #FFFFFF;
-                                }}
-                                .email-logo {{
-                                    max-width: 300px;
-                                    height: auto;
-                                    width: 100%;
-                                    margin-bottom: 20px;
-                                    display: flex;
-                                    justify-content: center;
-                                    margin: 0 auto;
-                                }}
-                                .logo_style{{
-                                    height:40px;
-                                    width:auto;
-                                }}
-                                @media only screen and (max-width: 600px) {{
-                                                    .email_logo_lead {{
-                                                        width: 100% !important;
-                                                    }}
-                                            }}
-                            </style>
-                        </head>
-                        <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
-                           
-                                        <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box; margin:0 auto;">
-                                            <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
-                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Malta" class="logo_style" style="height: 40px; width: auto; margin-bottom: 10px;">
-                                            </div>
-                                            <img src="https://ascencia-interview.com/static/img/email_template_icon/doc_rejected.png" 
-                                                alt="Document Rejected" class="email_logo_lead" style="width: 50%; display: block; margin: 20px auto;"/>
-                                            <h2 style="color: #2c3e50; text-align: center;">Document Verification Rejected</h2>
-                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Dear <span style="font-weight:bold">{student_manager_name},</span></p>
-                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">The document verification process for <strong>{zoho_full_name}</strong> has been <strong>rejected</strong>.</p>
-                                            
-                                            <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Click below to review rejection details:</p>
-                                             <div style="text-align: center;">
-                                                <a href="https://ascencia-interview.com/studentmanagerpanel/student/{zoho_lead_id}/" class="btn"  style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: center;">View Rejection Details</a>
-                                             </div>
-                                        </div>
-                                   
-                        </body>
-                        </html>
-                    """,
-                    recipient=[student_manager_email],
-                    # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
-                )
-                return JsonResponse({"message": "Success", "result": result}, status=200)
+    #                             <div class="email-container" style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box; margin:0 auto;">
+    #                                 <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
+    #                                     <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Malta" class="logo_style" style="height: 40px; width: auto; margin-bottom: 10px;">
+    #                                 </div>
+    #                                 <img src="https://ascencia-interview.com/static/img/email_template_icon/doc_rejected.png" 
+    #                                     alt="Document Rejected" class="email_logo_lead" style="width: 50%; display: block; margin: 20px auto;"/>
+    #                                 <h2 style="color: #2c3e50; text-align: center;">Document Verification Rejected</h2>
+    #                                 <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Dear <span style="font-weight:bold">{student_manager_name},</span></p>
+    #                                 <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">The document verification process for <strong>{zoho_full_name}</strong> has been <strong>rejected</strong>.</p>
+                                    
+    #                                 <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center;">Click below to review rejection details:</p>
+    #                                     <div style="text-align: center;">
+    #                                     <a href="https://ascencia-interview.com/studentmanagerpanel/student/{zoho_lead_id}/" class="btn"  style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: center;">View Rejection Details</a>
+    #                                     </div>
+    #                             </div>
+                            
+    #             </body>
+    #             </html>
+    #         """,
+    #         recipient=["vaibhav@angel-portal.com"],
+    #         # cc=["admin@example.com", "hr@example.com"]  # Optional CC recipients
+    #     )
+    #     return JsonResponse({"message": "Success", "result": result}, status=200)
 
 
-        except Exception as e:
-            student = Students.objects.get(zoho_lead_id=zoho_lead_id)
-            student.verification_failed_reason = "Mindee API processing failed"
-            student.mindee_verification_status = "Completed"
-            student.save()
-            return JsonResponse({"error": f"Mindee API processing failed: {str(e)}"}, status=500)
+    #     except Exception as e:
+    #         student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+    #         student.verification_failed_reason = "Mindee API processing failed"
+    #         student.mindee_verification_status = "Completed"
+    #         student.save()
+    #         return JsonResponse({"error": f"Mindee API processing failed: {str(e)}"}, status=500)
 
-    except Exception as e:
-        student = Students.objects.get(zoho_lead_id=zoho_lead_id)
-        student.verification_failed_reason = "unexpected error occurred"
-        student.mindee_verification_status = "Completed"
-        student.save()
-        return JsonResponse({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
+    # except Exception as e:
+    #     student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+    #     student.verification_failed_reason = "unexpected error occurred"
+    #     student.mindee_verification_status = "Completed"
+    #     student.save()
+    #     return JsonResponse({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
 
     
 def fetch_interview_questions(request, crm_id):
