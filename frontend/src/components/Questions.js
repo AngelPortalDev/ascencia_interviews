@@ -74,6 +74,7 @@ const safe_encoded_interview_link_send_count = encoded_interview_link_send_count
   const toastId = useRef(null);
   const endCountdownStartedRef = useRef(false);
   const endCountdownStartedRefTwo = useRef(false);
+  const hasHandledZeroRef = useRef(false);
 
   // usePageReloadSubmit(
   //   videoRef,
@@ -453,7 +454,6 @@ useEffect(() => {
     const currentQId = getQuestions[currentQuestionIndex]?.encoded_id;
     const isLastQuestion = currentQId === last_question_id;
 
-    if (countdown === 0) {
       if (isLastQuestion) {
         if (!endCountdownStartedRefTwo.current) {
             endCountdownStartedRefTwo.current = true;
@@ -533,10 +533,16 @@ useEffect(() => {
           setShowUploading(false);
         }
       }
-    }
   };
 
-  handleNextQuestion();
+  if (countdown === 0 && getQuestions.length > 0 && !hasHandledZeroRef.current) {
+    hasHandledZeroRef.current =  true;
+    handleNextQuestion();
+  }
+   if (countdown > 0) {
+    hasHandledZeroRef.current = false;
+  }
+  
 }, [
   countdown,
   currentQuestionIndex,
@@ -753,6 +759,8 @@ useEffect(() => {
         navigate(`/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`);
       }else{
         if (currentIndex === 0 || isNaN(currentIndex)){
+            localStorage.clear();
+            sessionStorage.clear();
             navigate('/goback')
         }else{
             localStorage.clear();
@@ -964,8 +972,8 @@ useEffect(() => {
             className="col-span-12 md:col-span-9 bg-white p-2 rounded-xl  text-black  "
             style={{ display: "hidden" }}
           >
-             <DeepgramLiveCaptions
-              />
+             {/* <DeepgramLiveCaptions
+              /> */}
           </div>
           <div className="col-span-12 md:col-span-3 bg-white p-2 rounded-xl pt-0 sm:mt-2 text-black interviewPlayer">
             {interviewPlayerMemo}

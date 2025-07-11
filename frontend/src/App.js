@@ -16,6 +16,7 @@ import {usePermission} from "./context/PermissionContext.js";
 import ExpiredPage from "./components/ExpiredPage.js";
 import  InterviewSubmitted from "./components/InterviewSubmitted.js";
 import { ToastContainer } from "react-toastify";
+import Goback from './components/Goback.js'
 
 function App() {
 
@@ -29,6 +30,31 @@ function App() {
   // useEffect(() => {
   //   localStorage.setItem("hasAgreed", hasAgreed);
   // }, [hasAgreed]);
+
+  useEffect(() => {
+  const currentPath = window.location.pathname;
+
+  if (currentPath === "/frontend/notSupported") return;
+
+  const ua = navigator.userAgent;
+
+  const isIE =
+    ua.indexOf("MSIE ") > -1 || ua.indexOf("Trident/") > -1;
+
+  const isOldAndroidBrowser =
+    (ua.includes("Android") && ua.includes("AppleWebKit") && !ua.includes("Chrome")) ||
+    (ua.toLowerCase().includes("samsungbrowser") && !ua.includes("Chrome"));
+
+  const isBadBrowser =
+    ua.includes("SamsungBrowser") ||
+    ua.includes("UCBrowser") ||
+    ua.includes("HeyTapBrowser");
+
+  if (isIE || isOldAndroidBrowser || isBadBrowser) {
+    alert("This browser is not supported. Please use Chrome, Firefox, or another modern browser.");
+    window.location.href = "/frontend/notSupported";
+  }
+}, []);
   
 
   return (
@@ -49,6 +75,7 @@ function App() {
           <Route path="*" element={<NotFound />} />
           <Route path="/interviewsubmitted" element={<InterviewSubmitted/>}/>
           <Route path="/expired"  element={<ExpiredPage/>}/>
+          <Route path="/goback" element={<Goback/>}/>
         </Routes>
       </Router>
  
