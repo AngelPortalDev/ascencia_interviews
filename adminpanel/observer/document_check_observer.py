@@ -56,34 +56,34 @@ class APIDataFetcher:
             data = response.json()
             # count = len(data['data'])
             
-            if data.get('data') and len(data['data']) > 0:
-                highest_education_doc = data['data'][0].get('Highest_Education_Doc', [])
+            # if data.get('data') and len(data['data']) > 0:
+            #     highest_education_doc = data['data'][0].get('Highest_Education_Doc', [])
 
-                if highest_education_doc: 
-                    attachment_Id = data['data'][0]['Highest_Education_Doc'][0]['attachment_Id']
-                    file_Id = data['data'][0]['Highest_Education_Doc'][0]['file_Id']
-                    file_Name = data['data'][0]['Highest_Education_Doc'][0]['file_Name']
+                # if highest_education_doc: 
+                #     attachment_Id = data['data'][0]['Highest_Education_Doc'][0]['attachment_Id']
+                #     file_Id = data['data'][0]['Highest_Education_Doc'][0]['file_Id']
+                #     file_Name = data['data'][0]['Highest_Education_Doc'][0]['file_Name']
 
-                    # for item in data['data']:
-                        # file_id = item['$file_id']
-                        # parent_id = item['Parent_Id']['id']
-                        # file_name = item['File_Name']
+                #     # for item in data['data']:
+                #         # file_id = item['$file_id']
+                #         # parent_id = item['Parent_Id']['id']
+                #         # file_name = item['File_Name']
 
-                    encoded_file_name = quote(file_Name)
+                #     encoded_file_name = quote(file_Name)
 
-                    file_url = (
-                        f"https://crm.zoho.com/crm/org{publisher.crm_id}/ViewAttachment?"
-                        f"fileId={file_Id}&module=Leads&parentId={publisher.zoho_lead_id}&id={attachment_Id}"
-                        f"&name={encoded_file_name}&downLoadMode=pdfViewPlugin"
-                    )
+                #     file_url = (
+                #         f"https://crm.zoho.com/crm/org{publisher.crm_id}/ViewAttachment?"
+                #         f"fileId={file_Id}&module=Leads&parentId={publisher.zoho_lead_id}&id={attachment_Id}"
+                #         f"&name={encoded_file_name}&downLoadMode=pdfViewPlugin"
+                #     )
                     # process_queue.put((file_url, publisher, API_TOKEN))
                     # process_documents()
                     # if zoho_lead_id in ['5204268000112707003', '5204268000116210079']:
-                    if publisher.mindee_verification_status != 'Inprogress':
-                        # publisher.mindee_verification_status = 'Inprogress'
-                        # publisher.save(update_fields=['mindee_verification_status']) 
-                        time.sleep(10)
-                        async_task("adminpanel.observer.document_check_observer.process_documents_task", file_url, publisher, API_TOKEN)
+                # if publisher.mindee_verification_status != 'Inprogress':
+                #     # publisher.mindee_verification_status = 'Inprogress'
+                #     # publisher.save(update_fields=['mindee_verification_status']) 
+                #     time.sleep(10)
+            async_task("adminpanel.observer.document_check_observer.process_documents_task", publisher, API_TOKEN)
 
 
         except requests.RequestException as e:
@@ -157,19 +157,19 @@ class APIDataFetcher:
 #     time.sleep(5)  # Optional delay
 
 
-def process_documents_task(file_url, publisher, API_TOKEN):
+def process_documents_task(publisher, API_TOKEN):
     """Processes a single document in a Django Q worker."""
     import requests
     import time
     from django.conf import settings
 
     # Fetch document
-    try:
-        file_response = requests.get(file_url)
-        file_response.raise_for_status()  # This will raise an HTTPError for bad responses
-    except requests.RequestException as e:
-        print(f"❌ Failed to download file: {file_url}, Error: {e}")
-        return
+    # try:
+    #     # file_response = requests.get(file_url)
+    #     # file_response.raise_for_status()  # This will raise an HTTPError for bad responses
+    # except requests.RequestException as e:
+    #     print(f"❌ Failed to download file: {file_url}, Error: {e}")
+    #     return
 
     # Process document
     process_api_url = f"{settings.ADMIN_BASE_URL}/api/process_document"
@@ -181,11 +181,20 @@ def process_documents_task(file_url, publisher, API_TOKEN):
         "crm_id": publisher.crm_id,
         "API_TOKEN": API_TOKEN,
     }
-    files = {"document": (file_url, file_response.content, "application/pdf")}
+    # files = {"document": (file_url, file_response.content, "application/pdf")}
 
     try:
         # Send the request
-        process_response = requests.post(process_api_url, files=files, data=data)
+        # process_response = requests.post(process_api_url, files=files, data=data)
+        cert_path = os.path.abspath("C:/xampp/htdocs/vaibhav/ascencia_interviews/cert.pem")
+
+        process_response = requests.post(
+            process_api_url,
+            # files=files,
+            data=data,
+            verify=cert_path  # ✅ using the correct cert with SAN
+        )
+
 
         # Log the response status and content for debugging
 
