@@ -1,13 +1,21 @@
 import { NavLink,useParams} from "react-router-dom";
 import Interview from '../assest/Interview.png';
 import useInterviewLinkStatus  from '../hooks/useInterviewLinkStatus.js';
+import React,{useState,useEffect} from "react";
+import BasicInstruction from "./BasicInstruction.js";
 
 
 const Home = () => {
 
   const { encoded_zoho_lead_id,encoded_interview_link_send_count } = useParams(); // Get encoded student_id from URL
+    const [showInstructions, setShowInstructions] = useState(false);
+  
   // console.log("encoded_zoho_lead_id",encoded_zoho_lead_id)
   const isLoading = useInterviewLinkStatus(encoded_zoho_lead_id,encoded_interview_link_send_count);
+
+   useEffect(() => {
+  setShowInstructions(true); // Show modal on page load
+}, []);
   if (isLoading) {
     return <div>
       <section class="dots-container">
@@ -57,7 +65,7 @@ const Home = () => {
 
   return (
     <div className="bg-white">
-
+      <BasicInstruction open={showInstructions} onClose={() => setShowInstructions(false)} />
       <div className="relative isolate px-6 pt-8 lg:px-8">
         <div
           aria-hidden="true"

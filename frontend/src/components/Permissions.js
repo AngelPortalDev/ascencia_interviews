@@ -197,15 +197,6 @@ const Permissions = () => {
                           Submit button to save your selections.
                           </p>
                     </div>
-                  
-                    <div className="flex items-start gap-3">
-                          <span className="text-green-600">✓</span>
-                          <p className="text-gray-700 text-justify leading-5">
-                          Avoid noisy locations, background conversations,
-                        or moving out of the computer frame.
-                        If detected, the test will be automatically cancelled.
-                          </p>
-                    </div>
                     <div className="flex items-start gap-3">
                           <span className="text-green-600">✓</span>
                           <p className="text-gray-700 text-justify leading-5">
