@@ -1025,7 +1025,7 @@ def process_document(request):
                                 </body>
                             </html>
                             """,
-                            recipient=["vaibhav@angel-portal.com"],
+                            recipient=[student_email],
                         )
         
 
