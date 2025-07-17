@@ -275,7 +275,7 @@ def student_created_observer(sender, instance, created, **kwargs):
 
                     for student_data in studentLinkStatus:
 
-                        update_data = {"Interview_Process": "Second Round Interview"}
+                        update_data = {"Interview_Process": "First Round Interview"}
                         print(update_data)
                         print(zoho_lead_id)
                         if update_zoho_lead(student.crm_id, zoho_lead_id, update_data):

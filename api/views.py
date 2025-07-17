@@ -753,7 +753,7 @@ def process_document(request):
             
 
             # if result:
-    update_data = {"Interview_Process": "Second Round Interview"}
+    update_data = {"Interview_Process": "First Round Interview"}
 
     if update_zoho_lead(crm_id, zoho_lead_id, update_data):
         student = Students.objects.get(zoho_lead_id=zoho_lead_id)

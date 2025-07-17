@@ -16,7 +16,7 @@ def students_leads_api(request):
         email = request.POST.get('Email')
         phone = request.POST.get('Phone')
         dob = request.POST.get('DOB')
-        date_object = datetime.strptime(dob, "%d-%m-%Y")
+        date_object = datetime.strptime(dob, "%m-%d-%Y")
         formatted_date = date_object.strftime("%Y-%m-%d")
         student_id = request.POST.get('UserId')
         zoho_lead_id =  request.POST.get('Zoho Lead Id')
