@@ -783,6 +783,7 @@ def process_document(request):
         student_name = f"{student.first_name} {student.last_name}"
         student_email = student.email
         student_zoho_lead_id = student.zoho_lead_id
+        student_program=student.program
 
         studentLinkStatus = StudentInterviewLink.objects.get(zoho_lead_id=zoho_lead_id)
         interview_start = studentLinkStatus.created_at
@@ -1026,6 +1027,87 @@ def process_document(request):
                             """,
                             recipient=[student_email],
                         )
+        
+
+        send_email(
+                                    subject="Interview Invitation Sent to Student",
+                                    message=f"""
+                                    <html>
+                                    <head>
+                                        <style>
+                                            body {{
+                                                font-family: Tahoma, sans-serif;
+                                                background-color: #f4f4f4;
+                                                padding: 20px;
+                                            }}
+                                            .email-container {{
+                                                max-width: 600px;
+                                                margin: auto;
+                                                background: #ffffff;
+                                                padding: 25px 30px;
+                                                border-radius: 8px;
+                                                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+                                                border: 1px solid #ddd;
+                                            }}
+                                            .header {{
+                                                text-align: center;
+                                                margin-bottom: 20px;
+                                            }}
+                                            .header img {{
+                                                max-height: 40px;
+                                            }}
+                                            h2 {{
+                                                color: #2c3e50;
+                                                text-align: center;
+                                            }}
+                                            p {{
+                                                font-size: 16px;
+                                                color: #333;
+                                                line-height: 1.6;
+                                            }}
+                                            .btn {{
+                                                display: inline-block;
+                                                background-color: #db2777;
+                                                color: #fff;
+                                                padding: 10px 20px;
+                                                border-radius: 5px;
+                                                text-decoration: none;
+                                                font-weight: bold;
+                                                margin-top: 20px;
+                                            }}
+                                        </style>
+                                    </head>
+                                    <body>
+                                        <div class="email-container">
+                                            <div class="header">
+                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Malta" />
+                                            </div>
+
+                                            <h2>Interview Invitation Sent</h2>
+
+                                            <p>Dear <strong>{student_manager_name}</strong>,</p>
+
+                                            <p>The interview invitation has been sent for the following student:</p>
+
+                                            <p><strong>Student Details:</strong></p>
+                                            <p><b>Name:</b> {student_name}</p>
+                                            <p><b>Email:</b> {student_email}</p>
+                                            <p><b>Zoho Lead ID:</b> {student_zoho_lead_id}</p>
+                                            <p><b>Program:</b> {student_program}</p>
+                                    
+
+                                        
+
+                                            <p>Regards,<br/>Ascencia Malta Team</p>
+                                        </div>
+                                    </body>
+                                    </html>
+                                    """,
+                                    recipient=[student_manager_email]
+                                    # recipient=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
+                                    # cc=["admin@example.com"],  # Optional
+                                )
+
 
         
         print("Lead updated successfully")

@@ -35,15 +35,24 @@ def convert_video(input_path, output_path, target_format):
     FFMPEG_PATH = '/usr/bin/ffmpeg'
     logging.info("output_path: %s", output_path)
     logging.info("target_format path: %s", target_format)
+    # if target_format == "webm":
+    #     command = (
+    #         f'{FFMPEG_PATH} -y -i "{input_path}" '
+    #         f'-vf scale=640:480 -r 30 -pix_fmt yuv420p '
+    #         f'-c:v libvpx -b:v 1M -quality good -cpu-used 4 '
+    #         f'-qmin 10 -qmax 42 '
+    #         f'-c:a libopus -application voip -b:a 96k '
+    #         f'-f webm "{output_path}"'
+    #     )
+
     if target_format == "webm":
         command = (
             f'{FFMPEG_PATH} -y -i "{input_path}" '
             f'-vf scale=640:480 -r 30 -pix_fmt yuv420p '
             f'-c:v libvpx -b:v 1M -quality good -cpu-used 4 '
             f'-qmin 10 -qmax 42 '
-            f'-c:a libopus -application voip -b:a 96k -vbr on '
-            f'-movflags faststart -avoid_negative_ts make_zero '
-            f'"{output_path}"'
+            f'-c:a libopus -b:a 96k '
+            f'-f webm "{output_path}"'
         )
 
 
@@ -390,7 +399,7 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
             video_codec, audio_codec = get_codecs(input_path)
             logging.info("Codecs - Video: %s, Audio: %s", video_codec, audio_codec)
         except Exception as e:
-            logging.warning("Could not read codecs, force conversion: %s", e)
+            logging.warning("Could not determine codecs. Forcing conversion. Error: %s", e)
             video_codec, audio_codec = None, None
 
         needs_conversion = True
@@ -450,12 +459,11 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
     
     if target_format == "webm":
         merge_command = (
-        f'{FFMPEG_PATH} -f concat -safe 0 -i "{list_file_path}" '
-        f'-c:v libvpx -b:v 1M -r 30 -pix_fmt yuv420p '
-        f'-c:a libopus -ar 48000 -ac 2 '
-        f'-movflags faststart -avoid_negative_ts make_zero '
-        f'"{output_path}"'
-    )
+            f'{FFMPEG_PATH} -f concat -safe 0 -i "{list_file_path}" '
+            f'-c:v libvpx -b:v 1M -r 30 -pix_fmt yuv420p '
+            f'-c:a libopus -ar 48000 -ac 2 '
+            f'-f webm "{output_path}"'
+        )
 
     elif target_format == "mp4":
         merge_command = (
@@ -509,6 +517,7 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
 
         video_path = os.path.join(
             "/home/ascenciaintervie/public_html/static/uploads/interview_videos",
+            # "/home/interview/public_html/static/uploads/interview_videos",
             # "C:/xampp/htdocs/vaibhav/ascencia_interviews/static/uploads/interview_videos",
             zoho_lead_id,
             "merged_video.webm"
@@ -534,6 +543,7 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
 
         subject = "Interview Process Completed"
         recipient = [student_manager_email]
+        # recipient = ["vaibhav@angel-portal.com"]
         from_email = ''
         # url = video_path  # or your public URL if available
         url = f"https://video.bunnycdn.com/play/{settings.BUNNY_STREAM_LIBRARY_ID}/{video_id}"
@@ -714,6 +724,7 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
                 </body>
             </html>
             """,
+            # recipient=["vaibhav@angel-portal.com"]
             recipient=[student_email]
         )
         logging.info("Deleted %s StudentInterviewAnswers entries for zoho_lead_id: %s", deleted_count, zoho_lead_id)
