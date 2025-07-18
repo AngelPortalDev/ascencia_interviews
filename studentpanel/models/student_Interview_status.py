@@ -11,8 +11,7 @@ class Student_Interview(models.Model):
     # student_id = models.ForeignKey(Students, on_delete=models.CASCADE)
     zoho_lead_id = models.CharField(max_length=100,null=False)
     interview_process = models.CharField(max_length=225,null=True,blank=True)
-
-
+    profile_photo = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         indexes = [
