@@ -590,7 +590,7 @@ useEffect(() => {
   if (loading && endCountdown === 0) {
     localStorage.clear();
     sessionStorage.clear();
-    setLoading(false);
+    // setLoading(false);
     navigate(`/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`);
   }
 }, [endCountdown, loading]);
@@ -599,7 +599,7 @@ useEffect(() => {
   if (loading && endCountdownTwo === 0) {
     localStorage.clear();
     sessionStorage.clear();
-    setLoading(false);
+    // setLoading(false);
     navigate(`/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`);
   }
 }, [endCountdownTwo, loading]);
@@ -972,8 +972,8 @@ useEffect(() => {
             className="col-span-12 md:col-span-9 bg-white p-2 rounded-xl  text-black  "
             style={{ display: "hidden" }}
           >
-             {/* <DeepgramLiveCaptions
-              /> */}
+             <DeepgramLiveCaptions
+              />
           </div>
           <div className="col-span-12 md:col-span-3 bg-white p-2 rounded-xl pt-0 sm:mt-2 text-black interviewPlayer">
             {interviewPlayerMemo}

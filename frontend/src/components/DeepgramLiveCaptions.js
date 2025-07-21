@@ -1,180 +1,94 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
-
-const apiKey = process.env.REACT_APP_DEEPGRAM_API_KEY;
+import { useEffect, useRef, useState } from "react";
 
 const DeepgramLiveCaptions = () => {
-  const [transcript, setTranscript] = useState("");
-  const [interimTranscript, setInterimTranscript] = useState("");
-  const [status, setStatus] = useState("");
-
-  const wsRef = useRef(null);
+  const [captions, setCaptions] = useState([]);
+  const socketRef = useRef(null);
   const recorderRef = useRef(null);
-  const streamRef = useRef(null);
-  const clearTimerRef = useRef(null);
-  const pingIntervalRef = useRef(null);
-  const intentionallyStopped = useRef(false);
-  const intentionallyClosed = useRef(false);
-
-  const cleanup = () => {
-    intentionallyClosed.current = true;
-    intentionallyStopped.current = true;
-
-    if (recorderRef.current) {
-      recorderRef.current.stop();
-    }
-
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.close();
-    }
-
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-    }
-
-    clearTimeout(clearTimerRef.current);
-    clearInterval(pingIntervalRef.current);
-  };
-
-  const startTranscription = useCallback(async () => {
-    if (!apiKey) {
-      console.error("Deepgram API key is missing.");
-      return;
-    }
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
-
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: "audio/webm",
-      });
-      recorderRef.current = mediaRecorder;
-
-      const ws = new WebSocket(
-        `wss://api.deepgram.com/v1/listen?model=nova-3&language=en&punctuate=true&interim_results=true`,
-        ["token", apiKey]
-      );
-      wsRef.current = ws;
-
-      ws.onopen = () => {
-        intentionallyClosed.current = false;
-        intentionallyStopped.current = false;
-        console.log("WebSocket connected");
-        // setStatus("Listening...");
-        mediaRecorder.start(200);
-
-        pingIntervalRef.current = setInterval(() => {
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ event: "ping" }));
-          }
-        }, 10000);
-      };
-
-      ws.onmessage = (evt) => {
-        const msg = JSON.parse(evt.data);
-        // console.log("msg",msg);
-        const alt = msg.channel?.alternatives?.[0];
-        if (alt?.transcript) {
-          if (msg.is_final) {
-            setTranscript(alt.transcript);
-            setInterimTranscript("");
-
-            clearTimeout(clearTimerRef.current);
-            clearTimerRef.current = setTimeout(() => {
-              setTranscript("");
-            }, 2500);
-          } else {
-            setInterimTranscript(alt.transcript);
-          }
-        }
-      };
-
-      ws.onerror = (err) => {
-        console.warn("WebSocket error:", err);
-        // setStatus("Disconnected");
-        cleanup();
-        setTimeout(() => {
-          intentionallyClosed.current = false;
-          intentionallyStopped.current = false;
-          startTranscription();
-        }, 1500);
-      };
-
-      ws.onclose = () => {
-        if (!intentionallyClosed.current) {
-          console.warn("WebSocket closed unexpectedly.");
-          // setStatus("Disconnected");
-          cleanup();
-          setTimeout(() => {
-            intentionallyClosed.current = false;
-            intentionallyStopped.current = false;
-            startTranscription();
-          }, 1500);
-        } else {
-          console.log("WebSocket closed intentionally.");
-        }
-      };
-
-      mediaRecorder.ondataavailable = (ev) => {
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.send(ev.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        if (!intentionallyStopped.current) {
-          console.warn("MediaRecorder stopped unexpectedly.");
-          if (ws.readyState === WebSocket.OPEN) {
-            mediaRecorder.start(200);
-          }
-        }
-      };
-    } catch (err) {
-      console.error("Error starting transcription:", err);
-      // setStatus("Initialization failed");
-    }
-  }, []);
 
   useEffect(() => {
-    startTranscription();
+    const connectWebSocketAndStartRecording = async () => {
+      try {
+        // Connect to Django WebSocket server
+        socketRef.current = new WebSocket(
+          "wss://consensus-demo-occupations-richards.trycloudflare.com/ws/audio/"
+        );
+
+        console.log("websocket connected...");
+        socketRef.current.onopen = () => {
+
+          navigator.mediaDevices
+            .getUserMedia({ audio: true,sampleRate: 16000,noiseSuppression: true })
+            .then((stream) => {
+              const recorder = new MediaRecorder(stream, {
+                mimeType: "audio/webm;codecs=opus",
+                audioBitsPerSecond: 128000,
+              });
+              recorderRef.current = recorder;
+
+              recorder.ondataavailable = (event) => {
+                if (event.data && event.data.size > 0) {
+                  if (socketRef.current?.readyState === WebSocket.OPEN) {
+                    socketRef.current.send(event.data);
+                  }
+                }
+              };
+
+              recorder.onerror = (e) =>
+                console.error("MediaRecorder error:", e);
+              recorder.start(300);
+              console.log("🎬 Recorder started");
+            })
+            .catch((err) => {
+              console.error("🎤 Microphone access error:", err);
+            });
+        };
+
+        socketRef.current.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.text) {
+              const id = Date.now(); // Unique ID for each caption
+              const newCaption = { id, text: data.text };
+              setCaptions((prev) => [...prev, newCaption]);
+              console.log("newCaption",newCaption);
+
+              // Remove the caption after 10 seconds
+              setTimeout(() => {
+                setCaptions((prev) =>
+                  prev.filter((caption) => caption.id !== id)
+                );
+              }, 10000);
+            }
+          } catch (err) {
+            console.error("❌ Failed to parse message:", err);
+          }
+        };
+
+        socketRef.current.onerror = (err) => {
+          console.error("❌ WebSocket error:", err);
+        };
+
+        socketRef.current.onclose = () => {
+          console.log("🔌 WebSocket closed");
+        };
+      } catch (err) {
+        console.error("❌ WebSocket connection failed:", err);
+      }
+    };
+
+    connectWebSocketAndStartRecording();
 
     return () => {
-      console.log("Cleaning up transcription on unmount");
-      cleanup();
+      recorderRef.current?.stop();
+      socketRef.current?.close();
+      console.log("🧹 Cleaned up recorder and WebSocket");
     };
-  }, [startTranscription]);
+  }, []);
 
   return (
-    <div className="mainDeepfram">
-      {/* Optional: Show a status message if not connected */}
-      {/* {status !== "Listening..." && status !== "" && (
-        <div style={{ fontSize: 14, color: "orange", marginBottom: 8 }}>
-          {status}
-        </div>
-      )} */}
-
-      {/* Captions Display */}
-      <div>
-          <h4>Listening...</h4>
-          <div
-            style={{
-              borderRadius: "10px",
-              padding: "16px",
-              fontSize: "18px",
-              lineHeight: "1.5",
-              color: "#333",
-              maxWidth: "700px",
-              marginTop: "10px",
-              boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-              fontFamily: "Arial, sans-serif",
-              minHeight: "60px",
-            }}
-          >
-            {transcript}
-            <span style={{ opacity: 0.5 }}>{interimTranscript}</span>
-          </div>
-      </div>
-     
+    <div style={{ background: "#fff", color: "#000", padding: 10 }}>
+      <h3>You're Saying:</h3>
+      <p style={{marginTop:'10px'}}>{captions.map((cap) => cap.text).join(" ")}</p>
     </div>
   );
 };

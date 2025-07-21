@@ -96,72 +96,37 @@ def upload_profile_photo(request):
 
         try:
             zoho_lead_id = base64.b64decode(encoded_zoho_lead_id).decode("utf-8")
+          
+            
+            profile_dir = os.path.join('static', 'uploads', 'profile_photos', zoho_lead_id)
+            os.makedirs(profile_dir, exist_ok=True)
+
+            # Save file
+            profile_path = os.path.join(profile_dir, 'profile.jpg')
+        
+
+            with open(profile_path, 'wb+') as destination:
+                for chunk in image_file.chunks():
+                    destination.write(chunk)
+
+            # Relative path for DB
+            relative_path = os.path.join('uploads', 'profile_photos', zoho_lead_id, 'profile.jpg')
+            
+
+            # Update Student_Interview model
+            updated = Student_Interview.objects.filter(zoho_lead_id=zoho_lead_id).update(profile_photo=relative_path)
+
+            if updated:
+                return JsonResponse({
+                    'message': 'Profile photo uploaded successfully',
+                    'path': relative_path
+                }, status=200)
+            else:
+                return JsonResponse({'error': 'Student_Interview record not found for this Zoho Lead ID.'}, status=404)
         except Exception as e:
-            return JsonResponse({"error": f"Failed to decode zoho_lead_id: {str(e)}"}, status=400)
+            return JsonResponse({"error": f"Failed to decode zoho_lead_id: {str(e)}"}, status=500)
 
         # Create directory path
-        profile_dir = os.path.join('static', 'uploads', 'profile_photos', zoho_lead_id)
-        os.makedirs(profile_dir, exist_ok=True)
-
-        # Save file
-        profile_path = os.path.join(profile_dir, 'profile.jpg')
-        with open(profile_path, 'wb+') as destination:
-            for chunk in image_file.chunks():
-                destination.write(chunk)
-
-        # Relative path for DB
-        relative_path = os.path.join('uploads', 'profile_photos', zoho_lead_id, 'profile.jpg')
-
-        # Update Student_Interview model
-        updated = Student_Interview.objects.filter(zoho_lead_id=zoho_lead_id).update(profile_photo=relative_path)
-
-        if updated:
-            return JsonResponse({
-                'message': 'Profile photo uploaded successfully',
-                'path': relative_path
-            }, status=200)
-        else:
-            return JsonResponse({'error': 'Student_Interview record not found for this Zoho Lead ID.'}, status=404)
-
-    return JsonResponse({'error': 'Image file is missing or request method is not POST'}, status=400)
-
-
-
-@csrf_exempt
-def upload_profile_photo(request):
-    if request.method == 'POST' and 'image' in request.FILES:
-        image_file = request.FILES['image']
-        encoded_zoho_lead_id = request.POST.get('zoho_lead_id')
-
-        try:
-            zoho_lead_id = base64.b64decode(encoded_zoho_lead_id).decode("utf-8")
-        except Exception as e:
-            return JsonResponse({"error": f"Failed to decode zoho_lead_id: {str(e)}"}, status=400)
-
-        # Create directory path
-        profile_dir = os.path.join('static', 'uploads', 'profile_photos', zoho_lead_id)
-        os.makedirs(profile_dir, exist_ok=True)
-
-        # Save file
-        profile_path = os.path.join(profile_dir, 'profile.jpg')
-        with open(profile_path, 'wb+') as destination:
-            for chunk in image_file.chunks():
-                destination.write(chunk)
-
-        # Relative path for DB
-        relative_path = os.path.join('uploads', 'profile_photos', zoho_lead_id, 'profile.jpg')
-
-        # Update Student_Interview model
-        updated = Student_Interview.objects.filter(zoho_lead_id=zoho_lead_id).update(profile_photo=relative_path)
-
-        if updated:
-            return JsonResponse({
-                'message': 'Profile photo uploaded successfully',
-                'path': relative_path
-            }, status=200)
-        else:
-            return JsonResponse({'error': 'Student_Interview record not found for this Zoho Lead ID.'}, status=404)
-
     return JsonResponse({'error': 'Image file is missing or request method is not POST'}, status=400)
 
 @csrf_exempt
