@@ -10,7 +10,7 @@ const DeepgramLiveCaptions = () => {
       try {
         // Connect to Django WebSocket server
         socketRef.current = new WebSocket(
-          "wss://dev.ascencia-interview.com//ws/audio/"
+          "wss://dev.ascencia-interview.com/ws/audio/"
         );
 
         console.log("websocket connected...");
