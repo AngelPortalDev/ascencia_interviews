@@ -44,8 +44,10 @@ const DeepgramLiveCaptions = () => {
         };
 
         socketRef.current.onmessage = (event) => {
+          console.log('mesaage received',event);
           try {
             const data = JSON.parse(event.data);
+            console.log('data',data);
             if (data.text) {
               const id = Date.now(); // Unique ID for each caption
               const newCaption = { id, text: data.text };

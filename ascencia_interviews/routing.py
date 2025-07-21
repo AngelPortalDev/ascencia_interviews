@@ -15,7 +15,8 @@ from app.consumers import AudioStreamConsumer  # adjust if needed
 application = ProtocolTypeRouter({
     "websocket": AuthMiddlewareStack(
         URLRouter([
-            re_path(r"ws/audio/$", AudioStreamConsumer.as_asgi()),
+            # re_path(r"ws/audio/$", AudioStreamConsumer.as_asgi()),
+            re_path(r"(ws/)?audio/$", AudioStreamConsumer.as_asgi()),
         ])
     )
 })

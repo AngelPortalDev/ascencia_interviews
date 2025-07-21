@@ -26,7 +26,8 @@ application = ProtocolTypeRouter({
     "http": get_asgi_application(),
     "websocket": AuthMiddlewareStack(
         URLRouter([
-            re_path(r"ws/audio/$", AudioStreamConsumer.as_asgi()),
+            # re_path(r"ws/audio/$", AudioStreamConsumer.as_asgi()),
+            re_path(r"(ws/)?audio/$", AudioStreamConsumer.as_asgi()),
         ])
     ),
 })
