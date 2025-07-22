@@ -10,20 +10,26 @@ const DeepgramLiveCaptions = () => {
       try {
         // Connect to Django WebSocket server
         socketRef.current = new WebSocket(
-          "wss://dev.ascencia-interview.com/ws/audio/"
+          "wss://double-reduction-katie-activity.trycloudflare.com/ws/audio/"
         );
 
         console.log("websocket connected...");
         socketRef.current.onopen = () => {
-
           navigator.mediaDevices
-            .getUserMedia({ audio: true,sampleRate: 16000,noiseSuppression: true })
+            .getUserMedia({
+              audio: true,
+              sampleRate: 16000,
+              noiseSuppression: true,
+            })
             .then((stream) => {
+              console.log("✅ Microphone access granted");
               const recorder = new MediaRecorder(stream, {
                 mimeType: "audio/webm;codecs=opus",
                 audioBitsPerSecond: 128000,
               });
               recorderRef.current = recorder;
+
+              setCaptions([{ id: "init", text: "🎤 Listening..." }]);
 
               recorder.ondataavailable = (event) => {
                 if (event.data && event.data.size > 0) {
@@ -35,8 +41,10 @@ const DeepgramLiveCaptions = () => {
 
               recorder.onerror = (e) =>
                 console.error("MediaRecorder error:", e);
-              recorder.start(300);
-              console.log("🎬 Recorder started");
+              setTimeout(() => {
+                recorder.start(250);
+                console.log("🎬 Recorder started after delay");
+              }, 500);
             })
             .catch((err) => {
               console.error("🎤 Microphone access error:", err);
@@ -44,15 +52,18 @@ const DeepgramLiveCaptions = () => {
         };
 
         socketRef.current.onmessage = (event) => {
-          console.log('mesaage received',event);
+          console.log("mesaage received", event);
           try {
             const data = JSON.parse(event.data);
-            console.log('data',data);
+            console.log("data", data);
             if (data.text) {
               const id = Date.now(); // Unique ID for each caption
               const newCaption = { id, text: data.text };
-              setCaptions((prev) => [...prev, newCaption]);
-              console.log("newCaption",newCaption);
+              setCaptions((prev) => [
+                ...prev.filter((cap) => cap.id !== "init"), // remove "Listening..."
+                newCaption,
+              ]);
+              console.log("newCaption", newCaption);
 
               // Remove the caption after 10 seconds
               setTimeout(() => {
@@ -90,7 +101,9 @@ const DeepgramLiveCaptions = () => {
   return (
     <div style={{ background: "#fff", color: "#000", padding: 10 }}>
       <h3>You're Saying:</h3>
-      <p style={{marginTop:'10px'}}>{captions.map((cap) => cap.text).join(" ")}</p>
+      <p style={{ marginTop: "10px" }}>
+        {captions.map((cap) => cap.text).join(" ")}
+      </p>
     </div>
   );
 };

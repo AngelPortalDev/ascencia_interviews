@@ -85,7 +85,7 @@ const StudentFaceEnrollment = () => {
           Face Authentication Enrollment
         </h2>
         <p className="text-gray-600 mt-2 max-w-xl mx-auto text-sm">
-          Please capture your front, left, and right facial photos. These will
+          Please capture a clear photo of your face holding your ID card. These will
           help us authenticate you securely in future exams and logins. Ensure
           you're in good lighting and your face is clearly visible.
         </p>
