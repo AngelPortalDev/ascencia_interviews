@@ -4,14 +4,21 @@ const DeepgramLiveCaptions = () => {
   const [captions, setCaptions] = useState([]);
   const socketRef = useRef(null);
   const recorderRef = useRef(null);
+  const pingIntervalRef = useRef(null);
 
   useEffect(() => {
     const connectWebSocketAndStartRecording = async () => {
       try {
         // Connect to Django WebSocket server
         socketRef.current = new WebSocket(
-          "wss://double-reduction-katie-activity.trycloudflare.com/ws/audio/"
+          "wss://dev.ascencia-interview.com/ws/audio/"
         );
+
+        pingIntervalRef.current = setInterval(() => {
+          if (socketRef.current?.readyState === WebSocket.OPEN) {
+            socketRef.current.send(JSON.stringify({ type: "ping" }));
+          }
+        }, 30000);
 
         console.log("websocket connected...");
         socketRef.current.onopen = () => {
@@ -94,6 +101,7 @@ const DeepgramLiveCaptions = () => {
     return () => {
       recorderRef.current?.stop();
       socketRef.current?.close();
+      clearInterval(pingIntervalRef.current);
       console.log("🧹 Cleaned up recorder and WebSocket");
     };
   }, []);
