@@ -1,5 +1,17 @@
 
-<table class="table table-bordered table-responsive dataTable dtr-column"
+    <style>
+    td {
+        white-space: normal !important;  /* Allow wrapping */
+        max-height: 80px;                /* Optional: soft limit */
+        vertical-align: left;
+    }
+
+    /* Allow wrapping only for the action buttons column */
+    td.action-cell {
+        white-space: normal !important;
+    }
+</style>
+    <table class="table table-bordered table-responsive dataTable dtr-column"
     id="{{ tab_id }}" aria-describedby="{{ tab_id }}_info" style="width: 100%">
     <thead>
         <tr>
@@ -21,7 +33,7 @@
                 <span class="dt-column-title" role="button">Phone No.</span><span class="dt-column-order"></span>
             </th>
             <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc w-auto"
-                aria-label="Student Manager.: Activate to sort" tabindex="0">
+                aria-label="Student Manager.: Activate to sort" tabindex="0"  style=" white-space: normal !important; ">
                 <span class="dt-column-title" role="button">Student Manager</span><span class="dt-column-order"></span>
             </th>
             <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc w-auto"
@@ -29,19 +41,19 @@
                 <span class="dt-column-title" role="button">Course Applied</span><span class="dt-column-order"></span>
             </th>
             <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc w-auto"
-                aria-label="Verification Status" tabindex="0">
+                aria-label="Verification Status" tabindex="0" style=" white-space: normal !important; ">
                 <span class="dt-column-title" role="button">Verification Status</span><span class="dt-column-order"></span>
             </th>
             <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc w-auto"
-                aria-label="Intake Year: Activate to sort" tabindex="0">
+                aria-label="Intake Year: Activate to sort" tabindex="0"  style=" white-space: normal !important; ">
                 <span class="dt-column-title" role="button">Intake Year</span><span class="dt-column-order"></span>
             </th>
             <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc w-auto"
-                aria-label="Intake Month: Activate to sort" tabindex="0">
+                aria-label="Intake Month: Activate to sort" tabindex="0"  style=" white-space: normal !important; ">
                 <span class="dt-column-title" role="button">Intake Month</span><span class="dt-column-order"></span>
             </th>
             <th class="d-flex align-items-center dt-orderable-none w-auto" data-dt-column="8" rowspan="1" colspan="1"
-                aria-label="Actions">
+                aria-label="Actions" style="height:37px;">
                 <span class="dt-column-title">Actions</span><span class="dt-column-order"></span>
             </th>
         </tr>
@@ -68,9 +80,10 @@
             </td>
             <td>{{ student.intake_year }}</td>
             <td>{{ student.intake_month }}</td>
-            <td class="d-flex align-items-center">
+            <td>
+                <div class="d-flex align-items-center gap-2">
                 <a href="{% url request.user.profile.role|yesno:'studentmanager_student_detail,student_detail' zoho_lead_id=student.zoho_lead_id %}" 
-                class="btn btn-sm btn-light border me-2">
+                class="btn btn-sm btn-light border me-1">
                     <i class="bx bx-show"></i>
                 </a>
                 <a href="https://crm.zoho.com/crm/org{{student.crm_id}}/tab/Leads/{{ student.zoho_lead_id }}" 
@@ -78,6 +91,7 @@
                     class="btn btn-sm btn-primary">
                     Zoho
                 </a>
+            </div>
             </td>
         </tr>
         {% endfor %}

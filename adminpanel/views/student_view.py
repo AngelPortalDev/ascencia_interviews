@@ -7,9 +7,13 @@ from datetime import datetime
 import calendar
 from django.conf import settings
 from studentpanel.models.interview_link import StudentInterviewLink
+from django.db.models import Exists, OuterRef
+from django.utils.timezone import now
 
 @csrf_exempt  # Disable CSRF for webhooks
 def students_leads_api(request):
+    # print(f"data get",request.POST.get('CRM Id'))
+    # return HttpResponse(f"data get {request.POST.get('CRM Id')}")
     if request.method == "POST":
         first_name = request.POST.get('First Name')
         last_name = request.POST.get('Last Name')
@@ -47,8 +51,8 @@ def students_leads_api(request):
             where = {"zoho_lead_id": zoho_lead_id}
 
             result = save_data(Students, data_to_save, where)
-            # print(r'result:', result)
-
+            print(r'result:', result)
+            # return HttpResponse('here')
             if result['status']:
                 return JsonResponse({"status": True, "message": "Student updated successfully!"}, status=200)
             else:
@@ -65,9 +69,49 @@ def students_list(request):
     try:
 
         students = Students.objects.order_by('-id').filter(deleted_at__isnull=True)
-        verified_students = students.filter(edu_doc_verification_status="approved")
-        rejected_students = students.filter(edu_doc_verification_status="rejected")
-        unverified_students = students.filter(edu_doc_verification_status="Unverified")
+        # verified_students = students.filter(edu_doc_verification_status="approved")
+        verified_students = Students.objects.annotate(
+            interview_attended=Exists(
+                StudentInterviewLink.objects.filter(
+                    zoho_lead_id=OuterRef('zoho_lead_id'),
+                    interview_attend=True
+                )
+            )
+        ).filter(
+            interview_attended=True,
+            deleted_at__isnull=True  # optional
+        )
+        # rejected_students = students.filter(edu_doc_verification_status="rejected")
+        #   pending_but_link_valid
+        rejected_students = Students.objects.filter(
+            deleted_at__isnull=True
+        ).annotate(
+            has_valid_link=Exists(
+                StudentInterviewLink.objects.filter(
+                    zoho_lead_id=OuterRef('zoho_lead_id'),
+                    expires_at__gt=now(),
+                    interview_attend=False  # move it here
+                )
+            )
+        ).filter(
+            has_valid_link=True
+        )
+
+        # unverified_students = students.filter(edu_doc_verification_status="Unverified")
+        # expired_and_not_attended_students
+        unverified_students = Students.objects.filter(
+            deleted_at__isnull=True
+        ).annotate(
+            has_expired_link_without_attendance=Exists(
+                StudentInterviewLink.objects.filter(
+                    zoho_lead_id=OuterRef('zoho_lead_id'),
+                    expires_at__lt=now(),
+                    interview_attend=False
+                )
+            )
+        ).filter(
+            has_expired_link_without_attendance=True
+        )
 
         intake_month = request.GET.get('intake_month', '')
         intake_year = request.GET.get('intake_year', '')

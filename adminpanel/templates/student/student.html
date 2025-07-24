@@ -67,16 +67,16 @@
             <div>
               <ul class="nav nav-tabs mb-3 ms-3" id="studentTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab" aria-controls="all" aria-selected="true">All</button>
+                    <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab" aria-controls="all" aria-selected="true">Total Students</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="verified-tab" data-bs-toggle="tab" data-bs-target="#verified" type="button" role="tab" aria-controls="verified" aria-selected="true">Verified</button>
+                    <button class="nav-link" id="verified-tab" data-bs-toggle="tab" data-bs-target="#verified" type="button" role="tab" aria-controls="verified" aria-selected="true">Interviews Done</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected" type="button" role="tab" aria-controls="rejected" aria-selected="false">Rejected</button>
+                    <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected" type="button" role="tab" aria-controls="rejected" aria-selected="false">Pending Interviews</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="unverified-tab" data-bs-toggle="tab" data-bs-target="#unverified" type="button" role="tab" aria-controls="unverified" aria-selected="true">Unverified</button>
+                    <button class="nav-link" id="unverified-tab" data-bs-toggle="tab" data-bs-target="#unverified" type="button" role="tab" aria-controls="unverified" aria-selected="true">Interviews Not Given</button>
                 </li>
               </ul>
               <hr>
@@ -116,12 +116,30 @@
     </div>
 
     <script>
-      document.addEventListener("DOMContentLoaded", function () {
+      /*document.addEventListener("DOMContentLoaded", function () {
         $('#all_students_table').DataTable();
         $('#verified_students_table').DataTable();
         $('#rejected_students_table').DataTable();
         $('#unverified_students_table').DataTable();
-      });
+      });*/
+       document.addEventListener("DOMContentLoaded", function () {
+    // Initialize DataTables
+    $('#all_students_table').DataTable();
+    $('#verified_students_table').DataTable();
+    $('#rejected_students_table').DataTable();
+    $('#unverified_students_table').DataTable();
+
+    // --- Read ?tab= from URL and activate correct tab ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get("tab");
+
+    if (tabParam) {
+      const tabTriggerEl = document.querySelector(`#${tabParam}-tab`);
+      if (tabTriggerEl) {
+        new bootstrap.Tab(tabTriggerEl).show();  // Bootstrap 5 method
+      }
+    }
+  });
       
     </script>
 

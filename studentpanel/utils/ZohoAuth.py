@@ -44,6 +44,11 @@ class ZohoAuth:
             "client_id": "1000.7ED8CAF9C95QVFKAFORL6ZI3D6SQCS",  
             "client_secret": "bdffd3ef1302e199b24edcd0017115733af5927b52",  
             "refresh_token": "1000.6e8e4e04b17ef7515d974e3e24fb2579.6757812a7accb6f428db9cf0f6d8d9c2"  
+        },
+        "771661420":{  #india
+            "client_id": "1000.B9BWXZLVKXOM71BCVWF3K1MSU0FIJX",
+            "client_secret": "b236e7008315921814ad4fcc480374361b968eb4e0",
+            "refresh_token": "1000.59874d22ad5569d7c5efd49774bc48a8.f98660728b67e62704ba193733b87023"
         }
     }
 
