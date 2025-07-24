@@ -922,18 +922,12 @@ useEffect(() => {
                 onClick={handleSubmit}
                 disabled={loading}
                 className="
-                  bg-gradient-to-r from-[#ff80b5] to-[#9089fc] text-white font-semibold 
-                  text-base md:text-base
-                  py-1 md:py-2     
-                  px-4 md:px-3  
-                  rounded-xl shadow-2xl
-                  hover:bg-gradient-to-l transition-all
-                  w-auto
+                 bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600 text-sm font-medium
                 "
                 style={{
                   position: "absolute",
                   right: "15px",
-                  bottom: "15px",
+                  bottom: "5px",
                   minWidth: "100px",
                 }}
               >
@@ -958,7 +952,7 @@ useEffect(() => {
                   swiperRef.current?.slideNext();
                   handleQuestionChange(swiperRef.current);
                 }}
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm font-medium"
+                className="bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600 text-sm font-medium"
               >
                 Next
               </button>

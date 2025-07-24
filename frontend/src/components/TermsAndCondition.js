@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useParams, useLocation, NavLink } from "react-router-dom";
 import PropTypes from "prop-types";
 import { usePermission } from "../context/PermissionContext.js";
+import GDPR from "../assest/GDPRPolicy.pdf";
 
 const TermsAndCondition = () => {
   const location = useLocation();
@@ -45,10 +46,17 @@ const TermsAndCondition = () => {
   };
   useEffect(() => {
     if (encoded_zoho_lead_id == null) {
-      setTimeout(() => navigate("/expired"), 0);
+      setTimeout(() => navigate("/expired"), 100);
     }
   }, [encoded_zoho_lead_id, navigate]);
   if (encoded_zoho_lead_id == null) return null;
+
+  const styles = {
+    privacyStyle: {
+      color: "#2563EB",
+    },
+  };
+
 
   return (
     <>
@@ -118,7 +126,18 @@ const TermsAndCondition = () => {
                 <p>
                   We collect and process video, audio, and text data to analyze
                   your responses. This data will be stored and processed
-                  according to our Privacy Policy.
+                  according to our{" "}
+                  <span style={styles.privacyStyle}>
+                    <NavLink
+                      to="/privacy-policy"
+                      state={{
+                        encoded_zoho_lead_id,
+                        encoded_interview_link_send_count,
+                      }}
+                    >
+                      Privacy Policy.
+                    </NavLink>
+                  </span>
                 </p>
               </section>
             </div>
@@ -156,7 +175,11 @@ const TermsAndCondition = () => {
                   htmlFor="agreepolicy"
                   className="text-sm font-semibold text-gray-900"
                 >
-                  Please accept GDPR policy
+                  Please accept{" "}
+                  
+                  <NavLink to="/GDPRPolicy.pdf" target="_blank" className="mr-2 text-blue-600">
+                    GDPR Policy
+                  </NavLink>
                 </label>
               </div>
             </div>

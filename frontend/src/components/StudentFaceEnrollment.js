@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import Webcam from "react-webcam";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Instruction from "../assest/studentWIthId.jpg";
 import Logo from "../assest/Logo.svg";
@@ -59,7 +59,11 @@ const StudentFaceEnrollment = () => {
       console.log("response", response);
 
       if (response.status === 200) {
-        toast.success("Image uploaded successfully!");
+        toast.success("Uploaded successfully!",{
+          autoClose:2000,
+          hideProgressBar:true,
+        });
+        // alert("SUCCESSFULLY UPLOADED...")
         setShowCamera(false);
       }
     } catch (err) {
@@ -78,7 +82,7 @@ const StudentFaceEnrollment = () => {
 
   return (
     <div className="mx-auto max-w-4xl py-2 sm:py-4 lg:py-4">
-      <ToastContainer />
+      {/* <ToastContainer /> */}
       <div className="text-center mb-10">
         <img src={Logo} alt="Logo" className="h-16 mx-auto" />
         <h2 className="text-2xl font-bold mt-4 text-gray-800">
@@ -86,7 +90,7 @@ const StudentFaceEnrollment = () => {
         </h2>
         <p className="text-gray-600 mt-2 max-w-xl mx-auto text-sm">
           Please capture a clear photo of your face holding your ID card. These will
-          help us authenticate you securely in future exams and logins. Ensure
+          help us authenticate you securely in future. Ensure
           you're in good lighting and your face is clearly visible.
         </p>
       </div>
@@ -215,7 +219,7 @@ const StudentFaceEnrollment = () => {
             <div className="mt-4 space-x-3">
               <button
                 onClick={handleCapture}
-                className="px-4 py-2 bg-pink-600 text-white rounded hover:bg-green-700 transition"
+                className="px-4 py-2 bg-pink-600 text-white rounded hover:bg-pink-700 transition"
               >
                 Capture
               </button>
