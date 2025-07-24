@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation, NavLink } from "react-router-dom";
 import PropTypes from "prop-types";
 import { usePermission } from "../context/PermissionContext.js";
-import GDPR from "../assest/GDPRPolicy.pdf";
+// import GDPR from "../assest/GDPRPolicy.pdf";
 
 const TermsAndCondition = () => {
   const location = useLocation();
