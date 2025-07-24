@@ -91,12 +91,12 @@
                   </a>
                 </li>
                 <!-- Course -->
-                <li class="menu-item {% if '/course' in request.path %}active{% endif %}">
+                {% comment %} <li class="menu-item {% if '/course' in request.path %}active{% endif %}">
                   <a href="{% url 'courses' %}" class="menu-link">
                     <i class="menu-icon bx bx-book" aria-hidden="true"></i>
                     <div data-i18n="Basic">Courses</div>
                   </a>
-                </li>
+                </li> {% endcomment %}
                 <!-- Student -->
                 <li class="menu-item {% if request.resolver_match.url_name == 'students_list' %}active{% endif %}">
                   <a href="{% url 'students_list' %}" class="menu-link">
@@ -105,15 +105,10 @@
                   </a>
                 </li>
                 <!-- Question -->
-                <li class="menu-item {% if '/question' in request.path or '/common_question' in request.path %}active open{% endif %}">
-                  <a href="javascript:void(0);" class="menu-link menu-toggle">
-                    <i class="menu-icon bx bx-help-circle" aria-hidden="true"></i>
-                    <div data-i18n="Form Elements">Questions</div>
-                  </a>
-                  <ul class="menu-sub">
                     <li class="menu-item {% if '/common_question' in request.path %}active{% endif %}">
                       <a href="{% url 'common_questions' %}" class="menu-link">
-                        <div data-i18n="Basic Inputs">Common Question</div>
+                        <i class="menu-icon bx bx-help-circle" aria-hidden="true"></i>
+                        <div data-i18n="Form Elements">Questions</div>
                       </a>
                     </li>
                     <!-- <li class="menu-item {% if '/question' in request.path %}active{% endif %}">
@@ -121,8 +116,6 @@
                         <div data-i18n="Basic Inputs">Customize Question</div>
                       </a>
                     </li> -->
-                  </ul>
-                </li>
                 <!-- Student Manager -->
                 <li class="menu-item {% if '/student_manager' in request.path %}active{% endif %}">
                   <a href="{% url 'student_managers' %}" class="menu-link">

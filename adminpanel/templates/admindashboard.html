@@ -23,6 +23,9 @@
       height: 190px; 
       width:auto;
     }
+    .text-nowrap {
+    white-space: wrap !important;
+}
 </style>
 
 <!-- Basic Bootstrap Table -->
@@ -50,6 +53,7 @@
 
         <!-- Total Students Card -->
         <div class="col-lg-3 col-md-6 col-sm-12 mb-4">
+          <a href="{% url 'students_list' %}?tab=all" style="text-decoration: none;">
           <div class="card shadow-md border-0 rounded-3 card1 dashboardCard">
             <div class="card-body text-white text-center py-4">
               <i class="bx bx-user-circle fs-1 mb-3" style="color:#20c2e9; background:#e4f7fc; padding:5px;border-radius:10px"></i>
@@ -58,34 +62,27 @@
               {% comment %} <p class="text-muted">Total students in the system</p> {% endcomment %}
             </div>
           </div>
+        </a>
         </div>
     
         <!-- Verified Students -->
         <div class="col-lg-3 col-md-6 col-sm-12 mb-4">
+
+          <a href="{% url 'students_list' %}?tab=verified" style="text-decoration: none;">
           <div class="card shadow-md border-0 rounded-3 card3 dashboardCard">
             <div class="card-body text-white text-center py-4">
               <i class="bx bx-check-circle fs-1 mb-3" style="color:#696cff; background:#e7e7ff; padding:5px;border-radius:10px"></i>
-              <h5 class="card-title">Verified Students</h5>
+              <h5 class="card-title">Interviews Done</h5>
               <h3 class="card-text">{{verified_students_count}}</h3>
               {% comment %} <p class="text-muted">Students who received an offer</p> {% endcomment %}
             </div>
           </div>
+        </a>
         </div>
-    
-        <!-- Rejected Students -->
-        <div class="col-lg-3 col-md-6 col-sm-12 mb-4">
-          <div class="card shadow-md border-0 rounded-3 card3 dashboardCard">
-            <div class="card-body text-white text-center py-4" style="">
-              <i class="bx bx-x-circle fs-1 mb-3" style="color:#ff3a29; background:#ffe7e5; padding:5px; border-radius:10px"></i>
-              <h5 class="card-title">Rejected Students</h5>
-              <h3 class="card-text">{{rejected_students_count}}</h3>
-              {% comment %} <p class="text-muted">Students who received an offer</p> {% endcomment %}
-            </div>
-          </div>
-        </div>
-    
+
         <!-- Pending Interviews -->
         <div class="col-lg-3 col-md-6 col-sm-12 mb-4">
+          <a href="{% url 'students_list' %}?tab=rejected" style="text-decoration: none;">
           <div class="card shadow-md border-0 rounded-3 card2 dashboardCard" >
             <div class="card-body text-white text-center py-4">
               <i class="bx bx-hourglass fs-1 mb-3" style="color:#ffab00; background:#fff2d6; padding:5px;border-radius:10px"></i> 
@@ -94,7 +91,24 @@
               {% comment %} <p class="text-muted">Students awaiting interview</p> {% endcomment %}
             </div>
           </div>
+        </a>
         </div>
+    
+        <!-- Rejected Students -->
+        <div class="col-lg-3 col-md-6 col-sm-12 mb-4">
+          <a href="{% url 'students_list' %}?tab=unverified" style="text-decoration: none;">
+          <div class="card shadow-md border-0 rounded-3 card3 dashboardCard">
+            <div class="card-body text-white text-center py-4" style="">
+              <i class="bx bx-x-circle fs-1 mb-3" style="color:#ff3a29; background:#ffe7e5; padding:5px; border-radius:10px"></i>
+              <h5 class="card-title">Interviews Not Given</h5>
+              <h3 class="card-text">{{rejected_students_count}}</h3>
+              {% comment %} <p class="text-muted">Students who received an offer</p> {% endcomment %}
+            </div>
+          </div>
+        </a>
+        </div>
+    
+        
 
         <!-- Pass Students -->
         {% comment %} <div class="col-lg-4 col-xxl-2 col-md-4 col-sm-6 mb-4">
@@ -129,7 +143,7 @@
     {% comment %} <h5 class="card-header">Students List</h5> {% endcomment %}
     
     <div class="card-header d-flex justify-content-between align-items-center">
-      <h5 class="mb-0">Verified Students List</h5>
+      <h5 class="mb-0">interview Done Students List</h5>
       <a href="{% url 'students_list' %}" class="btn btn-primary btn-sm">View All</a>
     </div>
     <div class="table-responsive text-nowrap">
