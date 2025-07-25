@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.utils.timezone import now
 from studentpanel.models.student_interview_answer import StudentInterviewAnswers
 from studentpanel.models.interview_link import StudentInterviewLink
-from studentpanel.models.student_Interview_status import Student_Interview
+# from studentpanel.models.student_Interview_status import StudentInterview
 
 from django_q.tasks import async_task
 import json
