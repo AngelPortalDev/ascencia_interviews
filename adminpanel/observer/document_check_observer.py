@@ -4,7 +4,7 @@ import os
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from studentpanel.models.interview_process_model import Students
-from studentpanel.models.student_Interview_status import Student_Interview
+from studentpanel.models.student_Interview_status import StudentInterview
 from urllib.parse import quote
 from studentpanel.utils.ZohoAuth import ZohoAuth
 import time
@@ -265,7 +265,7 @@ def student_created_observer(sender, instance, created, **kwargs):
         
         student = Students.objects.get(zoho_lead_id=zoho_lead_id)
         try: 
-            student_interview = Student_Interview.objects.get(zoho_lead_id=zoho_lead_id)
+            student_interview = StudentInterview.objects.get(zoho_lead_id=zoho_lead_id)
 
             if not student_interview.interview_process:
                 print(student.interview_process)
@@ -524,7 +524,7 @@ def student_created_observer(sender, instance, created, **kwargs):
                                 )
 
                                 # student.save()
-        except Student_Interview.DoesNotExist:
+        except StudentInterview.DoesNotExist:
             print("Student_Interview entry does not exist")
     finally:
         print("zoho_lead_id dsfsd",zoho_lead_id)

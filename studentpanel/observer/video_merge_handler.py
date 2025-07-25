@@ -12,7 +12,7 @@ from django_q.tasks import async_task
 import logging
 from django.core.mail import EmailMultiAlternatives
 import mimetypes
-from studentpanel.models.student_Interview_status import Student_Interview
+from studentpanel.models.student_Interview_status import StudentInterview
 from studentpanel.models.interview_link import StudentInterviewLink
 import time
 from adminpanel.models.common_question import CommonQuestion
@@ -639,7 +639,7 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
 
          # Delete StudentInterviewAnswers after processing
         deleted_count, _ = StudentInterviewAnswers.objects.filter(zoho_lead_id=zoho_lead_id).delete()
-        delted_student_interview = Student_Interview.objects.filter(zoho_lead_id=zoho_lead_id).update(interview_process='')
+        delted_student_interview = StudentInterview.objects.filter(zoho_lead_id=zoho_lead_id).update(interview_process='')
 
         # ✅ Send "Thank You" Email to Student
         send_email(
