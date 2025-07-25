@@ -9,7 +9,9 @@ from studentpanel.views.interview_process import (
     # interview_score,
     interview_video_upload,
     interview_questions,
-    student_data
+    student_data,
+    upload_profile_photo
+    
     
 )
 from studentpanel.views.interview_analyze import analyze_video,check_answers, merge_videos, delete_video,interview_add_video_path,student_interview_answers
@@ -39,6 +41,7 @@ urlpatterns = [
                 path("student-data/", student_data, name="student_data"),
                 path("student-interview-answers/", student_interview_answers, name="student_interview_answers"),
                 path("interview-add-video-path/", interview_add_video_path, name="interview_add_video_path"),
+                path('upload-profile-photo/', upload_profile_photo, name='upload_profile_photo'),
 
                 
                 # path("index/", index, name="index"),

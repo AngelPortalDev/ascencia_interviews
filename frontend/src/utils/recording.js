@@ -113,7 +113,6 @@ export const stopRecording = (
     };
 
     if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
       mediaRecorderRef.current.onstop = async () => {
         //  console.log("⏹️ Stopped video recording for question:", capturedQuestionId);
         //   console.log("📦 captureLastQuestionId:", captureLastQuestionId);
@@ -137,13 +136,13 @@ export const stopRecording = (
 
         recordedChunksRef.current = [];
       };
+      mediaRecorderRef.current.stop();
     } else {
       videoUploaded = true; 
       checkCompletion();
     }
 
     if (audioRecorderRef.current) {
-      audioRecorderRef.current.stop();
       audioRecorderRef.current.onstop = async () => {
         // console.log("⏹️ Stopped audio recording for question:", capturedQuestionId);
         // console.log("🔍 Audio section - typeof last_question_id:", typeof captureLastQuestionId, captureLastQuestionId);
@@ -169,6 +168,7 @@ export const stopRecording = (
 
         recordedAudioChunksRef.current = [];
       };
+      audioRecorderRef.current.stop();
     } else {
       audioUploaded = true; 
       checkCompletion();

@@ -51,7 +51,8 @@ INSTALLED_APPS = [
     'django_extensions',
     'commands',
     'django_q',
-    
+    'channels',
+    'ascencia_interviews',
 
 ]
 
@@ -66,6 +67,7 @@ MIDDLEWARE = [
     'adminpanel.middlewares.loginRequiredMiddleware.LoginRequiredMiddleware',
     'adminpanel.middlewares.Force404Middleware.Force404Middleware',
     'corsheaders.middleware.CorsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'ascencia_interviews.urls'
@@ -87,7 +89,17 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'ascencia_interviews.wsgi.application'
+WSGI_APPLICATION = 'ascencia_interviews.wsgi.application'   
+
+
+ASGI_APPLICATION = 'ascencia_interviews.asgi.application'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {"hosts": [("127.0.0.1", 6379)]}
+    }
+}
 
 
 # Database
@@ -247,6 +259,14 @@ Q_CLUSTER = {
     "queue_limit": 200,  # Increased queue size to handle more tasks
     "bulk": 10,  # Processes 3 tasks at a time for balanced load
     "orm": "default",  # Use Django ORM for task management
+    "schedule": [
+        {
+            "func": "api.views.schedule_reminders_for_all",
+            "name": "Send Interview Reminder Emails",
+            "schedule_type": "I",  # ✅ Corrected to "I" for "minutes"
+            "minutes": 10,          # ⏱ Every 10 minute
+        }
+    ],
 }
 
 
@@ -257,3 +277,4 @@ CSRF_TRUSTED_ORIGINS = [
 
 CSRF_COOKIE_SECURE = True 
 CSRF_COOKIE_SAMESITE = 'None'
+DEEPGRAM_API_KEY='969234a32a04fdef01977e6c7cf50436c7c86da5'

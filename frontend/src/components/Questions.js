@@ -590,7 +590,7 @@ useEffect(() => {
   if (loading && endCountdown === 0) {
     localStorage.clear();
     sessionStorage.clear();
-    setLoading(false);
+    // setLoading(false);
     navigate(`/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`);
   }
 }, [endCountdown, loading]);
@@ -599,7 +599,7 @@ useEffect(() => {
   if (loading && endCountdownTwo === 0) {
     localStorage.clear();
     sessionStorage.clear();
-    setLoading(false);
+    // setLoading(false);
     navigate(`/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`);
   }
 }, [endCountdownTwo, loading]);
@@ -922,18 +922,12 @@ useEffect(() => {
                 onClick={handleSubmit}
                 disabled={loading}
                 className="
-                  bg-gradient-to-r from-[#ff80b5] to-[#9089fc] text-white font-semibold 
-                  text-base md:text-base
-                  py-1 md:py-2     
-                  px-4 md:px-3  
-                  rounded-xl shadow-2xl
-                  hover:bg-gradient-to-l transition-all
-                  w-auto
+                 bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600 text-sm font-medium
                 "
                 style={{
                   position: "absolute",
                   right: "15px",
-                  bottom: "15px",
+                  bottom: "5px",
                   minWidth: "100px",
                 }}
               >
@@ -958,7 +952,7 @@ useEffect(() => {
                   swiperRef.current?.slideNext();
                   handleQuestionChange(swiperRef.current);
                 }}
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm font-medium"
+                className="bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600 text-sm font-medium"
               >
                 Next
               </button>
@@ -972,8 +966,8 @@ useEffect(() => {
             className="col-span-12 md:col-span-9 bg-white p-2 rounded-xl  text-black  "
             style={{ display: "hidden" }}
           >
-             {/* <DeepgramLiveCaptions
-              /> */}
+             <DeepgramLiveCaptions
+              />
           </div>
           <div className="col-span-12 md:col-span-3 bg-white p-2 rounded-xl pt-0 sm:mt-2 text-black interviewPlayer">
             {interviewPlayerMemo}

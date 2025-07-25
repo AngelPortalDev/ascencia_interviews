@@ -17,6 +17,8 @@ import ExpiredPage from "./components/ExpiredPage.js";
 import  InterviewSubmitted from "./components/InterviewSubmitted.js";
 import { ToastContainer } from "react-toastify";
 import Goback from './components/Goback.js'
+import StudentFaceEnrollment from "./components/StudentFaceEnrollment.js";
+import PrivacyPolicy from "./components/PrivacyPolicy.js";
 
 function App() {
 
@@ -73,9 +75,11 @@ function App() {
           <Route path="/questions"  element={<ProtectedRoute element={<Questions/>} isAllowed={audioVideoAccepted && !isExamSubmitted} redirectPath="/permissions"/>}/>
          {/* Add Question Router Here */}
           <Route path="*" element={<NotFound />} />
+          <Route path="/studentfaceenrollment"  element={<ProtectedRoute element={<StudentFaceEnrollment/>} isAllowed={termsAccept && !isExamSubmitted} redirectPath="/permissions"/>}/>
           <Route path="/interviewsubmitted" element={<InterviewSubmitted/>}/>
           <Route path="/expired"  element={<ExpiredPage/>}/>
           <Route path="/goback" element={<Goback/>}/>
+          <Route path="/privacy-policy" element={<PrivacyPolicy/>}/>
         </Routes>
       </Router>
  

@@ -87,7 +87,7 @@ const Permissions = () => {
         // localStorage.setItem("hasPermissions", "true");
         acceptAudioVideo();
         // navigate(`/questions/${encoded_zoho_lead_id}/${encoded_interview_link_send_count}`);
-        navigate(`/questions`, {
+        navigate(`/studentfaceenrollment`, {
           state: { encoded_zoho_lead_id, encoded_interview_link_send_count }
         });
       }
