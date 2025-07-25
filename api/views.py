@@ -36,7 +36,7 @@ from django.utils.timezone import localtime
 import pytz
 # Configure logging
 logging.basicConfig(level=logging.INFO)
-from studentpanel.models.student_Interview_status import Student_Interview
+from studentpanel.models.student_Interview_status import StudentInterview
 from django.core.mail import send_mail
 import logging
 from django.core.mail import EmailMultiAlternatives
@@ -798,11 +798,11 @@ def process_document(request):
 
 
         try:
-            student_interview_status = Student_Interview.objects.get(zoho_lead_id=zoho_lead_id)
+            student_interview_status = StudentInterview.objects.get(zoho_lead_id=zoho_lead_id)
             student_interview_status.interview_process="Second_Round_Interview"
             student_interview_status.save()
-        except Student_Interview.DoesNotExist:
-            student_interview = Student_Interview.objects.create(
+        except StudentInterview.DoesNotExist:
+            student_interview = StudentInterview.objects.create(
                 zoho_lead_id=zoho_lead_id,
                 # student_id=student,
                 interview_process="Second_Round_Interview"

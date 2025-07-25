@@ -9,7 +9,7 @@ from studentpanel.models.interview_process_model import Students
 from django.core.files.storage import FileSystemStorage
 from studentpanel.models.student_interview_answer import StudentInterviewAnswers
 from studentpanel.models.interview_link import StudentInterviewLink
-from studentpanel.models.student_Interview_status import Student_Interview
+from studentpanel.models.student_Interview_status import StudentInterview
 
 
 from django.conf import settings
@@ -114,7 +114,7 @@ def upload_profile_photo(request):
             
 
             # Update Student_Interview model
-            updated = Student_Interview.objects.filter(zoho_lead_id=zoho_lead_id).update(profile_photo=relative_path)
+            updated = StudentInterview.objects.filter(zoho_lead_id=zoho_lead_id).update(profile_photo=relative_path)
 
             if updated:
                 return JsonResponse({
