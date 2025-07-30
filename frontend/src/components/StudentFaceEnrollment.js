@@ -115,7 +115,7 @@ const StudentFaceEnrollment = () => {
             No Image
           </div>
         )}
-        <div className="d-flex space-x-3">
+        {/* <div className="d-flex space-x-3">
           <button
             className="bg-pink-500 text-white px-6 py-2 rounded hover:bg-pink-700 transition"
             onClick={handleStartCapture}
@@ -126,6 +126,26 @@ const StudentFaceEnrollment = () => {
             onClick={handleSubmit}
             disabled={!capturedImage}
             className={`mt-6 px-6 mr-4 py-2 rounded transition ${
+              capturedImage
+                ? "bg-green-600 hover:bg-green-700 text-white"
+                : "bg-gray-400 text-white cursor-not-allowed"
+            }`}
+          >
+            Submit & Next
+          </button>
+        </div> */}
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-4 ">
+          <button
+            className="bg-pink-500 text-white px-6 py-2 rounded hover:bg-pink-700 transition w-full sm:w-auto text-center"
+            onClick={handleStartCapture}
+          >
+            {!capturedImage ? "Capture Face with ID" : "Retake"}
+          </button>
+
+          <button
+            onClick={handleSubmit}
+            disabled={!capturedImage}
+            className={`px-6 py-2 rounded transition w-full sm:w-auto text-center ${
               capturedImage
                 ? "bg-green-600 hover:bg-green-700 text-white"
                 : "bg-gray-400 text-white cursor-not-allowed"
