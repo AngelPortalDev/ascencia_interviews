@@ -374,7 +374,7 @@ def student_created_observer(sender, instance, created, **kwargs):
                                                     border-bottom: 1px solid #eee;
                                                 }}
                                                 .header img {{
-                                                    height: 40px;
+                                                    height: 70px;
                                                     width: auto;
                                                     margin-bottom: 10px;
                                                 }}
@@ -469,7 +469,7 @@ def student_created_observer(sender, instance, created, **kwargs):
                                                 margin-bottom: 20px;
                                             }}
                                             .header img {{
-                                                max-height: 40px;
+                                                max-height: 70px;
                                             }}
                                             h2 {{
                                                 color: #2c3e50;

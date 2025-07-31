@@ -27,7 +27,7 @@ import {
 import { interviewAddVideoPath } from "../utils/fileUpload.js";
 import usePageReloadSubmit from "../hooks/usePageReloadSubmit.js";
 import AI_LOGO from "../assest/AI_LOGO.png";
-import Logo from "../assest/Logo.svg";
+import Logo from "../assest/Logo.png";
 import usePageUnloadHandler from "../hooks/usePageUnloadHandler.js";
 // import useBackSubmitHandler from '../hooks/useBackSubmitHandler.js';
 

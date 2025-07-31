@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Logo from "../assest/Logo.svg";
+import Logo from "../assest/Logo.png";
 
 const Goback = () => {
   const navigate = useNavigate();

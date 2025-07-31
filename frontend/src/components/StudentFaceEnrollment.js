@@ -3,7 +3,7 @@ import Webcam from "react-webcam";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Instruction from "../assest/studentWIthId.jpg";
-import Logo from "../assest/Logo.svg";
+import Logo from '../assest/Logo.png';
 import { useNavigate, useLocation } from "react-router-dom";
 import Axios from "axios";
 
