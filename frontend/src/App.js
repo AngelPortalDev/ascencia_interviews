@@ -19,6 +19,7 @@ import { ToastContainer } from "react-toastify";
 import Goback from './components/Goback.js'
 import StudentFaceEnrollment from "./components/StudentFaceEnrollment.js";
 import PrivacyPolicy from "./components/PrivacyPolicy.js";
+import NotSupported from './components/NotSuppotedBrowser.js'
 
 function App() {
 
@@ -33,15 +34,14 @@ function App() {
   //   localStorage.setItem("hasAgreed", hasAgreed);
   // }, [hasAgreed]);
 
-  useEffect(() => {
+ useEffect(() => {
   const currentPath = window.location.pathname;
 
   if (currentPath === "/frontend/notSupported") return;
 
   const ua = navigator.userAgent;
 
-  const isIE =
-    ua.indexOf("MSIE ") > -1 || ua.indexOf("Trident/") > -1;
+  const isIE = ua.indexOf("MSIE ") > -1 || ua.indexOf("Trident/") > -1;
 
   const isOldAndroidBrowser =
     (ua.includes("Android") && ua.includes("AppleWebKit") && !ua.includes("Chrome")) ||
@@ -52,7 +52,21 @@ function App() {
     ua.includes("UCBrowser") ||
     ua.includes("HeyTapBrowser");
 
-  if (isIE || isOldAndroidBrowser || isBadBrowser) {
+  const isiOS = /iP(hone|ad|od)/.test(ua);
+
+  const isChromeIOS = /CriOS/.test(ua);
+  const isFirefoxIOS = /FxiOS/.test(ua);
+  const isEdgeIOS = /EdgiOS/.test(ua);
+
+  const isSafariOnIOS =
+    isiOS &&
+    !isChromeIOS &&
+    !isFirefoxIOS &&
+    !isEdgeIOS &&
+    /Safari/.test(ua) &&
+    !/GSA/.test(ua); // Optional: Google Search App
+
+  if (isIE || isOldAndroidBrowser || isBadBrowser || isSafariOnIOS) {
     alert("This browser is not supported. Please use Chrome, Firefox, or another modern browser.");
     window.location.href = "/frontend/notSupported";
   }
@@ -80,6 +94,7 @@ function App() {
           <Route path="/expired"  element={<ExpiredPage/>}/>
           <Route path="/goback" element={<Goback/>}/>
           <Route path="/privacy-policy" element={<PrivacyPolicy/>}/>
+          <Route path="/notSupported" element={<NotSupported/>}/>
         </Routes>
       </Router>
  

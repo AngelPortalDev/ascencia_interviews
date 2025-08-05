@@ -869,7 +869,7 @@ useEffect(() => {
       <div className="flex justify-between flex-col sm:flex-row px-8 pt-3 sm:pt-3  lg:px-16 items-center">
         <div>
           <h3 className="text-black text-xl sm:text-2xl mb-2">
-            <img src={Logo} alt="AI Software" className="h-12 sm:h-16" />
+            <img src={Logo} alt="AI Software" className="h-16 sm:h-16" />
           </h3>
           {/* <img src={Logo} alt="Not found" style={{width:'200px'}}/> */}
         </div>
