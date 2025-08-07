@@ -555,7 +555,7 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
                     
                     <!-- Logo Header -->
                     <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
-                    <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Company Logo" style="height: 40px; width: auto; margin-bottom: 10px;">
+                    <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Company Logo" style="height: 70px; width: auto; margin-bottom: 10px;">
                     </div>
 
                     <!-- Illustration -->
@@ -675,7 +675,7 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
                             border-bottom: 1px solid #eee;
                         }}
                         .header img {{
-                            height: 40px;
+                            height: 70px;
                             width: auto;
                             margin-bottom: 10px;
                         }}

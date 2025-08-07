@@ -964,7 +964,7 @@ def process_document(request):
                                 border-bottom: 1px solid #eee;
                             }}
                             .header img {{
-                                height: 40px;
+                                height: 70px;
                                 width: auto;
                                 margin-bottom: 10px;
                             }}
@@ -1061,7 +1061,7 @@ def process_document(request):
                                                 margin-bottom: 20px;
                                             }}
                                             .header img {{
-                                                max-height: 40px;
+                                                max-height: 70px;
                                             }}
                                             h2 {{
                                                 color: #2c3e50;
@@ -1345,7 +1345,7 @@ def send_interview_reminders(zoho_lead_id):
           <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
             <div style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box; margin: 0 auto;">
               <div style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
-                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Logo" style="height: 40px; margin-bottom: 10px;">
+                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Logo" style="height: 70px; margin-bottom: 10px;">
               </div>
               <img src="https://ascencia-interview.com/static/img/email_template_icon/interviewcomplete.png" alt="Interview Submitted" style="width: 50%; display: block; margin: 20px auto;" />
               <h2 style="color: #2c3e50; text-align: center; line-height:1.4;">Final Reminder <br/>Complete Interview Before Deadline</h2>
