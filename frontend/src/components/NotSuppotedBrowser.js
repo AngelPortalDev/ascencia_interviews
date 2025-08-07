@@ -1,4 +1,3 @@
-import React from "react";
 import Logo from '../assest/Logo.png';
 
 const NotSuppotedBrowser = () => {
@@ -9,7 +8,6 @@ const NotSuppotedBrowser = () => {
             <div className="logomobile">
               <img src={Logo} alt="AI Software" className="h-16" />
             </div>
-    
             <section className="dots-container">
               <div
                 style={{
@@ -23,9 +21,9 @@ const NotSuppotedBrowser = () => {
                   <h3 className="text-lg sm:text-xl font-semibold text-gray-800 text-center">
                     This browser is not supported.
                   </h3>
-                  <p>
+                  <p className="w-full text-center mt-2">
                     Please open this site in Chrome, Firefox, or another modern browser.
-                </p>
+                  </p>
                 </div>
                 <br />
               </div>
