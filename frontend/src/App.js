@@ -68,7 +68,8 @@ function App() {
 
   if (isIE || isOldAndroidBrowser || isBadBrowser || isSafariOnIOS) {
     alert("This browser is not supported. Please use Chrome, Firefox, or another modern browser.");
-    window.location.href = "/frontend/notSupported";
+    // window.location.href = "/frontend/notSupported";
+    window.location.replace("/frontend/notSupported");
   }
 }, []);
   

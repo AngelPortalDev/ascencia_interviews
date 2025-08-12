@@ -41,9 +41,17 @@ if (videoRef.current) {
 //   audioBitsPerSecond: 32000,
 //   videoBitsPerSecond: 1000000,
 // });
-const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
-  ? "video/webm;codecs=vp8,opus"
-  : "video/webm";
+
+const types = [
+  "video/webm;codecs=vp9,opus", // Try first (higher quality)
+  "video/webm;codecs=vp8,opus", // Fallback (broader support)
+  "video/webm"                  // Last-resort fallback
+];
+
+// const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
+//   ? "video/webm;codecs=vp8,opus"
+//   : "video/webm";
+const mimeType = types.find(type => MediaRecorder.isTypeSupported(type));
 
 mediaRecorderRef.current = new MediaRecorder(stream, {
   mimeType,
