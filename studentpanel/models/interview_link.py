@@ -35,6 +35,7 @@ class StudentInterviewLink(models.Model):
 )
     transcript_text = models.TextField(null=True, blank=True, help_text="Transcript of the merged interview video")
     reminder_sent = models.BooleanField(default=False)  # New field to track reminder status
+    reminder_1hr_sent = models.BooleanField(default=False)
     def save(self, *args, **kwargs):
         """Ensure expiration logic is applied before saving."""
         if self.expires_at <= now():

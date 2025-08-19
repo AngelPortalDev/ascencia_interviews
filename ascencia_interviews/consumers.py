@@ -19,7 +19,7 @@ class AudioStreamConsumer(AsyncWebsocketConsumer):
         token = settings.DEEPGRAM_API_KEY
         headers = [("Authorization", f"Token {settings.DEEPGRAM_API_KEY}")]
         self.deepgram_ws = await websockets.connect(
-        "wss://api.deepgram.com/v1/listen?punctuate=true&model=nova&smart_format=true&language=en-US&endpointing=300&no_delay=true&numerals=true",
+        "wss://api.deepgram.com/v1/listen?punctuate=true&model=nova-3&smart_format=true&language=en-US&endpointing=300&no_delay=true&numerals=true",
         extra_headers=headers
         )
         async def receive_deepgram():

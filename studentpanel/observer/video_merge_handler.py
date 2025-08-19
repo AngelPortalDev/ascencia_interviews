@@ -21,6 +21,8 @@ import uuid
 import json
 import whisper
 import warnings
+from django.utils.html import escape
+import re
 
 def get_uploads_folder():
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
@@ -273,6 +275,19 @@ def is_video_valid(video_path):
         logging.warning(f"Invalid video structure, will re-encode: {video_path} | Error: {e}")
         return False
 
+def build_qa_blocks_with_paths(questions, converted_files):
+    qa_blocks = []
+    for i in range(0, len(converted_files), 2):
+        q_file = converted_files[i]
+        a_file = converted_files[i + 1]
+        question_text = questions[i // 2].question
+        qa_blocks.append({
+            "question": question_text,
+            "q_file": q_file,
+            "a_file": a_file
+        })
+    return qa_blocks
+
 
 def merge_videos(zoho_lead_id,interview_link_count=None):
     uploads_folder = os.path.join(get_uploads_folder(), zoho_lead_id)
@@ -485,20 +500,70 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
         subprocess.run(merge_command, shell=True, check=True)
         logging.info("merge_command subprocess: %s", merge_command)
 
-        transcript_file_path = transcribe_complete_video(output_path)
+        # transcript_file_path = transcribe_complete_video(output_path)
 
-        if transcript_file_path and os.path.exists(transcript_file_path):
-            with open(transcript_file_path, "r", encoding="utf-8") as f:
-                transcript_text = f.read()
-                # Save to StudentInterviewLink
-                try:
-                    interview_link.transcript_text = transcript_text
-                    interview_link.save(update_fields=["transcript_text"])
-                    logging.info("✅ Transcript text saved to StudentInterviewLink")
-                except Exception as e:
-                    logging.warning("⚠️ Failed to save transcript to DB: %s", e)
-        else:
-            logging.warning("Transcript generation failed or skipped.")
+        # if transcript_file_path and os.path.exists(transcript_file_path):
+        #     with open(transcript_file_path, "r", encoding="utf-8") as f:
+        #         transcript_text = f.read()
+        #         # Save to StudentInterviewLink
+        #         try:
+        #             interview_link.transcript_text = transcript_text
+        #             interview_link.save(update_fields=["transcript_text"])
+        #             logging.info("✅ Transcript text saved to StudentInterviewLink")
+        #         except Exception as e:
+        #             logging.warning("⚠️ Failed to save transcript to DB: %s", e)
+        # else:
+        #     logging.warning("Transcript generation failed or skipped.")
+
+        # ✅ Transcribe full video and match segments to Q&A blocks
+        import whisper
+        model = whisper.load_model("small")
+        qa_blocks = build_qa_blocks_with_paths(ordered_questions, converted_files)
+
+        qa_transcript = []
+        # for block in qa_blocks:
+        for idx, block in enumerate(qa_blocks, start=1):
+            question_text = block["question"]
+            answer_file = block["a_file"]
+
+            result = model.transcribe(answer_file, language="en", word_timestamps=False)
+            answer_text = result.get("text", "").strip()
+
+            if not answer_text:
+                answer_text = "[No response detected]"
+
+            qa_transcript.append(f"Q.{idx}: {question_text}\nANS: {answer_text}\n")
+
+        transcript_output = "\n".join(qa_transcript)
+        transcript_txt_path = os.path.splitext(output_path)[0] + "_transcript.txt"
+        with open(transcript_txt_path, "w", encoding="utf-8") as f:
+            f.write(transcript_output)
+
+        # Save to DB
+        interview_link.transcript_text = transcript_output
+        interview_link.save(update_fields=["transcript_text"])
+
+        
+        clean_transcript = transcript_output.strip()
+
+# Remove any spaces/tabs at the beginning of lines before "Q."
+        clean_transcript = re.sub(r'^[ \t]+(Q\.\d+:)', r'\1', clean_transcript, flags=re.MULTILINE)
+
+        formatted_transcript = escape(clean_transcript).replace("\n", "<br>")
+
+        # ✅ Save Q&A transcript to file and DB
+        # transcript_output = "\n".join(qa_transcript)
+        # transcript_txt_path = os.path.splitext(output_path)[0] + "_transcript.txt"
+
+        # with open(transcript_txt_path, "w", encoding="utf-8") as f:
+        #     f.write(transcript_output)
+
+        # try:
+        #     interview_link.transcript_text = transcript_output
+        #     interview_link.save(update_fields=["transcript_text"])
+        #     logging.info("✅ Formatted transcript saved to DB and file.")
+        # except Exception as e:
+        #     logging.warning("⚠️ Failed to save formatted transcript to DB: %s", e)
 
         video_id = upload_to_bunnystream(output_path)
         logging.info("video_id: %s", video_id)
@@ -516,8 +581,8 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
 
 
         video_path = os.path.join(
-            "/home/ascenciaintervie/public_html/static/uploads/interview_videos",
-            # "/home/interview/public_html/static/uploads/interview_videos",
+            # "/home/ascenciaintervie/public_html/static/uploads/interview_videos",
+            "/home/interview/public_html/static/uploads/interview_videos",
             # "C:/xampp/htdocs/vaibhav/ascencia_interviews/static/uploads/interview_videos",
             zoho_lead_id,
             "merged_video.webm"
@@ -542,8 +607,8 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
 
 
         subject = "Interview Process Completed"
-        recipient = [student_manager_email]
-        # recipient = ["vaibhav@angel-portal.com"]
+        # recipient = [student_manager_email]
+        recipient = ["vaibhav@angel-portal.com"]
         from_email = ''
         # url = video_path  # or your public URL if available
         url = f"https://video.bunnycdn.com/play/{settings.BUNNY_STREAM_LIBRARY_ID}/{video_id}"
@@ -583,6 +648,13 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
                     <div style="text-align: left; margin-top: 30px;">
                         <a href="{url}" target="_blank" style="background-color: #007bff; color: white; padding: 12px 25px; font-size: 16px; text-decoration: none; border-radius: 5px;">Watch Video</a>
                     </div>
+
+                    <!-- Transcript Section -->
+                    <h3 style="color: #2c3e50; margin-top: 40px;">Interview Transcript</h3>
+                    <div style="background: #f9f9f9; border: 1px solid #ddd; padding: 15px; border-radius: 5px; font-size: 14px; line-height: 1.5; color: #333;">
+                        {formatted_transcript}
+                    </div>
+
                     <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left; margin-top: 30px;">
                                                     Best regards,<br/>Ascencia Malta
                                                 </p>
@@ -724,8 +796,8 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
                 </body>
             </html>
             """,
-            # recipient=["vaibhav@angel-portal.com"]
-            recipient=[student_email]
+            recipient=["vaibhav@angel-portal.com"]
+            # recipient=[student_email]
         )
         logging.info("Deleted %s StudentInterviewAnswers entries for zoho_lead_id: %s", deleted_count, zoho_lead_id)
 

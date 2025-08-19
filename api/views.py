@@ -1032,7 +1032,7 @@ def process_document(request):
                                 </body>
                             </html>
                             """,
-                            recipient=[student_email],
+                            recipient=["vaibhav@angel-portal.com"],
                         )
         
 
@@ -1102,7 +1102,7 @@ def process_document(request):
                                             <p><b>Zoho Lead ID:</b> {student_zoho_lead_id}</p>
                                             <p><b>Program:</b> {student_program}</p>
                                     
-
+                                            <b>Interview Link : </b><a href="{interview_url}" target="_blank">{interview_url}</a>
                                         
 
                                             <p>Regards,<br/>Ascencia Malta Team</p>
@@ -1110,8 +1110,8 @@ def process_document(request):
                                     </body>
                                     </html>
                                     """,
-                                    recipient=[student_manager_email]
-                                    # recipient=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
+                                    # recipient=[student_manager_email]
+                                    recipient=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
                                     # cc=["admin@example.com"],  # Optional
                                 )
 
@@ -1404,3 +1404,146 @@ def schedule_reminders_for_all():
             send_interview_reminders(student.zoho_lead_id)
     else:
         print(">>> No students found for reminders <<<")
+
+
+def send_interview_reminders(zoho_lead_id, reminder_type="24h"):
+    print(f">>> Running {reminder_type} reminder check <<<")
+    now_time = now()
+
+    # Choose the right timing window and flags
+    if reminder_type == "24h":
+        expiry_threshold = now_time + timedelta(hours=24)
+        pending_students = StudentInterviewLink.objects.filter(
+            zoho_lead_id=zoho_lead_id,
+            interview_attend=False,
+            is_expired=False,
+            reminder_sent=False,
+            expires_at__lte=expiry_threshold,
+            expires_at__gte=now_time
+        )
+    elif reminder_type == "1h":
+        expiry_threshold = now_time + timedelta(hours=1)
+        pending_students = StudentInterviewLink.objects.filter(
+            zoho_lead_id=zoho_lead_id,
+            interview_attend=False,
+            is_expired=False,
+            reminder_1hr_sent=False,
+            expires_at__lte=expiry_threshold,
+            expires_at__gte=now_time
+        )
+    else:
+        print(">>> Invalid reminder type <<<")
+        return
+
+    count = pending_students.count()
+    print(f">>> Found {count} students for {reminder_type} reminder <<<")
+
+    for student in pending_students:
+        student_obj = Students.objects.filter(zoho_lead_id=student.zoho_lead_id).first()
+        student_name = student_obj.first_name
+        student_email = student_obj.email
+        interview_url = student.interview_link
+        interview_start = student.created_at
+        interview_end = student.expires_at
+
+        tz = pytz.timezone("Europe/Malta")
+        formatted_start = localtime(interview_start).astimezone(tz).strftime("%d %b %Y - %I:%M %p (Europe/Malta)")
+        formatted_end = localtime(interview_end).astimezone(tz).strftime("%d %b %Y - %I:%M %p (Europe/Malta)")
+        # Friendly time label for email display
+        reminder_display = "1 hour" if reminder_type == "1h" else "24 hours"
+
+
+        # Email content
+        subject = f"Interview reminder - Expires in {reminder_display}"
+        text_content = f"Reminder: Interview for {student_name} expires in {reminder_display}. Visit: {interview_url}"
+
+        to_email = ["vaibhav@angel-portal.com"]
+
+        # You can customize the HTML based on reminder_type
+
+        if reminder_type == '1h':
+            reminder_note = f"⏰ <strong>Note:</strong> The interview link will expire in <b>{reminder_display}</b>. Kindly make sure the student completes the interview before the deadline."
+        else:
+            reminder_note = f"⏰ <strong>Note:</strong> The interview link will expire in <b>{reminder_display}</b>. Kindly make sure the student completes the interview before the deadline."
+
+
+        html_content = f"""
+<html>
+          <body style="background-color: #f4f4f4; font-family: Tahoma, sans-serif; margin: 0; padding: 40px 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+            <div style="background: #ffffff; max-width: 600px; width: 100%; padding: 30px 25px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #ddd; box-sizing: border-box; margin: 0 auto;">
+              <div style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
+                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Logo" style="height: 70px; margin-bottom: 10px;">
+              </div>
+              <img src="https://ascencia-interview.com/static/img/email_template_icon/interviewcomplete.png" alt="Interview Submitted" style="width: 50%; display: block; margin: 20px auto;" />
+              <h2 style="color: #2c3e50; text-align: center; line-height:1.4;">Final Reminder <br/>Complete Interview Before Deadline</h2>
+              <p style="color: #555; font-size: 16px; line-height: 1.6;">Dear <b>{student_name}</b>,</p>
+              <p style="color: #d9534f; font-size: 16px; font-weight: bold; line-height: 1.6;">
+                {reminder_note}
+              </p>
+              <p style="color: #555; font-size: 16px; line-height: 1.6;"><strong>Interview Details:</strong></p>
+              <p style="color: #555; font-size: 14px; line-height: 1.6;"><strong>Interviewer name: </strong> {student_name}</p>
+              <p style="color: #555; font-size: 14px;"><strong>Start Date and time: </strong> {formatted_start}</p>
+              <p style="color: #555; font-size: 14px;"><strong>End Date and time: </strong> {formatted_end}</p>
+              <p style="color: #555; font-size: 14px;">please note that you can only access the interview between the start and end times mentioned above.</p>
+              <div style="text-align: left; margin-top: 30px;">
+                <a href="{interview_url}" target="_blank" style="background-color: #db2777; color: #fff; padding: 12px 25px; font-size: 16px; text-decoration: none; border-radius: 5px;">
+                 Start Interview
+                </a>
+              </div>
+              <p style="color: #555; font-size: 16px; line-height: 1.6; margin-top: 30px;">
+                Best regards,<br/>
+                <strong>Ascencia Malta</strong>
+              </p>
+            </div>
+          </body>
+        </html>"""
+
+        try:
+            print(f">>> Sending {reminder_type} reminder to: {interview_url}")
+            email = EmailMultiAlternatives(subject, text_content, "", to_email)
+            email.attach_alternative(html_content, "text/html")
+            email.send(fail_silently=False)
+
+            if reminder_type == "24h":
+                student.reminder_sent = True
+                student.save(update_fields=["reminder_sent"])
+            elif reminder_type == "1h":
+                student.reminder_1hr_sent = True
+                student.save(update_fields=["reminder_1hr_sent"])
+
+            print(">>> Email sent successfully")
+            logger.info(f"{reminder_type} reminder sent to %s", interview_url)
+
+        except Exception as e:
+            print(">>> Email error:", e)
+            logger.error("Reminder send failed: %s", str(e))
+
+
+def schedule_reminders_for_all():
+    print(">>> schedule_reminders_for_all() triggered <<<") 
+    now_time = now()
+
+    # 24-hour reminder check
+    students_24h = StudentInterviewLink.objects.filter(
+        interview_attend=False,
+        is_expired=False,
+        reminder_sent=False,
+        expires_at__lte=now_time + timedelta(hours=24),
+        expires_at__gte=now_time
+    )
+    for student in students_24h:
+        send_interview_reminders(student.zoho_lead_id, reminder_type="24h")
+
+    # 1-hour reminder check
+    students_1h = StudentInterviewLink.objects.filter(
+        interview_attend=False,
+        is_expired=False,
+        reminder_1hr_sent=False,
+        expires_at__lte=now_time + timedelta(hours=1),
+        expires_at__gte=now_time
+    )
+    for student in students_1h:
+        send_interview_reminders(student.zoho_lead_id, reminder_type="1h")
+
+    if not students_24h.exists() and not students_1h.exists():
+        print(">>> No students found for any reminders <<<")
