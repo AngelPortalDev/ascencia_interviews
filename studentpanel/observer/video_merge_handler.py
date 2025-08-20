@@ -49,18 +49,12 @@ def convert_video(input_path, output_path, target_format):
 
     if target_format == "webm":
         command = (
-            # f'{FFMPEG_PATH} -y -i "{input_path}" '
-            # f'-vf scale=640:480 -r 30 -pix_fmt yuv420p '
-            # f'-c:v libvpx -b:v 1M -quality good -cpu-used 4 '
-            # f'-qmin 10 -qmax 42 '
-            # f'-c:a libopus -b:a 96k '
-            # f'-f webm "{output_path}"'
-            f'{FFMPEG_PATH} -y -fflags +genpts -i "{input_path}" '
-            f'-vf "scale=640:480:force_original_aspect_ratio=decrease,pad=640:480:(ow-iw)/2:(oh-ih)/2" '
-            f'-r 30 -pix_fmt yuv420p '
-            f'-c:v libvpx -crf 10 -b:v 1M -cpu-used 4 -deadline good '
-            f'-c:a libopus -ar 48000 -ac 1 -b:a 96k '
-            f'-avoid_negative_ts make_zero -f webm "{output_path}"'
+            f'{FFMPEG_PATH} -y -i "{input_path}" '
+            f'-vf scale=640:480 -r 30 -pix_fmt yuv420p '
+            f'-c:v libvpx -b:v 1M -quality good -cpu-used 4 '
+            f'-qmin 10 -qmax 42 '
+            f'-c:a libopus -b:a 96k '
+            f'-f webm "{output_path}"'
         )
 
 
