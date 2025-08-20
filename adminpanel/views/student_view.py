@@ -123,6 +123,10 @@ def extend_first_interview_link(zoho_lead_id):
     interview_start_local = localtime(interview_start).astimezone(tz)
     interview_end_local = localtime(interview_end).astimezone(tz)
 
+    interviwelink1.created_at = interview_start_local
+    interviwelink1.expires_at = interview_end_local
+    interviwelink1.save(update_fields=["created_at", "expires_at"])
+
     # Format the datetime
     formatted_start = interview_start_local.strftime("%d %b %Y - %I:%M %p (Europe/Malta)")
     formatted_end = interview_end_local.strftime("%d %b %Y - %I:%M %p (Europe/Malta)")
@@ -307,7 +311,7 @@ def extend_first_interview_link(zoho_lead_id):
                                             <p><b>Program:</b> {student_program}</p>
                                     
 
-                                            <b>Interview Link : </b><a href="{interview_url}" target="_blank">{interview_url}</a>
+                                            <p><b>Interview Link : </b><a href="{interview_url}" target="_blank">{interview_url}</a></p>
 
 
                                             <p>Regards,<br/>Ascencia Malta Team</p>

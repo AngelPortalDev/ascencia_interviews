@@ -335,6 +335,11 @@ def student_created_observer(sender, instance, created, **kwargs):
                                 interview_start_local = localtime(interview_start).astimezone(tz)
                                 interview_end_local = localtime(interview_end).astimezone(tz)
 
+
+                                student_data.created_at = interview_start_local
+                                student_data.expires_at = interview_end_local
+                                student_data.save(update_fields=["created_at", "expires_at"])
+                                
                                 # Format the datetime
                                 formatted_start = interview_start_local.strftime("%d %b %Y - %I:%M %p (Europe/Malta)")
                                 formatted_end = interview_end_local.strftime("%d %b %Y - %I:%M %p (Europe/Malta)")
@@ -510,8 +515,7 @@ def student_created_observer(sender, instance, created, **kwargs):
                                             <p><b>Email:</b> {student_email}</p>
                                             <p><b>Zoho Lead ID:</b> {student_zoho_lead_id}</p>
                                             <p><b>Program:</b> {student_program}</p>
-                                            <b>Interview Link : </b><a href="{interview_url}" target="_blank">{interview_url}</a>
-
+                                            <p><b>Interview Link : </b><a href="{interview_url}" target="_blank">{interview_url}</a></p>
                                         
 
                                             <p>Regards,<br/>Ascencia Malta Team</p>

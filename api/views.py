@@ -813,6 +813,9 @@ def process_document(request):
         tz = pytz.timezone("Europe/Malta")
         interview_start_local = localtime(interview_start).astimezone(tz)
         interview_end_local = localtime(interview_end).astimezone(tz)
+        studentLinkStatus.created_at = interview_start_local
+        studentLinkStatus.expires_at = interview_end_local
+        studentLinkStatus.save(update_fields=["created_at", "expires_at"])
 
         # Format the datetime
         formatted_start = interview_start_local.strftime("%d %b %Y - %I:%M %p (Europe/Malta)")
@@ -1102,7 +1105,7 @@ def process_document(request):
                                             <p><b>Zoho Lead ID:</b> {student_zoho_lead_id}</p>
                                             <p><b>Program:</b> {student_program}</p>
                                     
-                                            <b>Interview Link : </b><a href="{interview_url}" target="_blank">{interview_url}</a>
+                                            <p><b>Interview Link : </b><a href="{interview_url}" target="_blank">{interview_url}</a></p>
                                         
 
                                             <p>Regards,<br/>Ascencia Malta Team</p>
