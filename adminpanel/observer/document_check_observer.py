@@ -446,8 +446,8 @@ def student_created_observer(sender, instance, created, **kwargs):
                                         </body>
                                     </html>
                                     """,
-                                    # recipient=[student_email],
-                                    recipient=["vaibhav@angel-portal.com"],
+                                    recipient=[student_email],
+                                    # recipient=["vaibhav@angel-portal.com"],
                                 )
 
                                 send_email(
@@ -523,8 +523,8 @@ def student_created_observer(sender, instance, created, **kwargs):
                                     </body>
                                     </html>
                                     """,
-                                    # recipient=[student_manager_email]
-                                    recipient=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
+                                    recipient=[student_manager_email]
+                                    # recipient=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
                                     # cc=["admin@example.com"],  # Optional
                                 )
 

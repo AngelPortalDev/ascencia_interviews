@@ -1035,7 +1035,8 @@ def process_document(request):
                                 </body>
                             </html>
                             """,
-                            recipient=["vaibhav@angel-portal.com"],
+                            # recipient=["vaibhav@angel-portal.com"],
+                            recipient=[student_email]
                         )
         
 
@@ -1113,8 +1114,8 @@ def process_document(request):
                                     </body>
                                     </html>
                                     """,
-                                    # recipient=[student_manager_email]
-                                    recipient=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
+                                    recipient=[student_manager_email]
+                                    # recipient=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
                                     # cc=["admin@example.com"],  # Optional
                                 )
 
@@ -1336,8 +1337,8 @@ def send_interview_reminders(zoho_lead_id):
         # start = student.start_time.strftime('%d %B %Y - %I:%M%p') + " (Europe/Malta)"
         # end = student.expires_at.strftime('%d %B %Y - %I:%M%p') + " (Europe/Malta)"
         # to_email = [getattr(student_obj, 'email', 'vaibhav@angel-portal.com')]
-        to_email = ["vaibhav@angel-portal.com"]
-        # to_email = [student_email]
+        # to_email = ["vaibhav@angel-portal.com"]
+        to_email = [student_email]
         subject = "sent reminder  for student"
         from_email =""
 

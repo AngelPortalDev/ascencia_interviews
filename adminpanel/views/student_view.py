@@ -138,7 +138,9 @@ def extend_first_interview_link(zoho_lead_id):
     subject="Interview Invitation for Student Interview",
     message="Please view this email in HTML format.",  # plain text fallback
     from_email=settings.DEFAULT_FROM_EMAIL,
-    recipient_list=["vaibhav@angel-portal.com"],
+    # recipient_list=["vaibhav@angel-portal.com"],
+    recipient_list=[student_email],
+
     html_message=f"""
         <html>
             <head>
@@ -320,7 +322,8 @@ def extend_first_interview_link(zoho_lead_id):
                                     </html>
                                     """,
                                     
-                                    recipient_list=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
+                                    # recipient_list=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
+                                    recipient_list=[student_manager_email],
                                     
                                 )
 
