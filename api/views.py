@@ -1461,7 +1461,8 @@ def send_interview_reminders(zoho_lead_id, reminder_type="24h"):
         subject = f"Interview reminder - Expires in {reminder_display}"
         text_content = f"Reminder: Interview for {student_name} expires in {reminder_display}. Visit: {interview_url}"
 
-        to_email = ["vaibhav@angel-portal.com"]
+        # to_email = ["vaibhav@angel-portal.com"]
+        to_email = [student_email]
 
         # You can customize the HTML based on reminder_type
 

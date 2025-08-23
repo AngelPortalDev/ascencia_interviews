@@ -350,8 +350,8 @@ def students_leads_api(request):
         print("extend_link",extend_link)
 
 
-        if zoho_lead_id != "5204268000112707003":
-            return JsonResponse({"status": False, "error": "Unauthorized Zoho Lead Id"}, status=403)
+        # if zoho_lead_id != "5204268000112707003":
+        #     return JsonResponse({"status": False, "error": "Unauthorized Zoho Lead Id"}, status=403)
         
         
         
