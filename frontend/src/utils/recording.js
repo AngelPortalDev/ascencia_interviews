@@ -43,7 +43,7 @@ if (videoRef.current) {
 // });
 
 const types = [
-  "video/webm;codecs=vp9,opus", // Try first (higher quality)
+  // "video/webm;codecs=vp9,opus", // Try first (higher quality)
   "video/webm;codecs=vp8,opus", // Fallback (broader support)
   "video/webm"                  // Last-resort fallback
 ];
