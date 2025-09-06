@@ -43,15 +43,21 @@ if (videoRef.current) {
 // });
 
 const types = [
-  // "video/webm;codecs=vp9,opus", // Try first (higher quality)
-  "video/webm;codecs=vp8,opus", // Fallback (broader support)
-  "video/webm"                  // Last-resort fallback
+  "video/webm;codecs=vp8,opus", // ✅ Preferred (broad support, safe for backend)
+  "video/webm;codecs=vp9,opus", // fallback if VP8 not available
+  "video/webm"                  // last-resort fallback
 ];
 
-// const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")
-//   ? "video/webm;codecs=vp8,opus"
-//   : "video/webm";
-const mimeType = types.find(type => MediaRecorder.isTypeSupported(type));
+function getSupportedMimeType(types) {
+  for (const type of types) {
+    if (MediaRecorder.isTypeSupported(type)) {
+      return type;
+    }
+  }
+  return "";
+}
+
+const mimeType = getSupportedMimeType(types);
 
 mediaRecorderRef.current = new MediaRecorder(stream, {
   mimeType,

@@ -228,6 +228,27 @@ def interview_video_upload(request):
             return JsonResponse({"error": f"Failed to decode Base64: {str(e)}"}, status=400)
 
         file_path = handle_uploaded_file(file, zoho_lead_id)
+
+        browser_name = request.POST.get("Browser Name")
+        browser_version = request.POST.get("Browser Version")
+
+        log_dir = os.path.join('static', 'uploads', 'interview_videos', zoho_lead_id)
+        os.makedirs(log_dir, exist_ok=True)
+        log_file_path = os.path.join(log_dir, "browser_info.txt")
+
+        if not os.path.exists(log_file_path):  # only create once
+            with open(log_file_path, "w", encoding="utf-8") as f:
+                f.write("===== Browser Info =====\n")
+                f.write(f"Browser Name: {browser_name}\n")
+                f.write(f"Browser Version: {browser_version}\n")
+                f.write(f"Captured At: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write("========================\n")
+
+        return JsonResponse({
+            'message': 'File successfully uploaded',
+            'file_path': file_path,
+            'browser_log': log_file_path if os.path.exists(log_file_path) else None
+        })
         # async_task(studentpanel.views.interview_process.analyze_video(video_path,audio_path,))
 
         return JsonResponse({'message': 'File successfully uploaded', 'file_path': file_path})

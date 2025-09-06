@@ -782,7 +782,8 @@ def process_document(request):
             defaults={
                 "interview_link_count" : encoded_interview_link_send_count,
                 "interview_link": interview_url,
-                "expires_at": now() + timedelta(hours=72),
+                # "expires_at": now() + timedelta(hours=72),
+                "expires_at": now() + timedelta(minutes=15), 
             }
         )
 

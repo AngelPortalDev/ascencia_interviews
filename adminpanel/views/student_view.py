@@ -464,8 +464,21 @@ def students_list(request):
         intake_year = request.GET.get('intake_year', '')
         
         # Apply filters if selected
-        if intake_month and intake_year.isdigit():
-            students = students.filter(intake_month=intake_month, intake_year=int(intake_year))
+        # if intake_month and intake_year.isdigit():
+        #     students = students.filter(intake_month=intake_month, intake_year=int(intake_year))
+
+
+        filter_kwargs = {}
+        if intake_month:
+            filter_kwargs['intake_month'] = intake_month
+        if intake_year.isdigit():
+            filter_kwargs['intake_year'] = int(intake_year)
+
+        # Apply filters
+        students = students.filter(**filter_kwargs)
+        verified_students = verified_students.filter(**filter_kwargs)
+        rejected_students = rejected_students.filter(**filter_kwargs)
+        unverified_students = unverified_students.filter(**filter_kwargs)
 
         # if intake_month:
         #     students = students.filter(intake_month=intake_month)
@@ -476,6 +489,42 @@ def students_list(request):
         def get_student_manager_name(email):
             user = User.objects.filter(email=email).first()
             return f"{user.first_name} {user.last_name}" if user else "N/A"
+        
+        # Get latest Interview Status
+        # -------------------------------
+        def get_interview_status(student):
+            link = StudentInterviewLink.objects.filter(
+                zoho_lead_id=student.zoho_lead_id
+            ).order_by('-id').first()
+
+            interview_record = StudentInterview.objects.filter(
+            zoho_lead_id=student.zoho_lead_id
+            ).first()
+
+            if not link:
+                return "Not Sent"
+            if link.interview_attend:
+                if student.bunny_stream_video_id:
+                    return 'Interview Done <span style="display:inline-block;width:8px;height:8px;background-color:green;border-radius:50%;margin-left:4px;"></span>'
+                else:
+                    return 'Interview Done <span style="display:inline-block;width:8px;height:8px;background-color:red;border-radius:50%;margin-left:4px;"></span>'
+
+                
+            
+            
+            if link.expires_at and link.expires_at < timezone.now():
+                return "Expired"
+             # 🔹 New check: if extended link exists in StudentInterview
+            # if interview_record and interview_record.Extend_interview_link:
+            #     return "Extend Link"
+            
+
+            if link.interview_link_count == "MQ==":
+                return "First Link Active"
+            if link.interview_link_count == "Mg==":
+                return "Second Link Active"
+            
+            return "Pending"
 
         def format_student_data(queryset):
             return [
@@ -492,6 +541,7 @@ def students_list(request):
                     'zoho_lead_id': getattr(student, 'zoho_lead_id', '') or '',
                     'crm_id': getattr(student, 'crm_id', '') or '',
                     'student_manager_name': get_student_manager_name(student.student_manager_email),
+                    'interview_status': get_interview_status(student),   # ✅ Added field
                 }
                 for student in queryset
             ]
@@ -503,6 +553,7 @@ def students_list(request):
             {"name": "Dashboard", "url": reverse('admindashboard')},
             {"name": "Students", "url": ""},
         ]
+        active_tab = request.GET.get('tab', 'all')  # default to 'all'
 
         context = {
             'all_students': format_student_data(students),
@@ -515,6 +566,7 @@ def students_list(request):
             "selected_intake_year": intake_year,
             "show_breadcrumb": True,
             "breadcrumb_items": breadcrumb_items,
+            "active_tab": active_tab,
         }
 
         return render(request, 'student/student.html', context)
