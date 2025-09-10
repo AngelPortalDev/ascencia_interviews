@@ -23,6 +23,14 @@ import whisper
 import warnings
 from django.utils.html import escape
 import re
+from django_q.tasks import async_task, schedule
+from django.utils.timezone import now, timedelta
+
+
+from django_q.models import Schedule
+
+
+logger = logging.getLogger(__name__)
 
 def get_uploads_folder():
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
@@ -277,10 +285,20 @@ def is_video_valid(video_path):
 
 def build_qa_blocks_with_paths(questions, converted_files):
     qa_blocks = []
-    for i in range(0, len(converted_files), 2):
-        q_file = converted_files[i]
-        a_file = converted_files[i + 1]
-        question_text = questions[i // 2].question
+    total_pairs = len(converted_files) // 2  # floor division to avoid IndexError
+    for i in range(total_pairs):
+        q_file = converted_files[i * 2]
+        a_file = converted_files[i * 2 + 1]
+
+        # Safety check: skip if missing or 0-byte
+        if not os.path.exists(a_file) or os.path.getsize(a_file) == 0:
+            logging.warning("Skipping Q&A block: missing answer file: %s", a_file)
+            continue
+        if not os.path.exists(q_file) or os.path.getsize(q_file) == 0:
+            logging.warning("Skipping Q&A block: missing question file: %s", q_file)
+            continue
+
+        question_text = questions[i].question if i < len(questions) else "[Unknown Question]"
         qa_blocks.append({
             "question": question_text,
             "q_file": q_file,
@@ -290,6 +308,7 @@ def build_qa_blocks_with_paths(questions, converted_files):
 
 
 def merge_videos(zoho_lead_id,interview_link_count=None):
+    logger.info("[MERGE TRIGGERED] zoho_lead_id=%s", zoho_lead_id)
     uploads_folder = os.path.join(get_uploads_folder(), zoho_lead_id)
     logging.info("uploads_folder: %s", uploads_folder)
 
@@ -363,53 +382,131 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
         return f"Error: No video files found in {uploads_folder}."
     target_format = "webm"
 
+ 
+
+    # converted_files = []
+    # list_file_path = os.path.join(uploads_folder, "video_list.txt").replace("\\", "/")
+
+    # output_filename = "merged_video.webm"
+
+
+    # output_path = os.path.join(uploads_folder, output_filename).replace("\\", "/")
+    # # FFMPEG_PATH = '/home/YOUR_CPANEL_USERNAME/ffmpeg/ffmpeg'
+    # FFMPEG_PATH = 'C:/ffmpeg/bin/ffmpeg.exe'
+    # # FFMPEG_PATH = '/usr/bin/ffmpeg'
+    # logging.info("uploads_folder: %s", uploads_folder)
+    # logging.info("output_filename: %s", output_filename)
+    # logging.info("output_path check: %s", output_path)
+
+    # for video in video_files:
+    #     logging.info("video_list: %s", video)
+    #     # input_path = os.path.join(uploads_folder, video).replace("\\", "/")
+    #     input_path = video 
+    #     logging.info("input_path: %s", input_path)
+    #     output_path_converted = os.path.join(uploads_folder, f"{os.path.splitext(video)[0]}_converted.{target_format}").replace("\\", "/")
+    #     logging.info("output_path_converted: %s", output_path_converted)
+    #     # if not video.endswith(f".{target_format}"):
+    #     #     # logging.info("target_format path video: %s", target_format)
+    #     #     # convert_video(input_path, output_path_converted, target_format)
+    #     #     # logging.info("ends with : %s", "end with")
+
+    #     #     # converted_files.append(output_path_converted)
+    #     #     # logging.info("target_format path video input_path output: %s", output_path_converted)
+    #     #     ext = os.path.splitext(video)[1][1:].lower()
+    #     #     if ext != target_format:
+    #     #         # Make filename unique to avoid overwrite
+    #     #         unique_id = uuid.uuid4().hex[:6]
+    #     #         converted_name = f"{os.path.splitext(video)[0]}_{unique_id}_converted.{target_format}"
+    #     #         converted_path = os.path.join(uploads_folder, converted_name).replace("\\", "/")
+    #     #         logging.info("Converting: %s -> %s", input_path, converted_path)
+    #     #         convert_video(input_path, converted_path, target_format)
+    #     #         converted_files.append(converted_path)
+    #     #     else:
+    #     #         converted_files.append(input_path)
+
+    #     # else:
+    #     #     logging.info("target_format path video input_path: %s", input_path)
+
+    #     #     converted_files.append(input_path)
+
+    #             # Always normalize, regardless of extension
+    #     try:
+    #         video_codec, audio_codec = get_codecs(input_path)
+    #         logging.info("Codecs - Video: %s, Audio: %s", video_codec, audio_codec)
+    #     except Exception as e:
+    #         logging.warning("Could not determine codecs. Forcing conversion. Error: %s", e)
+    #         video_codec, audio_codec = None, None
+
+    #     needs_conversion = True
+    #     if (
+    #             target_format == "webm" and
+    #             video_codec == "vp8" and
+    #             audio_codec == "opus" and
+    #             is_video_valid(input_path)
+    #         ):
+    #             needs_conversion = False
+    #     elif target_format == "mp4" and video_codec == "h264" and audio_codec in ["aac", "mp3"]:
+    #         needs_conversion = False
+    #     elif target_format == "mov" and video_codec == "prores":
+    #         needs_conversion = False
+        
+    #     logging.info(f"Checking: {input_path} | Video Codec: {video_codec} | Audio Codec: {audio_codec}")
+
+    #     if needs_conversion:
+    #         unique_id = uuid.uuid4().hex[:6]
+    #         converted_name = f"{os.path.splitext(video)[0]}_{unique_id}_converted.{target_format}"
+    #         converted_path = os.path.join(uploads_folder, converted_name).replace("\\", "/")
+    #         logging.info("Converting: %s -> %s", input_path, converted_path)
+    #         convert_video(input_path, converted_path, target_format)
+    #         converted_files.append(converted_path)
+    #     else:
+    #         logging.info("No conversion needed for: %s", input_path)
+    #         converted_files.append(input_path)
+
+    # with open(list_file_path, "w") as f:
+    #     for video_path in converted_files:
+    #         if os.path.exists(video_path):  # Only include if file exists
+    #             f.write(f"file '{video_path}'\n")
+    #         else:
+    #             logging.warning("File does not exist, skipping in list: %s", video_path)
+
+
+    # with open(list_file_path, "r") as debug_file:
+    #     logging.info("video_list.txt contents:\n%s", debug_file.read())
+
 
     converted_files = []
     list_file_path = os.path.join(uploads_folder, "video_list.txt").replace("\\", "/")
-
     output_filename = "merged_video.webm"
-
-
     output_path = os.path.join(uploads_folder, output_filename).replace("\\", "/")
+
     # FFMPEG_PATH = '/home/YOUR_CPANEL_USERNAME/ffmpeg/ffmpeg'
-    # FFMPEG_PATH = 'C:/ffmpeg/bin/ffmpeg.exe'
-    FFMPEG_PATH = '/usr/bin/ffmpeg'
+    FFMPEG_PATH = 'C:/ffmpeg/bin/ffmpeg.exe'
+    # FFMPEG_PATH = '/usr/bin/ffmpeg'
+
     logging.info("uploads_folder: %s", uploads_folder)
     logging.info("output_filename: %s", output_filename)
     logging.info("output_path check: %s", output_path)
 
     for video in video_files:
-        logging.info("video_list: %s", video)
-        # input_path = os.path.join(uploads_folder, video).replace("\\", "/")
-        input_path = video 
-        logging.info("input_path: %s", input_path)
-        output_path_converted = os.path.join(uploads_folder, f"{os.path.splitext(video)[0]}_converted.{target_format}").replace("\\", "/")
-        logging.info("output_path_converted: %s", output_path_converted)
-        # if not video.endswith(f".{target_format}"):
-        #     # logging.info("target_format path video: %s", target_format)
-        #     # convert_video(input_path, output_path_converted, target_format)
-        #     # logging.info("ends with : %s", "end with")
+        input_path = video
+        logging.info("Processing video: %s", input_path)
 
-        #     # converted_files.append(output_path_converted)
-        #     # logging.info("target_format path video input_path output: %s", output_path_converted)
-        #     ext = os.path.splitext(video)[1][1:].lower()
-        #     if ext != target_format:
-        #         # Make filename unique to avoid overwrite
-        #         unique_id = uuid.uuid4().hex[:6]
-        #         converted_name = f"{os.path.splitext(video)[0]}_{unique_id}_converted.{target_format}"
-        #         converted_path = os.path.join(uploads_folder, converted_name).replace("\\", "/")
-        #         logging.info("Converting: %s -> %s", input_path, converted_path)
-        #         convert_video(input_path, converted_path, target_format)
-        #         converted_files.append(converted_path)
-        #     else:
-        #         converted_files.append(input_path)
+        # ✅ 1. Skip missing or 0-byte files
+        if not os.path.exists(input_path):
+            logging.warning("Skipping missing file: %s", input_path)
+            continue
 
-        # else:
-        #     logging.info("target_format path video input_path: %s", input_path)
+        size = os.path.getsize(input_path)
+        if size == 0:
+            logging.warning("Skipping 0-byte file: %s", input_path)
+            try:
+                os.remove(input_path)  # optional cleanup
+            except Exception as e:
+                logging.warning("Failed to remove 0-byte file %s: %s", input_path, e)
+            continue
 
-        #     converted_files.append(input_path)
-
-                # Always normalize, regardless of extension
+        # ✅ 2. Check codecs to decide if conversion is required
         try:
             video_codec, audio_codec = get_codecs(input_path)
             logging.info("Codecs - Video: %s, Audio: %s", video_codec, audio_codec)
@@ -419,37 +516,42 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
 
         needs_conversion = True
         if (
-                target_format == "webm" and
-                video_codec == "vp8" and
-                audio_codec == "opus" and
-                is_video_valid(input_path)
-            ):
-                needs_conversion = False
+            target_format == "webm" and
+            video_codec == "vp8" and
+            audio_codec == "opus" and
+            is_video_valid(input_path)
+        ):
+            needs_conversion = False
         elif target_format == "mp4" and video_codec == "h264" and audio_codec in ["aac", "mp3"]:
             needs_conversion = False
         elif target_format == "mov" and video_codec == "prores":
             needs_conversion = False
-        
-        logging.info(f"Checking: {input_path} | Video Codec: {video_codec} | Audio Codec: {audio_codec}")
+
+        # ✅ 3. Build deterministic converted file path (no UUIDs)
+        converted_path = os.path.splitext(input_path)[0] + "_converted." + target_format
 
         if needs_conversion:
-            unique_id = uuid.uuid4().hex[:6]
-            converted_name = f"{os.path.splitext(video)[0]}_{unique_id}_converted.{target_format}"
-            converted_path = os.path.join(uploads_folder, converted_name).replace("\\", "/")
-            logging.info("Converting: %s -> %s", input_path, converted_path)
-            convert_video(input_path, converted_path, target_format)
+            if os.path.exists(converted_path) and os.path.getsize(converted_path) > 0:
+                logging.info("Already converted, reusing: %s", converted_path)
+            else:
+                logging.info("Converting: %s -> %s", input_path, converted_path)
+                try:
+                    convert_video(input_path, converted_path, target_format)
+                except subprocess.CalledProcessError as e:
+                    logging.error("Conversion failed for %s: %s", input_path, e)
+                    continue
             converted_files.append(converted_path)
         else:
             logging.info("No conversion needed for: %s", input_path)
             converted_files.append(input_path)
 
+    # ✅ 4. Write only valid, non-empty files to list_file_path
     with open(list_file_path, "w") as f:
         for video_path in converted_files:
-            if os.path.exists(video_path):  # Only include if file exists
+            if os.path.exists(video_path) and os.path.getsize(video_path) > 0:
                 f.write(f"file '{video_path}'\n")
             else:
-                logging.warning("File does not exist, skipping in list: %s", video_path)
-
+                logging.warning("Skipping empty/missing file in final list: %s", video_path)
 
     with open(list_file_path, "r") as debug_file:
         logging.info("video_list.txt contents:\n%s", debug_file.read())
@@ -581,8 +683,8 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
 
 
         video_path = os.path.join(
-            "/home/ascenciaintervie/public_html/static/uploads/interview_videos",
-            # "/home/interview/public_html/static/uploads/interview_videos",
+            # "/home/ascenciaintervie/public_html/static/uploads/interview_videos",
+            "/home/interview/public_html/static/uploads/interview_videos",
             # "C:/xampp/htdocs/vaibhav/ascencia_interviews/static/uploads/interview_videos",
             zoho_lead_id,
             "merged_video.webm"
@@ -607,8 +709,8 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
 
 
         subject = "Interview Process Completed"
-        recipient = [student_manager_email]
-        # recipient = ["vaibhav@angel-portal.com"]
+        # recipient = [student_manager_email]
+        recipient = ["vaibhav@angel-portal.com"]
         from_email = ''
         # url = video_path  # or your public URL if available
         url = f"https://video.bunnycdn.com/play/{settings.BUNNY_STREAM_LIBRARY_ID}/{video_id}"
@@ -796,8 +898,8 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
                 </body>
             </html>
             """,
-            # recipient=["vaibhav@angel-portal.com"]
-            recipient=[student_email]
+            recipient=["vaibhav@angel-portal.com"]
+            # recipient=[student_email]
         )
         logging.info("Deleted %s StudentInterviewAnswers entries for zoho_lead_id: %s", deleted_count, zoho_lead_id)
 
@@ -811,12 +913,64 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
 
 @receiver(post_save, sender=StudentInterviewAnswers)
 def handle_student_interview_answer_save(sender, instance, created, **kwargs):
-    if created:
-        # Run your custom logic here when a new StudentInterviewAnswer is created
-        print(f'New answer created: {instance}')
-        zoho_lead_id = instance.zoho_lead_id
-        last_6_answers = sender.objects.filter(zoho_lead_id=zoho_lead_id).order_by('-created_at')[:6]
-        print(r'last_6_answers_count:', last_6_answers)
+    logger.info("post_save fired for %s created=%s", instance.zoho_lead_id, created)
+    if not created:
+        return
+
+    zoho_lead_id = instance.zoho_lead_id
+    
+
+     # Fetch interview_link_count from DB
+    try:
+        interview_link_obj = StudentInterviewLink.objects.get(zoho_lead_id=zoho_lead_id)
+        interview_link_count = interview_link_obj.interview_link_count
+    except StudentInterviewLink.DoesNotExist:
+        logger.warning("No StudentInterviewLink found for zoho_lead_id=%s", zoho_lead_id)
+        interview_link_count = None
+
+    # Optional: only schedule when at least 1 answer exists (or change to == 6 if you need exactly 6)
+    # answers_count = sender.objects.filter(zoho_lead_id=zoho_lead_id).count()
+    # if answers_count < 1:
+    #     logger.info("Not enough answers for lead %s yet. Skipping scheduling.", zoho_lead_id)
+    #     return
+
+    # ALWAYS compute from now(), not created_at
+    run_time = now() + timedelta(minutes=30)
+
+    # De-duplicate: ensure only ONE pending schedule per lead
+    schedule_name = f"merge_videos:{zoho_lead_id}"
+    Schedule.objects.filter(name=schedule_name).delete()
+
+    print("helloo")
+    schedule(
+        "studentpanel.observer.video_merge_handler.merge_videos",  # dotted path
+        zoho_lead_id,                    # positional arg to the task
+        interview_link_count=interview_link_count,  # ✅ keyword argument  # pass as keyword argument
+        schedule_type="O",                # One-time
+        next_run=run_time,                # exact run time
+        name=schedule_name,               # lets us de-duplicate
+    )
+
+    logger.info("Scheduled merge_videos for lead=%s at %s", zoho_lead_id, run_time)
+
+# @receiver(post_save, sender=StudentInterviewAnswers)
+# def handle_student_interview_answer_save(sender, instance, created, **kwargs):
+#     if created:
+#         # Run your custom logic here when a new StudentInterviewAnswer is created
+#         print(f'New answer created: {instance}')
+#         zoho_lead_id = instance.zoho_lead_id
+#         last_6_answers = sender.objects.filter(zoho_lead_id=zoho_lead_id).order_by('-created_at')[:6]
+#         print(r'last_6_answers_count:', last_6_answers)
+#         # Schedule merge 10 minutes after created_at
+#         run_time = instance.created_at + timedelta(minutes=10)
+#         schedule(
+#             "studentpanel.observer.video_merge_handler.merge_videos",
+#             zoho_lead_id,
+#             schedule_type="O",  # One-time task
+#             next_run=run_time
+#         )
+
+#         print(f"Scheduled merge for Zoho Lead {zoho_lead_id} at {run_time}")
     #     if last_6_answers.count() == 6:
     #         time.sleep(10)
     #         print(r'last_6_answers_count text:', last_6_answers.count())

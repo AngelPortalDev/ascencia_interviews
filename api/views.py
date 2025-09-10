@@ -782,8 +782,7 @@ def process_document(request):
             defaults={
                 "interview_link_count" : encoded_interview_link_send_count,
                 "interview_link": interview_url,
-                # "expires_at": now() + timedelta(hours=72),
-                "expires_at": now() + timedelta(minutes=15), 
+                "expires_at": now() + timedelta(hours=72),
             }
         )
 
@@ -1036,8 +1035,8 @@ def process_document(request):
                                 </body>
                             </html>
                             """,
-                            # recipient=["vaibhav@angel-portal.com"],
-                            recipient=[student_email]
+                            recipient=["vaibhav@angel-portal.com"],
+                            # recipient=[student_email]
                         )
         
 
@@ -1115,8 +1114,8 @@ def process_document(request):
                                     </body>
                                     </html>
                                     """,
-                                    recipient=[student_manager_email]
-                                    # recipient=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
+                                    # recipient=[student_manager_email]
+                                    recipient=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
                                     # cc=["admin@example.com"],  # Optional
                                 )
 

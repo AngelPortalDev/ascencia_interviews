@@ -232,7 +232,7 @@ def interview_video_upload(request):
         browser_name = request.POST.get("Browser Name")
         browser_version = request.POST.get("Browser Version")
 
-        log_dir = os.path.join('static', 'uploads', 'interview_videos', zoho_lead_id)
+        log_dir = os.path.join('static', 'uploads', 'profile_photos', zoho_lead_id)
         os.makedirs(log_dir, exist_ok=True)
         log_file_path = os.path.join(log_dir, "browser_info.txt")
 
