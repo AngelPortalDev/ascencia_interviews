@@ -1035,8 +1035,8 @@ def process_document(request):
                                 </body>
                             </html>
                             """,
-                            recipient=["vaibhav@angel-portal.com"],
-                            # recipient=[student_email]
+                            # recipient=["vaibhav@angel-portal.com"],
+                            recipient=[student_email]
                         )
         
 
@@ -1114,8 +1114,8 @@ def process_document(request):
                                     </body>
                                     </html>
                                     """,
-                                    # recipient=[student_manager_email]
-                                    recipient=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
+                                    recipient=[student_manager_email]
+                                    # recipient=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
                                     # cc=["admin@example.com"],  # Optional
                                 )
 
