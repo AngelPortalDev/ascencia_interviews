@@ -42,7 +42,7 @@
             </th>
             <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc w-auto"
                 aria-label="Verification Status" tabindex="0" style=" white-space: normal !important; ">
-                <span class="dt-column-title" role="button">Verification Status</span><span class="dt-column-order"></span>
+                <span class="dt-column-title" role="button">Interview Status</span><span class="dt-column-order"></span>
             </th>
             <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc w-auto"
                 aria-label="Intake Year: Activate to sort" tabindex="0"  style=" white-space: normal !important; ">
@@ -72,11 +72,12 @@
             <td>{{ student.program }}</td>
             {% comment %} <td>{{ student.edu_doc_verification_status }}</td> {% endcomment %}
             <td>
-                {% if student.edu_doc_verification_status == 'approved' %}
+                {% comment %} {% if student.edu_doc_verification_status == 'approved' %}
                   Verified
                 {% else %}
                     {{ student.edu_doc_verification_status|title }}
-                {% endif %}
+                {% endif %} {% endcomment %}
+                {{ student.interview_status|safe }}
             </td>
             <td>{{ student.intake_year }}</td>
             <td>{{ student.intake_month }}</td>

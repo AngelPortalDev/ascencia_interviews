@@ -34,9 +34,8 @@ function App() {
   //   localStorage.setItem("hasAgreed", hasAgreed);
   // }, [hasAgreed]);
 
- useEffect(() => {
+useEffect(() => {
   const currentPath = window.location.pathname;
-
   if (currentPath === "/frontend/notSupported") return;
 
   const ua = navigator.userAgent;
@@ -64,14 +63,32 @@ function App() {
     !isFirefoxIOS &&
     !isEdgeIOS &&
     /Safari/.test(ua) &&
-    !/GSA/.test(ua); // Optional: Google Search App
+    !/GSA/.test(ua);
 
-  if (isIE || isOldAndroidBrowser || isBadBrowser || isSafariOnIOS) {
-    alert("This browser is not supported. Please use Chrome, Firefox, or another modern browser.");
-    // window.location.href = "/frontend/notSupported";
+  // ✅ Correct check: returns TRUE if browser does NOT support MediaRecorder properly
+  const isMediaRecorderUnsupported =
+    !window.MediaRecorder ||
+    typeof MediaRecorder.isTypeSupported !== "function" ||
+    !MediaRecorder.isTypeSupported("video/webm;codecs=vp8");
+
+  // Optionally: Chrome version check
+  const rawChrome = ua.match(/Chrom(e|ium)\/([0-9]+)\./);
+  const chromeVersion = rawChrome ? parseInt(rawChrome[2], 10) : null;
+  const isOldChrome = chromeVersion && chromeVersion < 70;
+
+  if (
+    isIE ||
+    isOldAndroidBrowser ||
+    isBadBrowser ||
+    isSafariOnIOS ||
+    isMediaRecorderUnsupported ||
+    isOldChrome
+  ) {
+    alert("This browser is not supported. Please use the latest version of Chrome or Firefox.");
     window.location.replace("/frontend/notSupported");
   }
 }, []);
+
   
 
   return (

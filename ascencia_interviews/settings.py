@@ -259,6 +259,8 @@ Q_CLUSTER = {
     "queue_limit": 200,  # Increased queue size to handle more tasks
     "bulk": 10,  # Processes 3 tasks at a time for balanced load
     "orm": "default",  # Use Django ORM for task management
+    "scheduler": True,    
+    "catch_up": False,      
     "schedule": [
         {
             "func": "api.views.schedule_reminders_for_all",

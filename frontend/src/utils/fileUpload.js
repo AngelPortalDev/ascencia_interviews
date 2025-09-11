@@ -4,14 +4,44 @@ import axios from "axios";
 
 // Uplaod File
 
+const getBrowserInfo = () => {
+  const userAgent = navigator.userAgent;
+  let browserName = "Unknown";
+  let fullVersion = "Unknown";
+
+  if (userAgent.includes("Chrome") && !userAgent.includes("Edg") && !userAgent.includes("OPR")) {
+    browserName = "Chrome";
+    fullVersion = userAgent.match(/Chrome\/([\d.]+)/)?.[1] || "Unknown";
+  } else if (userAgent.includes("Firefox")) {
+    browserName = "Firefox";
+    fullVersion = userAgent.match(/Firefox\/([\d.]+)/)?.[1] || "Unknown";
+  } else if (userAgent.includes("Safari") && !userAgent.includes("Chrome")) {
+    browserName = "Safari";
+    fullVersion = userAgent.match(/Version\/([\d.]+)/)?.[1] || "Unknown";
+  } else if (userAgent.includes("Edg")) {
+    browserName = "Edge";
+    fullVersion = userAgent.match(/Edg\/([\d.]+)/)?.[1] || "Unknown";
+  } else if (userAgent.includes("OPR") || userAgent.includes("Opera")) {
+    browserName = "Opera";
+    fullVersion = userAgent.match(/(OPR|Opera)\/([\d.]+)/)?.[2] || "Unknown";
+  }
+
+  return {
+    browserName,
+    fullVersion,
+    userAgent
+  };
+};
 
 let isUploading = false;
 
 export const uploadFile = async (blob, filename,zoho_lead_id,question_id,last_question_id,encoded_interview_link_send_count) => {
-  console.log("last_question_id test upload file" ,last_question_id);
+  console.log("encoded_interview_link_send_count file uplaod" ,encoded_interview_link_send_count);
   if (isUploading) return;  //  Duplicate Execution
   isUploading = true;
 
+  const browserInfo = getBrowserInfo();
+  console.log("Browser Info:", browserInfo);
 
   const isInterviewSubmitted = question_id === last_question_id;
   console.log('question_id',question_id);
@@ -25,6 +55,9 @@ export const uploadFile = async (blob, filename,zoho_lead_id,question_id,last_qu
   formData.append("last_question_id",last_question_id);
   formData.append("is_interview_submitted", isInterviewSubmitted);
   console.log("isInterviewSubmitted",isInterviewSubmitted);
+  
+  formData.append("Browser Name",browserInfo.browserName)
+  formData.append("Browser Version",browserInfo.fullVersion)
   
   try {
     const response = await axios.post(

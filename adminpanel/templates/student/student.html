@@ -59,6 +59,7 @@
                       <a href="{% url 'students_list' %}" class="btn btn-secondary">Clear</a>
                   </div>
               </div>
+               <input type="hidden" name="tab" id="active_tab_input" value="{{ active_tab }}">
             </form>
             
 
@@ -76,7 +77,7 @@
                     <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected" type="button" role="tab" aria-controls="rejected" aria-selected="false">Pending Interviews</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="unverified-tab" data-bs-toggle="tab" data-bs-target="#unverified" type="button" role="tab" aria-controls="unverified" aria-selected="true">Interviews Not Given</button>
+                    <button class="nav-link" id="unverified-tab" data-bs-toggle="tab" data-bs-target="#unverified" type="button" role="tab" aria-controls="unverified" aria-selected="true">Expired Link</button>
                 </li>
               </ul>
               <hr>
@@ -129,17 +130,23 @@
     $('#rejected_students_table').DataTable();
     $('#unverified_students_table').DataTable();
 
-    // --- Read ?tab= from URL and activate correct tab ---
-    const urlParams = new URLSearchParams(window.location.search);
-    const tabParam = urlParams.get("tab");
 
-    if (tabParam) {
-      const tabTriggerEl = document.querySelector(`#${tabParam}-tab`);
-      if (tabTriggerEl) {
-        new bootstrap.Tab(tabTriggerEl).show();  // Bootstrap 5 method
-      }
+    const tabButtons = document.querySelectorAll('#studentTabs button[data-bs-toggle="tab"]');
+    const activeTabInput = document.getElementById('active_tab_input');
+    tabButtons.forEach(btn => {
+        btn.addEventListener('shown.bs.tab', function (event) {
+            activeTabInput.value = event.target.id.replace('-tab', '');
+        });
+    });
+
+    // On page load, check if ?tab= exists and activate that tab
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get("tab") || "all"; // default to all
+    const tabTriggerEl = document.querySelector(`#${tabParam}-tab`);
+    if (tabTriggerEl) {
+        new bootstrap.Tab(tabTriggerEl).show();  // Activate correct tab
     }
-  });
+});
       
     </script>
 

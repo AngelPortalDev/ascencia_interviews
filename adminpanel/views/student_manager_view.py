@@ -6,6 +6,11 @@ from django.http import HttpResponse
 from studentpanel.models.interview_process_model import Students
 from django.contrib.auth.hashers import make_password
 import re
+from django.utils.timezone import now
+from django.db.models import OuterRef, Subquery, Exists
+
+from studentpanel.models.interview_link import StudentInterviewLink
+
 
 User = get_user_model()
 
@@ -256,16 +261,98 @@ def student_list_by_manager(request, id):
 
     # Get the Student Manager
     student_manager = get_object_or_404(User, id=manager_id)
-
+    manager_email = student_manager.email
     # Fetch students where student_manager_email matches the Student Manager's email
     students = Students.objects.filter(student_manager_email=student_manager.email)
-    verified_students = students.filter(edu_doc_verification_status="approved")
-    rejected_students = students.filter(edu_doc_verification_status="rejected")
-    unverified_students = students.filter(edu_doc_verification_status="Unverified")
+    # verified_students = students.filter(edu_doc_verification_status="approved")
+
+    # Subqueries for latest interviews
+    latest_link_subquery = StudentInterviewLink.objects.filter(
+        zoho_lead_id=OuterRef('zoho_lead_id'),
+        interview_attend=True
+    ).order_by('-id').values('id')[:1]
+
+    verified_students = Students.objects.annotate(
+        latest_interview_id=Subquery(latest_link_subquery)
+    ).filter(
+        latest_interview_id__isnull=False,
+        deleted_at__isnull=True,
+        student_manager_email=manager_email
+    ).order_by('-latest_interview_id')
+
+    # rejected_students = students.filter(edu_doc_verification_status="rejected")
+     # Rejected students (pending but valid link)
+    rejected_latest_link_subquery = StudentInterviewLink.objects.filter(
+        zoho_lead_id=OuterRef('zoho_lead_id')
+    ).order_by('-id').values('id')[:1]
+
+    rejected_students = Students.objects.annotate(
+        has_valid_link=Exists(
+            StudentInterviewLink.objects.filter(
+                zoho_lead_id=OuterRef('zoho_lead_id'),
+                expires_at__gt=now(),
+                interview_attend=False
+            )
+        ),
+        latest_interview_id=Subquery(rejected_latest_link_subquery)
+    ).filter(
+        has_valid_link=True,
+        deleted_at__isnull=True,
+        student_manager_email=manager_email
+    ).order_by('-latest_interview_id')
+
+    
+    # unverified_students = students.filter(edu_doc_verification_status="Unverified")
+
+    # Unverified students (expired and not attended)
+    unverified_latest_link_subquery = StudentInterviewLink.objects.filter(
+        zoho_lead_id=OuterRef('zoho_lead_id')
+    ).order_by('-id').values('id')[:1]
+
+    unverified_students = Students.objects.annotate(
+        has_expired_link_without_attendance=Exists(
+            StudentInterviewLink.objects.filter(
+                zoho_lead_id=OuterRef('zoho_lead_id'),
+                expires_at__lt=now(),
+                interview_attend=False
+            )
+        ),
+        latest_interview_id=Subquery(unverified_latest_link_subquery)
+    ).filter(
+        has_expired_link_without_attendance=True,
+        deleted_at__isnull=True,
+        student_manager_email=manager_email
+    ).order_by('-latest_interview_id')
+
     
     def get_student_manager_name(email):
         user = User.objects.filter(email=email).first()
         return f"{user.first_name} {user.last_name}" if user else "N/A"
+        
+
+    def get_interview_status(student):
+        link = StudentInterviewLink.objects.filter(
+            zoho_lead_id=student.zoho_lead_id
+        ).order_by('-id').first()
+
+        if not link:
+            return "Not Sent"
+
+        if link.interview_attend:
+            if student.bunny_stream_video_id:
+                return 'Interview Done <span style="display:inline-block;width:8px;height:8px;background-color:green;border-radius:50%;margin-left:4px;"></span>'
+            else:
+                return 'Interview Done <span style="display:inline-block;width:8px;height:8px;background-color:red;border-radius:50%;margin-left:4px;"></span>'
+
+        if link.expires_at and link.expires_at < timezone.now():
+            return "Expired"
+
+        if link.interview_link_count == "MQ==":
+            return "First Link Active"
+        if link.interview_link_count == "Mg==":
+            return "Second Link Active"
+
+        return "Pending"
 
     def format_student_data(queryset):
         return [
@@ -282,6 +369,7 @@ def student_list_by_manager(request, id):
                 'zoho_lead_id': getattr(student, 'zoho_lead_id', '') or '',
                 'crm_id': getattr(student, 'crm_id', '') or '',
                 'student_manager_name': get_student_manager_name(student.student_manager_email),
+                'interview_status': get_interview_status(student),  # ✅ Added
             }
             for student in queryset
         ]
