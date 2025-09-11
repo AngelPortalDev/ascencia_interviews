@@ -34,44 +34,143 @@ function App() {
   //   localStorage.setItem("hasAgreed", hasAgreed);
   // }, [hasAgreed]);
 
- useEffect(() => {
-  const currentPath = window.location.pathname;
+  const MIN_VERSIONS = {
+    Chrome: 81,
+    Edge: 79,
+    Safari: 14.1,
+    Firefox: 25,
+    Opera: 36,
+    'Chrome for Android': 139,
+    'Samsung Internet': 5,
+    'Opera Mini': null, 
+    'Opera Mobile': 80,
+    'UC Browser for Android': 15.5,
+    'Android Browser': 139,
+    'Firefox for Android': 142,
+    QQ: null, 
+    Baidu: null,
+    KaiOS: 3.1,
+};
 
-  if (currentPath === "/frontend/notSupported") return;
 
+function getBrowserInfo() {
   const ua = navigator.userAgent;
 
-  const isIE = ua.indexOf("MSIE ") > -1 || ua.indexOf("Trident/") > -1;
+  if (/Chrome\/(\d+)/.test(ua) && !/Edg|OPR|SamsungBrowser/.test(ua)) {
+    return { name: "Chrome", version: parseInt(ua.match(/Chrome\/(\d+)/)[1], 10) };
+  }
+  if (/Edg\/(\d+)/.test(ua)) {
+    return { name: "Edge", version: parseInt(ua.match(/Edg\/(\d+)/)[1], 10) };
+  }
+  if (/Firefox\/(\d+)/.test(ua)) {
+    return { name: "Firefox", version: parseInt(ua.match(/Firefox\/(\d+)/)[1], 10) };
+  }
+  if (/Safari\/(\d+)/.test(ua) && /Version\/(\d+(\.\d+)?)/.test(ua) && !/Chrome/.test(ua)) {
+    // Safari version is in Version/x.x format
+    return { name: "Safari", version: parseFloat(ua.match(/Version\/(\d+(\.\d+)?)/)[1]) };
+  }
+  if (/OPR\/(\d+)/.test(ua)) {
+    return { name: "Opera", version: parseInt(ua.match(/OPR\/(\d+)/)[1], 10) };
+  }
+  if (/SamsungBrowser\/(\d+)/.test(ua)) {
+    return { name: "Samsung Internet", version: parseInt(ua.match(/SamsungBrowser\/(\d+)/)[1], 10) };
+  }
+  // Add more if needed, or default:
+  return { name: "Unknown", version: 0 };
+}
 
-  const isOldAndroidBrowser =
-    (ua.includes("Android") && ua.includes("AppleWebKit") && !ua.includes("Chrome")) ||
-    (ua.toLowerCase().includes("samsungbrowser") && !ua.includes("Chrome"));
+useEffect(() => {
+  const currentPath = window.location.pathname;
+  if (currentPath === "/frontend/notSupported") return;
 
-  const isBadBrowser =
-    ua.includes("SamsungBrowser") ||
-    ua.includes("UCBrowser") ||
-    ua.includes("HeyTapBrowser");
+  // MediaRecorder support basic check
+  const isMediaRecorderUnsupported =
+    !window.MediaRecorder ||
+    typeof MediaRecorder.isTypeSupported !== "function" ||
+    !MediaRecorder.isTypeSupported("video/webm;codecs=vp8");
 
-  const isiOS = /iP(hone|ad|od)/.test(ua);
+  if (isMediaRecorderUnsupported) {
+    alert("This browser does not support MediaRecorder.");
+    window.location.replace("/frontend/notSupported");
+    return;
+  }
 
-  const isChromeIOS = /CriOS/.test(ua);
-  const isFirefoxIOS = /FxiOS/.test(ua);
-  const isEdgeIOS = /EdgiOS/.test(ua);
+  const { name, version } = getBrowserInfo();
 
-  const isSafariOnIOS =
-    isiOS &&
-    !isChromeIOS &&
-    !isFirefoxIOS &&
-    !isEdgeIOS &&
-    /Safari/.test(ua) &&
-    !/GSA/.test(ua); // Optional: Google Search App
+  // Compare with minimum supported versions
+  const minVersion = MIN_VERSIONS[name];
 
-  if (isIE || isOldAndroidBrowser || isBadBrowser || isSafariOnIOS) {
-    alert("This browser is not supported. Please use Chrome, Firefox, or another modern browser.");
-    // window.location.href = "/frontend/notSupported";
+  if (minVersion === null || minVersion === undefined) {
+    // Browser not recognized or no support data => show warning
+    alert("This browser is not supported. Please use a supported browser.");
+    window.location.replace("/frontend/notSupported");
+    return;
+  }
+
+  if (version < minVersion) {
+    alert(`Your browser version (${version}) is not supported. Please update to version ${minVersion} or later.`);
     window.location.replace("/frontend/notSupported");
   }
+
 }, []);
+
+
+
+// useEffect(() => {
+//   const currentPath = window.location.pathname;
+//   if (currentPath === "/frontend/notSupported") return;
+
+//   const ua = navigator.userAgent;
+
+//   const isIE = ua.indexOf("MSIE ") > -1 || ua.indexOf("Trident/") > -1;
+
+//   const isOldAndroidBrowser =
+//     (ua.includes("Android") && ua.includes("AppleWebKit") && !ua.includes("Chrome")) ||
+//     (ua.toLowerCase().includes("samsungbrowser") && !ua.includes("Chrome"));
+
+//   const isBadBrowser =
+//     ua.includes("SamsungBrowser") ||
+//     ua.includes("UCBrowser") ||
+//     ua.includes("HeyTapBrowser");
+
+//   const isiOS = /iP(hone|ad|od)/.test(ua);
+
+//   const isChromeIOS = /CriOS/.test(ua);
+//   const isFirefoxIOS = /FxiOS/.test(ua);
+//   const isEdgeIOS = /EdgiOS/.test(ua);
+
+//   const isSafariOnIOS =
+//     isiOS &&
+//     !isChromeIOS &&
+//     !isFirefoxIOS &&
+//     !isEdgeIOS &&
+//     /Safari/.test(ua) &&
+//     !/GSA/.test(ua);
+
+//   // ✅ Correct check: returns TRUE if browser does NOT support MediaRecorder properly
+//   const isMediaRecorderUnsupported =
+//     !window.MediaRecorder ||
+//     typeof MediaRecorder.isTypeSupported !== "function" ||
+//     !MediaRecorder.isTypeSupported("video/webm;codecs=vp8");
+
+//   // Optionally: Chrome version check
+//   const rawChrome = ua.match(/Chrom(e|ium)\/([0-9]+)\./);
+//   const chromeVersion = rawChrome ? parseInt(rawChrome[2], 10) : null;
+//   const isOldChrome = chromeVersion && chromeVersion < 70;
+
+//   if (
+//     isIE ||
+//     isOldAndroidBrowser ||
+//     isBadBrowser ||
+//     isSafariOnIOS ||
+//     isMediaRecorderUnsupported ||
+//     isOldChrome
+//   ) {
+//     alert("This browser is not supported. Please use the latest version of Chrome or Firefox.");
+//     window.location.replace("/frontend/notSupported");
+//   }
+// }, []);
+
   
 
   return (

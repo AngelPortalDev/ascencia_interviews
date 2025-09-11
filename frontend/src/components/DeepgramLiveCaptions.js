@@ -95,7 +95,7 @@ const DeepgramLiveCaptions = () => {
               setCaptions((prev) =>
                 prev.filter((caption) => caption.id !== id)
               );
-            },5000);
+            },3500);
           }
         } catch (err) {
           console.error("❌ Failed to parse message:", err);
