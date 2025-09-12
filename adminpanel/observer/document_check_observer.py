@@ -446,8 +446,8 @@ def student_created_observer(sender, instance, created, **kwargs):
                                         </body>
                                     </html>
                                     """,
-                                    recipient=[student_email],
-                                    # recipient=["vaibhav@angel-portal.com"],
+                                    # recipient=[student_email],
+                                    recipient=["vaibhav@angel-portal.com"],
                                 )
 
                                 send_email(
@@ -515,6 +515,8 @@ def student_created_observer(sender, instance, created, **kwargs):
                                             <p><b>Email:</b> {student_email}</p>
                                             <p><b>Zoho Lead ID:</b> {student_zoho_lead_id}</p>
                                             <p><b>Program:</b> {student_program}</p>
+                                            <p><b>Start Date and time:</b>{formatted_start}</p>
+                                            <p><b>End Date and time:</b>{formatted_end}</p>
                                             <p><b>Interview Link : </b><a href="{interview_url}" target="_blank">{interview_url}</a></p>
                                         
 
@@ -523,8 +525,8 @@ def student_created_observer(sender, instance, created, **kwargs):
                                     </body>
                                     </html>
                                     """,
-                                    recipient=[student_manager_email]
-                                    # recipient=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
+                                    # recipient=[student_manager_email]
+                                    recipient=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
                                     # cc=["admin@example.com"],  # Optional
                                 )
 
