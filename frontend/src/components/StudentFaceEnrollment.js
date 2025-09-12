@@ -80,7 +80,46 @@ const StudentFaceEnrollment = () => {
     }
   };
 
-  const handleSubmit = () => {
+  async function testRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    const recorder = new MediaRecorder(stream, { mimeType: "video/webm;codecs=vp8,opus" });
+    let chunks = [];
+
+    recorder.ondataavailable = e => {
+      if (e.data.size > 0) chunks.push(e.data);
+    };
+
+    console.log("Recorder state:", recorder.state);
+
+    console.log(chunks,"chunk");
+
+    recorder.start();
+    recorder.onstart = () => console.log("Recorder started:", recorder.state);
+    await new Promise(res => setTimeout(res, 1000));
+    recorder.stop();
+
+    await new Promise(res => (recorder.onstop = res));
+
+    stream.getTracks().forEach(t => t.stop());
+    
+    if (chunks.length === 0) return false;
+    return true;
+
+  } catch (err) {
+    console.error("Recording test failed:", err);
+    return false;
+  }
+}
+
+  const handleSubmit = async() => {
+
+  const canRecord = await testRecording();
+
+  if (!canRecord) {
+    alert("We couldn’t access your camera or microphone. Please check your browser permissions, or try again using another device or an incognito/private window.");
+    return;
+  }
     navigate(`/questions`, {
       state: { encoded_zoho_lead_id, encoded_interview_link_send_count },
     });

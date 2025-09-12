@@ -927,7 +927,7 @@ useEffect(() => {
                 style={{
                   position: "absolute",
                   right: "15px",
-                  bottom: "5px",
+                  bottom: "10px",
                   minWidth: "100px",
                 }}
               >
