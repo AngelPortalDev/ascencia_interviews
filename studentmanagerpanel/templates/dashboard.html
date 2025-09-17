@@ -45,77 +45,136 @@
     <div class="row mt-3">
 
       <!-- Total Students Card -->
-      <div class="col-md-2 col-sm-6 mb-4">
+     {% comment %}  <div class="col-md-2 col-sm-6 mb-4">
         <div class="card shadow-md border-0 rounded-3 card1">
           <div class="card-body text-white text-center py-4">
             <i class="bx bx-user-circle fs-1 mb-3" style="color:#20c2e9; background:#e4f7fc; padding:5px;border-radius:10px"></i>
             <h5 class="card-title">Total Students</h5>
             <h3 class="card-text">{{students_count}}</h3> <!-- Dynamic data can go here -->
-            {% comment %} <p class="text-muted">Total students in the system</p> {% endcomment %}
+            <p class="text-muted">Total students in the system</p> 
           </div>
         </div>
-      </div>
+      </div>{% endcomment %}
   
       <!-- Verified Students -->
-      <div class="col-md-2 col-sm-6 mb-4">
+      {% comment %}<div class="col-md-2 col-sm-6 mb-4">
         <div class="card shadow-md border-0 rounded-3 card3">
           <div class="card-body text-white text-center py-4">
             <i class="bx bx-check-circle fs-1 mb-3" style="color:#696cff; background:#e7e7ff; padding:5px;border-radius:10px"></i>
             <h5 class="card-title">Verified Students</h5>
             <h3 class="card-text">{{verified_students_count}}</h3>
-            {% comment %} <p class="text-muted">Students who received an offer</p> {% endcomment %}
+             <p class="text-muted">Students who received an offer</p> 
           </div>
         </div>
-      </div>
+      </div>{% endcomment %}
   
       <!-- Rejected Students -->
-      <div class="col-md-2 col-sm-6 mb-4">
+      {% comment %}<div class="col-md-2 col-sm-6 mb-4">
         <div class="card shadow-md border-0 rounded-3 card3">
           <div class="card-body text-white text-center py-4">
             <i class="bx bx-x-circle fs-1 mb-3" style="color:#ff3a29; background:#ffe7e5; padding:5px; border-radius:10px"></i>
             <h5 class="card-title">Rejected Students</h5>
             <h3 class="card-text">{{rejected_students_count}}</h3>
-            {% comment %} <p class="text-muted">Students who received an offer</p> {% endcomment %}
+             <p class="text-muted">Students who received an offer</p> 
           </div>
         </div>
       </div>
-  
+  {% endcomment %}
       <!-- Pending Interviews -->
-      <div class="col-md-2 col-sm-6 mb-4">
+      {% comment %} <div class="col-md-2 col-sm-6 mb-4">
         <div class="card shadow-md border-0 rounded-3 card2" >
           <div class="card-body text-white text-center py-4">
             <i class="bx bx-hourglass fs-1 mb-3" style="color:#ffab00; background:#fff2d6; padding:5px;border-radius:10px"></i> 
             <h5 class="card-title">Pending Interviews</h5>
             <h3 class="card-text">{{pending_interviews_count}}</h3>
-            {% comment %} <p class="text-muted">Students awaiting interview</p> {% endcomment %}
+            <p class="text-muted">Students awaiting interview</p> 
           </div>
         </div>
       </div>
+{% endcomment %}
 
       <!-- Pass Students -->
-      <div class="col-md-2 col-sm-6 mb-4">
+      {% comment %}<div class="col-md-2 col-sm-6 mb-4">
         <div class="card shadow-md border-0 rounded-3 card4" >
           <div class="card-body text-white text-center py-4">
             <i class="bx bx-check-circle fs-1 mb-3" style="color:#4caf50; background:#e7ffe5; padding:5px;border-radius:10px"></i>
             <h5 class="card-title">Pass Students</h5>
             <h3 class="card-text">{{pass_students_count}}</h3>
-            {% comment %} <p class="text-muted">Pending follow-ups</p> {% endcomment %}
+             <p class="text-muted">Pending follow-ups</p> 
           </div>
         </div>
       </div>
       
       <!-- Fail Students -->
-      <div class="col-md-2 col-sm-6 mb-4">
+      {% comment %}<div class="col-md-2 col-sm-6 mb-4">
         <div class="card shadow-md border-0 rounded-3 card4" >
           <div class="card-body text-white text-center py-4">
             <i class="bx bx-error-circle fs-1 mb-3" style="color:#ff9800; background:#fff3e0; padding:5px; border-radius:10px"></i>
             <h5 class="card-title">Fail Students</h5>
             <h3 class="card-text">{{fail_students_count}}</h3>
-            {% comment %} <p class="text-muted">Pending follow-ups</p> {% endcomment %}
+            <p class="text-muted">Pending follow-ups</p> 
           </div>
         </div>
       </div>
-      
+      {% endcomment %}
+
+      <!-- Total Students Card -->
+        <div class="col-lg-3 col-md-6 col-sm-12 mb-4">
+          <a href="{% url 'studentmanager_students_list' %}?tab=all" style="text-decoration: none;">
+          <div class="card shadow-md border-0 rounded-3 card1 dashboardCard">
+            <div class="card-body text-white text-center py-4">
+              <i class="bx bx-user-circle fs-1 mb-3" style="color:#20c2e9; background:#e4f7fc; padding:5px;border-radius:10px"></i>
+              <h5 class="card-title">Total Students</h5>
+              <h3 class="card-text">{{students_count}}</h3> <!-- Dynamic data can go here -->
+              {% comment %} <p class="text-muted">Total students in the system</p> {% endcomment %}
+            </div>
+          </div>
+        </a>
+        </div>
+    
+        <!-- Verified Students -->
+        <div class="col-lg-3 col-md-6 col-sm-12 mb-4">
+
+          <a href="{% url 'studentmanager_students_list' %}?tab=verified" style="text-decoration: none;">
+          <div class="card shadow-md border-0 rounded-3 card3 dashboardCard">
+            <div class="card-body text-white text-center py-4">
+              <i class="bx bx-check-circle fs-1 mb-3" style="color:#696cff; background:#e7e7ff; padding:5px;border-radius:10px"></i>
+              <h5 class="card-title">Interviews Done</h5>
+              <h3 class="card-text">{{verified_students_count}}</h3>
+              {% comment %} <p class="text-muted">Students who received an offer</p> {% endcomment %}
+            </div>
+          </div>
+        </a>
+        </div>
+
+        <!-- Pending Interviews -->
+        <div class="col-lg-3 col-md-6 col-sm-12 mb-4">
+          <a href="{% url 'studentmanager_students_list' %}?tab=rejected" style="text-decoration: none;">
+          <div class="card shadow-md border-0 rounded-3 card2 dashboardCard" >
+            <div class="card-body text-white text-center py-4">
+              <i class="bx bx-hourglass fs-1 mb-3" style="color:#ffab00; background:#fff2d6; padding:5px;border-radius:10px"></i> 
+              <h5 class="card-title">Pending Interviews</h5>
+              <h3 class="card-text">{{pending_interviews_count}}</h3>
+              {% comment %} <p class="text-muted">Students awaiting interview</p> {% endcomment %}
+            </div>
+          </div>
+        </a>
+        </div>
+    
+        <!-- Rejected Students -->
+        <div class="col-lg-3 col-md-6 col-sm-12 mb-4">
+          <a href="{% url 'studentmanager_students_list' %}?tab=unverified" style="text-decoration: none;">
+          <div class="card shadow-md border-0 rounded-3 card3 dashboardCard">
+            <div class="card-body text-white text-center py-4" style="">
+              <i class="bx bx-x-circle fs-1 mb-3" style="color:#ff3a29; background:#ffe7e5; padding:5px; border-radius:10px"></i>
+              <h5 class="card-title">Interviews Not Given</h5>
+              <h3 class="card-text">{{rejected_students_count}}</h3>
+              {% comment %} <p class="text-muted">Students who received an offer</p> {% endcomment %}
+            </div>
+          </div>
+        </a>
+        </div>
+    
   
     </div>
 
@@ -135,7 +194,7 @@
                 <th>Student Name</th>
                 <th>Email ID</th>
                 <th>Course Applied</th>
-                <th>Interview Status</th>
+                {% comment %} <th>Interview Status</th> {% endcomment %}
                 <th>Manager Assigned</th>
                 <th>Actions</th>
               </tr>
@@ -154,9 +213,9 @@
                     </td>
                     <td>{{ student.student.email }}</td>
                     <td>{{ student.student.program }}</td>
-                    <td>
+                    {% comment %} <td>
                       <span class="badge bg-label-primary me-1">{{ student.interview_status }}</span>
-                    </td>
+                    </td> {% endcomment %}
                     <td>{{ student.student.student_manager_email }}</td>
                     <td class="d-flex align-items-center">
                       <a href="{% url 'studentmanager_student_detail' zoho_lead_id=student.student.zoho_lead_id %}" class="btn btn-sm btn-light border me-2">

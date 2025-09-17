@@ -32,10 +32,12 @@
                 aria-label="Phone No.: Activate to sort" tabindex="0">
                 <span class="dt-column-title" role="button">Phone No.</span><span class="dt-column-order"></span>
             </th>
+            {% if request.user.profile.role != 1 %}
             <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc w-auto"
                 aria-label="Student Manager.: Activate to sort" tabindex="0"  style=" white-space: normal !important; ">
                 <span class="dt-column-title" role="button">Student Manager</span><span class="dt-column-order"></span>
             </th>
+            {% endif %}
             <th data-dt-column="3" rowspan="1" colspan="1" class="dt-orderable-asc dt-orderable-desc w-auto"
                 aria-label="Program: Activate to sort" tabindex="0">
                 <span class="dt-column-title" role="button">Course Applied</span><span class="dt-column-order"></span>
@@ -68,7 +70,9 @@
             <td>{{ student.first_name }} {{ student.last_name }}</td>
             <td>{{ student.email }}</td>
             <td>{{ student.phone }}</td>
+            {% if request.user.profile.role != 1 %}
             <td>{{ student.student_manager_name }}</td>
+            {% endif %}
             <td>{{ student.program }}</td>
             {% comment %} <td>{{ student.edu_doc_verification_status }}</td> {% endcomment %}
             <td>

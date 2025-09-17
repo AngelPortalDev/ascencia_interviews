@@ -341,8 +341,14 @@ def students_leads_api(request):
         email = request.POST.get('Email')
         phone = request.POST.get('Phone')
         dob = request.POST.get('DOB')
-        date_object = datetime.strptime(dob, "%m-%d-%Y")
-        formatted_date = date_object.strftime("%Y-%m-%d")
+        formatted_date = ""
+        if dob:  # ✅ Only parse if dob is provided and not empty
+            try:
+                date_object = datetime.strptime(dob, "%m-%d-%Y")
+                formatted_date = date_object.strftime("%Y-%m-%d")
+            except ValueError:
+                return JsonResponse({"status": False, "error": "Invalid DOB format. Expected MM-DD-YYYY"}, status=400)
+
         student_id = request.POST.get('UserId')
         zoho_lead_id =  request.POST.get('Zoho Lead Id')
         extend_link = request.POST.get('Extend Interview Link')

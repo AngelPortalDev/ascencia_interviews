@@ -29,7 +29,8 @@
             </div>
 
             <!-- Filter Form -->
-            <form method="GET" action="{% url 'students_list' %}">
+            {% comment %} <form method="GET" action="{% url 'students_list' %}"> {% endcomment %}
+              <form method="GET" action="{% if request.user.profile.role == 1 %}{% url 'studentmanager_students_list' %}{% else %}{% url 'students_list' %}{% endif %}">
               <div class="row m-3">
                   <!-- Intake Month Filter -->
                   <div class="col-md-4">
