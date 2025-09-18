@@ -692,8 +692,8 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
 
 
         video_path = os.path.join(
-            # "/home/ascenciaintervie/public_html/static/uploads/interview_videos",
-            "/home/interview/public_html/static/uploads/interview_videos",
+            "/home/ascenciaintervie/public_html/static/uploads/interview_videos",
+            # "/home/interview/public_html/static/uploads/interview_videos",
             # "C:/xampp/htdocs/vaibhav/ascencia_interviews/static/uploads/interview_videos",
             zoho_lead_id,
             "merged_video.webm"
@@ -718,8 +718,8 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
 
 
         subject = "Interview Process Completed"
-        # recipient = [student_manager_email]
-        recipient = ["vaibhav@angel-portal.com"]
+        recipient = [student_manager_email]
+        # recipient = ["vaibhav@angel-portal.com"]
         from_email = ''
         # url = video_path  # or your public URL if available
         url = f"https://video.bunnycdn.com/play/{settings.BUNNY_STREAM_LIBRARY_ID}/{video_id}"
@@ -907,8 +907,9 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
                 </body>
             </html>
             """,
-            recipient=["vaibhav@angel-portal.com"]
-            # recipient=[student_email]
+            # recipient=["vaibhav@angel-portal.com"]
+            recipient=[student_email],
+            reply_to=[student_manager_email]
         )
         logging.info("Deleted %s StudentInterviewAnswers entries for zoho_lead_id: %s", deleted_count, zoho_lead_id)
 

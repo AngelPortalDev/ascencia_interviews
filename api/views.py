@@ -1036,7 +1036,8 @@ def process_document(request):
                             </html>
                             """,
                             # recipient=["vaibhav@angel-portal.com"],
-                            recipient=[student_email]
+                            recipient=[student_email],
+                            reply_to=[student_manager_email]  # ✅ Ensures replies go to student manager too
                         )
         
 
