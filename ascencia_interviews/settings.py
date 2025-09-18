@@ -267,7 +267,13 @@ Q_CLUSTER = {
             "name": "Send Interview Reminder Emails",
             "schedule_type": "I",  # ✅ Corrected to "I" for "minutes"
             "minutes": 10,          # ⏱ Every 10 minute
-        }
+        },
+        {
+            "func": "studentpanel.tasks.update_expired_links_in_zoho",  # ✅ Our new task
+            "name": "Update Expired Links in Zoho",
+            "schedule_type": "I",  # Interval
+            "minutes": 1,  # Runs every 15 minutes
+        },
     ],
 }
 

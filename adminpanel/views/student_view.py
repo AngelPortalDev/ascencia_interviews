@@ -312,7 +312,8 @@ def extend_first_interview_link(zoho_lead_id):
                                             <p><b>Zoho Lead ID:</b> {student_zoho_lead_id}</p>
                                             <p><b>Program:</b> {student_program}</p>
                                     
-
+                                            <p><b>Start Date and time:</b> {formatted_start}</p>
+                                            <p><b>End Date and time:</b> {formatted_end}</p>
                                             <p><b>Interview Link : </b><a href="{interview_url}" target="_blank">{interview_url}</a></p>
 
 
@@ -341,8 +342,14 @@ def students_leads_api(request):
         email = request.POST.get('Email')
         phone = request.POST.get('Phone')
         dob = request.POST.get('DOB')
-        date_object = datetime.strptime(dob, "%m-%d-%Y")
-        formatted_date = date_object.strftime("%Y-%m-%d")
+        formatted_date = ""
+        if dob:  # ✅ Only parse if dob is provided and not empty
+            try:
+                date_object = datetime.strptime(dob, "%m-%d-%Y")
+                formatted_date = date_object.strftime("%Y-%m-%d")
+            except ValueError:
+                return JsonResponse({"status": False, "error": "Invalid DOB format. Expected MM-DD-YYYY"}, status=400)
+
         student_id = request.POST.get('UserId')
         zoho_lead_id =  request.POST.get('Zoho Lead Id')
         extend_link = request.POST.get('Extend Interview Link')

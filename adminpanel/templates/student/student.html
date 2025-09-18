@@ -29,7 +29,8 @@
             </div>
 
             <!-- Filter Form -->
-            <form method="GET" action="{% url 'students_list' %}">
+            {% comment %} <form method="GET" action="{% url 'students_list' %}"> {% endcomment %}
+              <form method="GET" action="{% if request.user.profile.role == 1 %}{% url 'studentmanager_students_list' %}{% else %}{% url 'students_list' %}{% endif %}">
               <div class="row m-3">
                   <!-- Intake Month Filter -->
                   <div class="col-md-4">
@@ -56,7 +57,15 @@
                   <!-- Submit & Clear Buttons -->
                   <div class="col-md-4 d-flex align-items-end mt-2 mt-md-0">
                       <button type="submit" class="btn btn-primary me-2">Filter</button>
-                      <a href="{% url 'students_list' %}" class="btn btn-secondary">Clear</a>
+                      <a href="{% if request.user.is_authenticated %}
+                {% if request.user.profile.role == 1 %}
+                    {% url 'studentmanager_students_list' %}
+                {% else %}
+                    {% url 'students_list' %}
+                {% endif %}
+             {% else %}
+                {% url 'students_list' %}
+             {% endif %}"  class="btn btn-secondary">Clear</a>
                   </div>
               </div>
                <input type="hidden" name="tab" id="active_tab_input" value="{{ active_tab }}">
