@@ -4,7 +4,7 @@ import logging
 
 logger = logging.getLogger(__name__)  # Logger for error tracking
 
-def send_email(subject, message, recipient=None, cc=None):
+def send_email(subject, message, recipient=None, cc=None, reply_to=None):
     recipient = recipient or []  # Ensure recipient is a list
     cc = cc or []  # Ensure cc is a list
 
@@ -15,6 +15,7 @@ def send_email(subject, message, recipient=None, cc=None):
             from_email=settings.DEFAULT_FROM_EMAIL,
             to=recipient,
             cc=cc,
+            reply_to=reply_to
         )
         email.content_subtype = "html"  # Set email format to HTML
         email.send(fail_silently=False)
