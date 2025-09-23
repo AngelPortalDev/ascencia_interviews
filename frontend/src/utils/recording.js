@@ -1,5 +1,6 @@
 // utils/recording.js
 
+
 import { uploadFile, downloadFile } from "./fileUpload.js";
 export const startRecording = async (
   videoRef,
@@ -16,10 +17,6 @@ export const startRecording = async (
   last_question_id,
   encoded_interview_link_send_count
 ) => {
-  // console.log("question_id 111",question_id)
-  // console.log("last_question_id",last_question_id);
-  // console.log("🔥 encoded_interview_link_send_count:", encoded_interview_link_send_count);
-  // console.log("🔥 Type of last_question_id:", typeof last_question_id);
   try {
   // console.log("question_id 222",question_id);
    setIsRecording(true);
@@ -31,16 +28,10 @@ export const startRecording = async (
       // audio:true
     });
     
-if (videoRef.current) {
-  videoRef.current.srcObject = stream;
-}
+    if (videoRef.current) {
+      videoRef.current.srcObject = stream;
+    }
 
-    // Video recording setup
-//     mediaRecorderRef.current = new MediaRecorder(stream, {
-//   mimeType: "video/webm;codecs=vp8,opus",  // Explicitly request vp8
-//   audioBitsPerSecond: 32000,
-//   videoBitsPerSecond: 1000000,
-// });
 
 const types = [
   "video/webm;codecs=vp8,opus", // ✅ Preferred (broad support, safe for backend)
@@ -70,22 +61,10 @@ mediaRecorderRef.current = new MediaRecorder(stream, {
     };
     mediaRecorderRef.current.start();
 
-    // Audio-only recording setup
-    const audioStream = new MediaStream(stream.getAudioTracks());
-    audioRecorderRef.current = new MediaRecorder(audioStream, {
-      audioBitsPerSecond: 128000,
-      mimeType: "audio/webm",
-    });
-
-
     mediaRecorderRef.current.onerror = (e) => {
-  console.error("❌ MediaRecorder error:", e.error);
-};
+      console.error("❌ MediaRecorder error:", e.error);
+  };
 
-    // audioRecorderRef.current.ondataavailable = (event) => {
-    //   if (event.data.size > 0) recordedAudioChunksRef.current.push(event.data);
-    // };
-    // audioRecorderRef.current.start();
 
     if (videoRef.current) videoRef.current.srcObject = stream;
     setIsRecording(true);
@@ -109,9 +88,6 @@ export const stopRecording = (
 ) => {
     const capturedQuestionId = question_id;
     const captureLastQuestionId = last_question_id
-  // console.log("encoded_interview_link_send_countttt",encoded_interview_link_send_count);
-  // console.log("capturedQuestionId",capturedQuestionId);
-  // console.log("🔍 In stopRecording - typeof last_question_id:", typeof captureLastQuestionId, captureLastQuestionId);
 
 
   return new Promise((resolve, reject) => { 
@@ -128,9 +104,6 @@ export const stopRecording = (
 
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.onstop = async () => {
-        //  console.log("⏹️ Stopped video recording for question:", capturedQuestionId);
-        //   console.log("📦 captureLastQuestionId:", captureLastQuestionId);
-        // console.log("🎥 Stopping video recording...");
         const videoBlob = new Blob(recordedChunksRef.current, { type: "video/webm" });
         const fileNameVideo = `interview_video_${zoho_lead_id}_${capturedQuestionId}_${new Date().toISOString().replace(/:/g, "-").split(".")[0]}.webm`;
 
@@ -153,38 +126,6 @@ export const stopRecording = (
       mediaRecorderRef.current.stop();
     } else {
       videoUploaded = true; 
-      checkCompletion();
-    }
-
-    if (audioRecorderRef.current) {
-      audioRecorderRef.current.onstop = async () => {
-        // console.log("⏹️ Stopped audio recording for question:", capturedQuestionId);
-        // console.log("🔍 Audio section - typeof last_question_id:", typeof captureLastQuestionId, captureLastQuestionId);
-
-        console.log("📦 Audio chunks size:", recordedAudioChunksRef.current.length);
-
-        // console.log("🎤 Stopping audio recording...");
-        const audioBlob = new Blob(recordedAudioChunksRef.current, { type: "audio/webm" });
-        const fileNameAudio = `interview_audio_${zoho_lead_id}_${capturedQuestionId}_${new Date().toISOString().replace(/:/g, "-").split(".")[0]}.webm`;
-
-        try {
-          audioPath = await uploadFile(audioBlob, fileNameAudio, zoho_lead_id, capturedQuestionId, captureLastQuestionId,true);
-          //   console.log('question_id in recording audio',capturedQuestionId)
-          // console.log('last_question_id in recording audio',captureLastQuestionId)
-          // console.log("📤 Audio uploaded. Path:", audioPath);
-          setAudioFilePath(audioPath);
-          audioUploaded = true;
-          checkCompletion();
-        } catch (error) {
-          console.error("❌ Audio upload failed:", error);
-          reject(error);
-        }
-
-        recordedAudioChunksRef.current = [];
-      };
-      audioRecorderRef.current.stop();
-    } else {
-      audioUploaded = true; 
       checkCompletion();
     }
   });
