@@ -224,11 +224,9 @@ LOGIN_URL = '/login'
 
 ADMIN_BASE_URL = "https://ascencia-interview.com"
 
-# BUNNY_STREAM_API_KEY = "e31364b4-b2f4-4221-aac3bd5d34e5-6769-4f29"  # Replace with your actual Library Key
-# BUNNY_STREAM_LIBRARY_ID = "390607"
+BUNNY_STREAM_API_KEY = "e31364b4-b2f4-4221-aac3bd5d34e5-6769-4f29"  # Replace with your actual Library Key
+BUNNY_STREAM_LIBRARY_ID = "390607"
 
-BUNNY_STREAM_API_KEY = "604a3484-c939-4ce1-a82d5dba2db6-e350-4620"  # Replace with your actual Library Key
-BUNNY_STREAM_LIBRARY_ID = "503898"
 
 # Email Settings
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
