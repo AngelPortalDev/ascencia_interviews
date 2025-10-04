@@ -138,7 +138,11 @@ DATABASES = {
         'USER': 'ascenciaintervie_db',
         'PASSWORD': '}Qc,O3Sw-?).',
         'HOST': '127.0.0.1',  # Or your MySQL server address
-        'PORT': '3306',       # Default MySQL port
+        'PORT': '3306',  
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            'init_command': "SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'"
+        }
     }
 }
 
@@ -220,11 +224,9 @@ LOGIN_URL = '/login'
 
 ADMIN_BASE_URL = "https://ascencia-interview.com"
 
-# BUNNY_STREAM_API_KEY = "e31364b4-b2f4-4221-aac3bd5d34e5-6769-4f29"  # Replace with your actual Library Key
-# BUNNY_STREAM_LIBRARY_ID = "390607"
-
 BUNNY_STREAM_API_KEY = "e31364b4-b2f4-4221-aac3bd5d34e5-6769-4f29"  # Replace with your actual Library Key
 BUNNY_STREAM_LIBRARY_ID = "390607"
+
 
 # Email Settings
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
