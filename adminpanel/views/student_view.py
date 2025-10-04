@@ -19,6 +19,9 @@ import base64
 import pytz
 from django.utils.timezone import localtime
 from zoneinfo import ZoneInfo
+import logging
+
+logger = logging.getLogger('zoho_webhook_logger')
 
 # def encode_base64(value: str) -> str:
 #     """Encodes a string to base64 (URL-safe)."""
@@ -334,6 +337,7 @@ def extend_first_interview_link(zoho_lead_id):
 
 @csrf_exempt  # Disable CSRF for webhooks
 def students_leads_api(request):
+    logger.info("=== students_leads_api called ===")
     # print(f"data get",request.POST.get('CRM Id'))
     # return HttpResponse(f"data get {request.POST.get('CRM Id')}")
     if request.method == "POST":
@@ -347,7 +351,9 @@ def students_leads_api(request):
             try:
                 date_object = datetime.strptime(dob, "%m-%d-%Y")
                 formatted_date = date_object.strftime("%Y-%m-%d")
+                logger.info("Parsed DOB successfully: %s -> %s", dob, formatted_date)
             except ValueError:
+                logger.warning("Invalid DOB format: %s", dob)
                 return JsonResponse({"status": False, "error": "Invalid DOB format. Expected MM-DD-YYYY"}, status=400)
 
         student_id = request.POST.get('UserId')
@@ -368,10 +374,12 @@ def students_leads_api(request):
         intake_month =  request.POST.get('Intake Month')
         student_manager_email = request.POST.get('Student Manager Email')
         crm_id = request.POST.get('CRM Id')
+
+        logger.debug("Incoming POST data: %s", request.POST.dict())
         
         if extend_link and extend_link.lower() == "yes":
             extend_first_interview_link(zoho_lead_id)
-            print("not add update as a yes")
+            logger.info("Extended first interview link for Zoho Lead Id: %s", zoho_lead_id)
             return JsonResponse({"status": True, "message": "Student updated successfully!"}, status=200)
 
         try:
@@ -389,18 +397,23 @@ def students_leads_api(request):
                 'student_manager_email': student_manager_email,
                 'crm_id': crm_id,
             }
+            logger.debug("Data to save: %s", data_to_save)
 
             where = {"zoho_lead_id": zoho_lead_id}
 
             result = save_data(Students, data_to_save, where)
             print(r'result:', result)
+            logger.info("Save data result: %s", result)
             # return HttpResponse('here')
             if result['status']:
                 return JsonResponse({"status": True, "message": "Student updated successfully!"}, status=200)
             else:
+                logger.error("Failed to update student: %s", result.get('error'))
                 return JsonResponse({"status": False, "error": result.get('error', "Failed to update the student.")}, status=400)
 
         except Exception as e:
+            logger.error("Failed to update student: %s", result.get('error'))
+
             return JsonResponse({"status": False, "error": str(e)}, status=500)
 
     return JsonResponse({"status": False, "error": "Invalid request method"}, status=405)
