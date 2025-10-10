@@ -288,3 +288,44 @@ CSRF_TRUSTED_ORIGINS = [
 CSRF_COOKIE_SECURE = True 
 CSRF_COOKIE_SAMESITE = 'None'
 DEEPGRAM_API_KEY='969234a32a04fdef01977e6c7cf50436c7c86da5'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{levelname}] {asctime} {name} - {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+         'file_errors': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs/error.log'),
+            'formatter': 'verbose',
+        },
+        'file_zoho_webhook': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs/zoho_webhook.log'),
+            'formatter': 'verbose',
+        }
+        
+        
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['file_errors'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'zoho_webhook_logger': {
+            'handlers': ['file_zoho_webhook'],
+            'level': 'DEBUG',
+            'propagate': False,
+        }
+        
+       
+    },
+}
