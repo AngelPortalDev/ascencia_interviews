@@ -45,12 +45,18 @@ def extend_first_interview_link(zoho_lead_id):
         print(f"❌ No student found with Zoho Lead ID: {zoho_lead_id}")
         return False
     
-    if StudentInterview.objects.filter(
-        zoho_lead_id=zoho_lead_id,
-        Extend_interview_link="YES"
-    ).exists():
-        print("⚠️ Interview link already extended, skipping.")
+    # Fetch the StudentInterview record
+    try:
+        student_interview = StudentInterview.objects.get(zoho_lead_id=zoho_lead_id)
+    except StudentInterview.DoesNotExist:
+        print(f"❌ No interview record found for Zoho Lead ID: {zoho_lead_id}")
         return False
+
+    # Allow up to 4 attempts
+    if student_interview.extend_attempts >= 4:
+        print("⚠️ Maximum 4 extension attempts reached, skipping.")
+        return False
+
     
     # Convert to Asia/Calcutta timezone
     
@@ -101,9 +107,14 @@ def extend_first_interview_link(zoho_lead_id):
     link.save(update_fields=["expires_at", "is_expired", "reminder_sent","reminder_1hr_sent"])
 
     # 6️⃣ Mark as processed in StudentInterview
-    StudentInterview.objects.filter(zoho_lead_id=zoho_lead_id).update(
-        Extend_interview_link="YES"
-    )
+    # StudentInterview.objects.filter(zoho_lead_id=zoho_lead_id).update(
+    #     Extend_interview_link="YES"
+    # )
+    student_interview.extend_attempts += 1
+    student_interview.Extend_interview_link = "YES"  # keep for UI/backward compatibility
+    student_interview.save(update_fields=["extend_attempts", "Extend_interview_link"])
+    print(f"✅ Interview link extended. Attempt {student_interview.extend_attempts}/4")
+
     student_zoho_lead_id= student.zoho_lead_id
     
     student_name = f"{student.first_name} {student.last_name}"

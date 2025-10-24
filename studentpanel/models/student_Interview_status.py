@@ -14,6 +14,8 @@ class StudentInterview(models.Model):
     profile_photo = models.CharField(max_length=255, blank=True, null=True)
     	
     Extend_interview_link = models.CharField(max_length=255,blank=True,null=True)
+    extend_attempts = models.PositiveIntegerField(default=0)
+
 
     class Meta:
         db_table = 'studentpanel_student_interview' 
