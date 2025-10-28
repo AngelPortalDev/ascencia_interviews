@@ -20,6 +20,7 @@ import pytz
 from django.utils.timezone import localtime
 from zoneinfo import ZoneInfo
 import logging
+from adminpanel.helper.email_branding import get_email_branding
 
 logger = logging.getLogger('zoho_webhook_logger')
 
@@ -104,6 +105,8 @@ def extend_first_interview_link(zoho_lead_id):
     link.is_expired = False
     link.reminder_sent = False
     link.reminder_1hr_sent= False
+    # link.extend_interview_date = now()
+    extend_interview_date = now()
     link.save(update_fields=["expires_at", "is_expired", "reminder_sent","reminder_1hr_sent"])
 
     # 6️⃣ Mark as processed in StudentInterview
@@ -136,6 +139,8 @@ def extend_first_interview_link(zoho_lead_id):
     tz = pytz.timezone("Europe/Malta")
     interview_start_local = localtime(interview_start).astimezone(tz)
     interview_end_local = localtime(interview_end).astimezone(tz)
+    extend_date_local = localtime(extend_interview_date).astimezone(tz) if extend_interview_date else None
+
 
     interviwelink1.created_at = interview_start_local
     interviwelink1.expires_at = interview_end_local
@@ -144,7 +149,10 @@ def extend_first_interview_link(zoho_lead_id):
     # Format the datetime
     formatted_start = interview_start_local.strftime("%d %b %Y - %I:%M %p (Europe/Malta)")
     formatted_end = interview_end_local.strftime("%d %b %Y - %I:%M %p (Europe/Malta)")
+    formatted_extend = extend_date_local.strftime("%d %b %Y - %I:%M %p (Europe/Malta)") if extend_date_local else "N/A"
 
+    crm_id = student.crm_id
+    logo_url, company_name = get_email_branding(crm_id)
     print("Start Date and time:", formatted_start)
     print("End Date and time:", formatted_end)
     # 7️⃣ Send notification email
@@ -154,7 +162,7 @@ def extend_first_interview_link(zoho_lead_id):
     from_email=settings.DEFAULT_FROM_EMAIL,
     # recipient_list=["vaibhav@angel-portal.com"],
     recipient_list=[student_email],
-
+    
     html_message=f"""
         <html>
             <head>
@@ -230,7 +238,7 @@ def extend_first_interview_link(zoho_lead_id):
             <body>
                 <div class="email-container">
                     <div class="header">
-                        <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Malta" />
+                        <img src="{logo_url}" alt="Ascencia Malta" />
                     </div>
                     <img src="https://ascencia-interview.com/static/img/email_template_icon/notification.png" alt="Interview Invitation" class="email-logo" />
                     
@@ -242,14 +250,14 @@ def extend_first_interview_link(zoho_lead_id):
                     
                     <p><b>Interview Details:</b></p>
                     <p><b>Interviewer name:</b> {student_name}</p>
-                    <p><b>Start Date and time:</b> {formatted_start}</p>
+                    <p><b>Start Date and time:</b> {formatted_extend}</p>
                     <p><b>End Date and time:</b> {formatted_end}</p>
                     
                     <p>Please note that you can access the interview only between the start and end times mentioned above.</p>
                     
                     <a href="{interview_url}" class="goInterviewbtnStyle">Start Interview</a>
 
-                    <p>Best regards,<br/>Ascencia Malta</p>
+                    <p>Best regards,<br/>{company_name}</p>
                 </div>
             </body>
         </html>
@@ -311,7 +319,7 @@ def extend_first_interview_link(zoho_lead_id):
                                     <body>
                                         <div class="email-container">
                                             <div class="header">
-                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Malta" />
+                                                <img src="{logo_url}" alt="Ascencia Malta" />
                                             </div>
 
                                             <h2>Interview Invitation Sent</h2>
@@ -326,12 +334,12 @@ def extend_first_interview_link(zoho_lead_id):
                                             <p><b>Zoho Lead ID:</b> {student_zoho_lead_id}</p>
                                             <p><b>Program:</b> {student_program}</p>
                                     
-                                            <p><b>Start Date and time:</b> {formatted_start}</p>
+                                            <p><b>Start Date and time:</b> {formatted_extend}</p>
                                             <p><b>End Date and time:</b> {formatted_end}</p>
                                             <p><b>Interview Link : </b><a href="{interview_url}" target="_blank">{interview_url}</a></p>
 
 
-                                            <p>Regards,<br/>Ascencia Malta Team</p>
+                                            <p>Regards,<br/>{company_name} Team</p>
                                         </div>
                                     </body>
                                     </html>

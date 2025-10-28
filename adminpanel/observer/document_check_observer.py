@@ -24,6 +24,7 @@ from django.contrib.auth.models import User
 process_queue = Queue()
 lock = threading.Lock()
 
+from adminpanel.helper.email_branding import get_email_branding
 
 class APIDataFetcher:
     def notify(self, publisher):
@@ -346,6 +347,8 @@ def student_created_observer(sender, instance, created, **kwargs):
 
                                 print("Start Date and time:", formatted_start)
                                 print("End Date and time:", formatted_end)
+                                crm_id = student.crm_id
+                                logo_url, company_name = get_email_branding(crm_id)
                                 send_email(
                                     subject="Interview Invitation for Student Interview",
                                     message=f"""
@@ -423,7 +426,7 @@ def student_created_observer(sender, instance, created, **kwargs):
                                         <body>
                                             <div class="email-container">
                                                 <div class="header">
-                                                    <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Malta" />
+                                                    <img src="{logo_url}" alt="Ascencia Malta" />
                                                 </div>
                                                 <img src="https://ascencia-interview.com/static/img/email_template_icon/notification.png" alt="Interview Invitation" class="email-logo" />
                                                                             
@@ -441,7 +444,7 @@ def student_created_observer(sender, instance, created, **kwargs):
                                                 
                                                 <a href="{interview_url}" style="display: inline-block; background: #db2777; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; margin: 20px auto 10px; text-align: center;">Start Interview</a>
 
-                                                <p>Best regards,<br/>Ascencia Malta</p>
+                                                <p>Best regards,<br/>{company_name}</p>
                                             </div>
                                         </body>
                                     </html>
@@ -502,7 +505,7 @@ def student_created_observer(sender, instance, created, **kwargs):
                                     <body>
                                         <div class="email-container">
                                             <div class="header">
-                                                <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Malta" />
+                                                <img src="{logo_url}" alt="Ascencia Malta" />
                                             </div>
 
                                             <h2>Interview Invitation Sent</h2>
@@ -521,7 +524,7 @@ def student_created_observer(sender, instance, created, **kwargs):
                                             <p><b>Interview Link : </b><a href="{interview_url}" target="_blank">{interview_url}</a></p>
                                         
 
-                                            <p>Regards,<br/>Ascencia Malta Team</p>
+                                            <p>Regards,<br/>{company_name} Team</p>
                                         </div>
                                     </body>
                                     </html>
