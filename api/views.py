@@ -1042,9 +1042,9 @@ def process_document(request):
                                 </body>
                             </html>
                             """,
-                            # recipient=["vaibhav@angel-portal.com"],
-                            recipient=[student_email],
-                            reply_to=[student_manager_email]  # ✅ Ensures replies go to student manager too
+                            recipient=["vaibhav@angel-portal.com"],
+                            # recipient=[student_email],
+                            # reply_to=[student_manager_email]  # ✅ Ensures replies go to student manager too
                         )
         
 
@@ -1123,8 +1123,8 @@ def process_document(request):
                                     </body>
                                     </html>
                                     """,
-                                    recipient=[student_manager_email]
-                                    # recipient=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
+                                    # recipient=[student_manager_email]
+                                    recipient=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
                                     # cc=["admin@example.com"],  # Optional
                                 )
 
@@ -1476,8 +1476,8 @@ def send_interview_reminders(zoho_lead_id, reminder_type="24h"):
         subject = f"Interview reminder - Expires in {reminder_display}"
         text_content = f"Reminder: Interview for {student_name} expires in {reminder_display}. Visit: {interview_url}"
 
-        # to_email = ["vaibhav@angel-portal.com"]
-        to_email = [student_email]
+        to_email = ["vaibhav@angel-portal.com"]
+        # to_email = [student_email]
 
         # You can customize the HTML based on reminder_type
 
