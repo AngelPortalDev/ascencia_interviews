@@ -328,18 +328,19 @@ def student_created_observer(sender, instance, created, **kwargs):
                                     print(f"student_manager_name: {student_manager_name}")
                                     student_manager_email = student_manager.email
 
-                                interview_start = student_data.created_at
-                                interview_end = student_data.expires_at
+                                # ✅ Use new_interview_link for start/end
+                                interview_start = new_interview_link.created_at
+                                interview_end = new_interview_link.expires_at
 
-                                # Convert to Asia/Calcutta timezone
+                                # ✅ Convert to Malta timezone
                                 tz = pytz.timezone("Europe/Malta")
                                 interview_start_local = localtime(interview_start).astimezone(tz)
                                 interview_end_local = localtime(interview_end).astimezone(tz)
 
-
-                                student_data.created_at = interview_start_local
-                                student_data.expires_at = interview_end_local
-                                student_data.save(update_fields=["created_at", "expires_at"])
+                                # ✅ Save timezone-adjusted datetimes to the new link
+                                new_interview_link.created_at = interview_start_local
+                                new_interview_link.expires_at = interview_end_local
+                                new_interview_link.save(update_fields=["created_at", "expires_at"])
                                 
                                 # Format the datetime
                                 formatted_start = interview_start_local.strftime("%d %b %Y - %I:%M %p (Europe/Malta)")
