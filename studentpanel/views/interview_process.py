@@ -19,6 +19,7 @@ from datetime import datetime
 import pytz
 import random
 import json
+from adminpanel.helper.email_branding import get_email_branding
 # from studentpanel.tasks import merge_videos_task 
 # from .serializers import QuestionSerializer
 # from .serializers import QuestionSerializer
@@ -373,46 +374,94 @@ def interview_questions(request):
     except StudentInterviewLink.DoesNotExist:
         return JsonResponse({'error': 'Interview link not found'}, status=404)
 
-    # Assign 6 random questions if not already assigned
-    # if not interview_link.assigned_question_ids:
-    #     questions = list(CommonQuestion.objects.all())
-    #     if len(questions) < 6:
-    #         return JsonResponse({'error': 'Not enough questions available'}, status=400)
+     # ✅ Get Student & CRM ID
+    try:
+        student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        # crm_id = student.crm_id
+    except Students.DoesNotExist:
+        return JsonResponse({'error': 'Student not found'}, status=404)
+    
+    # ✅ Get Institute by matching CRM ID (string field)
+    try:
+        institute = Institute.objects.get(crm_id=student.crm_id)
+    except Institute.DoesNotExist:
+        return JsonResponse({'error': 'No Institute found for this CRM ID'}, status=404)
 
-    #     import random
-    #     selected = random.sample(questions, 6)
-    #     interview_link.assigned_question_ids = ",".join(str(q.id) for q in selected)
-    #     interview_link.save()
+     # ✅ Fetch common questions for this institute
+    common_questions = list(CommonQuestion.active_objects.filter(crm_id=institute))
+
+    print("common_questions",common_questions)
+    # ✅ Fetch course questions if student has a course assigned
+    course_questions = []
+    if student.program:
+        matched_course = Course.active_objects.filter(
+            course_name__iexact=student.program.strip(),
+            crm_id=institute
+        ).first()
+
+        if matched_course:
+            course_questions = list(Question.active_objects.filter(course_id=matched_course))
+
+        print("course_questions",course_questions)
+    # ✅ Merge common + course questions
+    if course_questions:
+        all_questions = common_questions + course_questions
+    else:
+        all_questions = common_questions
+
+
+    if not all_questions:
+        return JsonResponse({'error': 'No questions available for this student'}, status=400)
+    print("Matched Questions:", all_questions)
+    
+
     if not interview_link.assigned_question_ids:
-        questions = list(CommonQuestion.objects.all().order_by('id'))
-        if len(questions) < 6:
-            return JsonResponse({'error': 'Not enough questions available'}, status=400)
+        if str(institute.crm_id) == "755071407":
+            # Special case: Assign all
+            selected_questions = all_questions
+        else:
+            # Default: 6 questions → 3 fixed + 3 random if available
+            first_three = all_questions[:3]
+            remaining = all_questions[3:]
+            import random
+            random_three = random.sample(remaining, min(3, len(remaining)))
+            selected_questions = first_three + random_three
 
-        first_three = questions[:3]
-        remaining = questions[3:]
-
-        if len(remaining) < 3:
-            return JsonResponse({'error': 'Not enough remaining questions for random selection'}, status=400)
-
-        import random
-        random_three = random.sample(remaining, 3)
-
-        selected = first_three + random_three
-        interview_link.assigned_question_ids = ",".join(str(q.id) for q in selected)
+        interview_link.assigned_question_ids = ",".join(str(q.id) for q in selected_questions)
         interview_link.save()
 
     # Fetch assigned questions
+     # ✅ Prepare response data
     question_ids = list(map(int, interview_link.assigned_question_ids.split(',')))
-    question_objs = CommonQuestion.objects.filter(id__in=question_ids)
-    question_map = {q.id: q.question for q in question_objs}
 
-    ordered_data = [
-    {
-        'encoded_id': qid,
-        'question': question_map[qid]
-    }
-    for qid in question_ids if qid in question_map
-    ]
+    # Need to check both models, since assigned IDs may include both types
+    # common_qs_map = {q.id: q.question for q in CommonQuestion.objects.filter(id__in=question_ids)}
+    # course_qs_map = {q.id: q.question for q in Question.objects.filter(id__in=question_ids)}
+    # question_map = {**common_qs_map, **course_qs_map}
+
+    # ordered_data = [
+    # {
+    #     'encoded_id': qid,
+    #     'question': question_map[qid]
+    # }
+    # for qid in question_ids if qid in question_map
+    # ]
+
+    # ✅ Fetch objects with question text and time limit
+    common_qs = {q.id: q for q in CommonQuestion.objects.filter(id__in=question_ids)}
+    course_qs = {q.id: q for q in Question.objects.filter(id__in=question_ids)}
+
+    ordered_data = []
+    for qid in question_ids:
+        q_obj = common_qs.get(qid) or course_qs.get(qid)
+        if q_obj:
+            ordered_data.append({
+                'encoded_id': qid,
+                'question': q_obj.question,
+                'time_limit': q_obj.time_limit if hasattr(q_obj, 'time_limit') else 30  # ✅ add time limit
+            })
+
+
 
     return JsonResponse({'questions': ordered_data}, status=200)
 
@@ -445,3 +494,24 @@ def student_data(request):
     return JsonResponse({'error': 'No file part in the request'}, status=400)
 
 
+@csrf_exempt
+def get_branding_by_zoho_id(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Only POST allowed"}, status=405)
+    try:
+        data = json.loads(request.body)
+        encoded_zoho_lead_id = data.get("zoho_lead_id")
+        if not encoded_zoho_lead_id:
+            return JsonResponse({"error": "Missing zoho_lead_id"}, status=400)
+
+        zoho_lead_id = base64.b64decode(encoded_zoho_lead_id).decode("utf-8")
+        student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        crm_id = student.crm_id
+
+        logo_url, company_name = get_email_branding(str(crm_id))
+        print("logo_url and company name",logo_url, company_name)
+        return JsonResponse({"success": True, "logo_url": logo_url, "company_name": company_name})
+    except Students.DoesNotExist:
+        return JsonResponse({"error": "Student not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
