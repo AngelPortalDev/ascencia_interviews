@@ -66,7 +66,7 @@
           </div> {% endcomment %}
 
           <div class="app-brand d-flex flex-column align-items-center py-3">
-            <a href="{% url 'admindashboard' %}" class="app-brand-link">
+            <a href="{% if request.user.profile.role == 1 %}{% url 'studentmanagerdashboard' %}{% else %}{% url 'admindashboard' %}{% endif %}"  class="app-brand-link">
                 <img src="{% static 'img/logo/ascencia_logo.png' %}" alt="AI Interview" class="img-fluid" style="max-width: 100%; height: auto;"/>
             </a>
           </div>
@@ -91,12 +91,12 @@
                   </a>
                 </li>
                 <!-- Course -->
-                {% comment %} <li class="menu-item {% if '/course' in request.path %}active{% endif %}">
+                 <li class="menu-item {% if '/course' in request.path %}active{% endif %}">
                   <a href="{% url 'courses' %}" class="menu-link">
                     <i class="menu-icon bx bx-book" aria-hidden="true"></i>
                     <div data-i18n="Basic">Courses</div>
                   </a>
-                </li> {% endcomment %}
+                </li>
                 <!-- Student -->
                 <li class="menu-item {% if request.resolver_match.url_name == 'students_list' %}active{% endif %}">
                   <a href="{% url 'students_list' %}" class="menu-link">
@@ -111,11 +111,12 @@
                         <div data-i18n="Form Elements">Questions</div>
                       </a>
                     </li>
-                    <!-- <li class="menu-item {% if '/question' in request.path %}active{% endif %}">
+                    <li class="menu-item {% if '/question' in request.path %}active{% endif %}">
                       <a href="{% url 'questions' %}" class="menu-link">
+                         <i class="menu-icon bx bx-help-circle" aria-hidden="true"></i>
                         <div data-i18n="Basic Inputs">Customize Question</div>
                       </a>
-                    </li> -->
+                    </li> 
                 <!-- Student Manager -->
                 <li class="menu-item {% if '/student_manager' in request.path %}active{% endif %}">
                   <a href="{% url 'student_managers' %}" class="menu-link">
