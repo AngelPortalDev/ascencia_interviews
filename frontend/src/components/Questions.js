@@ -28,6 +28,12 @@ import Logo from "../assest/Logo.png";
 import usePageUnloadHandler from "../hooks/usePageUnloadHandler.js";
 
 const Questions = () => {
+
+  const [branding, setBranding] = useState({
+      logo: Logo,
+      name: "Question",
+    });
+
   const [countdown, setCountdown] = useState(60);
   const [currentTimeLimit, setCurrentTimeLimit] = useState(60);
 
@@ -282,6 +288,31 @@ const Questions = () => {
     zoho_lead_id,
     encoded_interview_link_send_count,
   ]);
+
+
+  
+    
+  useEffect(() => {
+    const fetchBranding = async () => {
+      if (!encoded_zoho_lead_id) return;
+      try {
+        const response = await Axios.post(
+          `${process.env.REACT_APP_API_BASE_URL}interveiw-section/get-branding-by-zoho-id/`,
+          { zoho_lead_id: encoded_zoho_lead_id }
+        );
+        if (response.data.success) {
+          setBranding({
+            logo: response.data.logo_url || Logo,
+            name: response.data.company_name || "Face Authentication Enrollment",
+          });
+        }
+      } catch (err) {
+        console.error("Branding fetch failed:", err);
+      }
+    };
+    fetchBranding();
+  }, [encoded_zoho_lead_id]);
+  
 
   const handleSubmit = useCallback(async () => {
     setLoading(true);
@@ -865,7 +896,7 @@ useEffect(() => {
     return (
       <div style={{padding:'10px 20px'}}>
         <div className="logomobile">
-          <img src={Logo} alt="AI Software" className="h-16" />
+          <img src={branding.logo} alt="AI Software" className="h-16" />
         </div>
 
         <section class="dots-container">
@@ -928,7 +959,7 @@ useEffect(() => {
       <div className="flex justify-between flex-col sm:flex-row px-8 pt-3 sm:pt-3  lg:px-16 items-center">
         <div>
           <h3 className="text-black text-xl sm:text-2xl mb-2">
-            <img src={Logo} alt="AI Software" className="h-16 sm:h-16" />
+            <img src={branding.logo} alt="AI Software" className="h-16 sm:h-16" />
           </h3>
           {/* <img src={Logo} alt="Not found" style={{width:'200px'}}/> */}
         </div>

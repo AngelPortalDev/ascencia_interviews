@@ -25,10 +25,15 @@ from django.utils.html import escape
 import re
 from django_q.tasks import async_task, schedule
 from django.utils.timezone import now, timedelta
-
+import torch
+from django.conf import settings
 
 from django_q.models import Schedule
+from adminpanel.helper.email_branding import get_email_branding
 
+from html import escape
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import whisper
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +47,7 @@ def get_uploads_folder():
 
 def convert_video(input_path, output_path, target_format):
     # FFMPEG_PATH = 'C:/ffmpeg/bin/ffmpeg.exe'
-    FFMPEG_PATH = '/usr/bin/ffmpeg'
+    # FFMPEG_PATH = '/usr/bin/ffmpeg'
     logging.info("output_path: %s", output_path)
     logging.info("target_format path: %s", target_format)
     # if target_format == "webm":
@@ -57,7 +62,7 @@ def convert_video(input_path, output_path, target_format):
 
     if target_format == "webm":
         command = (
-            f'{FFMPEG_PATH} -y -i "{input_path}" '
+            f'{settings.FFMPEG_PATH} -y -i "{input_path}" '
             f'-vf "fps=30,scale=640:480" '  # force 30 fps and resize
             f'-pix_fmt yuv420p '
             f'-c:v libvpx -b:v 1M -quality good -cpu-used 4 '
@@ -145,10 +150,10 @@ def upload_to_bunnystream(video_path):
         return video_id
     
 def get_duration(file_path):
-    FFMPEG_PROBE = '/usr/bin/ffprobe'
+    # FFMPEG_PROBE = '/usr/bin/ffprobe'
     # FFMPEG_PROBE = "C:/ffmpeg/bin/ffprobe.exe"
     cmd = [
-        FFMPEG_PROBE, "-v", "error",
+        settings.FFMPEG_PROBE, "-v", "error",
         "-show_entries", "format=duration",
         "-of", "default=noprint_wrappers=1:nokey=1",
         file_path
@@ -168,9 +173,9 @@ def get_duration(file_path):
     
 def generate_question_video(text, output_path, duration=2):
     # FFMPEG_PATH = r"C:\ffmpeg\bin\ffmpeg.exe"  # raw string avoids escaping
-    FFMPEG_PATH = '/usr/bin/ffmpeg'
+    # FFMPEG_PATH = '/usr/bin/ffmpeg'
     # font_path = "C\\\\:/Windows/Fonts/arial.ttf"
-    font_path = "/usr/share/fonts/dejavu/DejaVuSans.ttf"
+    # font_path = "/usr/share/fonts/dejavu/DejaVuSans.ttf"
 
 
       # ✅ Escape special characters properly for FFmpeg
@@ -180,13 +185,13 @@ def generate_question_video(text, output_path, duration=2):
     safe_text = text.replace("\n", " ").replace(":", r'\:').replace("?", r'\?').replace("'", "").replace('"', "")
 
     drawtext = (
-    f"drawtext=fontfile={font_path}:"
+    f"drawtext=fontfile={settings.FONT_PATH}:"
     f"text='{safe_text}':fontcolor=white:fontsize=12:x=(w-text_w)/2:y=(h-text_h)/2"
     )
     print("drawtext",drawtext)
 
     command = (
-        f'"{FFMPEG_PATH}" '
+        f'"{settings.FFMPEG_PATH}" '
         f'-f lavfi -i color=c=black:s=640x360:d={duration} '
         f'-f lavfi -i anullsrc=channel_layout=stereo:sample_rate=48000 '
         f'-shortest -vf "{drawtext}" '
@@ -242,10 +247,10 @@ def wait_for_complete_files(folder, min_files=1, stable_duration=5, timeout=30):
     # return video_i
 def get_codecs(video_path):
     # FFMPEG_PROBE = 'C:/ffmpeg/bin/ffprobe.exe'
-    FFMPEG_PROBE = '/usr/bin/ffprobe'
+    # FFMPEG_PROBE = '/usr/bin/ffprobe'
 
     cmd_video = [
-        FFMPEG_PROBE, '-v', 'error',
+        settings.FFMPEG_PROBE, '-v', 'error',
         '-select_streams', 'v:0', '-show_entries', 'stream=codec_name',
         '-of', 'json', video_path
     ]
@@ -253,7 +258,7 @@ def get_codecs(video_path):
     video_codec = json.loads(result_video.stdout)["streams"][0]["codec_name"].lower()
 
     cmd_audio = [
-        FFMPEG_PROBE, '-v', 'error',
+        settings.FFMPEG_PROBE, '-v', 'error',
         '-select_streams', 'a:0', '-show_entries', 'stream=codec_name',
         '-of', 'json', video_path
     ]
@@ -265,10 +270,10 @@ def get_codecs(video_path):
 
 def is_video_valid(video_path):
     # FFMPEG_PROBE = 'C:/ffmpeg/bin/ffprobe.exe'
-    FFMPEG_PROBE = '/usr/bin/ffprobe'
+    # FFMPEG_PROBE = '/usr/bin/ffprobe'
     try:
         cmd = [
-            FFMPEG_PROBE, "-v", "error",
+            settings.FFMPEG_PROBE, "-v", "error",
             "-select_streams", "v:0",
             "-show_entries", "stream=avg_frame_rate,duration",
             "-of", "default=noprint_wrappers=1:nokey=1",
@@ -491,7 +496,7 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
 
     # FFMPEG_PATH = '/home/YOUR_CPANEL_USERNAME/ffmpeg/ffmpeg'
     # FFMPEG_PATH = 'C:/ffmpeg/bin/ffmpeg.exe'
-    FFMPEG_PATH = '/usr/bin/ffmpeg'
+    # FFMPEG_PATH = '/usr/bin/ffmpeg'
 
     logging.info("uploads_folder: %s", uploads_folder)
     logging.info("output_filename: %s", output_filename)
@@ -585,7 +590,7 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
     
     if target_format == "webm":
         merge_command = (
-            f'{FFMPEG_PATH} -f concat -safe 0 -i "{list_file_path}" '
+            f'{settings.FFMPEG_PATH} -f concat -safe 0 -i "{list_file_path}" '
             f'-c:v libvpx -b:v 1M -r 30 -pix_fmt yuv420p '
             f'-c:a libopus -ar 48000 -ac 2 '
             f'-f webm "{output_path}"'
@@ -593,13 +598,13 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
 
     elif target_format == "mp4":
         merge_command = (
-            f'{FFMPEG_PATH} -f concat -safe 0 -i "{list_file_path}" '
+            f'{settings.FFMPEG_PATH} -f concat -safe 0 -i "{list_file_path}" '
             f'-map 0:v -map 0:a -c:v libx264 -preset veryfast -crf 28 '
             f'-vf scale=640:-2 -c:a aac -b:a 96k -movflags +faststart "{output_path}"'
         )
     elif target_format == "mov":
         merge_command = (
-            f'{FFMPEG_PATH} -f concat -safe 0 -i "{list_file_path}" '
+            f'{settings.FFMPEG_PATH} -f concat -safe 0 -i "{list_file_path}" '
             f'-c:v prores -c:a pcm_s16le "{output_path}"'
         )
     else:
@@ -692,9 +697,10 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
 
 
         video_path = os.path.join(
-            "/home/ascenciaintervie/public_html/static/uploads/interview_videos",
+            # "/home/ascenciaintervie/public_html/static/uploads/interview_videos",
             # "/home/interview/public_html/static/uploads/interview_videos",
             # "C:/xampp/htdocs/vaibhav/ascencia_interviews/static/uploads/interview_videos",
+            settings.UPLOADS_FOLDER,
             zoho_lead_id,
             "merged_video.webm"
         )
@@ -718,8 +724,8 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
 
 
         subject = "Interview Process Completed"
-        recipient = [student_manager_email]
-        # recipient = ["vaibhav@angel-portal.com"]
+        # recipient = [student_manager_email]
+        recipient = ["vaibhav@angel-portal.com"]
         from_email = ''
         # url = video_path  # or your public URL if available
         url = f"https://video.bunnycdn.com/play/{settings.BUNNY_STREAM_LIBRARY_ID}/{video_id}"
@@ -823,7 +829,9 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
          # Delete StudentInterviewAnswers after processing
         deleted_count, _ = StudentInterviewAnswers.objects.filter(zoho_lead_id=zoho_lead_id).delete()
         delted_student_interview = StudentInterview.objects.filter(zoho_lead_id=zoho_lead_id).update(interview_process='')
-
+        student1 = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        crm_id = student1.crm_id
+        logo_url, company_name = get_email_branding(crm_id)
         # ✅ Send "Thank You" Email to Student
         send_email(
             subject="Thank You for Completing Your Interview!",
@@ -887,7 +895,7 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
                 <body>
                     <div class="email-container">
                         <div class="header">
-                            <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Malta" />
+                            <img src="{logo_url}" alt="Ascencia Malta" />
                         </div>
                         <img src="https://ascencia-interview.com/static/img/email_template_icon/Thank_you-01.png" alt="Interview Completed" class="email-logo" />
                         
@@ -902,14 +910,14 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
                         <p>We’re excited to support you on your journey!</p>
 
                         <p>Best regards,<br/>
-                        Ascencia Malta</p>
+                        {company_name}</p>
                     </div>
                 </body>
             </html>
             """,
-            # recipient=["vaibhav@angel-portal.com"]
-            recipient=[student_email],
-            reply_to=[student_manager_email]
+            recipient=["vaibhav@angel-portal.com"]
+            # recipient=[student_email],
+            # reply_to=[student_manager_email]
         )
         logging.info("Deleted %s StudentInterviewAnswers entries for zoho_lead_id: %s", deleted_count, zoho_lead_id)
 
