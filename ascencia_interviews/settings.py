@@ -27,7 +27,7 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 # ✅ Use environment variables directly (no fallbacks)
 FFMPEG_PATH = os.environ["FFMPEG_PATH"]
-FFPROBE_PATH = os.environ["FFPROBE_PATH"]
+FFMPEG_PROBE = os.environ["FFMPEG_PROBE"]  
 UPLOADS_FOLDER = os.environ["UPLOADS_FOLDER"]
 FONT_PATH = os.environ["FONT_PATH"]
 
