@@ -207,9 +207,8 @@ LOGIN_URL = '/login'
 
 ADMIN_BASE_URL = "https://dev.ascencia-interview.com"
 
-# DEV server
-BUNNY_STREAM_API_KEY = "604a3484-c939-4ce1-a82d5dba2db6-e350-4620"
-BUNNY_STREAM_LIBRARY_ID = "503898"
+BUNNY_STREAM_API_KEY = os.getenv("BUNNY_STREAM_API_KEY")
+BUNNY_STREAM_LIBRARY_ID = os.getenv("BUNNY_STREAM_LIBRARY_ID")
 
 
 # Email Configuration (works for local & dev)
