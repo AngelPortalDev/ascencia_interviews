@@ -33,6 +33,14 @@ class StudentInterviewLink(models.Model):
     blank=True,
     help_text="Comma-separated IDs of assigned CommonQuestion rows"
 )
+    
+    assigned_course_question_ids = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="Comma-separated IDs of assigned Course Question rows"
+    )
+
     transcript_text = models.TextField(null=True, blank=True, help_text="Transcript of the merged interview video")
     reminder_sent = models.BooleanField(default=False)  # New field to track reminder status
     reminder_1hr_sent = models.BooleanField(default=False)

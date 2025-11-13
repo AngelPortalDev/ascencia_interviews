@@ -16,6 +16,7 @@ from studentpanel.models.student_Interview_status import StudentInterview
 from studentpanel.models.interview_link import StudentInterviewLink
 import time
 from adminpanel.models.common_question import CommonQuestion
+from adminpanel.models.question import Question
 logging.basicConfig(level=logging.INFO)
 import uuid
 import json
@@ -342,26 +343,48 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
     except StudentInterviewLink.DoesNotExist:
         return f"Interview link not found for zoho_lead_id: {zoho_lead_id}"
 
-    if not interview_link.assigned_question_ids:
+    # -----------------------------
+    # ✅ Fetch both question types
+    # -----------------------------
+    common_ids = list(map(int, interview_link.assigned_question_ids.split(","))) if interview_link.assigned_question_ids else []
+    course_ids = list(map(int, interview_link.assigned_course_question_ids.split(","))) if interview_link.assigned_course_question_ids else []
+
+    if not common_ids and not course_ids:
         return f"No assigned questions for zoho_lead_id: {zoho_lead_id}"
 
-    question_id_list = list(map(int, interview_link.assigned_question_ids.split(",")))
+    # Fetch from both models
+    common_qs = list(CommonQuestion.active_objects.filter(id__in=common_ids))
+    course_qs = list(Question.active_objects.filter(id__in=course_ids))
 
-    # ✅ Fetch answer objects in order of submission
+    # Map by ID for quick access
+    common_map = {q.id: q for q in common_qs}
+    course_map = {q.id: q for q in course_qs}
+
+    # Preserve order: common first, then course
+    ordered_questions = []
+    for qid in common_ids:
+        if qid in common_map:
+            ordered_questions.append(common_map[qid])
+    for qid in course_ids:
+        if qid in course_map:
+            ordered_questions.append(course_map[qid])
+
+    # -----------------------------
+    # ✅ Fetch answers in order
+    # -----------------------------
     answers = list(StudentInterviewAnswers.objects.filter(
         zoho_lead_id=zoho_lead_id
-    ).order_by("created_at")[:len(question_id_list)])
+    ).order_by("created_at")[:len(ordered_questions)])
 
     if not answers:
         return f"No answers found for lead ID {zoho_lead_id}."
 
-    # ✅ Fetch questions by ID and preserve order from interview_link
-    questions_qs = CommonQuestion.active_objects.filter(id__in=question_id_list)
-    question_map = {q.id: q for q in questions_qs}
-    ordered_questions = [question_map[qid] for qid in question_id_list if qid in question_map]
-
     if len(ordered_questions) < len(answers):
-        return f"Some question IDs are missing from CommonQuestion."
+        logging.warning("Some questions missing or not matched.")
+
+
+    # if len(ordered_questions) < len(answers):
+    #     return f"Some question IDs are missing from CommonQuestion."
 
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
     video_files = []

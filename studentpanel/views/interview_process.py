@@ -348,8 +348,6 @@ def interview_questions(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'Only POST allowed'}, status=405)
     
-    print("Request Body:", request.body)
-
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
@@ -357,7 +355,6 @@ def interview_questions(request):
 
     encoded_id = data.get('zoho_lead_id')
     interview_link_count = data.get('interview_link_count')
-
     if not encoded_id or not interview_link_count:
         return JsonResponse({'error': 'Missing required fields'}, status=400)
 
@@ -374,97 +371,80 @@ def interview_questions(request):
     except StudentInterviewLink.DoesNotExist:
         return JsonResponse({'error': 'Interview link not found'}, status=404)
 
-     # ✅ Get Student & CRM ID
+    # Get Student & Institute
     try:
         student = Students.objects.get(zoho_lead_id=zoho_lead_id)
-        # crm_id = student.crm_id
-    except Students.DoesNotExist:
-        return JsonResponse({'error': 'Student not found'}, status=404)
-    
-    # ✅ Get Institute by matching CRM ID (string field)
-    try:
         institute = Institute.objects.get(crm_id=student.crm_id)
-    except Institute.DoesNotExist:
-        return JsonResponse({'error': 'No Institute found for this CRM ID'}, status=404)
+    except (Students.DoesNotExist, Institute.DoesNotExist):
+        return JsonResponse({'error': 'Student or Institute not found'}, status=404)
 
-     # ✅ Fetch common questions for this institute
+    # Fetch questions
     common_questions = list(CommonQuestion.active_objects.filter(crm_id=institute))
-
-    print("common_questions",common_questions)
-    # ✅ Fetch course questions if student has a course assigned
     course_questions = []
     if student.program:
         matched_course = Course.active_objects.filter(
             course_name__iexact=student.program.strip(),
             crm_id=institute
         ).first()
-
         if matched_course:
             course_questions = list(Question.active_objects.filter(course_id=matched_course))
 
-        print("course_questions",course_questions)
-    # ✅ Merge common + course questions
-    if course_questions:
-        all_questions = common_questions + course_questions
-    else:
-        all_questions = common_questions
+    # ----------------------------
+    # ✅ Assign questions logic
+    # ----------------------------
+    if not interview_link.assigned_question_ids and not interview_link.assigned_course_question_ids:
+        import random
 
-
-    if not all_questions:
-        return JsonResponse({'error': 'No questions available for this student'}, status=400)
-    print("Matched Questions:", all_questions)
-    
-
-    if not interview_link.assigned_question_ids:
+        # --- Common questions ---
         if str(institute.crm_id) == "755071407":
-            # Special case: Assign all
-            selected_questions = all_questions
+            selected_common = common_questions
         else:
-            # Default: 6 questions → 3 fixed + 3 random if available
-            first_three = all_questions[:3]
-            remaining = all_questions[3:]
-            import random
-            random_three = random.sample(remaining, min(3, len(remaining)))
-            selected_questions = first_three + random_three
+            first_three = common_questions[:3]
+            remaining_common = common_questions[3:]
+            random_three = random.sample(remaining_common, min(3, len(remaining_common))) if remaining_common else []
+            selected_common = first_three + random_three
 
-        interview_link.assigned_question_ids = ",".join(str(q.id) for q in selected_questions)
+        # --- Course questions (not mixed with common) ---
+        selected_course = course_questions if course_questions else []
+
+        # ✅ Save separately
+        interview_link.assigned_question_ids = ",".join(str(q.id) for q in selected_common)
+        interview_link.assigned_course_question_ids = ",".join(str(q.id) for q in selected_course)
         interview_link.save()
 
-    # Fetch assigned questions
-     # ✅ Prepare response data
-    question_ids = list(map(int, interview_link.assigned_question_ids.split(',')))
+    # ----------------------------
+    # ✅ Prepare response
+    # ----------------------------
+    common_ids = list(map(int, interview_link.assigned_question_ids.split(','))) if interview_link.assigned_question_ids else []
+    course_ids = list(map(int, interview_link.assigned_course_question_ids.split(','))) if interview_link.assigned_course_question_ids else []
 
-    # Need to check both models, since assigned IDs may include both types
-    # common_qs_map = {q.id: q.question for q in CommonQuestion.objects.filter(id__in=question_ids)}
-    # course_qs_map = {q.id: q.question for q in Question.objects.filter(id__in=question_ids)}
-    # question_map = {**common_qs_map, **course_qs_map}
-
-    # ordered_data = [
-    # {
-    #     'encoded_id': qid,
-    #     'question': question_map[qid]
-    # }
-    # for qid in question_ids if qid in question_map
-    # ]
-
-    # ✅ Fetch objects with question text and time limit
-    common_qs = {q.id: q for q in CommonQuestion.objects.filter(id__in=question_ids)}
-    course_qs = {q.id: q for q in Question.objects.filter(id__in=question_ids)}
+    # Fetch questions
+    common_qs = {q.id: q for q in CommonQuestion.objects.filter(id__in=common_ids)}
+    course_qs = {q.id: q for q in Question.objects.filter(id__in=course_ids)}
 
     ordered_data = []
-    for qid in question_ids:
-        q_obj = common_qs.get(qid) or course_qs.get(qid)
+
+    # Common questions first
+    for qid in common_ids:
+        q_obj = common_qs.get(qid)
         if q_obj:
             ordered_data.append({
                 'encoded_id': qid,
                 'question': q_obj.question,
-                'time_limit': q_obj.time_limit if hasattr(q_obj, 'time_limit') else 30  # ✅ add time limit
+                'time_limit': getattr(q_obj, 'time_limit', 30)
             })
 
-
+    # Course questions next
+    for qid in course_ids:
+        q_obj = course_qs.get(qid)
+        if q_obj:
+            ordered_data.append({
+                'encoded_id': qid,
+                'question': q_obj.question,
+                'time_limit': getattr(q_obj, 'time_limit', 30)
+            })
 
     return JsonResponse({'questions': ordered_data}, status=200)
-
 
     
 @csrf_exempt

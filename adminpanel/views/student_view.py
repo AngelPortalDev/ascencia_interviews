@@ -382,9 +382,11 @@ def students_leads_api(request):
         print("extend_link",extend_link)
 
 
-        if zoho_lead_id != "4932235000170466001":
+        allowed_zoho_ids = ["4932235000170466001", "5204268000112707003"]
+
+        if zoho_lead_id not in allowed_zoho_ids:
             return JsonResponse({"status": False, "error": "Unauthorized Zoho Lead Id"}, status=403)
-        # 4932235000170466001   , 5204268000112707003
+                
         
         
         
