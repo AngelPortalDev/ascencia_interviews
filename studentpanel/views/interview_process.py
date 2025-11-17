@@ -392,26 +392,34 @@ def interview_questions(request):
     # ----------------------------
     # ✅ Assign questions logic
     # ----------------------------
-    if not interview_link.assigned_question_ids and not interview_link.assigned_course_question_ids:
-        import random
+    # ----- Assign Common Questions -----
+    if not interview_link.assigned_question_ids:
+        print("🟡 Assigning COMMON questions...")
 
-        # --- Common questions ---
-        if str(institute.crm_id) == "755071407":
+        if str(institute.crm_id) in ["755071407", "759439531"]:
             selected_common = common_questions
         else:
             first_three = common_questions[:3]
             remaining_common = common_questions[3:]
-            random_three = random.sample(remaining_common, min(3, len(remaining_common))) if remaining_common else []
+            random_three = random.sample(
+                remaining_common, 
+                min(3, len(remaining_common))
+            ) if remaining_common else []
             selected_common = first_three + random_three
 
-        # --- Course questions (not mixed with common) ---
-        selected_course = course_questions if course_questions else []
-
-        # ✅ Save separately
         interview_link.assigned_question_ids = ",".join(str(q.id) for q in selected_common)
-        interview_link.assigned_course_question_ids = ",".join(str(q.id) for q in selected_course)
-        interview_link.save()
+        print("🟢 Saved COMMON:", interview_link.assigned_question_ids)
 
+    # ----- Assign Course Questions -----
+    if not interview_link.assigned_course_question_ids:
+        print("🟡 Assigning COURSE questions...")
+
+        selected_course = course_questions if course_questions else []
+        interview_link.assigned_course_question_ids = ",".join(str(q.id) for q in selected_course)
+
+        print("🟢 Saved COURSE:", interview_link.assigned_course_question_ids)
+
+    interview_link.save()
     # ----------------------------
     # ✅ Prepare response
     # ----------------------------

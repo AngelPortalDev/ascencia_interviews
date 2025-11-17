@@ -37,6 +37,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import whisper
 
 logger = logging.getLogger(__name__)
+import subprocess
+import textwrap
+from PIL import ImageFont
+import tempfile
 
 def get_uploads_folder():
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
@@ -170,47 +174,86 @@ def get_duration(file_path):
         logging.warning(f"Duration check failed for {file_path}: {e}. Using fallback duration 2.0s")
         return 2.0
 
-    
-    
-def generate_question_video(text, output_path, duration=2):
-    # FFMPEG_PATH = r"C:\ffmpeg\bin\ffmpeg.exe"  # raw string avoids escaping
-    # FFMPEG_PATH = '/usr/bin/ffmpeg'
-    # font_path = "C\\\\:/Windows/Fonts/arial.ttf"
-    # font_path = "/usr/share/fonts/dejavu/DejaVuSans.ttf"
+def wrap_text_pixels(text, font_path, fontsize, max_width_px):
+    font = ImageFont.truetype(font_path, fontsize)
+    words = text.split()
+    lines = []
+    current_line = ""
+
+    for word in words:
+        test_line = f"{current_line} {word}".strip()
+        if len(current_line.split()) >= 16:
+            lines.append(current_line)
+            current_line = word
+            continue
+        bbox = font.getbbox(test_line)
+        w = bbox[2] - bbox[0]
+
+        if w <= max_width_px:
+            current_line = test_line
+        else:
+            if current_line:
+                lines.append(current_line)
+            word_bbox = font.getbbox(word)
+            word_width = word_bbox[2] - word_bbox[0]
+            if word_width > max_width_px:
+                split_word = [word[i:i+10] for i in range(0, len(word), 10)]
+                lines.extend(split_word[:-1])
+                current_line = split_word[-1]
+            else:
+                current_line = word
+    if current_line:
+        lines.append(current_line)
+    return lines
+
+def save_wrapped_text_file(text, font_path, fontsize, max_width_px):
+    wrapped_lines = wrap_text_pixels(text, font_path, fontsize, max_width_px)
+    tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".txt", mode="w", encoding="utf-8")
+    tmp_file.write("\n".join(wrapped_lines))
+    tmp_file.close()
+
+    original_path = tmp_file.name
+    # Correct FFmpeg path: double backslash before colon + forward slashes for rest
+    path = tmp_file.name
+    if ":" in path:
+        drive, rest = path.split(":", 1)
+        ffmpeg_path = f"{drive}\\\\:{rest.replace('\\', '/')}"
+    else:
+        ffmpeg_path = path.replace("\\", "/")
+
+    return original_path,ffmpeg_path
 
 
-      # ✅ Escape special characters properly for FFmpeg
-    #   this only one line Questions
-    # safe_text = text.replace(":", r'\:').replace("?", r'\?').replace("'", "").replace('"', "")
-    # for new line like two line questions 
-    safe_text = text.replace("\n", " ").replace(":", r'\:').replace("?", r'\?').replace("'", "").replace('"', "")
+def generate_question_video(text, output_path, duration=2, fontsize=12, max_width_px=500):
+    # Font path with DOUBLE backslash before colon for FFmpeg
+    font_path = settings.FONT_PATH  # e.g., "C:/Windows/Fonts/arial.ttf"
+    # font_path_ffmpeg = font_path.replace(":", "\\\\").replace("\\", "/")
 
+    # Generate wrapped text file
+    original_path,text_file_path = save_wrapped_text_file(text, font_path, fontsize, max_width_px)
+
+    # Drawtext exactly like your working command
     drawtext = (
-    f"drawtext=fontfile={settings.FONT_PATH}:"
-    f"text='{safe_text}':fontcolor=white:fontsize=12:x=(w-text_w)/2:y=(h-text_h)/2"
+        f"drawtext=fontfile={font_path}:"
+        f"textfile={text_file_path}:"
+        f"fontcolor=white:fontsize={fontsize}:line_spacing=6:"
+        "x=(w-text_w)/2:y=(h-text_h)/2:"
+        "fix_bounds=1:box=1:boxcolor=black@0.4:boxborderw=20"
     )
-    print("drawtext",drawtext)
 
     command = (
-        f'"{settings.FFMPEG_PATH}" '
-        f'-f lavfi -i color=c=black:s=640x360:d={duration} '
+        f'"C:/ffmpeg/bin/ffmpeg.exe" -f lavfi -i color=c=black:s=640x360:d={duration} '
         f'-f lavfi -i anullsrc=channel_layout=stereo:sample_rate=48000 '
-        f'-shortest -vf "{drawtext}" '
+        f'-vf "{drawtext}" -shortest '
         f'-c:v libvpx -b:v 1M -c:a libopus -ar 48000 -ac 2 '
-        f'-f webm -y "{output_path}"'
+        f'-y "{output_path}"'
     )
 
+    print("Running FFmpeg command:", command)
+    subprocess.run(command, shell=True, check=True)
 
-    logging.info("Running FFmpeg command:\n%s", command)
+    os.remove(original_path)
 
-    try:
-        subprocess.run(command, shell=True, check=True)
-    except subprocess.CalledProcessError as e:
-        logging.error("FFmpeg failed to generate VP8+Opus question video: %s", e)
-        raise
-
-
-    
 def wait_for_complete_files(folder, min_files=1, stable_duration=5, timeout=30):
     start = time.time()
     last_sizes = {}
@@ -407,7 +450,15 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
         #     return f"Missing answer file: {answer_path}"
 
         if not os.path.exists(question_path):
-            generate_question_video(f"{question.question}", question_path, duration=2.0)
+            # generate_question_video(f"{question.question}", question_path, duration=2.0)
+            # Assuming `question` is your question object and `question_path` is the output video path
+            generate_question_video(
+                text=f"{question.question}",  # the question text
+                output_path=question_path,    # the output video file path
+                duration=2.0,                 # video duration in seconds
+                fontsize=12,                  # font size for text
+                max_width_px=600              # max width in pixels for wrapping
+            )         
 
         video_files.append(question_path)
         video_files.append(answer_path)
