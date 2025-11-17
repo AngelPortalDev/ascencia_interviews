@@ -232,6 +232,7 @@ def save_wrapped_text_file(text, font_path, fontsize, max_width_px):
 def generate_question_video(text, output_path, duration=2, fontsize=12, max_width_px=500):
     # Font path with DOUBLE backslash before colon for FFmpeg
     font_path = settings.FONT_PATH  # e.g., "C:/Windows/Fonts/arial.ttf"
+    ffmpeg_path = settings.FFMPEG_PATH
     # font_path_ffmpeg = font_path.replace(":", "\\\\").replace("\\", "/")
 
     # Generate wrapped text file
@@ -246,8 +247,15 @@ def generate_question_video(text, output_path, duration=2, fontsize=12, max_widt
         "fix_bounds=1:box=1:boxcolor=black@0.4:boxborderw=20"
     )
 
+    # command = (
+    #     f'"C:/ffmpeg/bin/ffmpeg.exe" -f lavfi -i color=c=black:s=640x360:d={duration} '
+    #     f'-f lavfi -i anullsrc=channel_layout=stereo:sample_rate=48000 '
+    #     f'-vf "{drawtext}" -shortest '
+    #     f'-c:v libvpx -b:v 1M -c:a libopus -ar 48000 -ac 2 '
+    #     f'-y "{output_path}"'
+    # )
     command = (
-        f'"C:/ffmpeg/bin/ffmpeg.exe" -f lavfi -i color=c=black:s=640x360:d={duration} '
+        f'"{ffmpeg_path}" -f lavfi -i color=c=black:s=640x360:d={duration} '
         f'-f lavfi -i anullsrc=channel_layout=stereo:sample_rate=48000 '
         f'-vf "{drawtext}" -shortest '
         f'-c:v libvpx -b:v 1M -c:a libopus -ar 48000 -ac 2 '
