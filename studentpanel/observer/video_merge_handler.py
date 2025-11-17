@@ -218,7 +218,9 @@ def save_wrapped_text_file(text, font_path, fontsize, max_width_px):
         path = original_path
         if ":" in path:
             drive, rest = path.split(":", 1)
-            ffmpeg_path = original_path
+            # ffmpeg_path = original_path
+            rest_clean = rest.replace("\\", "/")
+            ffmpeg_path = f"{drive}\\\\:{rest_clean}"
         else:
             ffmpeg_path = path.replace("\\", "/")
     else:                 # Linux (cPanel)
