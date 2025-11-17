@@ -214,12 +214,15 @@ def save_wrapped_text_file(text, font_path, fontsize, max_width_px):
 
     original_path = tmp_file.name
     # Correct FFmpeg path: double backslash before colon + forward slashes for rest
-    path = tmp_file.name
-    if ":" in path:
-        drive, rest = path.split(":", 1)
-        ffmpeg_path = f"{drive}\\\\:{rest.replace('\\', '/')}"
-    else:
-        ffmpeg_path = path.replace("\\", "/")
+    if os.name == "nt":   # Windows
+        path = original_path
+        if ":" in path:
+            drive, rest = path.split(":", 1)
+            ffmpeg_path = f"{drive}\\\\:{rest.replace('\\', '/')}"
+        else:
+            ffmpeg_path = path.replace("\\", "/")
+    else:                 # Linux (cPanel)
+        ffmpeg_path = original_path  # NO escaping needed
 
     return original_path,ffmpeg_path
 
