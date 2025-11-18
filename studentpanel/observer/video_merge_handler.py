@@ -810,6 +810,10 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
             student_manager_email= student_manager.email
 
 
+        student1 = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        crm_id = student1.crm_id
+        logo_url, company_name = get_email_branding(crm_id)
+
         subject = "Interview Process Completed"
         # recipient = [student_manager_email]
         recipient = ["vaibhav@angel-portal.com"]
@@ -828,7 +832,7 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
                     </div>
 
                     <!-- Illustration -->
-                    <img src="https://ascencia-interview.com/static/img/email_template_icon/interviewcomplete.png" alt="Document Verified" style="width: 50%; display: block; margin: 20px auto;" />
+                    <img src="{logo_url}" alt="Document Verified" style="width: 50%; display: block; margin: 20px auto;" />
 
                     <!-- Heading -->
                     <h2 style="color: #2c3e50; text-align: center;">Interview Process Submitted</h2>
@@ -860,7 +864,7 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
                     </div>
 
                     <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left; margin-top: 30px;">
-                                                    Best regards,<br/>Ascencia Malta
+                                                    Best regards,<br/>{company_name}
                                                 </p>
                 </div>
                 
@@ -916,9 +920,7 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
          # Delete StudentInterviewAnswers after processing
         deleted_count, _ = StudentInterviewAnswers.objects.filter(zoho_lead_id=zoho_lead_id).delete()
         delted_student_interview = StudentInterview.objects.filter(zoho_lead_id=zoho_lead_id).update(interview_process='')
-        student1 = Students.objects.get(zoho_lead_id=zoho_lead_id)
-        crm_id = student1.crm_id
-        logo_url, company_name = get_email_branding(crm_id)
+        
         # ✅ Send "Thank You" Email to Student
         send_email(
             subject="Thank You for Completing Your Interview!",

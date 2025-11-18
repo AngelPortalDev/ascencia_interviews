@@ -70,7 +70,8 @@ export const startRecording = async (
     });
 
     //  IMPORTANT: Clear chunks array for new recording
-    recordedChunksRef.current = [];
+    // recordedChunksRef.current = [];
+    setTimeout(() => { recordedChunksRef.current = []; }, 50);
 
     mediaRecorderRef.current.ondataavailable = (event) => {
       if (event.data.size > 0) {
@@ -133,7 +134,8 @@ export const stopRecording = (
 
         //  STEP 2: Copy chunks and clear immediately so new recording can start
         const chunksToUpload = [...recordedChunksRef.current];
-        recordedChunksRef.current = [];
+        // recordedChunksRef.current = [];
+        setTimeout(() => { recordedChunksRef.current = []; }, 50);
 
         //  STEP 3: Resolve promise immediately so UI can continue
         resolve({ videoPath: null, audioPath: null });

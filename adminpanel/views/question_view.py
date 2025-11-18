@@ -45,18 +45,24 @@ def common_question_add(request):
     if request.method == 'POST':
         data = request.POST
         question = data.get('question')
-        crm_id = data.get('crm_id')
+        # crm_id = data.get('crm_id')
+        crm_ids = request.POST.getlist('crm_id')
+
         time_limit = data.get('time_limit', 30)  # default 30 if not provided
 
 
 
-        if not crm_id:
+        if not crm_ids:
             errors['crm_id'] = "Institute is required."
         if not question:
             errors['question'] = "Question is required." 
         else:
-            if CommonQuestion.objects.filter(question=question).exists():
-                errors['question'] = "Question must be unique."
+            # if CommonQuestion.objects.filter(question=question).exists():
+            #     errors['question'] = "Question must be unique."
+            for cid in crm_ids:
+                if CommonQuestion.objects.filter(question=question, crm_id=cid).exists():
+                    errors['question'] = f"This question already exists for one of the selected institutes."
+                    break
 
         try:
             time_limit = int(time_limit)
@@ -68,14 +74,16 @@ def common_question_add(request):
         if errors:
             return render(request, 'common_question/common_question_add.html', {'errors': errors, 'institutes': institutes, "show_breadcrumb": True, "breadcrumb_items": breadcrumb_items, })
         try:
-            institute = Institute.objects.get(id=crm_id)
-            data_to_save = {
-                'question': question,
-                'crm_id': institute,
-                'time_limit': time_limit,  # 👈 save time_limit
-            }
+            for cid in crm_ids:
+                institute = Institute.objects.get(id=cid)
+                data_to_save = {
+                    'question': question,
+                    'crm_id': institute,
+                    'time_limit': time_limit,
+                }
+                result = save_data(CommonQuestion, data_to_save)
 
-            result = save_data(CommonQuestion, data_to_save)
+            # result = save_data(CommonQuestion, data_to_save)
 
             if result['status']:
                 messages.success(request, "Question added successfully!")
@@ -129,8 +137,10 @@ def common_question_update(request, id):
         if not question:
             errors['question'] = "Question is required."
         else:
-            if CommonQuestion.objects.filter(question=question).exclude(id=id).exists():
-                errors['question'] = "Question must be unique."
+            # if CommonQuestion.objects.filter(question=question).exclude(id=id).exists():
+            #     errors['question'] = "Question must be unique."
+            if CommonQuestion.objects.filter(question=question, crm_id=crm_id).exclude(id=id).exists():
+                errors['question'] = "This question already exists for the selected institute."
 
          # Validate time_limit
         try:

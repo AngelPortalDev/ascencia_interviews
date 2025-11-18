@@ -627,7 +627,8 @@ useEffect(() => {
 
   // ************ User Spent More Than 30 seconds then navigation enabled ****************
   useEffect(() => {
-    if (timeSpent > 30 || currentTimeLimit <= 30) {
+    const minimumTimeBeforeNav = Math.floor(currentTimeLimit / 2);
+    if (timeSpent >= minimumTimeBeforeNav) {
       setIsNavigationEnabled(true);
     } else {
       setIsNavigationEnabled(false);
@@ -1037,7 +1038,7 @@ useEffect(() => {
                 >
                   Skip
                 </button> */}
-            {(timeSpent > 30 || currentTimeLimit <= 30) && (
+            {(timeSpent >= Math.floor(currentTimeLimit / 2)) && (
               <button
                 onClick={() => {
                   swiperRef.current?.slideNext();
