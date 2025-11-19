@@ -49,45 +49,69 @@ def get_uploads_folder():
     logging.info("uploads folder text: %s", uploads_folder)
     return uploads_folder.replace("\\", "/")
 
-
 def convert_video(input_path, output_path, target_format):
-    # FFMPEG_PATH = 'C:/ffmpeg/bin/ffmpeg.exe'
-    # FFMPEG_PATH = '/usr/bin/ffmpeg'
-    logging.info("output_path: %s", output_path)
-    logging.info("target_format path: %s", target_format)
-    # if target_format == "webm":
-    #     command = (
-    #         f'{FFMPEG_PATH} -y -i "{input_path}" '
-    #         f'-vf scale=640:480 -r 30 -pix_fmt yuv420p '
-    #         f'-c:v libvpx -b:v 1M -quality good -cpu-used 4 '
-    #         f'-qmin 10 -qmax 42 '
-    #         f'-c:a libopus -application voip -b:a 96k '
-    #         f'-f webm "{output_path}"'
-    #     )
+    logging.info("Converting: %s", input_path)
+    logging.info("Target: %s", output_path)
 
     if target_format == "webm":
-        command = (
-            # f'{settings.FFMPEG_PATH} -y -i "{input_path}" '
-            f'{settings.FFMPEG_PATH} -y -fflags +genpts -i "{input_path}" '
-            f'-vf "fps=30,scale=640:480" '  # force 30 fps and resize
-            f'-pix_fmt yuv420p '
-            f'-c:v libvpx -b:v 1M -quality good -cpu-used 4 '
-            f'-qmin 10 -qmax 42 '
-            f'-c:a libopus -b:a 96k '
-            f'-f webm "{output_path}"'
-    )
-
+        cmd = [
+            settings.FFMPEG_PATH,
+            "-y",
+            "-fflags", "+genpts",
+            "-i", input_path,
+            "-vf", "fps=30,scale=640:480",
+            "-pix_fmt", "yuv420p",
+            "-c:v", "libvpx",
+            "-b:v", "1M",
+            "-quality", "good",
+            "-cpu-used", "4",
+            "-qmin", "10",
+            "-qmax", "42",
+            "-c:a", "libopus",
+            "-b:a", "96k",
+            "-f", "webm",
+            output_path
+        ]
 
     elif target_format == "mp4":
-        command = f'ffmpeg -i "{input_path}" -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -movflags +faststart "{output_path}"'
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", input_path,
+            "-c:v", "libx264",
+            "-preset", "fast",
+            "-crf", "23",
+            "-c:a", "aac",
+            "-b:a", "128k",
+            "-movflags", "+faststart",
+            output_path
+        ]
+
     elif target_format == "mov":
-        command = f'ffmpeg -i "{input_path}" -c:v prores -c:a pcm_s16le "{output_path}"'
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", input_path,
+            "-c:v", "prores",
+            "-c:a", "pcm_s16le",
+            output_path
+        ]
+
     else:
-        raise ValueError(f"Unsupported format: {target_format}")
+        raise ValueError("Unsupported format")
 
-    subprocess.run(command, shell=True, check=True)
+    # Run FFmpeg and capture errors
+    process = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-warnings.filterwarnings("ignore", message="FP16 is not supported on CPU; using FP32 instead")
+    # Log the FFmpeg output in case of failure
+    if process.returncode != 0:
+        logging.error("FFmpeg failed with error:\n%s", process.stderr.decode())
+        raise Exception("FFmpeg conversion failed")
+
+    # Detect zero-byte output
+    if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
+        logging.error("Zero-byte output detected. FFmpeg stderr:\n%s", process.stderr.decode())
+        raise Exception("Conversion failed: zero-byte output file.")
+
+    logging.info("Conversion successful.")
 
 def transcribe_complete_video(video_path):
     if not os.path.exists(video_path):
@@ -446,36 +470,52 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
     video_files = []
 
-    # 🔁 Pair each question with its corresponding answer
-    for i, (answer, question) in enumerate(zip(answers, ordered_questions), start=1):
-        question_filename = f"question_{question.id}.webm"
-        question_path = os.path.join(uploads_folder, question_filename).replace("\\", "/")
-        answer_path = os.path.join(project_root, answer.video_path).replace("\\", "/")
+    # ----------------------------------------
+# BUILD ANSWER MAP BY QUESTION ID
+# ----------------------------------------
+    answers_qid_map = {}
 
-         # Skip Q&A pair if answer is missing or 0-byte
-        if not os.path.exists(answer_path) or os.path.getsize(answer_path) == 0:
-            logging.warning(
-                "Skipping Q&A pair: Answer missing or 0-byte, question not generated. "
-                "Question ID: %s, Answer Path: %s", question.id, answer_path
-            )
+    for ans in answers:
+        if ans.question_id:
+            answers_qid_map[ans.question_id] = ans
+
+
+    # ----------------------------------------
+    # LOOP QUESTIONS IN CORRECT ORDER
+    # ----------------------------------------
+    for question in ordered_questions:
+        qid = question.id
+
+        # Find matching answer
+        answer = answers_qid_map.get(qid)
+
+        if not answer:
+            logging.warning(f"Skipping: No answer for Question {qid}")
             continue
 
-        # if not os.path.exists(answer_path):
-        #     return f"Missing answer file: {answer_path}"
+        answer_path = os.path.join(project_root, answer.video_path).replace("\\", "/")
+
+        # Skip corrupted answer
+        if not os.path.exists(answer_path) or os.path.getsize(answer_path) == 0:
+            logging.warning(f"Skipping Question {qid}: Answer missing or 0-byte.")
+            continue
+
+        # Generate question video ONLY if answer exists
+        question_filename = f"question_{qid}.webm"
+        question_path = os.path.join(uploads_folder, question_filename).replace("\\", "/")
 
         if not os.path.exists(question_path):
-            # generate_question_video(f"{question.question}", question_path, duration=2.0)
-            # Assuming `question` is your question object and `question_path` is the output video path
             generate_question_video(
-                text=f"{question.question}",  # the question text
-                output_path=question_path,    # the output video file path
-                duration=2.0,                 # video duration in seconds
-                fontsize=12,                  # font size for text
-                max_width_px=600              # max width in pixels for wrapping
-            )         
+                text=question.question,
+                output_path=question_path,
+                duration=2.0,
+                fontsize=12,
+                max_width_px=600
+            )
 
         video_files.append(question_path)
         video_files.append(answer_path)
+
 
 
 
