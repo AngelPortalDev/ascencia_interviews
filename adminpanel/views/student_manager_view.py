@@ -70,6 +70,11 @@ def student_manager_add(request):
         #     errors['last_name'] = "Last Name is required."
         if not email:
             errors['email'] = "Email is required."
+        else:
+            # Email already exists check
+            if User.objects.filter(email=email).exists():
+                errors['email'] = "Email already exists."
+
         if not institute_id:
             errors['institute_id'] = "Institute is required."
         if not password:
@@ -163,6 +168,10 @@ def student_manager_update(request, id):
         #     errors['last_nasme'] = "Last Name is required."
         if not email:
             errors['email'] = "Email is required."
+        else:
+    # Check if another user already uses this email
+            if User.objects.filter(email=email).exclude(id=user.id).exists():
+                errors['email'] = "Email already exists."
         if not institute_id:
             errors['institute_id'] = "Institute is required."
             

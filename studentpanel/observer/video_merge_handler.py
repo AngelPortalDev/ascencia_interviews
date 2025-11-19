@@ -828,11 +828,11 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
                     
                     <!-- Logo Header -->
                     <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
-                    <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Company Logo" style="height: 70px; width: auto; margin-bottom: 10px;">
+                    <img src="{logo_url}" alt="Company Logo" style="height: 70px; width: auto; margin-bottom: 10px;">
                     </div>
 
                     <!-- Illustration -->
-                    <img src="{logo_url}" alt="Document Verified" style="width: 50%; display: block; margin: 20px auto;" />
+                    <img src="https://ascencia-interview.com/static/img/email_template_icon/interviewcomplete.png" alt="Document Verified" style="width: 50%; display: block; margin: 20px auto;" />
 
                     <!-- Heading -->
                     <h2 style="color: #2c3e50; text-align: center;">Interview Process Submitted</h2>
