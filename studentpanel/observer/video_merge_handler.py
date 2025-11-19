@@ -53,25 +53,60 @@ def convert_video(input_path, output_path, target_format):
     logging.info("Converting: %s", input_path)
     logging.info("Target: %s", output_path)
 
+    # if target_format == "webm":
+    #     cmd = [
+    #         settings.FFMPEG_PATH,
+    #         "-y",
+    #         "-r", "30",                        # REQUIRED FIX (before -i)
+    #         "-fflags", "+genpts",
+    #         "-reset_timestamps", "1",
+    #         "-i", input_path,
+    #         "-vf", "fps=30,scale=640:480",
+    #         "-pix_fmt", "yuv420p",
+    #         "-c:v", "libvpx",
+    #         "-b:v", "1M",
+    #         "-quality", "good",
+    #         "-cpu-used", "4",
+    #         "-qmin", "10",
+    #         "-qmax", "42",
+    #         "-c:a", "libopus",
+    #         "-b:a", "96k",
+    #         "-f", "webm",
+    #         output_path
+    #     ]
+
     if target_format == "webm":
         cmd = [
             settings.FFMPEG_PATH,
             "-y",
+
+            # 🔥 CRITICAL FIXES
             "-fflags", "+genpts",
+            "-use_wallclock_as_timestamps", "1",   # <-- REQUIRED (repairs broken Firefox/Chrome WebM)
+            "-r", "30",                            # Force a valid FPS for decoding
+
             "-i", input_path,
+
+            # 🔥 Normalize video quality
             "-vf", "fps=30,scale=640:480",
             "-pix_fmt", "yuv420p",
+
+            # 🔥 Stable VP8/Opus output
             "-c:v", "libvpx",
             "-b:v", "1M",
             "-quality", "good",
             "-cpu-used", "4",
             "-qmin", "10",
             "-qmax", "42",
+
             "-c:a", "libopus",
             "-b:a", "96k",
+
             "-f", "webm",
             output_path
         ]
+
+
 
     elif target_format == "mp4":
         cmd = [
