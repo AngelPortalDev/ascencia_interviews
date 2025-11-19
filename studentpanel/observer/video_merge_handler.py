@@ -67,7 +67,8 @@ def convert_video(input_path, output_path, target_format):
 
     if target_format == "webm":
         command = (
-            f'{settings.FFMPEG_PATH} -y -i "{input_path}" '
+            # f'{settings.FFMPEG_PATH} -y -i "{input_path}" '
+            f'{settings.FFMPEG_PATH} -y -fflags +genpts -i "{input_path}" '
             f'-vf "fps=30,scale=640:480" '  # force 30 fps and resize
             f'-pix_fmt yuv420p '
             f'-c:v libvpx -b:v 1M -quality good -cpu-used 4 '

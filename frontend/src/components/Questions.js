@@ -1009,7 +1009,7 @@ useEffect(() => {
                 className="bg-white pb-6 pt-0 pr-6 pl-6  rounded-lg shadow-lg text-black position-relative"
               >
                 <p className="text-base sm:text-lg">{questionItem.question}</p>
-                {index === getQuestions.length - 1 && (timeSpent > 30 || currentTimeLimit <= 30) && (
+                {index === getQuestions.length - 1 && timeSpent >= Math.floor(currentTimeLimit / 2) && (
                   <button
                     onClick={handleSubmit}
                     disabled={loading}
