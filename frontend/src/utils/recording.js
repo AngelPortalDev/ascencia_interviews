@@ -38,7 +38,7 @@ export const startRecording = async (
     // Get new stream
     const stream = await navigator.mediaDevices.getUserMedia({
       video: true,
-      audio: { noiseSuppression: true, echoCancellation: true,autoGainControl: true, },
+      audio: { noiseSuppression: false, echoCancellation: true,autoGainControl: true},
     });
 
     if (videoRef.current) {
@@ -65,13 +65,13 @@ export const startRecording = async (
     //  Create new MediaRecorder
     mediaRecorderRef.current = new MediaRecorder(stream, {
       mimeType,
-      audioBitsPerSecond: 32000,
+      audioBitsPerSecond: 96000,
       videoBitsPerSecond: 500000,
     });
 
     //  IMPORTANT: Clear chunks array for new recording
-    // recordedChunksRef.current = [];
-    setTimeout(() => { recordedChunksRef.current = []; }, 50);
+    recordedChunksRef.current = [];
+    // setTimeout(() => { recordedChunksRef.current = []; }, 50);
 
     mediaRecorderRef.current.ondataavailable = (event) => {
       if (event.data.size > 0) {
@@ -97,6 +97,90 @@ export const startRecording = async (
 // ============================================
 // STOP RECORDING - Updated for background upload
 // ============================================
+// export const stopRecording = (
+//   videoRef,
+//   mediaRecorderRef,
+//   audioRecorderRef,
+//   recordedChunksRef,
+//   recordedAudioChunksRef,
+//   setVideoFilePath,
+//   setAudioFilePath,
+//   zoho_lead_id,
+//   question_id,
+//   last_question_id,
+//   encoded_interview_link_send_count,
+//   onComplete
+// ) => {
+//   const capturedQuestionId = question_id;
+//   const captureLastQuestionId = last_question_id;
+
+//   return new Promise((resolve, reject) => {
+//     // Check if there's an active recording
+//     if (!mediaRecorderRef.current || mediaRecorderRef.current.state === "inactive") {
+//       console.warn("⚠️ No active recording to stop");
+//       resolve({ videoPath: null, audioPath: null });
+//       if (onComplete) onComplete();
+//       return;
+//     }
+
+//     mediaRecorderRef.current.onstop = async () => {
+//       try {
+//         //  STEP 1: Create blob immediately from captured chunks
+//         const videoBlob = new Blob(recordedChunksRef.current, {
+//           type: "video/webm",
+//         });
+        
+//         console.log("📹 Video blob created:", videoBlob.size, "bytes");
+
+//         //  STEP 2: Copy chunks and clear immediately so new recording can start
+//         const chunksToUpload = [...recordedChunksRef.current];
+//         recordedChunksRef.current = [];
+//         // setTimeout(() => { recordedChunksRef.current = []; }, 50);
+
+//         //  STEP 3: Resolve promise immediately so UI can continue
+//         resolve({ videoPath: null, audioPath: null });
+        
+//         //  STEP 4: Call onComplete to allow new recording to start
+//         if (onComplete) {
+//           onComplete();
+//         }
+
+//         //  STEP 5: Upload in background (don't await, don't block)
+//         const fileNameVideo = `interview_video_${zoho_lead_id}_${capturedQuestionId}_${
+//           new Date().toISOString().replace(/:/g, "-").split(".")[0]
+//         }.webm`;
+
+//         console.log("📤 Starting background upload for:", capturedQuestionId);
+
+//         // Upload happens in background - we don't block here
+//         uploadFile(
+//           videoBlob,
+//           fileNameVideo,
+//           zoho_lead_id,
+//           capturedQuestionId,
+//           captureLastQuestionId,
+//           encoded_interview_link_send_count
+//         ).then((videoPath) => {
+//           console.log("✅ Background upload completed:", videoPath);
+//           setVideoFilePath(videoPath);
+//         }).catch((error) => {
+//           console.error("❌ Background upload failed:", error);
+//           // TODO: Add retry logic here if needed
+//           // You could store failed uploads and retry later
+//         });
+
+//       } catch (error) {
+//         console.error("❌ Error creating blob:", error);
+//         reject(error);
+//       }
+//     };
+
+//     // Stop the recorder
+//     console.log("⏸️ Stopping recording for question:", capturedQuestionId);
+//     mediaRecorderRef.current.stop();
+//   });
+// };
+
 export const stopRecording = (
   videoRef,
   mediaRecorderRef,
@@ -114,70 +198,61 @@ export const stopRecording = (
   const capturedQuestionId = question_id;
   const captureLastQuestionId = last_question_id;
 
-  return new Promise((resolve, reject) => {
-    // Check if there's an active recording
-    if (!mediaRecorderRef.current || mediaRecorderRef.current.state === "inactive") {
-      console.warn("⚠️ No active recording to stop");
-      resolve({ videoPath: null, audioPath: null });
-      if (onComplete) onComplete();
+  return new Promise((resolve) => {
+    const recorder = mediaRecorderRef.current;
+
+    if (!recorder || recorder.state === "inactive") {
+      resolve({ videoPath: null });
+      onComplete && onComplete();
       return;
     }
 
-    mediaRecorderRef.current.onstop = async () => {
+    // console.log("⏸ Stopping recording…");
+
+    // 1️ Create placeholder so UI can move instantly
+    resolve({ videoPath: null });
+    onComplete && onComplete();
+
+    // 2️ After the above returns, we wait internally for final chunks
+    recorder.onstop = async () => {
       try {
-        //  STEP 1: Create blob immediately from captured chunks
-        const videoBlob = new Blob(recordedChunksRef.current, {
-          type: "video/webm",
+        // Wait a tick for final dataavailable
+        await new Promise((r) => setTimeout(r, 10));
+
+        const blob = new Blob(recordedChunksRef.current, {
+          type: "video/webm"
         });
-        
-        console.log("📹 Video blob created:", videoBlob.size, "bytes");
 
-        //  STEP 2: Copy chunks and clear immediately so new recording can start
-        const chunksToUpload = [...recordedChunksRef.current];
-        // recordedChunksRef.current = [];
-        setTimeout(() => { recordedChunksRef.current = []; }, 50);
+        recordedChunksRef.current = [];
 
-        //  STEP 3: Resolve promise immediately so UI can continue
-        resolve({ videoPath: null, audioPath: null });
-        
-        //  STEP 4: Call onComplete to allow new recording to start
-        if (onComplete) {
-          onComplete();
-        }
-
-        //  STEP 5: Upload in background (don't await, don't block)
-        const fileNameVideo = `interview_video_${zoho_lead_id}_${capturedQuestionId}_${
+        // 3 Background upload — actual work starts only after final blob is ready
+        const fileName = `interview_${zoho_lead_id}_${capturedQuestionId}_${
           new Date().toISOString().replace(/:/g, "-").split(".")[0]
         }.webm`;
 
-        console.log("📤 Starting background upload for:", capturedQuestionId);
+        // console.log("📤 Background upload starting…");
 
-        // Upload happens in background - we don't block here
         uploadFile(
-          videoBlob,
-          fileNameVideo,
+          blob,
+          fileName,
           zoho_lead_id,
           capturedQuestionId,
           captureLastQuestionId,
           encoded_interview_link_send_count
-        ).then((videoPath) => {
-          console.log("✅ Background upload completed:", videoPath);
-          setVideoFilePath(videoPath);
-        }).catch((error) => {
-          console.error("❌ Background upload failed:", error);
-          // TODO: Add retry logic here if needed
-          // You could store failed uploads and retry later
-        });
+        )
+          .then((videoPath) => {
+            console.log("✅ Upload completed:", videoPath);
+            setVideoFilePath(videoPath);
+          })
+          .catch((err) => console.error("❌ Upload failed:", err));
 
-      } catch (error) {
-        console.error("❌ Error creating blob:", error);
-        reject(error);
+      } catch (e) {
+        console.error("❌ Error finalizing blob:", e);
       }
     };
 
-    // Stop the recorder
-    console.log("⏸️ Stopping recording for question:", capturedQuestionId);
-    mediaRecorderRef.current.stop();
+    // 4 Actually stop the recorder
+    recorder.stop();
   });
 };
 
