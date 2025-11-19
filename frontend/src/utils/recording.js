@@ -37,7 +37,9 @@ export const startRecording = async (
 
     // Get new stream
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: true,
+      video: {
+        frameRate: { ideal: 24 },
+      },
       audio: { noiseSuppression: false, echoCancellation: true,autoGainControl: true},
     });
 
@@ -217,7 +219,7 @@ export const stopRecording = (
     recorder.onstop = async () => {
       try {
         // Wait a tick for final dataavailable
-        await new Promise((r) => setTimeout(r, 10));
+        await new Promise((r) => setTimeout(r, 250));
 
         const blob = new Blob(recordedChunksRef.current, {
           type: "video/webm"
