@@ -38,7 +38,7 @@ export const startRecording = async (
     // Get new stream
     const stream = await navigator.mediaDevices.getUserMedia({
       video: {
-        frameRate: { ideal: 24 },
+        frameRate: { ideal: 30, max: 30 }
       },
       audio: { noiseSuppression: false, echoCancellation: true,autoGainControl: true},
     });
@@ -68,7 +68,7 @@ export const startRecording = async (
     mediaRecorderRef.current = new MediaRecorder(stream, {
       mimeType,
       audioBitsPerSecond: 96000,
-      videoBitsPerSecond: 500000,
+      videoBitsPerSecond: 900000,
     });
 
     //  IMPORTANT: Clear chunks array for new recording
