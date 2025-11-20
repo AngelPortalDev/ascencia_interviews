@@ -37,9 +37,7 @@ export const startRecording = async (
 
     // Get new stream
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        frameRate: { ideal: 30, max: 30 }
-      },
+      video:true,
       audio: { noiseSuppression: false, echoCancellation: true,autoGainControl: true},
     });
 
