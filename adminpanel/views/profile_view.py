@@ -11,7 +11,7 @@ def profile_update(request):
 
     if request.method == "POST":
         username = request.POST.get("username").strip()
-        email = request.POST.get("email").strip()
+        # email = request.POST.get("email").strip()
         first_name = request.POST.get("first_name").strip()
         last_name = request.POST.get("last_name").strip()
         password = request.POST.get("password", "").strip()
@@ -21,16 +21,16 @@ def profile_update(request):
         # Validate required fields
         if not username:
             errors['username'] = "Username is required."
-        if not email:
-            errors['email'] = "Email is required."
+        # if not email:
+        #     errors['email'] = "Email is required."
 
         # Check for duplicate username
         if User.objects.filter(username=username).exclude(id=user.id).exists():
             errors['username'] = "This username is already taken."
 
         # Check for duplicate email
-        if User.objects.filter(email=email).exclude(id=user.id).exists():
-            errors['email'] = "This email is already in use."
+        # if User.objects.filter(email=email).exclude(id=user.id).exists():
+        #     errors['email'] = "This email is already in use."
 
         # Validate password strength (if provided)
         if password:
@@ -53,7 +53,7 @@ def profile_update(request):
         try:
             # Update user details
             user.username = username
-            user.email = email
+            # user.email = email
             user.first_name = first_name
             user.last_name = last_name
 
