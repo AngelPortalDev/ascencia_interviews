@@ -76,15 +76,15 @@ useEffect(() => {
   const chromeVersion = rawChrome ? parseInt(rawChrome[2], 10) : null;
   const isOldChrome = chromeVersion && chromeVersion < 70;
 
-  if (
-    isIE ||
-    isOldAndroidBrowser ||
-    isBadBrowser ||
-    isSafariOnIOS ||
-    isMediaRecorderUnsupported ||
-    isOldChrome
-  ) {
-    alert("This browser is not supported. Please use the latest version of Chrome or Firefox.");
+if (
+  isIE ||
+  isOldAndroidBrowser ||
+  isBadBrowser ||
+  isSafariOnIOS ||
+  isMediaRecorderUnsupported ||
+  isOldChrome
+) {
+  alert("This browser is not supported. Please use the latest version of Chrome or Firefox.");
     window.location.replace("/frontend/notSupported");
   }
 }, []);
@@ -106,13 +106,19 @@ useEffect(() => {
 
           <Route path="/questions"  element={<ProtectedRoute element={<Questions/>} isAllowed={audioVideoAccepted && !isExamSubmitted} redirectPath="/permissions"/>}/>
          {/* Add Question Router Here */}
-          <Route path="*" element={<NotFound />} />
+         
+
           <Route path="/studentfaceenrollment"  element={<ProtectedRoute element={<StudentFaceEnrollment/>} isAllowed={termsAccept && !isExamSubmitted} redirectPath="/permissions"/>}/>
           <Route path="/interviewsubmitted" element={<InterviewSubmitted/>}/>
-          <Route path="/expired"  element={<ExpiredPage/>}/>
+          <Route path="/expired/:zohoLeadId" element={<ExpiredPage />} />
+
           <Route path="/goback" element={<Goback/>}/>
           <Route path="/privacy-policy" element={<PrivacyPolicy/>}/>
-          <Route path="/notSupported" element={<NotSupported/>}/>
+          {/* <Route path="/notSupported" element={<NotSupported/>}/> */}
+          <Route path="/notSupported/:encoded_zoho_lead_id" element={<NotSupported />} />
+           <Route path="/not-found/:encoded_zoho_lead_id?" element={<NotFound />} />
+          <Route path="*" element={<NotFound />} />
+
         </Routes>
       </Router>
  

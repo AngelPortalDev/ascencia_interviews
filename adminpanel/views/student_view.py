@@ -35,7 +35,7 @@ def encode_base64(value) -> str:
     # Convert any non-string to string first
     return base64.urlsafe_b64encode(str(value).encode()).decode()
 
-def extend_first_interview_link(zoho_lead_id):
+def extend_first_interview_link(zoho_lead_id,hour):
 
     student = Students.objects.get(zoho_lead_id=zoho_lead_id)
     interviwelink = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id)
@@ -54,7 +54,7 @@ def extend_first_interview_link(zoho_lead_id):
         return False
 
     # Allow up to 4 attempts
-    if student_interview.extend_attempts >= 4:
+    if student_interview.extend_attempts >= 5:
         print("⚠️ Maximum 4 extension attempts reached, skipping.")
         return False
 
@@ -66,12 +66,13 @@ def extend_first_interview_link(zoho_lead_id):
     # 1️⃣ Check if already processed
 
     # 2️⃣ Get link for given Zoho Lead ID
-    student_links = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id)
+    # student_links = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id)
+    student_links = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).order_by('-created_at')
     # print("student_links",student_links.interview_link_count)
 
-    if student_links.count() != 1:
-        print("❌ No unique student link found.")
-        return False
+    # if student_links.count() != 1:
+    #     print("❌ No unique student link found.")
+    #     return False
 
     link = student_links.first()
 
@@ -101,7 +102,7 @@ def extend_first_interview_link(zoho_lead_id):
     #     return False
 
     # 5️⃣ All checks passed → extend expiry
-    link.expires_at = now() + timedelta(hours=72)
+    link.expires_at = now() + timedelta(hours=hour)
     link.is_expired = False
     link.reminder_sent = False
     link.reminder_1hr_sent= False
@@ -114,7 +115,7 @@ def extend_first_interview_link(zoho_lead_id):
     #     Extend_interview_link="YES"
     # )
     student_interview.extend_attempts += 1
-    student_interview.Extend_interview_link = "YES"  # keep for UI/backward compatibility
+    # student_interview.Extend_interview_link = "YES"  # keep for UI/backward compatibility
     student_interview.save(update_fields=["extend_attempts", "Extend_interview_link"])
     print(f"✅ Interview link extended. Attempt {student_interview.extend_attempts}/4")
 
@@ -352,7 +353,41 @@ def extend_first_interview_link(zoho_lead_id):
 
 
     print("✅ Interview link extended and email sent.")
-    return True
+    return True,"Link extended successfully."
+
+# @csrf_exempt
+# def extend_interview_api(request, zoho_lead_id):
+#     if request.method != "POST":
+#         return JsonResponse({"success": False, "message": "Invalid method"}, status=405)
+
+#     result = extend_first_interview_link(zoho_lead_id,hour=96)
+
+#     return JsonResponse({"success": True, "message": "Extended successfully"})
+
+@csrf_exempt
+def extend_interview_api(request, zoho_lead_id):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "Invalid method"}, status=405)
+
+    try:
+        student_interview = StudentInterview.objects.get(zoho_lead_id=zoho_lead_id)
+    except StudentInterview.DoesNotExist:
+        return JsonResponse({"success": False, "message": "Student not found."})
+
+    # ❗ Check if already extended
+    if student_interview.Extend_interview_link == "YES":
+        return JsonResponse({"success": False, "message": "Already extended once."})
+
+    # 👉 First time — allow extension
+    success, msg = extend_first_interview_link(zoho_lead_id, hour=96)
+
+    # 👉 Mark as extended (API only)
+    student_interview.Extend_interview_link = "YES"
+    student_interview.save(update_fields=["Extend_interview_link"])
+
+    return JsonResponse({"success": True, "message": "Extended successfully"})
+
+
 
 @csrf_exempt  # Disable CSRF for webhooks
 def students_leads_api(request):
@@ -400,7 +435,7 @@ def students_leads_api(request):
         logger.debug("Incoming POST data: %s", request.POST.dict())
         
         if extend_link and extend_link.lower() == "yes":
-            extend_first_interview_link(zoho_lead_id)
+            extend_first_interview_link(zoho_lead_id,hour=72)
             logger.info("Extended first interview link for Zoho Lead Id: %s", zoho_lead_id)
             return JsonResponse({"status": True, "message": "Student updated successfully!"}, status=200)
 

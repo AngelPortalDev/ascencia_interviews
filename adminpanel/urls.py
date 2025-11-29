@@ -6,11 +6,12 @@ from adminpanel.views.institute_view import institute_list, institute_add, insti
 from adminpanel.views.course_view import courses, course_add, course_update, course_delete
 from adminpanel.views.question_view import questions, question_add, question_update, question_delete, common_questions, common_question_add, common_question_update, common_question_delete
 from adminpanel.views.student_manager_view import student_managers, student_manager_add, student_manager_update, student_manager_delete, toggle_student_manager_status, student_list_by_manager
-from adminpanel.views.student_view import students_leads_api,students_list, student_detail
+from adminpanel.views.student_view import students_leads_api,students_list, student_detail,extend_interview_api
 
 
 
 urlpatterns = [
+    path("extend-first-interview/<str:zoho_lead_id>/", extend_interview_api),
     path(
         "adminpanel/",
         include(
@@ -68,7 +69,11 @@ urlpatterns = [
                 # Dashboards
                 # path('dashboard/',userdashboard),
                 path("dashboard/", admindashboard, name="admindashboard"),
+
+                
+
             ]
+            
         ),
     ),
 ]
