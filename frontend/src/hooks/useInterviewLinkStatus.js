@@ -27,7 +27,8 @@ const useInterviewLinkStatus = (encoded_zoho_lead_id,encoded_interview_link_send
       } catch (error) {
         if (error.response && error.response.status === 410) {
           console.log("Interview link has expired. Redirecting to expired page...");
-          navigate("/expired");
+          navigate(`/expired/${encoded_zoho_lead_id}`);
+
         } else {
           console.error("An error occurred while checking the interview link status:", error);
         }
