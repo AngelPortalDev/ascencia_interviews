@@ -716,7 +716,7 @@ def student_detail(request, zoho_lead_id):
     .order_by("-id")
     .first()
     )
-
+    browser_info = interview_link.browser_info if interview_link else None
     transcript_text = interview_link.transcript_text if interview_link and interview_link.transcript_text else "Transcript not available."
 
     breadcrumb_items = [
@@ -730,5 +730,7 @@ def student_detail(request, zoho_lead_id):
         "transcript_text": transcript_text,
         "show_breadcrumb": True,
         "breadcrumb_items": breadcrumb_items,
-        "BUNNY_STREAM_LIBRARY_ID": settings.BUNNY_STREAM_LIBRARY_ID
+        
+        "BUNNY_STREAM_LIBRARY_ID": settings.BUNNY_STREAM_LIBRARY_ID,
+        "browser_info": browser_info
     })
