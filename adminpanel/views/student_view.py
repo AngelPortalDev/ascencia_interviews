@@ -44,19 +44,19 @@ def extend_first_interview_link(zoho_lead_id,hour):
         student = Students.objects.get(zoho_lead_id=zoho_lead_id)
     except Students.DoesNotExist:
         print(f"❌ No student found with Zoho Lead ID: {zoho_lead_id}")
-        return False
+        return False, "No student found", None
     
     # Fetch the StudentInterview record
     try:
         student_interview = StudentInterview.objects.get(zoho_lead_id=zoho_lead_id)
     except StudentInterview.DoesNotExist:
         print(f"❌ No interview record found for Zoho Lead ID: {zoho_lead_id}")
-        return False
+        return False, "No interview record found", None
 
     # Allow up to 4 attempts
     if student_interview.extend_attempts >= 5:
         print("⚠️ Maximum 4 extension attempts reached, skipping.")
-        return False
+        return False, "Maximum extension attempts reached", None
 
     
     # Convert to Asia/Calcutta timezone
@@ -81,20 +81,21 @@ def extend_first_interview_link(zoho_lead_id,hour):
         link_count = int(base64.b64decode(link.interview_link_count))
     except Exception as e:
         print(f"❌ Base64 decode failed: {e}")
-        return False
+        return False, "Base64 decode failed", None
 
     # 4️⃣ Validation checks
     if link_count != 1:
         print("❌ Link count is not 1")
-        return False
+        return False, "Link count is not 1", None
 
     if link.interview_attend:
         print("❌ Interview already attended")
-        return False
+        return False, "Interview already attended", None
 
     if link.expires_at > now():
         print("⏳ Link is still valid, no need to extend")
-        return False
+        return False, "Link is still valid", None
+
 
     # Optional: prevent double reminders
     # if link.reminder_sent:
@@ -364,24 +365,74 @@ def extend_first_interview_link(zoho_lead_id,hour):
 
 #     return JsonResponse({"success": True, "message": "Extended successfully"})
 
+# @csrf_exempt
+# def extend_interview_api(request, zoho_lead_id):
+#     if request.method != "POST":
+#         return JsonResponse({"success": False, "message": "Invalid method"}, status=405)
+
+#     try:
+#         student_interview = StudentInterview.objects.get(zoho_lead_id=zoho_lead_id)
+#     except StudentInterview.DoesNotExist:
+#         return JsonResponse({"success": False, "message": "Student not found."})
+    
+#      # 👉 Get latest link to check interview_attend
+#     interview_link = StudentInterviewLink.objects.filter(
+#         zoho_lead_id=zoho_lead_id
+#     ).order_by('-id').first()
+
+
+#     # ❗ Block only when BOTH conditions match
+#     # Condition 1: interview_attend = 1
+#     # Condition 2: extended already YES
+#      # ❗ OR Condition → ANY TRUE = Block
+#     if (interview_link and interview_link.interview_attend == 1) \
+#             or student_interview.Extend_interview_link == "YES":
+#         return JsonResponse({
+#             "success": False,
+#             "message": "Interview already attended and extended once. Cannot extend again."
+#         })
+    
+#     # ❗ Check if already extended
+#     # if student_interview.Extend_interview_link == "YES":
+#     #     return JsonResponse({"success": False, "message": "Already extended once."})
+
+#     # 👉 First time — allow extension
+#     success, msg, interview_url = extend_first_interview_link(zoho_lead_id, hour=96)
+
+
+#     # 👉 Mark as extended (API only)
+#     student_interview.Extend_interview_link = "YES"
+#     student_interview.save(update_fields=["Extend_interview_link"])
+
+#     return JsonResponse({"success": True, "message": "Extended successfully", "interview_link": interview_url})
+
+
 @csrf_exempt
 def extend_interview_api(request, zoho_lead_id):
-    if request.method != "POST":
-        return JsonResponse({"success": False, "message": "Invalid method"}, status=405)
+    check_only = request.GET.get("check_only") == "true"
 
     try:
         student_interview = StudentInterview.objects.get(zoho_lead_id=zoho_lead_id)
     except StudentInterview.DoesNotExist:
         return JsonResponse({"success": False, "message": "Student not found."})
+    
+    interview_link = StudentInterviewLink.objects.filter(
+        zoho_lead_id=zoho_lead_id
+    ).order_by('-id').first()
 
-    # ❗ Check if already extended
-    if student_interview.Extend_interview_link == "YES":
-        return JsonResponse({"success": False, "message": "Already extended once."})
+    if (interview_link and interview_link.interview_attend == 1) \
+            or student_interview.Extend_interview_link == "YES":
+        return JsonResponse({
+            "success": False,
+            "message": "Interview already attended and extended once. Cannot extend again."
+        })
 
-    # 👉 First time — allow extension
+    if check_only:
+        return JsonResponse({"success": True, "message": "Can extend"})
+
+    # First time — actually extend
     success, msg, interview_url = extend_first_interview_link(zoho_lead_id, hour=96)
 
-    # 👉 Mark as extended (API only)
     student_interview.Extend_interview_link = "YES"
     student_interview.save(update_fields=["Extend_interview_link"])
 

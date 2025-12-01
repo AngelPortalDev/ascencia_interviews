@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; // ✅ add useEffect
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import timeExpired from "../assest/icons/time-expired.svg"; // check path
+
 
 const ExpiredPage = () => {
   const { zohoLeadId } = useParams();
@@ -11,6 +12,28 @@ const ExpiredPage = () => {
   const [message, setMessage] = useState("");
   const [showPopup, setShowPopup] = useState(false);
   const [interviewUrl, setInterviewUrl] = useState("");
+   const [hideExtendButton, setHideExtendButton] = useState(false);   // ✅ HERE
+
+
+     useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        const res = await axios.post(
+          `${process.env.REACT_APP_API_BASE_URL}extend-first-interview/${decodedId}/?check_only=true`
+        );
+
+        // If backend says cannot extend, hide the button and show message
+        if (!res.data.success) {
+          setHideExtendButton(true);
+          setMessage(res.data.message);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    checkStatus();
+  }, [decodedId]);
 
   const styles = {
     container: { display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", backgroundColor: "#f4f4f4", padding: "20px" },
@@ -46,16 +69,20 @@ const handleStartInterview = async () => {
     if (response.data.success) {
       const startLink = response.data.interview_link;
       if (startLink) {
-        // If link returned, redirect
         window.location.href = startLink;
       } else {
-        // Link already extended or no link returned
         setMessage(response.data.message || "Link already extended.");
         setShowPopup(false);
       }
     } else {
-      // API returned success=false
-      setMessage(response.data.message || "Link cannot be extended.");
+      const msg = response.data.message || "Link cannot be extended.";
+      setMessage(msg);
+
+      // 🔥 Hide button ONLY when backend returns this exact message
+      if (msg === "Interview already attended and extended once. Cannot extend again.") {
+        setHideExtendButton(true);
+      }
+
       setShowPopup(false);
     }
   } catch (error) {
@@ -83,9 +110,13 @@ const handleStartInterview = async () => {
         <p style={styles.message}>The given link has expired.</p>
         <p style={styles.subtext}>You can request to extend your interview link.</p>
 
-        <button style={styles.button} onClick={handleShowPopup} disabled={loading}>
-          Extend Interview Link
-        </button>
+       {!hideExtendButton && (
+          <button style={styles.button} onClick={handleShowPopup} disabled={loading}>
+            Extend Interview Link
+          </button>
+        )}
+
+
 
         {message && <p style={styles.msgBelow}>{message}</p>}
       </div>
