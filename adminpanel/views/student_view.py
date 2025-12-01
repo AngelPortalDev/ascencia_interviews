@@ -15,7 +15,6 @@ import base64
 from datetime import timedelta
 from django.core.mail import send_mail 
 from studentpanel.models.student_Interview_status import StudentInterview
-import base64
 import pytz
 from django.utils.timezone import localtime
 from zoneinfo import ZoneInfo
@@ -28,7 +27,7 @@ logger = logging.getLogger('zoho_webhook_logger')
 #     """Encodes a string to base64 (URL-safe)."""
 #     return base64.urlsafe_b64encode(value.encode()).decode()
 
-import base64
+
 
 def encode_base64(value) -> str:
     """Encodes a value to base64 (URL-safe)."""
@@ -39,7 +38,7 @@ def extend_first_interview_link(zoho_lead_id,hour):
 
     student = Students.objects.get(zoho_lead_id=zoho_lead_id)
     interviwelink = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id)
-
+    
     try:
         student = Students.objects.get(zoho_lead_id=zoho_lead_id)
     except Students.DoesNotExist:
@@ -67,14 +66,18 @@ def extend_first_interview_link(zoho_lead_id,hour):
 
     # 2️⃣ Get link for given Zoho Lead ID
     # student_links = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id)
-    student_links = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).order_by('-created_at')
+    # student_links = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).order_by('-created_at')
     # print("student_links",student_links.interview_link_count)
 
     # if student_links.count() != 1:
     #     print("❌ No unique student link found.")
     #     return False
 
-    link = student_links.first()
+    # Fetch earliest un-attended link
+    link = StudentInterviewLink.objects.filter(
+        zoho_lead_id=zoho_lead_id,
+        interview_attend=False
+    ).order_by('-id').first()
 
     # 3️⃣ Decode interview link count
     try:
@@ -84,9 +87,9 @@ def extend_first_interview_link(zoho_lead_id,hour):
         return False, "Base64 decode failed", None
 
     # 4️⃣ Validation checks
-    if link_count != 1:
-        print("❌ Link count is not 1")
-        return False, "Link count is not 1", None
+    # if link_count != 2:
+    #     print("❌ Link count is not 1")
+    #     return False, "Link count is not 1", None
 
     if link.interview_attend:
         print("❌ Interview already attended")
@@ -128,7 +131,11 @@ def extend_first_interview_link(zoho_lead_id,hour):
     encoded_zoho_lead_id = encode_base64(zoho_lead_id)
     encoded_interview_link_send_count = link.interview_link_count
     interview_url = f'{settings.ADMIN_BASE_URL}/frontend/interview_panel/{encoded_zoho_lead_id}/{encoded_interview_link_send_count}'
-    interviwelink1 = StudentInterviewLink.objects.get(zoho_lead_id=zoho_lead_id)
+    # interviwelink1 = StudentInterviewLink.objects.get(zoho_lead_id=zoho_lead_id)
+    interviwelink1 = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).order_by('-id').first()
+    if not interviwelink1:
+        print(f"❌ No interview link found for Zoho Lead ID: {zoho_lead_id}")
+        return False, "No interview link found", None
     interview_start = interviwelink1.created_at
     interview_end = interviwelink1.expires_at
     email = student.student_manager_email.strip().lower()
@@ -409,34 +416,63 @@ def extend_first_interview_link(zoho_lead_id,hour):
 
 @csrf_exempt
 def extend_interview_api(request, zoho_lead_id):
+    logger.info("=== extend_interview_api called ===")
     check_only = request.GET.get("check_only") == "true"
 
+    # 1️⃣ Fetch student interview
     try:
         student_interview = StudentInterview.objects.get(zoho_lead_id=zoho_lead_id)
     except StudentInterview.DoesNotExist:
         return JsonResponse({"success": False, "message": "Student not found."})
-    
+
+    # 2️⃣ Fetch ONLY latest interview link (as you said)
     interview_link = StudentInterviewLink.objects.filter(
         zoho_lead_id=zoho_lead_id
-    ).order_by('-id').first()
+    ).order_by("-id").first()
 
-    if (interview_link and interview_link.interview_attend == 1) \
-            or student_interview.Extend_interview_link == "YES":
+    if not interview_link:
+        return JsonResponse({"success": False, "message": "No interview link found."})
+
+    # 3️⃣ If attended OR already extended → BLOCK
+    if interview_link.interview_attend == 1 or student_interview.Extend_interview_link == "YES":
         return JsonResponse({
             "success": False,
-            "message": "Interview already attended and extended once. Cannot extend again."
+            "message": "❌ Interview already attended or extended once."
         })
 
+    # 4️⃣ EXPIRY CHECK (fixed)
+    from django.utils.timezone import now
+    current_time = now()
+
+    # If NOT expired → do NOT extend
+    if interview_link.expires_at and interview_link.expires_at > current_time:
+        return JsonResponse({
+            "success": False,
+            "message": "⏳ Latest interview link is still valid. Cannot extend."
+        })
+
+    # If check_only mode → just return Yes
     if check_only:
         return JsonResponse({"success": True, "message": "Can extend"})
 
-    # First time — actually extend
-    success, msg, interview_url = extend_first_interview_link(zoho_lead_id, hour=96)
+    # 5️⃣ Extend now
+    success, msg, interview_url = extend_first_interview_link(
+        zoho_lead_id, hour=96
+    )
 
+    # 6️⃣ Mark extended
     student_interview.Extend_interview_link = "YES"
     student_interview.save(update_fields=["Extend_interview_link"])
 
-    return JsonResponse({"success": True, "message": "Extended successfully", "interview_link": interview_url})
+    # Also update flag in latest link
+    # interview_link.Extend_interview_link = "YES"
+    # interview_link.save(update_fields=["Extend_interview_link"])
+
+    return JsonResponse({
+        "success": True,
+        "message": "Extended successfully",
+        "interview_link": interview_url
+    })
 
 
 
