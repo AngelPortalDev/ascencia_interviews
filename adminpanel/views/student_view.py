@@ -353,7 +353,7 @@ def extend_first_interview_link(zoho_lead_id,hour):
 
 
     print("✅ Interview link extended and email sent.")
-    return True,"Link extended successfully."
+    return True,"Link extended successfully.",interview_url
 
 # @csrf_exempt
 # def extend_interview_api(request, zoho_lead_id):
@@ -379,13 +379,13 @@ def extend_interview_api(request, zoho_lead_id):
         return JsonResponse({"success": False, "message": "Already extended once."})
 
     # 👉 First time — allow extension
-    success, msg = extend_first_interview_link(zoho_lead_id, hour=96)
+    success, msg, interview_url = extend_first_interview_link(zoho_lead_id, hour=96)
 
     # 👉 Mark as extended (API only)
     student_interview.Extend_interview_link = "YES"
     student_interview.save(update_fields=["Extend_interview_link"])
 
-    return JsonResponse({"success": True, "message": "Extended successfully"})
+    return JsonResponse({"success": True, "message": "Extended successfully", "interview_link": interview_url})
 
 
 
