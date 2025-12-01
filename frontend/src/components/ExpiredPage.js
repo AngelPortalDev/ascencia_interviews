@@ -79,7 +79,7 @@ const handleStartInterview = async () => {
       setMessage(msg);
 
       // 🔥 Hide button ONLY when backend returns this exact message
-      if (msg === "Interview already attended and extended once. Cannot extend again.") {
+      if (msg === "You have already attended the interview. To extend the link, please contact us.") {
         setHideExtendButton(true);
       }
 
