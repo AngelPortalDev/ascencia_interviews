@@ -13,6 +13,7 @@ const ExpiredPage = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [interviewUrl, setInterviewUrl] = useState("");
    const [hideExtendButton, setHideExtendButton] = useState(false);   // ✅ HERE
+   const [hideCheakdone, setHideCheakdone] = useState(false);   
 
 
      useEffect(() => {
@@ -29,6 +30,8 @@ const ExpiredPage = () => {
         }
       } catch (err) {
         console.error(err);
+      }finally{
+        setHideCheakdone(true);
       }
     };
 
@@ -110,7 +113,7 @@ const handleStartInterview = async () => {
         <p style={styles.message}>The given link has expired.</p>
         <p style={styles.subtext}>You can request to extend your interview link.</p>
 
-       {!hideExtendButton && (
+       {!hideExtendButton && hideCheakdone && (
           <button style={styles.button} onClick={handleShowPopup} disabled={loading}>
             Extend Interview Link
           </button>
