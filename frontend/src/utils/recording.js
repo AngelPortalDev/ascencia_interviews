@@ -30,10 +30,10 @@ const getOptimalMimeType = () => {
     return "video/webm;codecs=vp8,opus";
   }
   
-  // Chrome/Edge prefer VP9
+  // Chrome/Edge prefer VP8
   const types = [
-    "video/webm;codecs=vp9,opus",
     "video/webm;codecs=vp8,opus",
+    "video/webm;codecs=vp8",
     "video/webm",
   ];
   
@@ -341,6 +341,7 @@ export const stopRecording = (
           onComplete();
         }
 
+        
         // Stop all media tracks NOW (after blob is created)
         if (videoRef.current && videoRef.current.srcObject) {
           const tracks = videoRef.current.srcObject.getTracks();
