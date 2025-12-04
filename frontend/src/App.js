@@ -65,7 +65,7 @@ useEffect(() => {
     /Safari/.test(ua) &&
     !/GSA/.test(ua);
 
-  // ✅ Correct check: returns TRUE if browser does NOT support MediaRecorder properly
+  //  Correct check: returns TRUE if browser does NOT support MediaRecorder properly
   const isMediaRecorderUnsupported =
     !window.MediaRecorder ||
     typeof MediaRecorder.isTypeSupported !== "function" ||
@@ -80,7 +80,6 @@ if (
   isIE ||
   isOldAndroidBrowser ||
   isBadBrowser ||
-  isSafariOnIOS ||
   isMediaRecorderUnsupported ||
   isOldChrome
 ) {

@@ -1,22 +1,17 @@
 import { uploadFile } from "./fileUpload.js";
-
+import RecordRTC from "recordrtc";
 // ============================================
 // UTILITY: Detect Browser
 // ============================================
 const getBrowserType = () => {
-  const userAgent = navigator.userAgent.toLowerCase();
-  
-  if (userAgent.includes('firefox')) {
-    return 'firefox';
-  } else if (userAgent.includes('edg')) {
-    return 'edge';
-  } else if (userAgent.includes('chrome')) {
-    return 'chrome';
-  } else if (userAgent.includes('safari')) {
-    return 'safari';
-  }
-  
-  return 'unknown';
+  const ua = navigator.userAgent.toLowerCase();
+
+  if (ua.includes("firefox")) return "firefox";
+  if (ua.includes("edg")) return "edge";
+  if (ua.includes("chrome") && !ua.includes("edg")) return "chrome";
+  if (ua.includes("safari") && !ua.includes("chrome")) return "safari";
+
+  return "unknown";
 };
 
 // ============================================
@@ -24,20 +19,25 @@ const getBrowserType = () => {
 // ============================================
 const getOptimalMimeType = () => {
   const browserType = getBrowserType();
-  
-  // Firefox works best with VP8
-  if (browserType === 'firefox') {
+
+  // Prefer VP8/Opus for cross-browser compatibility
+  if (browserType === "firefox") {
     return "video/webm;codecs=vp8,opus";
   }
-  
-  // Chrome/Edge prefer VP8
+
   const types = [
     "video/webm;codecs=vp8,opus",
     "video/webm;codecs=vp8",
     "video/webm",
   ];
-  
-  return types.find((type) => MediaRecorder.isTypeSupported(type)) || "video/webm";
+
+  return types.find((t) => {
+    try {
+      return MediaRecorder.isTypeSupported(t);
+    } catch (e) {
+      return false;
+    }
+  }) || "video/webm";
 };
 
 // ============================================
@@ -45,14 +45,8 @@ const getOptimalMimeType = () => {
 // ============================================
 const getOptimalTimeslice = () => {
   const browserType = getBrowserType();
-  
-  // Firefox needs larger timeslice to prevent corruption
-  if (browserType === 'firefox') {
-    return 1000; // 1 second
-  }
-  
-  // Chrome/Edge work well with smaller timeslice
-  return 100; // 100ms
+  if (browserType === "firefox") return 1000; 
+  return 100; 
 };
 
 // ============================================
@@ -60,44 +54,47 @@ const getOptimalTimeslice = () => {
 // ============================================
 const getStopWaitTime = () => {
   const browserType = getBrowserType();
-  
-  // Firefox needs more time to flush chunks
-  if (browserType === 'firefox') {
-    return 1000; // 1 second
-  }
-  
-  return 500; // 500ms for others
+  if (browserType === "firefox") return 1000;
+  return 500;
 };
 
 // ============================================
 // UTILITY: Validate Recording Blob
 // ============================================
 const validateRecording = (blob, timeLimit) => {
-  const minSize = 1000; // 1KB absolute minimum
-  const expectedMinSize = timeLimit * 10000; // ~10KB per second rough estimate
-  
+  const minSize = 1000; 
+  const expectedMinSize = timeLimit * 10000; 
+
+  if (!blob || typeof blob.size !== "number") {
+    return { valid: false, error: "Invalid blob" };
+  }
+
   if (blob.size < minSize) {
     console.error(`❌ Recording too small: ${blob.size} bytes`);
     return { valid: false, error: "Recording file too small" };
   }
-  
+
   if (blob.size < expectedMinSize * 0.3) {
-    console.warn(`⚠️ Recording smaller than expected: ${blob.size} bytes (expected ~${expectedMinSize} bytes)`);
+    console.warn(
+      ` Recording smaller than expected: ${blob.size} bytes (expected ~${expectedMinSize} bytes)`
+    );
   }
-  
+
   console.log(`✅ Recording validation passed: ${blob.size} bytes`);
   return { valid: true };
 };
 
 // ============================================
-// START RECORDING - Complete Fixed Version
+// START RECORDING
+// - Uses RecordRTC for Safari + Firefox
+// - Uses MediaRecorder for Chrome + Edge
 // ============================================
 export const startRecording = async (
   videoRef,
-  mediaRecorderRef,
-  audioRecorderRef,
-  recordedChunksRef,
-  recordedAudioChunksRef,
+  mediaRecorderRef, 
+  audioRecorderRef, 
+  recordedChunksRef, 
+  recordedAudioChunksRef, 
   setIsRecording,
   setCountdown,
   setVideoFilePath,
@@ -110,33 +107,48 @@ export const startRecording = async (
 ) => {
   try {
     const browserType = getBrowserType();
-    console.log(`🌐 Browser detected: ${browserType}`);
+    console.log(` Browser detected: ${browserType}`);
 
-    // Stop existing recorder properly
-    if (
-      mediaRecorderRef.current &&
-      mediaRecorderRef.current.state !== "inactive"
-    ) {
-      console.log("🛑 Stopping existing recorder before starting new one");
-      mediaRecorderRef.current.stop();
-      await new Promise((resolve) => setTimeout(resolve, 500));
+    try {
+      if (mediaRecorderRef.current) {
+        // If it's RecordRTC instance
+        if (typeof mediaRecorderRef.current.stopRecording === "function") {
+          try {
+            mediaRecorderRef.current.stopRecording();
+          } catch (e) {
+            
+          }
+        } else if (typeof mediaRecorderRef.current.stop === "function") {
+          try {
+            if (mediaRecorderRef.current.state !== "inactive") {
+              mediaRecorderRef.current.stop();
+            }
+          } catch (e) {
+           
+          }
+        }
+        
+        await new Promise((r) => setTimeout(r, 300));
+      }
+    } catch (err) {
+      console.warn("Error stopping previous recorder:", err);
     }
 
-    // Stop all existing tracks
+    // Stop any active tracks and clear srcObject
     if (videoRef.current && videoRef.current.srcObject) {
       const tracks = videoRef.current.srcObject.getTracks();
-      tracks.forEach((track) => {
-        track.stop();
-        console.log(`🛑 Stopped track: ${track.kind}`);
+      tracks.forEach((t) => {
+        try {
+          t.stop();
+        } catch (e) {}
       });
       videoRef.current.srcObject = null;
     }
 
-    // Clear chunks BEFORE starting new recording
+    // Clear previous chunk buffer
     recordedChunksRef.current = [];
-    console.log("🧹 Cleared chunks array");
 
-    // Get new stream with optimized settings
+    // Request media (combined audio + video)
     const stream = await navigator.mediaDevices.getUserMedia({
       video: {
         width: { ideal: 480 },
@@ -148,92 +160,115 @@ export const startRecording = async (
         echoCancellation: true,
         autoGainControl: true,
         sampleRate: 48000,
-        channelCount: 1, // Mono for consistency
+        channelCount: 1,
       },
     });
 
+    // Show preview
     if (videoRef.current) {
       videoRef.current.srcObject = stream;
-      // Wait for video to be ready
-      await new Promise((resolve) => {
-        if (videoRef.current.readyState >= 2) {
-          resolve();
-        } else {
-          videoRef.current.onloadedmetadata = resolve;
-        }
-      });
+      try {
+        await new Promise((resolve) => {
+          if (videoRef.current.readyState >= 2) resolve();
+          else videoRef.current.onloadedmetadata = resolve;
+        });
+      } catch (e) {
+        /* ignore */
+      }
     }
 
-    // Get optimal settings for current browser
+    // Use RecordRTC for Safari & Firefox
+    if (browserType === "safari" || browserType === "firefox") {
+      console.log(" Using RecordRTC for", browserType);
+
+      // Configure RecordRTC to record combined audio+video as single blob
+      const recorder = new RecordRTC(stream, {
+        type: "video",
+        mimeType: getOptimalMimeType(), // likely webm
+        bitsPerSecond: 512000,
+        // ensure audio+video are captured
+        // RecordRTC will manage internal recorderType selection
+        video: {
+          width: 480,
+          height: 360,
+          frameRate: 24,
+        },
+        // disable logs? keep for debug
+        disableLogs: false,
+      });
+
+      recorder.startRecording();
+      // store the recorder instance (RecordRTC exposes stopRecording/getBlob)
+      mediaRecorderRef.current = recorder;
+
+      setIsRecording(true);
+      setCountdown(timeLimit);
+      console.log("🎬 RecordRTC recording started");
+      return;
+    }
+
+    // Otherwise use MediaRecorder for Chrome/Edge
     const mimeType = getOptimalMimeType();
     const timeslice = getOptimalTimeslice();
-    
-    console.log(`📹 Using MIME type: ${mimeType}`);
-    console.log(`⏱️ Using timeslice: ${timeslice}ms`);
 
-    // Create new MediaRecorder with browser-optimized settings
+    console.log(`📹 Using MediaRecorder MIME type: ${mimeType}`);
+    console.log(`⏱ Using timeslice: ${timeslice}ms`);
+
     const recorderOptions = {
       mimeType,
-      videoBitsPerSecond: browserType === 'firefox' ? 500000 : 600000,
+      // keep bits per second reasonable
+      videoBitsPerSecond: 600000,
       audioBitsPerSecond: 96000,
     };
 
-    mediaRecorderRef.current = new MediaRecorder(stream, recorderOptions);
+    const mediaRecorder = new MediaRecorder(stream, recorderOptions);
 
-    // Event: Data Available
-    mediaRecorderRef.current.ondataavailable = (event) => {
+    mediaRecorder.ondataavailable = (event) => {
       if (event.data && event.data.size > 0) {
         recordedChunksRef.current.push(event.data);
         console.log(
-          `📦 Chunk added: ${event.data.size} bytes (Total: ${recordedChunksRef.current.length} chunks)`
+          `📦 Chunk added: ${event.data.size} bytes (chunks: ${recordedChunksRef.current.length})`
         );
       } else {
         console.warn("⚠️ Received empty chunk");
       }
     };
 
-    // Event: Error
-    mediaRecorderRef.current.onerror = (e) => {
-      console.error("❌ MediaRecorder error:", e.error);
+    mediaRecorder.onerror = (e) => {
+      console.error("❌ MediaRecorder error:", e);
     };
 
-    // Event: Start
-    mediaRecorderRef.current.onstart = () => {
-      console.log("▶️ MediaRecorder started successfully");
+    mediaRecorder.onstart = () => {
+      console.log("▶ MediaRecorder started");
     };
 
-    // Event: Pause (for debugging)
-    mediaRecorderRef.current.onpause = () => {
-      console.log("⏸️ MediaRecorder paused");
-    };
+    mediaRecorderRef.current = mediaRecorder;
 
-    // Event: Resume (for debugging)
-    mediaRecorderRef.current.onresume = () => {
-      console.log("▶️ MediaRecorder resumed");
-    };
+    mediaRecorder.start(timeslice);
 
-    // Start recording with optimal timeslice
-    mediaRecorderRef.current.start(timeslice);
     setIsRecording(true);
     setCountdown(timeLimit);
-
-    console.log(`🎬 Recording started successfully for ${timeLimit} seconds`);
+    console.log(`🎬 MediaRecorder recording started for ${timeLimit} seconds`);
   } catch (error) {
-    console.error("❌ Error starting recording:", error);
-    
-    // Clean up on error
+    console.error("❌ Error in startRecording:", error);
+    // cleanup
     if (videoRef.current && videoRef.current.srcObject) {
       const tracks = videoRef.current.srcObject.getTracks();
-      tracks.forEach((track) => track.stop());
+      tracks.forEach((t) => {
+        try {
+          t.stop();
+        } catch (e) {}
+      });
       videoRef.current.srcObject = null;
     }
-    
     throw error;
   }
 };
 
 // ============================================
-// STOP RECORDING - Complete Fixed Version
+// STOP RECORDING
+// - Handles RecordRTC (Safari/Firefox) + MediaRecorder (Chrome/Edge)
+// - Produces single combined file, validates and uploads
 // ============================================
 export const stopRecording = (
   videoRef,
@@ -249,83 +284,156 @@ export const stopRecording = (
   encoded_interview_link_send_count,
   onComplete
 ) => {
-  const capturedQuestionId = question_id;
-  const captureLastQuestionId = last_question_id;
   const browserType = getBrowserType();
   const waitTime = getStopWaitTime();
 
   return new Promise((resolve) => {
-    const recorder = mediaRecorderRef.current;
+    // SAFELY handle RecordRTC path (Safari + Firefox)
+    if (browserType === "safari" || browserType === "firefox") {
+      const recorder = mediaRecorderRef.current;
+      if (!recorder || typeof recorder.stopRecording !== "function") {
+        console.warn("⚠️ No RecordRTC recorder found to stop");
+        resolve({ videoPath: null });
+        if (onComplete) onComplete();
+        return;
+      }
 
-    if (!recorder || recorder.state === "inactive") {
-      console.log("⚠️ Recorder already stopped or not initialized");
+      console.log(`🛑 Stopping RecordRTC recorder for ${browserType}`);
+
+      try {
+        recorder.stopRecording(async () => {
+          try {
+            const blob = await recorder.getBlob();
+            console.log("📦 RecordRTC blob size:", blob ? blob.size : "no blob");
+
+            // Validate blob
+            const validation = validateRecording(blob, 60);
+            if (!validation.valid) {
+              console.error("❌ RecordRTC validation failed:", validation.error);
+              resolve({ videoPath: null, error: validation.error });
+              if (onComplete) onComplete();
+              return;
+            }
+
+            // filename
+            const timestamp = new Date()
+              .toISOString()
+              .replace(/:/g, "-")
+              .split(".")[0];
+            const fileName = `interview_${zoho_lead_id}_${question_id}_${timestamp}.webm`;
+
+            // Stop camera tracks
+            if (videoRef.current && videoRef.current.srcObject) {
+              try {
+                const tracks = videoRef.current.srcObject.getTracks();
+                tracks.forEach((t) => {
+                  try {
+                    t.stop();
+                  } catch (e) {}
+                });
+                videoRef.current.srcObject = null;
+              } catch (e) {
+                console.warn("Error stopping tracks:", e);
+              }
+            }
+
+            // Resolve so UI can proceed, then upload in background
+            resolve({ videoPath: null, blob, fileName });
+
+            console.log(" Uploading RecordRTC blob...");
+            uploadFile(
+              blob,
+              fileName,
+              zoho_lead_id,
+              question_id,
+              last_question_id,
+              encoded_interview_link_send_count
+            )
+              .then((videoPath) => {
+                console.log("✅ Upload completed:", videoPath);
+                setVideoFilePath(videoPath);
+                if (onComplete) onComplete();
+              })
+              .catch((err) => {
+                console.error("❌ Upload failed:", err);
+                if (onComplete) onComplete();
+              });
+          } catch (err) {
+            console.error("❌ Error processing RecordRTC blob:", err);
+            resolve({ videoPath: null, error: err.message });
+            if (onComplete) onComplete();
+          }
+        });
+      } catch (err) {
+        console.error("❌ Error stopping RecordRTC:", err);
+        resolve({ videoPath: null, error: err.message });
+        if (onComplete) onComplete();
+      }
+
+      return; // done for RecordRTC path
+    }
+
+    // ----------------------------------------
+    // MEDIARECORDER path (Chrome + Edge)
+    // ----------------------------------------
+    const mediaRecorder = mediaRecorderRef.current;
+    if (!mediaRecorder) {
+      console.warn("⚠️ No mediaRecorder found");
       resolve({ videoPath: null });
       if (onComplete) onComplete();
       return;
     }
 
-    console.log(`🛑 Stopping recording for question: ${capturedQuestionId}`);
-    console.log(`🌐 Browser: ${browserType}, Wait time: ${waitTime}ms`);
+    // If already inactive
+    if (mediaRecorder.state === "inactive") {
+      console.log("⚠️ MediaRecorder already inactive");
+      resolve({ videoPath: null });
+      if (onComplete) onComplete();
+      return;
+    }
 
+    console.log("🛑 Stopping MediaRecorder, waiting for chunks to flush...");
     let stopTimeout;
 
-    recorder.onstop = async () => {
+    mediaRecorder.onstop = async () => {
       try {
-        console.log("⏹️ Recorder stopped, processing chunks...");
+        if (stopTimeout) clearTimeout(stopTimeout);
 
-        // Clear the timeout if stop event fired
-        if (stopTimeout) {
-          clearTimeout(stopTimeout);
-        }
-
-        // Wait for browser to flush all chunks
-        await new Promise((resolve) => setTimeout(resolve, waitTime));
+        // wait for browser flush
+        await new Promise((r) => setTimeout(r, waitTime));
 
         const totalChunks = recordedChunksRef.current.length;
         const totalSize = recordedChunksRef.current.reduce(
-          (sum, chunk) => sum + chunk.size,
+          (s, c) => s + (c.size || 0),
           0
         );
 
-        console.log(
-          `📊 Total chunks: ${totalChunks}, Total size: ${totalSize} bytes`
-        );
+        console.log(`📊 Total chunks: ${totalChunks}, totalSize: ${totalSize} bytes`);
 
         if (totalSize === 0) {
-          console.error("❌ No data recorded! Chunks array is empty.");
+          console.error("❌ No data recorded (MediaRecorder).");
           resolve({ videoPath: null, error: "No data recorded" });
           if (onComplete) onComplete();
           return;
         }
 
-        // Validate and filter chunks
-        const validChunks = recordedChunksRef.current.filter(
-          (chunk) => chunk && chunk.size > 0
-        );
-
-        if (validChunks.length !== totalChunks) {
-          console.warn(
-            `⚠️ Filtered out ${totalChunks - validChunks.length} invalid chunks`
-          );
-        }
-
-        // Create blob with explicit type
+        const validChunks = recordedChunksRef.current.filter((c) => c && c.size > 0);
         const blob = new Blob(validChunks, {
-          type: recorder.mimeType || "video/webm;codecs=vp8,opus",
+          type: mediaRecorder.mimeType || getOptimalMimeType(),
         });
 
-        console.log(`📦 Blob created: ${blob.size} bytes, type: ${blob.type}`);
+        console.log("📦 Blob created from chunks:", blob.size);
 
-        // Validate recording
-        const validation = validateRecording(blob, 60); // Assuming 60s max
+        // Validate
+        const validation = validateRecording(blob, 60);
         if (!validation.valid) {
-          console.error(`❌ Recording validation failed: ${validation.error}`);
+          console.error("❌ Validation failed:", validation.error);
           resolve({ videoPath: null, error: validation.error });
           if (onComplete) onComplete();
           return;
         }
 
-        // Backup chunks before clearing
+        // backup and clear chunks
         const chunksBackup = [...recordedChunksRef.current];
         recordedChunksRef.current = [];
 
@@ -333,96 +441,87 @@ export const stopRecording = (
           .toISOString()
           .replace(/:/g, "-")
           .split(".")[0];
-        const fileName = `interview_${zoho_lead_id}_${capturedQuestionId}_${timestamp}.webm`;
+        const fileName = `interview_${zoho_lead_id}_${question_id}_${timestamp}.webm`;
 
-        console.log(`📁 File name: ${fileName}`);
-
-        if (onComplete) {
-          onComplete();
-        }
-
-        
-        // Stop all media tracks NOW (after blob is created)
+        // Stop tracks
         if (videoRef.current && videoRef.current.srcObject) {
-          const tracks = videoRef.current.srcObject.getTracks();
-          tracks.forEach((track) => {
-            track.stop();
-            console.log(`🛑 Stopped track: ${track.kind}`);
-          });
-          videoRef.current.srcObject = null;
-          console.log("✅ All tracks stopped and srcObject cleared");
+          try {
+            const tracks = videoRef.current.srcObject.getTracks();
+            tracks.forEach((t) => {
+              try { t.stop(); } catch (e) {}
+            });
+            videoRef.current.srcObject = null;
+          } catch (e) {
+            console.warn("Error stopping tracks:", e);
+          }
         }
 
-        // Resolve promise to allow UI to proceed
+        // Resolve early so UI can proceed
         resolve({ videoPath: null, blob, fileName });
 
-        // Upload with retry logic
-        console.log("☁️ Starting upload...");
+        // Upload blob
+        console.log("☁️ Uploading MediaRecorder blob...");
         uploadFile(
           blob,
           fileName,
           zoho_lead_id,
-          capturedQuestionId,
-          captureLastQuestionId,
+          question_id,
+          last_question_id,
           encoded_interview_link_send_count
         )
           .then((videoPath) => {
             console.log("✅ Upload completed:", videoPath);
             setVideoFilePath(videoPath);
+            if (onComplete) onComplete();
           })
           .catch((err) => {
             console.error("❌ Upload failed:", err);
-            console.log(`💾 Backup chunks available: ${chunksBackup.length}`);
-            
-            // Optional: Retry with backup chunks
-            // You could implement retry logic here
+            // you may retry using chunksBackup
+            if (onComplete) onComplete();
           });
-      } catch (error) {
-        console.error("❌ Error in onstop handler:", error);
-        resolve({ videoPath: null, error: error.message });
+      } catch (err) {
+        console.error("❌ Error in MediaRecorder onstop:", err);
+        resolve({ videoPath: null, error: err.message });
         if (onComplete) onComplete();
       }
     };
 
     // Request final data and stop
     try {
-      if (recorder.state === "recording") {
-        console.log("📤 Requesting final data...");
-        
-        // Request any remaining buffered data
-        recorder.requestData();
+      if (mediaRecorder.state === "recording") {
+        mediaRecorder.requestData();
 
-        // Wait briefly before stopping (browser-specific)
-        const stopDelay = browserType === 'firefox' ? 200 : 100;
-        
+        const stopDelay = browserType === "firefox" ? 200 : 100;
         setTimeout(() => {
-          if (recorder.state === "recording" || recorder.state === "paused") {
-            console.log("🛑 Calling recorder.stop()");
-            recorder.stop();
+          try {
+            if (mediaRecorder.state === "recording" || mediaRecorder.state === "paused") {
+              mediaRecorder.stop();
+            }
+          } catch (e) {
+            console.warn("Error calling mediaRecorder.stop():", e);
           }
         }, stopDelay);
 
-        // Safety timeout: force stop if onstop doesn't fire
+        // Safety timeout if onstop doesn't fire
         stopTimeout = setTimeout(() => {
           console.warn("⚠️ Stop event didn't fire, forcing cleanup");
-          if (recorder.state !== "inactive") {
-            try {
-              recorder.stop();
-            } catch (e) {
-              console.error("❌ Error forcing stop:", e);
-            }
+          try {
+            if (mediaRecorder.state !== "inactive") mediaRecorder.stop();
+          } catch (e) {
+            console.error("❌ Error forcing mediaRecorder.stop():", e);
           }
           resolve({ videoPath: null, error: "Stop timeout" });
           if (onComplete) onComplete();
-        }, 5000); // 5 second timeout
+        }, 5000);
+      } else {
+        // If not recording, resolve immediately
+        resolve({ videoPath: null });
+        if (onComplete) onComplete();
       }
-    } catch (error) {
-      console.error("❌ Error stopping recorder:", error);
-      resolve({ videoPath: null, error: error.message });
+    } catch (err) {
+      console.error("❌ Error stopping recorder:", err);
+      resolve({ videoPath: null, error: err.message });
       if (onComplete) onComplete();
     }
-
-    // Stop all media tracks (do this AFTER recorder processing)
-    // Moved inside onstop handler to prevent null reference
   });
 };
