@@ -344,29 +344,87 @@ def is_video_valid(video_path):
         logging.warning(f"Invalid video structure, will re-encode: {video_path} | Error: {e}")
         return False
 
-def build_qa_blocks_with_paths(questions, converted_files):
+# def build_qa_blocks_with_paths(questions, converted_files):
+#     qa_blocks = []
+#     total_pairs = len(converted_files) // 2  # floor division to avoid IndexError
+#     for i in range(total_pairs):
+#         q_file = converted_files[i * 2]
+#         a_file = converted_files[i * 2 + 1]
+
+#         # Safety check: skip if missing or 0-byte
+#         if not os.path.exists(a_file) or os.path.getsize(a_file) == 0:
+#             logging.warning("Skipping Q&A block: missing answer file: %s", a_file)
+#             continue
+#         if not os.path.exists(q_file) or os.path.getsize(q_file) == 0:
+#             logging.warning("Skipping Q&A block: missing question file: %s", q_file)
+#             continue
+
+#         question_text = questions[i].question if i < len(questions) else "[Unknown Question]"
+#         qa_blocks.append({
+#             "question": question_text,
+#             "q_file": q_file,
+#             "a_file": a_file
+#         })
+#     return qa_blocks
+
+
+def build_qa_blocks_with_paths(ordered_questions, answers_qid_map, uploads_folder):
+    """
+    Build Q&A blocks using question IDs (NOT indices).
+    
+    Args:
+        ordered_questions: List of question objects (CommonQuestion or Question)
+        answers_qid_map: Dict mapping question_id -> StudentInterviewAnswers
+        uploads_folder: Path to uploads folder
+        
+    Returns:
+        List of dicts with: {question_id, question_text, q_file, a_file}
+    """
     qa_blocks = []
-    total_pairs = len(converted_files) // 2  # floor division to avoid IndexError
-    for i in range(total_pairs):
-        q_file = converted_files[i * 2]
-        a_file = converted_files[i * 2 + 1]
-
-        # Safety check: skip if missing or 0-byte
-        if not os.path.exists(a_file) or os.path.getsize(a_file) == 0:
-            logging.warning("Skipping Q&A block: missing answer file: %s", a_file)
+    
+    # Loop through questions by ID (not by index)
+    for question in ordered_questions:
+        question_id = question.id
+        
+        # Check if answer exists in database
+        answer = answers_qid_map.get(question_id)
+        if not answer:
+            logging.warning(f"❌ No answer in DB for Question ID {question_id}")
             continue
-        if not os.path.exists(q_file) or os.path.getsize(q_file) == 0:
-            logging.warning("Skipping Q&A block: missing question file: %s", q_file)
+        
+        # Get answer video path from database
+        answer_path = answer.video_path
+        if not answer_path:
+            logging.warning(f"❌ No video_path in DB for Question ID {question_id}")
             continue
-
-        question_text = questions[i].question if i < len(questions) else "[Unknown Question]"
-        qa_blocks.append({
-            "question": question_text,
-            "q_file": q_file,
-            "a_file": a_file
-        })
+        
+        # Validate answer file exists on disk
+        if not os.path.exists(answer_path) or os.path.getsize(answer_path) == 0:
+            logging.warning(f"❌ Answer video missing/empty for Question ID {question_id}")
+            continue
+        
+        # Find question video file
+        question_filename = f"question_{question_id}_converted.webm"
+        question_path = os.path.join(uploads_folder, question_filename).replace("\\", "/")
+        
+        # Validate question file exists
+        if not os.path.exists(question_path) or os.path.getsize(question_path) == 0:
+            logging.warning(f"❌ Question video missing/empty for Question ID {question_id}")
+            continue
+        
+        # ✅ Both files exist - add to blocks with question_id
+        qa_block = {
+            "question_id": question_id,      # ← KEY CHANGE: Use actual ID
+            "question_text": question.question,
+            "q_file": question_path,
+            "a_file": answer_path
+        }
+        qa_blocks.append(qa_block)
+        
+        logging.info(f"✅ Q&A pair validated - Question ID {question_id}")
+    
+    logging.info(f"✅ Total valid Q&A pairs: {len(qa_blocks)}")
     return qa_blocks
-
 
 def merge_videos(zoho_lead_id,interview_link_count=None):
     logger.info("[MERGE TRIGGERED] zoho_lead_id=%s", zoho_lead_id)
@@ -735,21 +793,50 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
         # ✅ Transcribe full video and match segments to Q&A blocks
         import whisper
         model = whisper.load_model("small")
-        qa_blocks = build_qa_blocks_with_paths(ordered_questions, converted_files)
+
+        # ✅ NEW CALL: Pass answers_qid_map to function
+        qa_blocks = build_qa_blocks_with_paths(ordered_questions, answers_qid_map, uploads_folder)
+
+        if not qa_blocks:
+            logging.warning(f"⚠️  No valid Q&A pairs for transcription: {zoho_lead_id}")
+            return "No valid Q&A pairs found."
 
         qa_transcript = []
-        # for block in qa_blocks:
-        for idx, block in enumerate(qa_blocks, start=1):
-            question_text = block["question"]
+        transcription_log = []
+
+        # ❌ OLD: for idx, block in enumerate(qa_blocks, start=1):
+        # ✅ NEW: Loop through blocks with question_id
+        for block in qa_blocks:
+            question_id = block["question_id"]      # ← KEY: Use actual ID
+            question_text = block["question_text"]
             answer_file = block["a_file"]
-
-            result = model.transcribe(answer_file, language="en", word_timestamps=False)
-            answer_text = result.get("text", "").strip()
-
-            if not answer_text:
-                answer_text = "[No response detected]"
-
-            qa_transcript.append(f"Q.{idx}: {question_text}\nANS: {answer_text}\n")
+            
+            try:
+                logging.info(f"  📝 Transcribing Q.{question_id}...")
+                result = model.transcribe(answer_file, language="en", word_timestamps=False)
+                answer_text = result.get("text", "").strip()
+                
+                if not answer_text:
+                    answer_text = "[No response detected]"
+                
+                # ✅ Use question_id, NOT enumerate index
+                qa_transcript.append(f"Q.{question_id}: {question_text}\nANS: {answer_text}\n")
+                #                        ↑ CORRECT: Actual question_id from database
+                
+                transcription_log.append({
+                    "question_id": question_id,
+                    "status": "success"
+                })
+                
+                logging.info(f"  ✅ Q.{question_id} transcribed")
+                
+            except Exception as e:
+                logging.error(f"  ❌ Transcription failed for Q.{question_id}: {str(e)}")
+                transcription_log.append({
+                    "question_id": question_id,
+                    "status": "failed",
+                    "error": str(e)
+                })
 
         transcript_output = "\n".join(qa_transcript)
         transcript_txt_path = os.path.splitext(output_path)[0] + "_transcript.txt"
@@ -759,13 +846,8 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
         # Save to DB
         interview_link.transcript_text = transcript_output
         interview_link.save(update_fields=["transcript_text"])
-
-        
         clean_transcript = transcript_output.strip()
-
-# Remove any spaces/tabs at the beginning of lines before "Q."
         clean_transcript = re.sub(r'^[ \t]+(Q\.\d+:)', r'\1', clean_transcript, flags=re.MULTILINE)
-
         formatted_transcript = escape(clean_transcript).replace("\n", "<br>")
 
         # ✅ Save Q&A transcript to file and DB
@@ -892,7 +974,9 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
             from_email=from_email,
             to=recipient,
         )
-
+        # 🔥 Add this to auto-apply CC everywhere
+        email.cc = settings.DEFAULT_CC_EMAILS
+        print(r"cc",settings.DEFAULT_CC_EMAILS)
         # Attach HTML version
         email.attach_alternative(html_content, "text/html")
         print(r"html_content",html_content)
@@ -922,14 +1006,14 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
         student.bunny_stream_video_id = video_id
         student.save()
         # add for completed interview process with send mail link
-        try:
-            for file in os.listdir(uploads_folder):
-                file_path = os.path.join(uploads_folder, file)
-                if os.path.isfile(file_path) and file_path.endswith((".webm", ".mp4", ".mov", ".txt")):
-                    os.remove(file_path)
-            logging.info("All video and temp files deleted from uploads folder: %s", uploads_folder)
-        except Exception as cleanup_error:
-            logging.warning("Failed to clean up uploads folder: %s", cleanup_error)
+        # try:
+        #     for file in os.listdir(uploads_folder):
+        #         file_path = os.path.join(uploads_folder, file)
+        #         if os.path.isfile(file_path) and file_path.endswith((".webm", ".mp4", ".mov", ".txt")):
+        #             os.remove(file_path)
+        #     logging.info("All video and temp files deleted from uploads folder: %s", uploads_folder)
+        # except Exception as cleanup_error:
+        #     logging.warning("Failed to clean up uploads folder: %s", cleanup_error)
 
          # Delete StudentInterviewAnswers after processing
         deleted_count, _ = StudentInterviewAnswers.objects.filter(zoho_lead_id=zoho_lead_id).delete()

@@ -3,7 +3,14 @@ import logging
 from celery import shared_task, group, chord
 from django.conf import settings
 
+import os
+from datetime import datetime
+from pathlib import Path
 logger = logging.getLogger(__name__)
+
+
+from .video_merge_handler import upload_to_bunnystream
+
 
 # Import your existing merge function (ensure correct path)
 # from .video_merge_handler import merge_videos, get_all_video_files_for_lead, chunk_list, ffmpeg_concat
@@ -67,3 +74,118 @@ def start_chunked_merge(zoho_lead_id, chunk_size=6):
     # return chord(grp)(concat_chunks.s(zoho_lead_id))
     # If you prefer chain:
     return chord(grp)(concat_chunks.s(zoho_lead_id))
+
+
+
+@shared_task(bind=True)
+def save_interview_video(self, file_bytes, file_name, zoho_lead_id, browser_name=None, browser_version=None):
+
+    try:
+        # ---- Correct upload directory (exactly like your working code) ----
+        upload_dir = Path("static") / "uploads" / "interview_videos" / zoho_lead_id
+        upload_dir.mkdir(parents=True, exist_ok=True)
+
+        file_path = upload_dir / file_name
+
+        # ---- Write video file ----
+        with open(file_path, "wb") as f:
+            f.write(file_bytes)
+
+        # ---- Save Browser Log ----
+        log_dir = Path("static") / "uploads" / "profile_photos" / zoho_lead_id
+        log_dir.mkdir(parents=True, exist_ok=True)
+
+        log_file = log_dir / "browser_info.txt"
+
+        with open(log_file, "a", encoding="utf-8") as f:
+            f.write("===== Browser Info =====\n")
+            f.write(f"Browser Name: {browser_name}\n")
+            f.write(f"Browser Version: {browser_version}\n")
+            f.write(f"Captured At: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write("========================\n")
+
+        return {
+            "file_path": str(file_path),
+            "browser_log": str(log_file)
+        }
+
+    except Exception as e:
+        raise Exception(f"Failed to save interview video: {str(e)}")
+
+
+# for reference, the old version that uploaded to Bunny Stream directly:
+
+# @shared_task(bind=True)
+# def save_interview_video(self, file_bytes, file_name, zoho_lead_id,
+#                          browser_name=None, browser_version=None):
+
+#     try:
+#         # -----------------------------------
+#         # 1. Upload DIRECTLY to Bunny Stream
+#         # -----------------------------------
+
+#         print("[CELERY] Uploading interview video to Bunny Stream...")
+#         bunny_response = upload_to_bunnystream(
+#             file_bytes=file_bytes,
+#             file_name=file_name,
+#             zoho_lead_id=zoho_lead_id
+#         )
+
+#         # bunny_response should return:
+#         # {
+#         #   "video_id": "...",
+#         #   "cdn_url": "...",
+#         #   "status": "success"
+#         # }
+
+#         # -----------------------------------
+#         # 2. Save Browser Log locally
+#         # -----------------------------------
+#         log_dir = Path("static") / "uploads" / "profile_photos" / zoho_lead_id
+#         log_dir.mkdir(parents=True, exist_ok=True)
+
+#         log_file = log_dir / "browser_info.txt"
+
+#         with open(log_file, "a", encoding="utf-8") as f:
+#             f.write("===== Browser Info =====\n")
+#             f.write(f"Browser Name: {browser_name}\n")
+#             f.write(f"Browser Version: {browser_version}\n")
+#             f.write(f"Captured At: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+#             f.write("========================\n")
+
+#         # -----------------------------------
+#         # 3. Return Bunny Stream data
+#         # -----------------------------------
+#         return {
+#             "bunnystream_video_id": bunny_response.get("video_id"),
+#             "bunnystream_url": bunny_response.get("cdn_url"),
+#             "browser_log_path": str(log_file),
+#             "status": "uploaded"
+#         }
+
+#     except Exception as e:
+#         raise Exception(f"Failed to save/upload interview video: {str(e)}")
+
+
+# ============================================================
+# 2️⃣ SAVE CHUNKED VIDEO FILES (Correct Directory)
+# ============================================================
+
+@shared_task(bind=True)
+def save_uploaded_chunk(self, file_bytes, file_name, question_id, chunk_index):
+
+    try:
+        # ---- Correct chunk upload location ----
+        upload_dir = Path("static") / "uploads" / "interview_chunks" / str(question_id)
+        upload_dir.mkdir(parents=True, exist_ok=True)
+
+        # Chunk filename: chunk_1.webm, chunk_2.webm, etc.
+        chunk_path = upload_dir / f"chunk_{chunk_index}.webm"
+
+        with open(chunk_path, "wb") as f:
+            f.write(file_bytes)
+
+        return str(chunk_path)
+
+    except Exception as e:
+        raise Exception(f"Failed to save chunk: {str(e)}")

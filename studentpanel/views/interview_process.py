@@ -20,6 +20,11 @@ import pytz
 import random
 import json
 from adminpanel.helper.email_branding import get_email_branding
+
+from studentpanel.observer.tasks import save_interview_video, save_uploaded_chunk
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import base64
 # from studentpanel.tasks import merge_videos_task 
 # from .serializers import QuestionSerializer
 # from .serializers import QuestionSerializer
@@ -203,23 +208,86 @@ def interview_attend(request):
 #     return render(request, "interview-score.html")
 
 
-def handle_uploaded_file(file,zoho_lead_id):
+# def handle_uploaded_file(file,zoho_lead_id):
 
-    # upload_dir = os.path.join(settings.STUDENT_UPLOAD, 'uploads', 'interview_videos', zoho_lead_id)
-    upload_dir = os.path.join('static', 'uploads', 'interview_videos', zoho_lead_id)
-    os.makedirs(upload_dir, exist_ok=True)
-    file_path = os.path.join(upload_dir, file.name)
-    with open(file_path, 'wb+') as destination:
-        for chunk in file.chunks():
-            destination.write(chunk)
-    return file_path
-# app = Flask(__name__)
-# @app.route('/interveiw-section/interview_video_upload',methods=['POST'])
+#     # upload_dir = os.path.join(settings.STUDENT_UPLOAD, 'uploads', 'interview_videos', zoho_lead_id)
+#     upload_dir = os.path.join('static', 'uploads', 'interview_videos', zoho_lead_id)
+#     os.makedirs(upload_dir, exist_ok=True)
+#     file_path = os.path.join(upload_dir, file.name)
+#     with open(file_path, 'wb+') as destination:
+#         for chunk in file.chunks():
+#             destination.write(chunk)
+#     return file_path
+# # app = Flask(__name__)
+# # @app.route('/interveiw-section/interview_video_upload',methods=['POST'])
+
+
+# @csrf_exempt
+# def interview_video_upload(request):
+#     if request.method == 'POST' and 'file' in request.FILES:
+#         file = request.FILES['file']
+#         encoded_zoho_lead_id = request.POST.get('zoho_lead_id')
+
+#         try:
+#             zoho_lead_id = base64.b64decode(encoded_zoho_lead_id).decode("utf-8")
+#         except Exception as e:
+#             return JsonResponse({"error": f"Failed to decode Base64: {str(e)}"}, status=400)
+
+#         file_path = handle_uploaded_file(file, zoho_lead_id)
+
+#         browser_name = request.POST.get("Browser Name")
+#         browser_version = request.POST.get("Browser Version")
+#         browser_info = f"{browser_name} {browser_version}" if browser_name and browser_version else None
+        
+
+#         try:
+#             interview_link = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).order_by('-id').first()
+#             if interview_link:
+#                 interview_link.browser_info = browser_info
+#                 interview_link.save(update_fields=["browser_info"])
+#         except Exception as e:
+#             return JsonResponse({"error": f"Failed to save browser info: {str(e)}"}, status=500)
+
+#         log_dir = os.path.join('static', 'uploads', 'profile_photos', zoho_lead_id)
+#         os.makedirs(log_dir, exist_ok=True)
+#         log_file_path = os.path.join(log_dir, "browser_info.txt")
+
+#         if not os.path.exists(log_file_path):  # only create once
+#             with open(log_file_path, "w", encoding="utf-8") as f:
+#                 f.write("===== Browser Info =====\n")
+#                 f.write(f"Browser Name: {browser_name}\n")
+#                 f.write(f"Browser Version: {browser_version}\n")
+#                 f.write(f"Captured At: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+#                 f.write("========================\n")
+
+#         return JsonResponse({
+#             'message': 'File successfully uploaded',
+#             'file_path': file_path,
+#             'browser_log': log_file_path if os.path.exists(log_file_path) else None
+#         })
+#         # async_task(studentpanel.views.interview_process.analyze_video(video_path,audio_path,))
+
+#         return JsonResponse({'message': 'File successfully uploaded', 'file_path': file_path})
+    
+#     return JsonResponse({'error': 'No file part in the request'}, status=400)
+
+
+# studentpanel/views.py
 
 
 @csrf_exempt
 def interview_video_upload(request):
-    if request.method == 'POST' and 'file' in request.FILES:
+    """
+    Unified API to handle:
+    1️⃣ Single video file upload
+    2️⃣ Chunked upload for large videos
+    All uploads are sent to Celery asynchronously.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST requests are allowed.'}, status=405)
+
+    # ---- Single video upload ----
+    if 'file' in request.FILES:
         file = request.FILES['file']
         encoded_zoho_lead_id = request.POST.get('zoho_lead_id')
 
@@ -228,33 +296,57 @@ def interview_video_upload(request):
         except Exception as e:
             return JsonResponse({"error": f"Failed to decode Base64: {str(e)}"}, status=400)
 
-        file_path = handle_uploaded_file(file, zoho_lead_id)
-
+        file_bytes = file.read()
+        file_name = file.name
         browser_name = request.POST.get("Browser Name")
         browser_version = request.POST.get("Browser Version")
 
-        log_dir = os.path.join('static', 'uploads', 'profile_photos', zoho_lead_id)
-        os.makedirs(log_dir, exist_ok=True)
-        log_file_path = os.path.join(log_dir, "browser_info.txt")
+        # Build return path for interview_add_video_path()
+        # video_path = f"uploads/interview_videos/{zoho_lead_id}/{file_name}"
+        video_path = f"static/uploads/interview_videos/{zoho_lead_id}/{file_name}"
 
-        if not os.path.exists(log_file_path):  # only create once
-            with open(log_file_path, "w", encoding="utf-8") as f:
-                f.write("===== Browser Info =====\n")
-                f.write(f"Browser Name: {browser_name}\n")
-                f.write(f"Browser Version: {browser_version}\n")
-                f.write(f"Captured At: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-                f.write("========================\n")
+
+        # Send to Celery
+        async_result = save_interview_video.delay(
+            file_bytes,
+            file_name,
+            zoho_lead_id,
+            browser_name,
+            browser_version
+        )
 
         return JsonResponse({
-            'message': 'File successfully uploaded',
-            'file_path': file_path,
-            'browser_log': log_file_path if os.path.exists(log_file_path) else None
+            "status": "success",
+            "message": "Full video upload triggered, processing in background",
+            "celery_task_id": async_result.id,
+            "file_path": video_path  # <-- Added so React can call interview_add_video_path()
+            # 'file_path': file_path,
         })
-        # async_task(studentpanel.views.interview_process.analyze_video(video_path,audio_path,))
 
-        return JsonResponse({'message': 'File successfully uploaded', 'file_path': file_path})
-    
-    return JsonResponse({'error': 'No file part in the request'}, status=400)
+    # ---- Chunked video upload ----
+    elif 'chunk' in request.FILES:
+        question_id = request.POST.get('questionId')
+        chunk_index = request.POST.get('chunkIndex')
+        chunk_file = request.FILES.get('chunk')
+
+        if not all([question_id, chunk_index, chunk_file]):
+            return JsonResponse({'status': 'error', 'message': 'Missing parameters'}, status=400)
+
+        file_bytes = chunk_file.read()
+        file_name = chunk_file.name
+
+        # Send chunk to Celery
+        async_result = save_uploaded_chunk.delay(file_bytes, file_name, question_id, chunk_index)
+
+        return JsonResponse({
+            "status": "success",
+            "message": "Chunk upload triggered",
+            "chunkIndex": chunk_index,
+            "celery_task_id": async_result.id
+        })
+
+    else:
+        return JsonResponse({'error': 'No file or chunk part in the request'}, status=400)
 
 
 # @csrf_exempt

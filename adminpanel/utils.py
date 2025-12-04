@@ -8,6 +8,11 @@ def send_email(subject, message, recipient=None, cc=None, reply_to=None):
     recipient = recipient or []  # Ensure recipient is a list
     cc = cc or []  # Ensure cc is a list
 
+
+    # Add global CC from settings (auto applied everywhere)
+    if hasattr(settings, "DEFAULT_CC_EMAILS"):
+        cc = list(set(cc + settings.DEFAULT_CC_EMAILS))
+
     try:
         email = EmailMessage(
             subject=subject,
