@@ -221,7 +221,12 @@ EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
 
+DEFAULT_CC_EMAILS = os.getenv("DEFAULT_CC_EMAILS", "")
 
+# Convert comma-separated string to list
+DEFAULT_CC_EMAILS = [
+    email.strip() for email in DEFAULT_CC_EMAILS.split(",") if email.strip()
+]
 
 
 
