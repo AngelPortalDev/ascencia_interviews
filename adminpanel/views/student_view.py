@@ -14,12 +14,14 @@ from studentpanel.models.interview_link import StudentInterviewLink
 import base64
 from datetime import timedelta
 from django.core.mail import send_mail 
+from adminpanel.utils import send_email
 from studentpanel.models.student_Interview_status import StudentInterview
 import pytz
 from django.utils.timezone import localtime
 from zoneinfo import ZoneInfo
 import logging
 from adminpanel.helper.email_branding import get_email_branding
+from django.utils.timezone import now
 
 logger = logging.getLogger('zoho_webhook_logger')
 
@@ -73,11 +75,15 @@ def extend_first_interview_link(zoho_lead_id,hour):
     #     print("❌ No unique student link found.")
     #     return False
 
-    # Fetch earliest un-attended link
+    # Fetch the LATEST created un-attended link (order by created_at DESC, not ID)
     link = StudentInterviewLink.objects.filter(
         zoho_lead_id=zoho_lead_id,
         interview_attend=False
-    ).order_by('-id').first()
+    ).order_by('-created_at').first()
+
+    if not link:
+        print(f"❌ No un-attended interview link found for Zoho Lead ID: {zoho_lead_id}")
+        return False, "No un-attended interview link found", None
 
     # 3️⃣ Decode interview link count
     try:
@@ -165,14 +171,15 @@ def extend_first_interview_link(zoho_lead_id,hour):
     print("Start Date and time:", formatted_start)
     print("End Date and time:", formatted_end)
     # 7️⃣ Send notification email
-    send_mail(
+    send_email(
     subject="Interview Invitation for Student Interview",
-    message="Please view this email in HTML format.",  # plain text fallback
-    from_email=settings.DEFAULT_FROM_EMAIL,
-    recipient_list=["vaibhav@angel-portal.com"],
+    # message="Please view this email in HTML format.",  # plain text fallback
+    # from_email=settings.DEFAULT_FROM_EMAIL,
+    recipient=["vaibhav@angel-portal.com"],
+    cc= [],
     # recipient_list=[student_email],
     
-    html_message=f"""
+    message=f"""
         <html>
             <head>
                 <style>
@@ -274,12 +281,12 @@ def extend_first_interview_link(zoho_lead_id,hour):
 )
         
 
-    send_mail(
+    send_email(
     
-                                    from_email=settings.DEFAULT_FROM_EMAIL,
+                                    # from_email=settings.DEFAULT_FROM_EMAIL,
                                     subject="Interview Invitation Sent to Student",
-                                    message="Please view this email in HTML format.",
-                                    html_message=f"""
+                                    # message="Please view this email in HTML format.",
+                                    message=f"""
                                     <html>
                                     <head>
                                         <style>
@@ -354,7 +361,7 @@ def extend_first_interview_link(zoho_lead_id,hour):
                                     </html>
                                     """,
                                     
-                                    recipient_list=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
+                                    recipient=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
                                     # recipient_list=[student_manager_email],
                                     
                                 )
@@ -441,7 +448,7 @@ def extend_interview_api(request, zoho_lead_id):
         })
 
     # 4️⃣ EXPIRY CHECK (fixed)
-    from django.utils.timezone import now
+   
     current_time = now()
 
     # If NOT expired → do NOT extend
