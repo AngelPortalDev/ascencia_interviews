@@ -54,22 +54,53 @@ const NotFound = () => {
 
 
   return (
-    <>
-      <div className="logomobile d-flex justify-content-center" style={{background:'#f0f0f0', padding:'10px 20px'}} >
-        <img src={branding.logo} alt="AI Software" className="h-16" />
-      </div>
-      <div className="not-found-container">
-        <div className="not-found-content">
-          <h1 className="not-found-title">404</h1>
-          <p className="not-found-message">
-          Oops! The page you’re looking for doesn’t exist.
+    // <>
+    //   <div className="logomobile d-flex justify-content-center" style={{background:'#f0f0f0', padding:'10px 20px'}} >
+    //     <img src={branding.logo} alt="AI Software" className="h-16" />
+    //   </div>
+    //   <div className="not-found-container">
+    //     <div className="not-found-content">
+    //       <h1 className="not-found-title">404</h1>
+    //       <p className="not-found-message">
+    //       Oops! The page you’re looking for doesn’t exist.
+    //     </p>
+    //       {/* <a href="/" className="bg-[rgb(219,39,131)] text-white rounded-md text-sm px-4 py-2 md:text-lg md:px-6 md:py-3">
+    //             Go Back to Home
+    //     </a> */}
+    //     </div>
+    //   </div>
+    // </>
+     <>
+    {/* Top Logo Section */}
+    <div
+      className="logomobile d-flex justify-content-center align-items-center shadow-sm"
+      style={{
+        background: "#ffffff",
+        padding: "14px 20px",
+        borderBottom: "1px solid #eee",
+      }}
+    >
+      <img
+        src={branding.logo}
+        alt="Logo"
+        style={{ height: "60px", objectFit: "contain" }}
+      />
+    </div>
+
+    {/* Main 404 Section */}
+    <div className="notfound-wrapper">
+      <div className="notfound-card">
+        <h1 className="notfound-title">404</h1>
+        <p className="notfound-text">
+        Oops! The page you’re looking for doesn’t exist.
         </p>
-          {/* <a href="/" className="bg-[rgb(219,39,131)] text-white rounded-md text-sm px-4 py-2 md:text-lg md:px-6 md:py-3">
-                Go Back to Home
+
+        {/* <a href="/" className="notfound-btn">
+          Go Back Home
         </a> */}
-        </div>
       </div>
-    </>
+    </div>
+  </>
   );
 };
 

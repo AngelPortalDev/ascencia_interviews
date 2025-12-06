@@ -46,7 +46,7 @@ const getOptimalMimeType = () => {
 const getOptimalTimeslice = () => {
   const browserType = getBrowserType();
   if (browserType === "firefox") return 1000; 
-  return 100; 
+  return 500; 
 };
 
 // ============================================

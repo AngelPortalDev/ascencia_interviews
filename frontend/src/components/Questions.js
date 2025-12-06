@@ -78,6 +78,9 @@ const Questions = () => {
   const endCountdownStartedRef = useRef(false);
   const endCountdownStartedRefTwo = useRef(false);
   const hasHandledZeroRef = useRef(false);
+  const isMobileOrIOS = () => /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+
 
   // usePageReloadSubmit(
   //   videoRef,
@@ -967,7 +970,7 @@ useEffect(() => {
         <div
           className={` px-4 py-2 rounded-2xl text-lg sm:text-2xl font-extrabold transition-all tracking-wider
         ${
-          countdown < 30
+          countdown < 30 && !isMobileOrIOS()
             ? "text-red-500 animate-blink"
             : "bg-gradient-to-r from-[#ff80b5] to-[#9089fc] sm:mt-2.5"
         }`}
