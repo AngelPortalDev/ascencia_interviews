@@ -806,6 +806,7 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
 
         # ❌ OLD: for idx, block in enumerate(qa_blocks, start=1):
         # ✅ NEW: Loop through blocks with question_id
+        idx = 1  # ← manual counter
         for block in qa_blocks:
             question_id = block["question_id"]      # ← KEY: Use actual ID
             question_text = block["question_text"]
@@ -820,8 +821,11 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
                     answer_text = "[No response detected]"
                 
                 # ✅ Use question_id, NOT enumerate index
-                qa_transcript.append(f"Q.{question_id}: {question_text}\nANS: {answer_text}\n")
+                # qa_transcript.append(f"Q.{question_id}: {question_text}\nANS: {answer_text}\n")
                 #                        ↑ CORRECT: Actual question_id from database
+
+                qa_transcript.append(f"Q.{idx}: {question_text}\nANS: {answer_text}\n")
+                idx += 1  # Increment manual counter
                 
                 transcription_log.append({
                     "question_id": question_id,
