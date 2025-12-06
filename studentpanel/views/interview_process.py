@@ -491,13 +491,15 @@ def interview_questions(request):
         if str(institute.crm_id) in ["755071407", "759439531"]:
             selected_common = common_questions
         else:
-            first_three = common_questions[:3]
-            remaining_common = common_questions[3:]
-            random_three = random.sample(
-                remaining_common, 
-                min(3, len(remaining_common))
-            ) if remaining_common else []
-            selected_common = first_three + random_three
+            # first_three = common_questions[:3]
+            # remaining_common = common_questions[3:]
+            # random_three = random.sample(
+            #     remaining_common, 
+            #     min(3, len(remaining_common))
+            # ) if remaining_common else []
+            # selected_common = first_three + random_three
+            selected_common = common_questions
+            print("Selected COMMON Questions IDs:", [q.id for q in selected_common])
 
         interview_link.assigned_question_ids = ",".join(str(q.id) for q in selected_common)
         print("🟢 Saved COMMON:", interview_link.assigned_question_ids)
