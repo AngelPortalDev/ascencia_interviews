@@ -9,11 +9,11 @@ def get_email_branding(crm_id: str):
     BRANDING = {
         # --- Ascencia (first two CRM IDs) ---
         "771809603": {
-            "logo_url": "https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png",
+            "logo_url": "https://dev.ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png",
             "company_name": "Ascencia Malta"
         },
         "771661420": {
-            "logo_url": "https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png",
+            "logo_url": "https://dev.ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png",
             "company_name": "Ascencia Malta"
         },
 
@@ -30,7 +30,7 @@ def get_email_branding(crm_id: str):
 
     # Default fallback (in case CRM ID not matched)
     DEFAULT_BRANDING = {
-        "logo_url": "https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png",
+        "logo_url": "https://dev.ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png",
         "company_name": "Ascencia Malta"
     }
 
