@@ -19,7 +19,7 @@ const ExpiredPage = () => {
      useEffect(() => {
     const checkStatus = async () => {
       try {
-        const res = await axios.post(
+        const res = await axios.get(
           `${process.env.REACT_APP_API_BASE_URL}extend-first-interview/${decodedId}/?check_only=true`
         );
 

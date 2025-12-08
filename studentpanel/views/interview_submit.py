@@ -4,7 +4,7 @@ from django.utils.timezone import now
 from studentpanel.models.student_interview_answer import StudentInterviewAnswers
 from studentpanel.models.interview_link import StudentInterviewLink
 # from studentpanel.models.student_Interview_status import StudentInterview
-from studentpanel.observer.tasks import merge_videos_task  # adjust import path
+# from studentpanel.observer.tasks import merge_videos_task  # adjust import path
 from django_q.tasks import async_task
 import json
 import base64
@@ -51,8 +51,8 @@ def submit_interview(request):
             print("Decoded zoho_lead_id:", zoho_lead_id)
             if is_submitted:
                 # Trigger async merge
-                 merge_videos_task.delay(zoho_lead_id, interview_link_count)
-                # async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead_id,interview_link_count)
+                #  merge_videos_task.delay(zoho_lead_id, interview_link_count)
+                async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead_id,interview_link_count)
             return JsonResponse({"status": "merge triggered"}, status=200)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)

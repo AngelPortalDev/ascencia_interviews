@@ -1010,14 +1010,14 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
         student.bunny_stream_video_id = video_id
         student.save()
         # add for completed interview process with send mail link
-        # try:
-        #     for file in os.listdir(uploads_folder):
-        #         file_path = os.path.join(uploads_folder, file)
-        #         if os.path.isfile(file_path) and file_path.endswith((".webm", ".mp4", ".mov", ".txt")):
-        #             os.remove(file_path)
-        #     logging.info("All video and temp files deleted from uploads folder: %s", uploads_folder)
-        # except Exception as cleanup_error:
-        #     logging.warning("Failed to clean up uploads folder: %s", cleanup_error)
+        try:
+            for file in os.listdir(uploads_folder):
+                file_path = os.path.join(uploads_folder, file)
+                if os.path.isfile(file_path) and file_path.endswith((".webm", ".mp4", ".mov", ".txt")):
+                    os.remove(file_path)
+            logging.info("All video and temp files deleted from uploads folder: %s", uploads_folder)
+        except Exception as cleanup_error:
+            logging.warning("Failed to clean up uploads folder: %s", cleanup_error)
 
          # Delete StudentInterviewAnswers after processing
         deleted_count, _ = StudentInterviewAnswers.objects.filter(zoho_lead_id=zoho_lead_id).delete()
