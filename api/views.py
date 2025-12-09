@@ -1520,7 +1520,7 @@ def send_interview_reminders(zoho_lead_id, reminder_type="24h"):
 
         try:
             print(f">>> Sending {reminder_type} reminder to: {interview_url}")
-            email = EmailMultiAlternatives(subject, text_content, "", to_email,cc=settings.DEFAULT_CC_EMAILS,)
+            email = EmailMultiAlternatives(subject, text_content, "", to_email,cc=settings.DEFAULT_CC_EMAILS)
             email.attach_alternative(html_content, "text/html")
             email.send(fail_silently=False)
 
