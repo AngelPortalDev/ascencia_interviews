@@ -174,7 +174,7 @@ def extend_first_interview_link(zoho_lead_id,hour):
     send_email(
     subject="Interview Invitation for Student Interview",
     # message="Please view this email in HTML format.",  # plain text fallback
-    from_email=settings.DEFAULT_FROM_EMAIL,
+    # from_email=settings.DEFAULT_FROM_EMAIL,
     # recipient=["vaibhav@angel-portal.com"],
     recipient=[student_email],
     cc= [],
