@@ -127,7 +127,7 @@ def extend_first_interview_link(zoho_lead_id,hour):
     student_interview.extend_attempts += 1
     # student_interview.Extend_interview_link = "YES"  # keep for UI/backward compatibility
     student_interview.save(update_fields=["extend_attempts", "Extend_interview_link"])
-    print(f"✅ Interview link extended. Attempt {student_interview.extend_attempts}/4")
+    print(f"✅ Interview link extended. Attempt {student_interview.extend_attempts}/5")
 
     student_zoho_lead_id= student.zoho_lead_id
     
@@ -174,10 +174,10 @@ def extend_first_interview_link(zoho_lead_id,hour):
     send_email(
     subject="Interview Invitation for Student Interview",
     # message="Please view this email in HTML format.",  # plain text fallback
-    # from_email=settings.DEFAULT_FROM_EMAIL,
-    recipient=["vaibhav@angel-portal.com"],
+    from_email=settings.DEFAULT_FROM_EMAIL,
+    # recipient=["vaibhav@angel-portal.com"],
+    recipient=[student_email],
     cc= [],
-    # recipient_list=[student_email],
     
     message=f"""
         <html>
@@ -361,8 +361,8 @@ def extend_first_interview_link(zoho_lead_id,hour):
                                     </html>
                                     """,
                                     
-                                    recipient=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
-                                    # recipient_list=[student_manager_email],
+                                    # recipient=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
+                                    recipient=[student_manager_email],
                                     
                                 )
 
@@ -511,10 +511,10 @@ def students_leads_api(request):
         print("extend_link",extend_link)
 
 
-        allowed_zoho_ids = ["4932235000170466001", "5204268000112707003"]
+        # allowed_zoho_ids = ["4932235000170466001", "5204268000112707003"]
 
-        if zoho_lead_id not in allowed_zoho_ids:
-            return JsonResponse({"status": False, "error": "Unauthorized Zoho Lead Id"}, status=403)
+        # if zoho_lead_id not in allowed_zoho_ids:
+        #     return JsonResponse({"status": False, "error": "Unauthorized Zoho Lead Id"}, status=403)
                 
         
         

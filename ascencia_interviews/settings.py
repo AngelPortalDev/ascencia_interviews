@@ -205,7 +205,7 @@ LOGIN_URL = '/login'
 
 # ADMIN_BASE_URL = "https://bb91-103-71-112-194.ngrok-free.app"
 
-ADMIN_BASE_URL = "https://dev.ascencia-interview.com"
+ADMIN_BASE_URL = "https://ascencia-interview.com"
 
 BUNNY_STREAM_API_KEY = os.getenv("BUNNY_STREAM_API_KEY")
 BUNNY_STREAM_LIBRARY_ID = os.getenv("BUNNY_STREAM_LIBRARY_ID")
@@ -213,7 +213,7 @@ BUNNY_STREAM_LIBRARY_ID = os.getenv("BUNNY_STREAM_LIBRARY_ID")
 
 # Email Configuration (works for local & dev)
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
-EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.zeptomail.in")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
 EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False") == "True"
@@ -268,7 +268,7 @@ Q_CLUSTER = {
 
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://dev.ascencia-interview.com",
+    "https://ascencia-interview.com",
     "https://bb91-103-71-112-194.ngrok-free.app",
 ]
 
@@ -319,15 +319,15 @@ LOGGING = {
 
 
 
-CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
-CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/1")
+# CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
+# CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/1")
 
-CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_TASK_SERIALIZER = "json"
-CELERY_RESULT_SERIALIZER = "json"
-CELERY_TIMEZONE = "Asia/Kolkata"
+# CELERY_ACCEPT_CONTENT = ["json"]
+# CELERY_TASK_SERIALIZER = "json"
+# CELERY_RESULT_SERIALIZER = "json"
+# CELERY_TIMEZONE = "Asia/Kolkata"
 
-# recommended for long tasks
-CELERY_WORKER_PREFETCH_MULTIPLIER = int(os.getenv("CELERY_WORKER_PREFETCH_MULTIPLIER", 1))
-CELERY_ACKS_LATE = True
-CELERY_TASK_DEFAULT_QUEUE = "default"
+# # recommended for long tasks
+# CELERY_WORKER_PREFETCH_MULTIPLIER = int(os.getenv("CELERY_WORKER_PREFETCH_MULTIPLIER", 1))
+# CELERY_ACKS_LATE = True
+# CELERY_TASK_DEFAULT_QUEUE = "default"
