@@ -9,11 +9,26 @@ manage.py
 /venv
 /ascencia_interviews/settings.py
 debug.log
+.pyc
 
 
 
 # Ignore Python cache files
+/node_modules/
+__pycache__/
+*.pyc
+*.pyo
 **/__pycache__/
 **/*.pyc
 **/*.pyo
 **/*.pyd
+package.json
+
+
+*.pem
+*.log
+static/uploads/interview_videos/
+*.webm
+static/uploads/profile_pictures/
+*.cjs
+
