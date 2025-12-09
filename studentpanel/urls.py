@@ -10,7 +10,9 @@ from studentpanel.views.interview_process import (
     interview_video_upload,
     interview_questions,
     student_data,
-    upload_profile_photo
+    upload_profile_photo,
+    get_branding_by_zoho_id
+
     
     
 )
@@ -42,7 +44,7 @@ urlpatterns = [
                 path("student-interview-answers/", student_interview_answers, name="student_interview_answers"),
                 path("interview-add-video-path/", interview_add_video_path, name="interview_add_video_path"),
                 path('upload-profile-photo/', upload_profile_photo, name='upload_profile_photo'),
-
+                path("get-branding-by-zoho-id/", get_branding_by_zoho_id, name="get_branding_by_zoho_id"),  # ✅ added here
                 
                 # path("index/", index, name="index"),
             ]

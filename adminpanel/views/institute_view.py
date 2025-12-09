@@ -176,6 +176,8 @@ def institute_delete(request, id):
 def student_managers_by_institute(request, id):
     id = base64_decode(id)
     institute = get_object_or_404(Institute, id=id)
+    encoded_institute_id = base64_encode(institute.id)
+
     
     studentManagers = User.objects.filter(
         id__in=StudentManagerProfile.objects.filter(institute_id=institute).values_list('user_id', flat=True)
@@ -186,7 +188,8 @@ def student_managers_by_institute(request, id):
             'first_name': studentManager.first_name,
             'last_name': studentManager.last_name,
             'email': studentManager.email,
-            'encoded_id': base64_encode(studentManager.id)
+            'encoded_id': base64_encode(studentManager.id),
+            'is_active': studentManager.is_active,   # ← THIS WAS MISSING
         }
         for studentManager in studentManagers
     ]
@@ -200,6 +203,7 @@ def student_managers_by_institute(request, id):
     return render(request, 'student_manager/student_managers_by_institute.html', {
         'student_managers': student_manager_data,
         'institute_name': institute.institute_name,
+         'encoded_institute_id': encoded_institute_id,  # <-- IMPORTANT
         "show_breadcrumb": True,
         "breadcrumb_items": breadcrumb_items,
     })
@@ -212,3 +216,20 @@ def toggle_institute_status(request, id):
     status = "activated" if institute.is_active else "deactivated"
     messages.success(request, f"Institution has been {status}.")
     return redirect('institute_list')
+
+
+
+def toggle_student_manager_status_in_institute(request, id, institute_id):
+    id = base64_decode(id)
+    institute_id = base64_decode(institute_id)
+
+    user = get_object_or_404(User, id=id)
+    user.is_active = not user.is_active
+    user.save()
+
+    status = "activated" if user.is_active else "deactivated"
+    messages.success(request, f"Student Manager has been {status}.")
+
+    # Redirect back to the SAME institute manager list
+    encoded_institute_id = base64_encode(institute_id)
+    return redirect('student_managers_by_institute', id=encoded_institute_id)

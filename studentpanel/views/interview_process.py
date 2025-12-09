@@ -19,6 +19,12 @@ from datetime import datetime
 import pytz
 import random
 import json
+from adminpanel.helper.email_branding import get_email_branding
+
+# from studentpanel.observer.tasks import save_interview_video, save_uploaded_chunk
+# from django.views.decorators.csrf import csrf_exempt
+# from django.http import JsonResponse
+# import base64
 # from studentpanel.tasks import merge_videos_task 
 # from .serializers import QuestionSerializer
 # from .serializers import QuestionSerializer
@@ -231,6 +237,16 @@ def interview_video_upload(request):
 
         browser_name = request.POST.get("Browser Name")
         browser_version = request.POST.get("Browser Version")
+        browser_info = f"{browser_name} {browser_version}" if browser_name and browser_version else None
+        
+
+        try:
+            interview_link = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).order_by('-id').first()
+            if interview_link:
+                interview_link.browser_info = browser_info
+                interview_link.save(update_fields=["browser_info"])
+        except Exception as e:
+            return JsonResponse({"error": f"Failed to save browser info: {str(e)}"}, status=500)
 
         log_dir = os.path.join('static', 'uploads', 'profile_photos', zoho_lead_id)
         os.makedirs(log_dir, exist_ok=True)
@@ -254,6 +270,83 @@ def interview_video_upload(request):
         return JsonResponse({'message': 'File successfully uploaded', 'file_path': file_path})
     
     return JsonResponse({'error': 'No file part in the request'}, status=400)
+
+
+# studentpanel/views.py
+
+# celery in handle upload video for bg task
+# @csrf_exempt
+# def interview_video_upload(request):
+#     """
+#     Unified API to handle:
+#     1️⃣ Single video file upload
+#     2️⃣ Chunked upload for large videos
+#     All uploads are sent to Celery asynchronously.
+#     """
+#     if request.method != 'POST':
+#         return JsonResponse({'error': 'Only POST requests are allowed.'}, status=405)
+
+#     # ---- Single video upload ----
+#     if 'file' in request.FILES:
+#         file = request.FILES['file']
+#         encoded_zoho_lead_id = request.POST.get('zoho_lead_id')
+
+#         try:
+#             zoho_lead_id = base64.b64decode(encoded_zoho_lead_id).decode("utf-8")
+#         except Exception as e:
+#             return JsonResponse({"error": f"Failed to decode Base64: {str(e)}"}, status=400)
+
+#         file_bytes = file.read()
+#         file_name = file.name
+#         browser_name = request.POST.get("Browser Name")
+#         browser_version = request.POST.get("Browser Version")
+
+#         # Build return path for interview_add_video_path()
+#         # video_path = f"uploads/interview_videos/{zoho_lead_id}/{file_name}"
+#         video_path = f"static/uploads/interview_videos/{zoho_lead_id}/{file_name}"
+
+
+#         # Send to Celery
+#         async_result = save_interview_video.delay(
+#             file_bytes,
+#             file_name,
+#             zoho_lead_id,
+#             browser_name,
+#             browser_version
+#         )
+
+#         return JsonResponse({
+#             "status": "success",
+#             "message": "Full video upload triggered, processing in background",
+#             "celery_task_id": async_result.id,
+#             "file_path": video_path  # <-- Added so React can call interview_add_video_path()
+#             # 'file_path': file_path,
+#         })
+
+#     # ---- Chunked video upload ----
+#     elif 'chunk' in request.FILES:
+#         question_id = request.POST.get('questionId')
+#         chunk_index = request.POST.get('chunkIndex')
+#         chunk_file = request.FILES.get('chunk')
+
+#         if not all([question_id, chunk_index, chunk_file]):
+#             return JsonResponse({'status': 'error', 'message': 'Missing parameters'}, status=400)
+
+#         file_bytes = chunk_file.read()
+#         file_name = chunk_file.name
+
+#         # Send chunk to Celery
+#         async_result = save_uploaded_chunk.delay(file_bytes, file_name, question_id, chunk_index)
+
+#         return JsonResponse({
+#             "status": "success",
+#             "message": "Chunk upload triggered",
+#             "chunkIndex": chunk_index,
+#             "celery_task_id": async_result.id
+#         })
+
+#     else:
+#         return JsonResponse({'error': 'No file or chunk part in the request'}, status=400)
 
 
 # @csrf_exempt
@@ -347,8 +440,6 @@ def interview_questions(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'Only POST allowed'}, status=405)
     
-    print("Request Body:", request.body)
-
     try:
         data = json.loads(request.body)
     except json.JSONDecodeError:
@@ -356,7 +447,6 @@ def interview_questions(request):
 
     encoded_id = data.get('zoho_lead_id')
     interview_link_count = data.get('interview_link_count')
-
     if not encoded_id or not interview_link_count:
         return JsonResponse({'error': 'Missing required fields'}, status=400)
 
@@ -373,49 +463,90 @@ def interview_questions(request):
     except StudentInterviewLink.DoesNotExist:
         return JsonResponse({'error': 'Interview link not found'}, status=404)
 
-    # Assign 6 random questions if not already assigned
-    # if not interview_link.assigned_question_ids:
-    #     questions = list(CommonQuestion.objects.all())
-    #     if len(questions) < 6:
-    #         return JsonResponse({'error': 'Not enough questions available'}, status=400)
+    # Get Student & Institute
+    try:
+        student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        institute = Institute.objects.get(crm_id=student.crm_id)
+    except (Students.DoesNotExist, Institute.DoesNotExist):
+        return JsonResponse({'error': 'Student or Institute not found'}, status=404)
 
-    #     import random
-    #     selected = random.sample(questions, 6)
-    #     interview_link.assigned_question_ids = ",".join(str(q.id) for q in selected)
-    #     interview_link.save()
+    # Fetch questions
+    common_questions = list(CommonQuestion.active_objects.filter(crm_id=institute))
+    course_questions = []
+    if student.program:
+        matched_course = Course.active_objects.filter(
+            course_name__iexact=student.program.strip(),
+            crm_id=institute
+        ).first()
+        if matched_course:
+            course_questions = list(Question.active_objects.filter(course_id=matched_course))
+
+    # ----------------------------
+    # ✅ Assign questions logic
+    # ----------------------------
+    # ----- Assign Common Questions -----
     if not interview_link.assigned_question_ids:
-        questions = list(CommonQuestion.objects.all().order_by('id'))
-        if len(questions) < 6:
-            return JsonResponse({'error': 'Not enough questions available'}, status=400)
+        print("🟡 Assigning COMMON questions...")
 
-        first_three = questions[:3]
-        remaining = questions[3:]
+        if str(institute.crm_id) in ["755071407", "759439531"]:
+            selected_common = common_questions
+        else:
+            # first_three = common_questions[:3]
+            # remaining_common = common_questions[3:]
+            # random_three = random.sample(
+            #     remaining_common, 
+            #     min(3, len(remaining_common))
+            # ) if remaining_common else []
+            # selected_common = first_three + random_three
+            selected_common = common_questions
+            print("Selected COMMON Questions IDs:", [q.id for q in selected_common])
 
-        if len(remaining) < 3:
-            return JsonResponse({'error': 'Not enough remaining questions for random selection'}, status=400)
+        interview_link.assigned_question_ids = ",".join(str(q.id) for q in selected_common)
+        print("🟢 Saved COMMON:", interview_link.assigned_question_ids)
 
-        import random
-        random_three = random.sample(remaining, 3)
+    # ----- Assign Course Questions -----
+    if not interview_link.assigned_course_question_ids:
+        print("🟡 Assigning COURSE questions...")
 
-        selected = first_three + random_three
-        interview_link.assigned_question_ids = ",".join(str(q.id) for q in selected)
-        interview_link.save()
+        selected_course = course_questions if course_questions else []
+        interview_link.assigned_course_question_ids = ",".join(str(q.id) for q in selected_course)
 
-    # Fetch assigned questions
-    question_ids = list(map(int, interview_link.assigned_question_ids.split(',')))
-    question_objs = CommonQuestion.objects.filter(id__in=question_ids)
-    question_map = {q.id: q.question for q in question_objs}
+        print("🟢 Saved COURSE:", interview_link.assigned_course_question_ids)
 
-    ordered_data = [
-    {
-        'encoded_id': qid,
-        'question': question_map[qid]
-    }
-    for qid in question_ids if qid in question_map
-    ]
+    interview_link.save()
+    # ----------------------------
+    # ✅ Prepare response
+    # ----------------------------
+    common_ids = list(map(int, interview_link.assigned_question_ids.split(','))) if interview_link.assigned_question_ids else []
+    course_ids = list(map(int, interview_link.assigned_course_question_ids.split(','))) if interview_link.assigned_course_question_ids else []
+
+    # Fetch questions
+    common_qs = {q.id: q for q in CommonQuestion.objects.filter(id__in=common_ids)}
+    course_qs = {q.id: q for q in Question.objects.filter(id__in=course_ids)}
+
+    ordered_data = []
+
+    # Common questions first
+    for qid in common_ids:
+        q_obj = common_qs.get(qid)
+        if q_obj:
+            ordered_data.append({
+                'encoded_id': qid,
+                'question': q_obj.question,
+                'time_limit': getattr(q_obj, 'time_limit', 30)
+            })
+
+    # Course questions next
+    for qid in course_ids:
+        q_obj = course_qs.get(qid)
+        if q_obj:
+            ordered_data.append({
+                'encoded_id': qid,
+                'question': q_obj.question,
+                'time_limit': getattr(q_obj, 'time_limit', 30)
+            })
 
     return JsonResponse({'questions': ordered_data}, status=200)
-
 
     
 @csrf_exempt
@@ -445,3 +576,24 @@ def student_data(request):
     return JsonResponse({'error': 'No file part in the request'}, status=400)
 
 
+@csrf_exempt
+def get_branding_by_zoho_id(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Only POST allowed"}, status=405)
+    try:
+        data = json.loads(request.body)
+        encoded_zoho_lead_id = data.get("zoho_lead_id")
+        if not encoded_zoho_lead_id:
+            return JsonResponse({"error": "Missing zoho_lead_id"}, status=400)
+
+        zoho_lead_id = base64.b64decode(encoded_zoho_lead_id).decode("utf-8")
+        student = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        crm_id = student.crm_id
+
+        logo_url, company_name = get_email_branding(str(crm_id))
+        print("logo_url and company name",logo_url, company_name)
+        return JsonResponse({"success": True, "logo_url": logo_url, "company_name": company_name})
+    except Students.DoesNotExist:
+        return JsonResponse({"error": "Student not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)

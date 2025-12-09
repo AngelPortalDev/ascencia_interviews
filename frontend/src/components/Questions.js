@@ -18,25 +18,27 @@ import { toast } from "react-toastify";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { usePermission } from "../context/PermissionContext.js";
 import DeepgramLiveCaptions from "./DeepgramLiveCaptions.js";
-import QuestionChecker from "./QuestionChecker.js";
 import {
   startRecording,
   stopRecording,
   setupMediaStream,
 } from "../utils/recording.js";
 import { interviewAddVideoPath } from "../utils/fileUpload.js";
-import usePageReloadSubmit from "../hooks/usePageReloadSubmit.js";
-import AI_LOGO from "../assest/AI_LOGO.png";
 import Logo from "../assest/Logo.png";
 import usePageUnloadHandler from "../hooks/usePageUnloadHandler.js";
-// import useBackSubmitHandler from '../hooks/useBackSubmitHandler.js';
 
 const Questions = () => {
+
+  const [branding, setBranding] = useState({
+      logo: Logo,
+      name: "Question",
+    });
+
   const [countdown, setCountdown] = useState(60);
-  const [endCountdown,setEndcountdwn] = useState(30);
-  const [endCountdownTwo,setEndcountdwnTwo] = useState(30);
-  // const [isListeningReady, setIsListeningReady] = useState(false);
-  // const [userData, setUserData] = useState(null);
+  const [currentTimeLimit, setCurrentTimeLimit] = useState(60);
+
+  const [endCountdown, setEndcountdwn] = useState(30);
+  const [endCountdownTwo, setEndcountdwnTwo] = useState(30);
   const [getQuestions, setQuestions] = useState([]);
   const [navigationTime, setNavigationTime] = useState(0);
   const [isNavigationEnabled, setIsNavigationEnabled] = useState(false);
@@ -45,16 +47,16 @@ const Questions = () => {
   const [transcribedText, setTranscribedText] = useState(""); // To hold transcribed text
   const [activeQuestionId, setActiveQuestionId] = useState(null); // Track active question
   const [student, setStudent] = useState(null);
-  // const { student_id } = useParams(); // Get encoded student_id from URL
   const location = useLocation();
   const encoded_zoho_lead_id = location.state?.encoded_zoho_lead_id || null;
-  const encoded_interview_link_send_count = location?.state?.encoded_interview_link_send_count || null;
+  const encoded_interview_link_send_count =
+    location?.state?.encoded_interview_link_send_count || null;
   const zoho_lead_id = atob(encoded_zoho_lead_id);
-  const safe_encoded_zoho_lead_id = encoded_zoho_lead_id || sessionStorage.getItem("zoho_lead_id");
-const safe_encoded_interview_link_send_count = encoded_interview_link_send_count || sessionStorage.getItem("interview_link_count");
-
-  
-  // console.log('encoded_interview_link_send_count',encoded_interview_link_send_count)
+  const safe_encoded_zoho_lead_id =
+    encoded_zoho_lead_id || sessionStorage.getItem("zoho_lead_id");
+  const safe_encoded_interview_link_send_count =
+    encoded_interview_link_send_count ||
+    sessionStorage.getItem("interview_link_count");
 
   //  // Recording State & Refs
   const [videoFilePath, setVideoFilePath] = useState(null);
@@ -68,6 +70,7 @@ const safe_encoded_interview_link_send_count = encoded_interview_link_send_count
   const [isFirstQuestionSet, setIsFirstQuestionSet] = useState(false);
   const [loading, setLoading] = useState(false);
   const swiperRef = useRef(null);
+  const recordingTimeoutRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const [showUploading, setShowUploading] = useState(false);
@@ -75,6 +78,9 @@ const safe_encoded_interview_link_send_count = encoded_interview_link_send_count
   const endCountdownStartedRef = useRef(false);
   const endCountdownStartedRefTwo = useRef(false);
   const hasHandledZeroRef = useRef(false);
+  const isMobileOrIOS = () => /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+
 
   // usePageReloadSubmit(
   //   videoRef,
@@ -86,17 +92,22 @@ const safe_encoded_interview_link_send_count = encoded_interview_link_send_count
 
   // usePageUnloadHandler(encodedLead, encodedLink);
 
-
   useEffect(() => {
-  if (safe_encoded_zoho_lead_id) {
-    sessionStorage.setItem("zoho_lead_id", safe_encoded_zoho_lead_id);
-  }
-  if (safe_encoded_interview_link_send_count) {
-    sessionStorage.setItem("interview_link_count", safe_encoded_interview_link_send_count);
-  }
-}, [safe_encoded_zoho_lead_id, safe_encoded_interview_link_send_count]);
+    if (safe_encoded_zoho_lead_id) {
+      sessionStorage.setItem("zoho_lead_id", safe_encoded_zoho_lead_id);
+    }
+    if (safe_encoded_interview_link_send_count) {
+      sessionStorage.setItem(
+        "interview_link_count",
+        safe_encoded_interview_link_send_count
+      );
+    }
+  }, [safe_encoded_zoho_lead_id, safe_encoded_interview_link_send_count]);
 
-  usePageUnloadHandler(safe_encoded_zoho_lead_id, safe_encoded_interview_link_send_count);
+  usePageUnloadHandler(
+    safe_encoded_zoho_lead_id,
+    safe_encoded_interview_link_send_count
+  );
 
   // usePageUnloadHandler(encoded_zoho_lead_id,encoded_interview_link_send_count);
   const navigate = useNavigate();
@@ -113,7 +124,7 @@ const safe_encoded_interview_link_send_count = encoded_interview_link_send_count
   //     const res = await Axios.get(
   //       `${process.env.REACT_APP_API_BASE_URL}interveiw-section/interview-questions/`
   //     );
- 
+
   //     if (res.data && res.data.questions && res.data.questions.length > 0) {
   //       setQuestions(res.data.questions);
   //       setActiveQuestionId(res.data.questions[0].encoded_id);
@@ -127,25 +138,28 @@ const safe_encoded_interview_link_send_count = encoded_interview_link_send_count
   // };
 
   const fetchInterviewQuestions = async () => {
-  const formData = new FormData();
-  formData.append("zoho_lead_id", safe_encoded_zoho_lead_id);
-  formData.append("interview_link_count",safe_encoded_interview_link_send_count);
+    const formData = new FormData();
+    formData.append("zoho_lead_id", safe_encoded_zoho_lead_id);
+    formData.append(
+      "interview_link_count",
+      safe_encoded_interview_link_send_count
+    );
 
     try {
       const res = await Axios.post(
         `${process.env.REACT_APP_API_BASE_URL}interveiw-section/interview-questions/`,
         {
           zoho_lead_id: safe_encoded_zoho_lead_id,
-          interview_link_count: safe_encoded_interview_link_send_count
+          interview_link_count: safe_encoded_interview_link_send_count,
         },
         {
           headers: {
-            "Content-Type": "application/json"
-          }
+            "Content-Type": "application/json",
+          },
         }
       );
 
-      console.log("data",res.data)
+      console.log("data", res.data);
 
       if (res.data && res.data.questions) {
         setQuestions(res.data.questions);
@@ -159,53 +173,37 @@ const safe_encoded_interview_link_send_count = encoded_interview_link_send_count
   };
   // Store countdown in the sessionstorage for resuem resume
   useEffect(() => {
-    // Retrieve countdown value from sessionStorage on load
-    const storedCountdown = sessionStorage.getItem("countdown");
-    if (storedCountdown !== null) {
-      setCountdown(parseInt(storedCountdown, 10)); // Restore countdown
+    // Stop the timer if countdown reaches 0 or during loading
+    if (countdown <= 0 || loading) {
+      return;
     }
-  
+
     const timer = setInterval(() => {
       setCountdown((prev) => {
-        if (prev === 1) {
-          clearInterval(timer);
+        if (prev <= 1) {
+          clearInterval(timer); // Stop immediately when reaching 0
           return 0;
         }
-        return prev - 1;
+        const newValue = prev - 1;
+        sessionStorage.setItem("countdown", newValue.toString());
+        return newValue;
       });
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isRecording, currentQuestionIndex]);
-
-  // for match websocket & question timer 
-//    useEffect(() => {
-//   // if (!isListeningReady) return;
-
-//   const timer = setInterval(() => {
-//     setCountdown((prev) => {
-//       if (prev <= 1) {
-//         clearInterval(timer);
-//         return 0;
-//       }
-//       return prev - 1;
-//     });
-//   }, 1000);
-
-//   return () => clearInterval(timer);
-// }, [currentQuestionIndex]);
+  }, [countdown, loading, currentQuestionIndex]);
 
   useEffect(() => {
     // Store time spent and question index
     sessionStorage.setItem("timeSpent", timeSpent);
     sessionStorage.setItem("currentQuestionIndex", currentQuestionIndex);
   }, [timeSpent, currentQuestionIndex]);
-  
+
   useEffect(() => {
     // Restore time spent and question index on reload
     const storedTimeSpent = sessionStorage.getItem("timeSpent");
     const storedQuestionIndex = sessionStorage.getItem("currentQuestionIndex");
-  
+
     if (storedTimeSpent) setTimeSpent(parseInt(storedTimeSpent, 10));
     if (storedQuestionIndex)
       setCurrentQuestionIndex(parseInt(storedQuestionIndex, 10));
@@ -218,45 +216,54 @@ const safe_encoded_interview_link_send_count = encoded_interview_link_send_count
 
   // 10 sec popup implement
 
-useEffect(() => {
-  if (loading) {
-    return;
-  }
-    if (countdown <= 10 && countdown >= 1) {
-        if (!toastId.current) {
-            toastId.current = toast.warn(`You have only ${countdown} seconds left!`, {
-                position: "top-center",
-                autoClose: false,
-                hideProgressBar: true,
-            });
-        } else {
-            toast.update(toastId.current, {
-                render: `You have only ${countdown} seconds left!`,
-            });
-        }
-
-        if (countdown === 1 && toastId.current) {
-            setTimeout(() => {
-                toast.dismiss(toastId.current);
-                toastId.current = null;
-            }, 900);
-        }
-
-    } else if (countdown === 0 && toastId.current) {
-        toastId.current = null;
+  useEffect(() => {
+    if (loading) {
+      return;
     }
-}, [countdown]);
+    const warningThreshold = Math.min(10, Math.floor(currentTimeLimit / 3));
 
+    if (countdown <= warningThreshold && countdown >= 1) {
+      if (!toastId.current) {
+        toastId.current = toast.warn(
+          `You have only ${countdown} seconds left!`,
+          {
+            position: "top-center",
+            autoClose: false,
+            hideProgressBar: true,
+          }
+        );
+      } else {
+        toast.update(toastId.current, {
+          render: `You have only ${countdown} seconds left!`,
+        });
+      }
 
-
+      if (countdown === 1 && toastId.current) {
+        setTimeout(() => {
+          toast.dismiss(toastId.current);
+          toastId.current = null;
+        }, 900);
+      }
+    } else if (countdown === 0 && toastId.current) {
+      toastId.current = null;
+    }
+  }, [countdown]);
 
   // ************* Get First Question id *********
 
   useEffect(() => {
     if (getQuestions.length > 0 && !isFirstQuestionSet) {
       const firstQuestion = getQuestions[0];
+      const timeLimit = firstQuestion.time_limit || 60;
       setActiveQuestionId(firstQuestion.encoded_id);
+      setCurrentTimeLimit(timeLimit);
+      setCountdown(timeLimit);
       setIsFirstQuestionSet(true);
+
+      console.log("TimeLimit........", timeLimit);
+
+      sessionStorage.setItem("currentTimeLimit", timeLimit.toString());
+      sessionStorage.setItem("countdown", timeLimit.toString());
 
       // Start the recording for the first question
       startRecording(
@@ -273,11 +280,42 @@ useEffect(() => {
         zoho_lead_id,
         firstQuestion.encoded_id,
         last_question_id,
-        encoded_interview_link_send_count
+        encoded_interview_link_send_count,
+        timeLimit
       );
     }
-  }, [getQuestions, isFirstQuestionSet, last_question_id, zoho_lead_id,encoded_interview_link_send_count]);
+  }, [
+    getQuestions,
+    isFirstQuestionSet,
+    last_question_id,
+    zoho_lead_id,
+    encoded_interview_link_send_count,
+  ]);
 
+
+  
+    
+  useEffect(() => {
+    const fetchBranding = async () => {
+      if (!encoded_zoho_lead_id) return;
+      try {
+        const response = await Axios.post(
+          `${process.env.REACT_APP_API_BASE_URL}interveiw-section/get-branding-by-zoho-id/`,
+          { zoho_lead_id: encoded_zoho_lead_id }
+        );
+        if (response.data.success) {
+          setBranding({
+            logo: response.data.logo_url || Logo,
+            name: response.data.company_name || "Face Authentication Enrollment",
+          });
+        }
+      } catch (err) {
+        console.error("Branding fetch failed:", err);
+      }
+    };
+    fetchBranding();
+  }, [encoded_zoho_lead_id]);
+  
 
   const handleSubmit = useCallback(async () => {
     setLoading(true);
@@ -287,15 +325,15 @@ useEffect(() => {
       console.error("Error: newQuestionId is undefined or invalid.");
       return;
     }
-  
+
     if (newQuestionId !== activeQuestionId) {
       setActiveQuestionId(newQuestionId);
     }
 
-     if (toastId.current) {
-        toast.dismiss(toastId.current);
-        toastId.current = null;
-      }
+    if (toastId.current) {
+      toast.dismiss(toastId.current);
+      toastId.current = null;
+    }
 
     try {
       await stopRecording(
@@ -312,6 +350,19 @@ useEffect(() => {
         encoded_interview_link_send_count,
         () => {
           try {
+            const nextIndex = currentQuestionIndex + 1;
+            const nextQuestion = getQuestions[nextIndex];
+            const nextTimeLimit = nextQuestion?.time_limit || 60;
+
+            setCurrentTimeLimit(nextTimeLimit);
+            setCountdown(nextTimeLimit);
+
+            sessionStorage.setItem(
+              "currentTimeLimit",
+              nextTimeLimit.toString()
+            );
+            sessionStorage.setItem("countdown", nextTimeLimit.toString());
+
             startRecording(
               videoRef,
               mediaRecorderRef,
@@ -326,40 +377,28 @@ useEffect(() => {
               newQuestionId,
               last_question_id,
               encoded_interview_link_send_count,
+              nextTimeLimit
             );
           } catch (err) {
             console.error("Failed to start recording:", err);
           }
         }
-        
       );
-      // console.log("last_question_id",last_question_id);
-      // localStorage.setItem("interviewSubmitted", "true");
-      // submitExam();
-      // if (isInterviewSubmitted) {
-        localStorage.setItem("interviewSubmitted", "true");
-        if(isLastQuestion){
-          if (!endCountdownStartedRef.current) {
-             endCountdownStartedRef.current = true;
-              setEndcountdwn(30);
-              setLoading(true);
-          }
-       
-          // setLoading(true);
-          // setTimeout(()=>{
-          //   localStorage.clear();
-          //   sessionStorage.clear();
-          //   setLoading(false);
-          //   navigate(`/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`);
-          // },30000);
-        }else{
-          setLoading(false);
+      localStorage.setItem("interviewSubmitted", "true");
+      if (isLastQuestion) {
+        if (!endCountdownStartedRef.current) {
+          endCountdownStartedRef.current = true;
+          setEndcountdwn(30);
+          setLoading(true);
         }
+      } else {
+        setLoading(false);
+      }
 
       // }
     } catch (error) {
       console.error("Error in handleSubmit:", error);
-    } 
+    }
     // finally {
     //   setLoading(false);
     // }
@@ -371,7 +410,7 @@ useEffect(() => {
     submitExam,
     zoho_lead_id,
     navigate,
-    encoded_interview_link_send_count
+    encoded_interview_link_send_count,
   ]);
 
   const handleSubmitNew = useCallback(async () => {
@@ -423,8 +462,9 @@ useEffect(() => {
             localStorage.clear();
             sessionStorage.clear();
             // navigate("/interviewsubmitted");
-          navigate(`/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`);
-            
+            navigate(
+              `/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`
+            );
           } else {
             console.error("Upload failed or incomplete:", response);
             // optionally show an error screen or retry
@@ -454,27 +494,15 @@ useEffect(() => {
     const currentQId = getQuestions[currentQuestionIndex]?.encoded_id;
     const isLastQuestion = currentQId === last_question_id;
 
-      if (isLastQuestion) {
-        if (!endCountdownStartedRefTwo.current) {
-            endCountdownStartedRefTwo.current = true;
-            setEndcountdwnTwo(30);
-            setLoading(true);
-        // ✅ Final question logic
-       
-        // console.log("last question reach...")
-        // setTimeout(() => {
-        //     console.log("🟢 Timeout executed");
-        //     // localStorage.setItem("interviewSubmitted", "true");
-        //     // submitExam();
-        //     localStorage.clear();
-        //     sessionStorage.clear();
-        //     setLoading(false);
-        //     // navigate("/interviewsubmitted");
-        // navigate(`/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`);
+    if (isLastQuestion) {
+      //  Last question - upload in background and show countdown
+      if (!endCountdownStartedRefTwo.current) {
+        endCountdownStartedRefTwo.current = true;
+        setEndcountdwnTwo(30);
+        setLoading(true);
 
-        // }, 30000);
-
-        await stopRecording(
+        // Upload last question in background
+        stopRecording(
           videoRef,
           mediaRecorderRef,
           audioRecorderRef,
@@ -485,68 +513,93 @@ useEffect(() => {
           zoho_lead_id,
           currentQId,
           last_question_id,
-          encoded_interview_link_send_count,
-        );
+          encoded_interview_link_send_count
+        ).catch((err) => console.error("Upload failed:", err));
       }
-      } else {
-        // ⏭️ Not last question logic
-        setShowUploading(true);
-        try {
-          await stopRecording(
-            videoRef,
-            mediaRecorderRef,
-            audioRecorderRef,
-            recordedChunksRef,
-            recordedAudioChunksRef,
-            setVideoFilePath,
-            setAudioFilePath,
-            zoho_lead_id,
-            currentQId,
-            last_question_id,
-            encoded_interview_link_send_count)
-              const nextIndex = currentQuestionIndex + 1;
-              const nextQId = getQuestions[nextIndex]?.encoded_id;
+    } else {
+      //  Not last question - move to next immediately
+      const nextIndex = currentQuestionIndex + 1;
+      const nextQuestion = getQuestions[nextIndex];
+      const nextQId = nextQuestion?.encoded_id;
+      const nextTimeLimit = nextQuestion?.time_limit || 60;
 
-              await startRecording(
-                videoRef,
-                mediaRecorderRef,
-                audioRecorderRef,
-                recordedChunksRef,
-                recordedAudioChunksRef,
-                setIsRecording,
-                setCountdown,
-                setVideoFilePath,
-                setAudioFilePath,
-                zoho_lead_id,
-                nextQId,
-                last_question_id,
-                encoded_interview_link_send_count
-              );
+      // Stop current recording (uploads in background)
+      stopRecording(
+        videoRef,
+        mediaRecorderRef,
+        audioRecorderRef,
+        recordedChunksRef,
+        recordedAudioChunksRef,
+        setVideoFilePath,
+        setAudioFilePath,
+        zoho_lead_id,
+        currentQId,
+        last_question_id,
+        encoded_interview_link_send_count,
+        async () => {
+          //  This callback runs immediately after blob is created
+          console.log(" Moving to next question:", nextQId);
 
-              setCurrentQuestionIndex(nextIndex);
-              setActiveQuestionId(nextQId);
-              setCountdown(60);
-          
-        } catch (err) {
-          console.error("Transition error:", err);
-        } finally {
-          setShowUploading(false);
+          // Update UI immediately
+          setCurrentQuestionIndex(nextIndex);
+          setActiveQuestionId(nextQId);
+          setCurrentTimeLimit(nextTimeLimit);
+          setCountdown(nextTimeLimit);
+
+          if (swiperRef.current) {
+            swiperRef.current.slideTo(nextIndex);
+          }
+
+          // Update session storage
+          sessionStorage.setItem("currentTimeLimit", nextTimeLimit.toString());
+          sessionStorage.setItem("countdown", nextTimeLimit.toString());
+          sessionStorage.setItem("currentQuestionIndex", nextIndex.toString());
+
+          hasHandledZeroRef.current = false;
+
+          //  Start new recording immediately (don't wait for upload)
+          try {
+            await startRecording(
+              videoRef,
+              mediaRecorderRef,
+              audioRecorderRef,
+              recordedChunksRef,
+              recordedAudioChunksRef,
+              setIsRecording,
+              setCountdown,
+              setVideoFilePath,
+              setAudioFilePath,
+              zoho_lead_id,
+              nextQId,
+              last_question_id,
+              encoded_interview_link_send_count,
+              nextTimeLimit
+            );
+            console.log(" New recording started for:", nextQId);
+          } catch (err) {
+            console.error("❌ Failed to start new recording:", err);
+          }
         }
-      }
+      ).catch((err) => console.error("❌ Error stopping recording:", err));
+    }
   };
 
-  if (countdown === 0 && getQuestions.length > 0 && !hasHandledZeroRef.current) {
-    hasHandledZeroRef.current =  true;
+  //  Trigger when countdown hits 0
+  if (
+    countdown === 0 &&
+    getQuestions.length > 0 &&
+    !hasHandledZeroRef.current &&
+    !loading
+  ) {
+    hasHandledZeroRef.current = true;
+    console.log("⏰ Countdown reached 0, auto-advancing...");
     handleNextQuestion();
   }
-   if (countdown > 0) {
-    hasHandledZeroRef.current = false;
-  }
-  
 }, [
   countdown,
   currentQuestionIndex,
   getQuestions,
+  loading,
   videoRef,
   mediaRecorderRef,
   audioRecorderRef,
@@ -558,9 +611,8 @@ useEffect(() => {
   last_question_id,
   submitExam,
   navigate,
-  encoded_interview_link_send_count
+  encoded_interview_link_send_count,
 ]);
-
 
   const formatTime = (time) => {
     const minutes = Math.floor(time / 60);
@@ -578,31 +630,36 @@ useEffect(() => {
 
   // ************ User Spent More Than 30 seconds then navigation enabled ****************
   useEffect(() => {
-    if (timeSpent > 30) {
+    const minimumTimeBeforeNav = Math.floor(currentTimeLimit / 2);
+    if (timeSpent >= minimumTimeBeforeNav) {
       setIsNavigationEnabled(true);
     } else {
       setIsNavigationEnabled(false);
     }
   }, [timeSpent]);
 
-  // Countdown reach 0 
+  // Countdown reach 0
   useEffect(() => {
-  if (loading && endCountdown === 0) {
-    localStorage.clear();
-    sessionStorage.clear();
-    // setLoading(false);
-    navigate(`/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`);
-  }
-}, [endCountdown, loading]);
+    if (loading && endCountdown === 0) {
+      localStorage.clear();
+      sessionStorage.clear();
+      // setLoading(false);
+      navigate(
+        `/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`
+      );
+    }
+  }, [endCountdown, loading]);
 
- useEffect(() => {
-  if (loading && endCountdownTwo === 0) {
-    localStorage.clear();
-    sessionStorage.clear();
-    // setLoading(false);
-    navigate(`/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`);
-  }
-}, [endCountdownTwo, loading]);
+  useEffect(() => {
+    if (loading && endCountdownTwo === 0) {
+      localStorage.clear();
+      sessionStorage.clear();
+      // setLoading(false);
+      navigate(
+        `/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`
+      );
+    }
+  }, [endCountdownTwo, loading]);
 
   useEffect(() => {
     setTimeSpent(0);
@@ -629,10 +686,22 @@ useEffect(() => {
       setTimeSpent(0); // Reset time tracker on question change
       setCurrentQuestionIndex(newQuestionIndex); // Update question index
 
-      const newQuestionId = getQuestions[newQuestionIndex]?.encoded_id;
+      //  FIX: Get the question object first, then get timeLimit from it
+      const newQuestion = getQuestions[newQuestionIndex];
+      const newQuestionId = newQuestion?.encoded_id;
+      const timeLimit = newQuestion?.time_limit || 60; // ✅ Get time_limit from question object
+
       if (newQuestionId !== activeQuestionId) {
         setActiveQuestionId(newQuestionId); // Update active question ID
       }
+
+      //  Update time limit and countdown
+      setCurrentTimeLimit(timeLimit);
+      setCountdown(timeLimit);
+
+      // Store in sessionStorage
+      sessionStorage.setItem("currentTimeLimit", timeLimit.toString());
+      sessionStorage.setItem("countdown", timeLimit.toString());
 
       // Stop current recording and start new recording for the new question
       stopRecording(
@@ -662,20 +731,28 @@ useEffect(() => {
               zoho_lead_id,
               newQuestionId,
               last_question_id,
-              encoded_interview_link_send_count
+              encoded_interview_link_send_count,
+              timeLimit //  Pass the time limit
             );
           } catch (err) {
             console.error("Failed to start recording:", err);
           }
         }
       );
-      console.log("last_question_id below", last_question_id);
-      // console.log("srcObject Video",videoRef.current.srcObject
 
-      // Reset countdown
-      setCountdown(60);
+      console.log("last_question_id below", last_question_id);
+      console.log("New question time_limit:", timeLimit); // ✅ Debug log
+
+      // ✅ REMOVED: setCountdown(60) - This was overriding the dynamic time limit!
     },
-    [activeQuestionId, getQuestions, zoho_lead_id, last_question_id, videoRef,encoded_interview_link_send_count]
+    [
+      activeQuestionId,
+      getQuestions,
+      zoho_lead_id,
+      last_question_id,
+      videoRef,
+      encoded_interview_link_send_count,
+    ]
   );
 
   // Prevent unnecessary re-renders of InterviewPlayer
@@ -694,7 +771,12 @@ useEffect(() => {
         encoded_interview_link_send_count={encoded_interview_link_send_count}
       />
     ),
-    [activeQuestionId, zoho_lead_id, last_question_id,encoded_interview_link_send_count]
+    [
+      activeQuestionId,
+      zoho_lead_id,
+      last_question_id,
+      encoded_interview_link_send_count,
+    ]
   );
 
   const handleTimeSpent = () => {
@@ -723,7 +805,7 @@ useEffect(() => {
     try {
       const res = await Axios.post(
         `${process.env.REACT_APP_API_BASE_URL}interveiw-section/student-data/`,
-        formData // ✅ Pass formData here
+        formData //  Pass formData here
       );
       if (res.data && res.data.student_data.length > 0) {
         setStudent(res.data.student_data[0]); // Get first object
@@ -753,19 +835,23 @@ useEffect(() => {
       // If user cancels, push the current state again to block navigation
       window.history.pushState(null, null, window.location.href);
     } else {
-      if(encoded_zoho_lead_id && encoded_interview_link_send_count){
+      if (encoded_zoho_lead_id && encoded_interview_link_send_count) {
         localStorage.clear();
         sessionStorage.clear();
-        navigate(`/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`);
-      }else{
-        if (currentIndex === 0 || isNaN(currentIndex)){
-            localStorage.clear();
-            sessionStorage.clear();
-            navigate('/goback')
-        }else{
-            localStorage.clear();
-            sessionStorage.clear();
-          navigate(`/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`);
+        navigate(
+          `/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`
+        );
+      } else {
+        if (currentIndex === 0 || isNaN(currentIndex)) {
+          localStorage.clear();
+          sessionStorage.clear();
+          navigate("/goback");
+        } else {
+          localStorage.clear();
+          sessionStorage.clear();
+          navigate(
+            `/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`
+          );
         }
       }
     }
@@ -791,7 +877,7 @@ useEffect(() => {
     );
   }
 
-useEffect(() => {
+  useEffect(() => {
     if (loading && endCountdown > 0) {
       const timer = setInterval(() => {
         setEndcountdwn((prev) => prev - 1);
@@ -801,12 +887,12 @@ useEffect(() => {
     }
   }, [loading, endCountdown]);
 
-  useEffect(()=>{
-    if(loading && endCountdownTwo>0){
-      const timer = setInterval(()=>{
-        setEndcountdwnTwo((prev) => prev-1);
-      },1000);
-      return ()=> clearInterval(timer);
+  useEffect(() => {
+    if (loading && endCountdownTwo > 0) {
+      const timer = setInterval(() => {
+        setEndcountdwnTwo((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(timer);
     }
   },[loading,endCountdownTwo]);
 
@@ -814,30 +900,38 @@ useEffect(() => {
     return (
       <div style={{padding:'10px 20px'}}>
         <div className="logomobile">
-            <img src={Logo} alt="AI Software" className="h-16" />
+          <img src={branding.logo} alt="AI Software" className="h-16" />
         </div>
-        
+
         <section class="dots-container">
           {/* <div class="dot"></div>
           <div class="dot"></div>
           <div class="dot"></div>
           <div class="dot"></div>
           <div class="dot"></div> */}
-          
-            <div style={{display:'flex', flexDirection:'column', alignItems:'center',padding:'10px'}}>
+
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              padding: "10px",
+            }}
+          >
             <div>
-               {endCountdown > 0 ? (
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-800 text-center">
-                Please wait, your interview will end in {endCountdown} second{endCountdown !== 1 ? "s" : ""}...
-              </h3>
-            ) : endCountdownTwo > 0 ? (
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-800 text-center">
-                Please wait, your interview will end in {endCountdownTwo} second{endCountdownTwo !== 1 ? "s" : ""}...
-              </h3>
-          ) : null}
-              
+              {endCountdown > 0 ? (
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800 text-center">
+                  Please wait, your interview will end in {endCountdown} second
+                  {endCountdown !== 1 ? "s" : ""}...
+                </h3>
+              ) : endCountdownTwo > 0 ? (
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-800 text-center">
+                  Please wait, your interview will end in {endCountdownTwo}{" "}
+                  second{endCountdownTwo !== 1 ? "s" : ""}...
+                </h3>
+              ) : null}
             </div>
-            <br/>
+            <br />
             <div>
               <p className="text-sm text-red-600 mt-1 font-medium">
                 Do not refresh or close the tab.
@@ -869,14 +963,14 @@ useEffect(() => {
       <div className="flex justify-between flex-col sm:flex-row px-8 pt-3 sm:pt-3  lg:px-16 items-center">
         <div>
           <h3 className="text-black text-xl sm:text-2xl mb-2">
-            <img src={Logo} alt="AI Software" className="h-16 sm:h-16" />
+            <img src={branding.logo} alt="AI Software" className="h-16 sm:h-16" />
           </h3>
           {/* <img src={Logo} alt="Not found" style={{width:'200px'}}/> */}
         </div>
         <div
           className={` px-4 py-2 rounded-2xl text-lg sm:text-2xl font-extrabold transition-all tracking-wider
         ${
-          countdown < 30
+          countdown < 30 && !isMobileOrIOS()
             ? "text-red-500 animate-blink"
             : "bg-gradient-to-r from-[#ff80b5] to-[#9089fc] sm:mt-2.5"
         }`}
@@ -900,10 +994,11 @@ useEffect(() => {
           modules={[Pagination, Navigation, Autoplay]}
           className="mySwiper"
           // style={{ minHeight: "200px" }}
-          autoplay={{
-            delay: 60000,
-            disableOnInteraction: false,
-          }}
+          // autoplay={{
+          //   delay: 60000,
+          //   disableOnInteraction: false,
+          // }}
+          autoplay={false}
           onSlideChange={(swiper) => {
             setCurrentIndex(swiper.activeIndex);
             handleQuestionChange(swiper); // if needed
@@ -917,22 +1012,22 @@ useEffect(() => {
                 className="bg-white pb-6 pt-0 pr-6 pl-6  rounded-lg shadow-lg text-black position-relative"
               >
                 <p className="text-base sm:text-lg">{questionItem.question}</p>
-                {index === getQuestions.length - 1 && timeSpent > 30 && (
+                {index === getQuestions.length - 1 && timeSpent >= Math.floor(currentTimeLimit / 2) && (
                   <button
-                onClick={handleSubmit}
-                disabled={loading}
-                className="
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    className="
                  bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600 text-sm font-medium
                 "
-                style={{
-                  position: "absolute",
-                  right: "5px",
-                  bottom: "20px",
-                  minWidth: "100px",
-                }}
-              >
-                Submit
-              </button>
+                    style={{
+                      position: "absolute",
+                      right: "5px",
+                      bottom: "20px",
+                      minWidth: "100px",
+                    }}
+                  >
+                    Submit
+                  </button>
                 )}
               </SwiperSlide>
             );
@@ -946,7 +1041,7 @@ useEffect(() => {
                 >
                   Skip
                 </button> */}
-            {timeSpent > 30 && (
+            {(timeSpent >= Math.floor(currentTimeLimit / 2)) && (
               <button
                 onClick={() => {
                   swiperRef.current?.slideNext();

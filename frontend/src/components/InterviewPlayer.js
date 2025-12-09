@@ -108,62 +108,53 @@ const InterviewPlayer = ({videoRef,mediaRecorderRef,audioRecorderRef,recordedChu
 
   // Analayze Video
 
-  useEffect(() => {
-    if (videoFilePath && audioFilePath) {
-      console.log("video path get Interview player",last_question_id);
+  // useEffect(() => {
+  //   if (videoFilePath && audioFilePath) {
+  //     console.log("video path get Interview player",last_question_id);
 
-      interviewAddVideoPath(videoFilePath, audioFilePath,zoho_lead_id,question_id,last_question_id);
-    }
-  }, [videoFilePath, audioFilePath,last_question_id,zoho_lead_id,question_id]);
-
-  useEffect(() => {
-
-  //   if (!question_id) {
-  //     console.error('question_id is not defined');
-  //     return;
+  //     interviewAddVideoPath(videoFilePath, audioFilePath,zoho_lead_id,question_id,last_question_id);
   //   }
-  // console.log("Inyterview Player start recording",last_question_id);
+  // }, [videoFilePath, audioFilePath,last_question_id,zoho_lead_id,question_id]);
 
-    const startNewRecording = () => {
-      startRecording(
-        videoRef,
-        mediaRecorderRef,
-        audioRecorderRef,
-        recordedChunksRef,
-        recordedAudioChunksRef,
-        setIsRecording,
-        setVideoFilePath,
-        setAudioFilePath,
-        zoho_lead_id,
-        question_id,
-        last_question_id,
-        encoded_interview_link_send_count,
-      );
-    };
+  // useEffect(() => {
+
+  //   const startNewRecording = () => {
+  //     startRecording(
+  //       videoRef,
+  //       mediaRecorderRef,
+  //       audioRecorderRef,
+  //       recordedChunksRef,
+  //       recordedAudioChunksRef,
+  //       setIsRecording,
+  //       setVideoFilePath,
+  //       setAudioFilePath,
+  //       zoho_lead_id,
+  //       question_id,
+  //       last_question_id,
+  //       encoded_interview_link_send_count,
+  //     );
+  //   };
   
-    startNewRecording();
+  //   startNewRecording();
 
-    const stopTimeout = setTimeout(() => {
-
-        // console.log("Inyterview Player stop recording",last_question_id);
-      
-      stopRecording(
-        videoRef,
-        mediaRecorderRef,
-        audioRecorderRef,
-        recordedChunksRef,
-        recordedAudioChunksRef,
-        setVideoFilePath,
-        setAudioFilePath,
-        zoho_lead_id,
-        question_id,
-        last_question_id,
-        encoded_interview_link_send_count,
-      );
-    }, 60000); // 10 seconds per question
+  //   const stopTimeout = setTimeout(() => {
+  //     stopRecording(
+  //       videoRef,
+  //       mediaRecorderRef,
+  //       audioRecorderRef,
+  //       recordedChunksRef,
+  //       recordedAudioChunksRef,
+  //       setVideoFilePath,
+  //       setAudioFilePath,
+  //       zoho_lead_id,
+  //       question_id,
+  //       last_question_id,
+  //       encoded_interview_link_send_count,
+  //     );
+  //   }, 60000); // 10 seconds per question
   
-    return () => clearTimeout(stopTimeout);
-  }, [videoRef,question_id,last_question_id,zoho_lead_id,audioRecorderRef,mediaRecorderRef,recordedAudioChunksRef,recordedChunksRef]); 
+  //   return () => clearTimeout(stopTimeout);
+  // }, [videoRef,question_id,last_question_id,zoho_lead_id,audioRecorderRef,mediaRecorderRef,recordedAudioChunksRef,recordedChunksRef]); 
   
 
   const handleCloseModal = () => {

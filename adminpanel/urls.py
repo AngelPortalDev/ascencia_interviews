@@ -2,15 +2,16 @@ from django.urls import path
 from django.urls import path, include
 from adminpanel.views.profile_view import profile_update
 from adminpanel.views.dashboard_view import admindashboard, custom_404_view
-from adminpanel.views.institute_view import institute_list, institute_add, institute_update, institute_delete, toggle_institute_status, student_managers_by_institute
+from adminpanel.views.institute_view import institute_list, institute_add, institute_update, institute_delete, toggle_institute_status, student_managers_by_institute,toggle_student_manager_status_in_institute
 from adminpanel.views.course_view import courses, course_add, course_update, course_delete
 from adminpanel.views.question_view import questions, question_add, question_update, question_delete, common_questions, common_question_add, common_question_update, common_question_delete
 from adminpanel.views.student_manager_view import student_managers, student_manager_add, student_manager_update, student_manager_delete, toggle_student_manager_status, student_list_by_manager
-from adminpanel.views.student_view import students_leads_api,students_list, student_detail
+from adminpanel.views.student_view import students_leads_api,students_list, student_detail,extend_interview_api
 
 
 
 urlpatterns = [
+    path("extend-first-interview/<str:zoho_lead_id>/", extend_interview_api),
     path(
         "adminpanel/",
         include(
@@ -25,6 +26,12 @@ urlpatterns = [
                     path("institute/delete/<id>/", institute_delete, name="institute_delete"),
                     path("institute/toggle-institute-status/<id>/", toggle_institute_status, name="toggle_institute_status"),
                     path('institute/<str:id>/student-managers/', student_managers_by_institute, name='student_managers_by_institute'),
+                    path(
+                        "institute/<str:institute_id>/toggle-manager-status/<str:id>/",
+                        toggle_student_manager_status_in_institute,
+                        name="toggle_student_manager_status_in_institute"
+                    ),
+
 
 
                 # courses
@@ -62,7 +69,11 @@ urlpatterns = [
                 # Dashboards
                 # path('dashboard/',userdashboard),
                 path("dashboard/", admindashboard, name="admindashboard"),
+
+                
+
             ]
+            
         ),
     ),
 ]

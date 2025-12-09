@@ -16,6 +16,7 @@ from studentpanel.models.student_Interview_status import StudentInterview
 from studentpanel.models.interview_link import StudentInterviewLink
 import time
 from adminpanel.models.common_question import CommonQuestion
+from adminpanel.models.question import Question
 logging.basicConfig(level=logging.INFO)
 import uuid
 import json
@@ -25,12 +26,21 @@ from django.utils.html import escape
 import re
 from django_q.tasks import async_task, schedule
 from django.utils.timezone import now, timedelta
-
+import torch
+from django.conf import settings
 
 from django_q.models import Schedule
+from adminpanel.helper.email_branding import get_email_branding
 
+from html import escape
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import whisper
 
 logger = logging.getLogger(__name__)
+import subprocess
+import textwrap
+from PIL import ImageFont
+import tempfile
 
 def get_uploads_folder():
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
@@ -39,10 +49,8 @@ def get_uploads_folder():
     logging.info("uploads folder text: %s", uploads_folder)
     return uploads_folder.replace("\\", "/")
 
-
 def convert_video(input_path, output_path, target_format):
-    # FFMPEG_PATH = 'C:/ffmpeg/bin/ffmpeg.exe'
-    FFMPEG_PATH = '/usr/bin/ffmpeg'
+   
     logging.info("output_path: %s", output_path)
     logging.info("target_format path: %s", target_format)
     # if target_format == "webm":
@@ -57,7 +65,7 @@ def convert_video(input_path, output_path, target_format):
 
     if target_format == "webm":
         command = (
-            f'{FFMPEG_PATH} -y -i "{input_path}" '
+            f'{settings.FFMPEG_PATH} -y -i "{input_path}" '
             f'-vf "fps=30,scale=640:480" '  # force 30 fps and resize
             f'-pix_fmt yuv420p '
             f'-c:v libvpx -b:v 1M -quality good -cpu-used 4 '
@@ -145,10 +153,10 @@ def upload_to_bunnystream(video_path):
         return video_id
     
 def get_duration(file_path):
-    FFMPEG_PROBE = '/usr/bin/ffprobe'
+    # FFMPEG_PROBE = '/usr/bin/ffprobe'
     # FFMPEG_PROBE = "C:/ffmpeg/bin/ffprobe.exe"
     cmd = [
-        FFMPEG_PROBE, "-v", "error",
+        settings.FFMPEG_PROBE, "-v", "error",
         "-show_entries", "format=duration",
         "-of", "default=noprint_wrappers=1:nokey=1",
         file_path
@@ -164,47 +172,99 @@ def get_duration(file_path):
         logging.warning(f"Duration check failed for {file_path}: {e}. Using fallback duration 2.0s")
         return 2.0
 
-    
-    
-def generate_question_video(text, output_path, duration=2):
-    # FFMPEG_PATH = r"C:\ffmpeg\bin\ffmpeg.exe"  # raw string avoids escaping
-    FFMPEG_PATH = '/usr/bin/ffmpeg'
-    # font_path = "C\\\\:/Windows/Fonts/arial.ttf"
-    font_path = "/usr/share/fonts/dejavu/DejaVuSans.ttf"
+def wrap_text_pixels(text, font_path, fontsize, max_width_px):
+    font = ImageFont.truetype(font_path, fontsize)
+    words = text.split()
+    lines = []
+    current_line = ""
+
+    for word in words:
+        test_line = f"{current_line} {word}".strip()
+        if len(current_line.split()) >= 16:
+            lines.append(current_line)
+            current_line = word
+            continue
+        bbox = font.getbbox(test_line)
+        w = bbox[2] - bbox[0]
+
+        if w <= max_width_px:
+            current_line = test_line
+        else:
+            if current_line:
+                lines.append(current_line)
+            word_bbox = font.getbbox(word)
+            word_width = word_bbox[2] - word_bbox[0]
+            if word_width > max_width_px:
+                split_word = [word[i:i+10] for i in range(0, len(word), 10)]
+                lines.extend(split_word[:-1])
+                current_line = split_word[-1]
+            else:
+                current_line = word
+    if current_line:
+        lines.append(current_line)
+    return lines
+
+def save_wrapped_text_file(text, font_path, fontsize, max_width_px):
+    wrapped_lines = wrap_text_pixels(text, font_path, fontsize, max_width_px)
+    tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".txt", mode="w", encoding="utf-8")
+    tmp_file.write("\n".join(wrapped_lines))
+    tmp_file.close()
+
+    original_path = tmp_file.name
+    # Correct FFmpeg path: double backslash before colon + forward slashes for rest
+    if os.name == "nt":   # Windows
+        path = original_path
+        if ":" in path:
+            drive, rest = path.split(":", 1)
+            # ffmpeg_path = original_path
+            rest_clean = rest.replace("\\", "/")
+            ffmpeg_path = f"{drive}\\\\:{rest_clean}"
+        else:
+            ffmpeg_path = path.replace("\\", "/")
+    else:                 # Linux (cPanel)
+        ffmpeg_path = original_path  # NO escaping needed
+
+    return original_path,ffmpeg_path
 
 
-      # ✅ Escape special characters properly for FFmpeg
-    #   this only one line Questions
-    # safe_text = text.replace(":", r'\:').replace("?", r'\?').replace("'", "").replace('"', "")
-    # for new line like two line questions 
-    safe_text = text.replace("\n", " ").replace(":", r'\:').replace("?", r'\?').replace("'", "").replace('"', "")
+def generate_question_video(text, output_path, duration=2, fontsize=12, max_width_px=500):
+    # Font path with DOUBLE backslash before colon for FFmpeg
+    font_path = settings.FONT_PATH  # e.g., "C:/Windows/Fonts/arial.ttf"
+    ffmpeg_path = settings.FFMPEG_PATH
+    # font_path_ffmpeg = font_path.replace(":", "\\\\").replace("\\", "/")
 
+    # Generate wrapped text file
+    original_path,text_file_path = save_wrapped_text_file(text, font_path, fontsize, max_width_px)
+
+    # Drawtext exactly like your working command
     drawtext = (
-    f"drawtext=fontfile={font_path}:"
-    f"text='{safe_text}':fontcolor=white:fontsize=12:x=(w-text_w)/2:y=(h-text_h)/2"
+        f"drawtext=fontfile={font_path}:"
+        f"textfile={text_file_path}:"
+        f"fontcolor=white:fontsize={fontsize}:line_spacing=6:"
+        "x=(w-text_w)/2:y=(h-text_h)/2:"
+        "fix_bounds=1:box=1:boxcolor=black@0.4:boxborderw=20"
     )
-    print("drawtext",drawtext)
 
+    # command = (
+    #     f'"C:/ffmpeg/bin/ffmpeg.exe" -f lavfi -i color=c=black:s=640x360:d={duration} '
+    #     f'-f lavfi -i anullsrc=channel_layout=stereo:sample_rate=48000 '
+    #     f'-vf "{drawtext}" -shortest '
+    #     f'-c:v libvpx -b:v 1M -c:a libopus -ar 48000 -ac 2 '
+    #     f'-y "{output_path}"'
+    # )
     command = (
-        f'"{FFMPEG_PATH}" '
-        f'-f lavfi -i color=c=black:s=640x360:d={duration} '
+        f'"{ffmpeg_path}" -f lavfi -i color=c=black:s=640x360:d={duration} '
         f'-f lavfi -i anullsrc=channel_layout=stereo:sample_rate=48000 '
-        f'-shortest -vf "{drawtext}" '
+        f'-vf "{drawtext}" -shortest '
         f'-c:v libvpx -b:v 1M -c:a libopus -ar 48000 -ac 2 '
-        f'-f webm -y "{output_path}"'
+        f'-y "{output_path}"'
     )
 
+    print("Running FFmpeg command:", command)
+    subprocess.run(command, shell=True, check=True)
 
-    logging.info("Running FFmpeg command:\n%s", command)
+    os.remove(original_path)
 
-    try:
-        subprocess.run(command, shell=True, check=True)
-    except subprocess.CalledProcessError as e:
-        logging.error("FFmpeg failed to generate VP8+Opus question video: %s", e)
-        raise
-
-
-    
 def wait_for_complete_files(folder, min_files=1, stable_duration=5, timeout=30):
     start = time.time()
     last_sizes = {}
@@ -242,10 +302,10 @@ def wait_for_complete_files(folder, min_files=1, stable_duration=5, timeout=30):
     # return video_i
 def get_codecs(video_path):
     # FFMPEG_PROBE = 'C:/ffmpeg/bin/ffprobe.exe'
-    FFMPEG_PROBE = '/usr/bin/ffprobe'
+    # FFMPEG_PROBE = '/usr/bin/ffprobe'
 
     cmd_video = [
-        FFMPEG_PROBE, '-v', 'error',
+        settings.FFMPEG_PROBE, '-v', 'error',
         '-select_streams', 'v:0', '-show_entries', 'stream=codec_name',
         '-of', 'json', video_path
     ]
@@ -253,7 +313,7 @@ def get_codecs(video_path):
     video_codec = json.loads(result_video.stdout)["streams"][0]["codec_name"].lower()
 
     cmd_audio = [
-        FFMPEG_PROBE, '-v', 'error',
+        settings.FFMPEG_PROBE, '-v', 'error',
         '-select_streams', 'a:0', '-show_entries', 'stream=codec_name',
         '-of', 'json', video_path
     ]
@@ -265,10 +325,10 @@ def get_codecs(video_path):
 
 def is_video_valid(video_path):
     # FFMPEG_PROBE = 'C:/ffmpeg/bin/ffprobe.exe'
-    FFMPEG_PROBE = '/usr/bin/ffprobe'
+    # FFMPEG_PROBE = '/usr/bin/ffprobe'
     try:
         cmd = [
-            FFMPEG_PROBE, "-v", "error",
+            settings.FFMPEG_PROBE, "-v", "error",
             "-select_streams", "v:0",
             "-show_entries", "stream=avg_frame_rate,duration",
             "-of", "default=noprint_wrappers=1:nokey=1",
@@ -284,29 +344,87 @@ def is_video_valid(video_path):
         logging.warning(f"Invalid video structure, will re-encode: {video_path} | Error: {e}")
         return False
 
-def build_qa_blocks_with_paths(questions, converted_files):
+# def build_qa_blocks_with_paths(questions, converted_files):
+#     qa_blocks = []
+#     total_pairs = len(converted_files) // 2  # floor division to avoid IndexError
+#     for i in range(total_pairs):
+#         q_file = converted_files[i * 2]
+#         a_file = converted_files[i * 2 + 1]
+
+#         # Safety check: skip if missing or 0-byte
+#         if not os.path.exists(a_file) or os.path.getsize(a_file) == 0:
+#             logging.warning("Skipping Q&A block: missing answer file: %s", a_file)
+#             continue
+#         if not os.path.exists(q_file) or os.path.getsize(q_file) == 0:
+#             logging.warning("Skipping Q&A block: missing question file: %s", q_file)
+#             continue
+
+#         question_text = questions[i].question if i < len(questions) else "[Unknown Question]"
+#         qa_blocks.append({
+#             "question": question_text,
+#             "q_file": q_file,
+#             "a_file": a_file
+#         })
+#     return qa_blocks
+
+
+def build_qa_blocks_with_paths(ordered_questions, answers_qid_map, uploads_folder):
+    """
+    Build Q&A blocks using question IDs (NOT indices).
+    
+    Args:
+        ordered_questions: List of question objects (CommonQuestion or Question)
+        answers_qid_map: Dict mapping question_id -> StudentInterviewAnswers
+        uploads_folder: Path to uploads folder
+        
+    Returns:
+        List of dicts with: {question_id, question_text, q_file, a_file}
+    """
     qa_blocks = []
-    total_pairs = len(converted_files) // 2  # floor division to avoid IndexError
-    for i in range(total_pairs):
-        q_file = converted_files[i * 2]
-        a_file = converted_files[i * 2 + 1]
-
-        # Safety check: skip if missing or 0-byte
-        if not os.path.exists(a_file) or os.path.getsize(a_file) == 0:
-            logging.warning("Skipping Q&A block: missing answer file: %s", a_file)
+    
+    # Loop through questions by ID (not by index)
+    for question in ordered_questions:
+        question_id = question.id
+        
+        # Check if answer exists in database
+        answer = answers_qid_map.get(question_id)
+        if not answer:
+            logging.warning(f"❌ No answer in DB for Question ID {question_id}")
             continue
-        if not os.path.exists(q_file) or os.path.getsize(q_file) == 0:
-            logging.warning("Skipping Q&A block: missing question file: %s", q_file)
+        
+        # Get answer video path from database
+        answer_path = answer.video_path
+        if not answer_path:
+            logging.warning(f"❌ No video_path in DB for Question ID {question_id}")
             continue
-
-        question_text = questions[i].question if i < len(questions) else "[Unknown Question]"
-        qa_blocks.append({
-            "question": question_text,
-            "q_file": q_file,
-            "a_file": a_file
-        })
+        
+        # Validate answer file exists on disk
+        if not os.path.exists(answer_path) or os.path.getsize(answer_path) == 0:
+            logging.warning(f"❌ Answer video missing/empty for Question ID {question_id}")
+            continue
+        
+        # Find question video file
+        question_filename = f"question_{question_id}_converted.webm"
+        question_path = os.path.join(uploads_folder, question_filename).replace("\\", "/")
+        
+        # Validate question file exists
+        if not os.path.exists(question_path) or os.path.getsize(question_path) == 0:
+            logging.warning(f"❌ Question video missing/empty for Question ID {question_id}")
+            continue
+        
+        # ✅ Both files exist - add to blocks with question_id
+        qa_block = {
+            "question_id": question_id,      # ← KEY CHANGE: Use actual ID
+            "question_text": question.question,
+            "q_file": question_path,
+            "a_file": answer_path
+        }
+        qa_blocks.append(qa_block)
+        
+        logging.info(f"✅ Q&A pair validated - Question ID {question_id}")
+    
+    logging.info(f"✅ Total valid Q&A pairs: {len(qa_blocks)}")
     return qa_blocks
-
 
 def merge_videos(zoho_lead_id,interview_link_count=None):
     logger.info("[MERGE TRIGGERED] zoho_lead_id=%s", zoho_lead_id)
@@ -337,52 +455,98 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
     except StudentInterviewLink.DoesNotExist:
         return f"Interview link not found for zoho_lead_id: {zoho_lead_id}"
 
-    if not interview_link.assigned_question_ids:
+    # -----------------------------
+    # ✅ Fetch both question types
+    # -----------------------------
+    common_ids = list(map(int, interview_link.assigned_question_ids.split(","))) if interview_link.assigned_question_ids else []
+    course_ids = list(map(int, interview_link.assigned_course_question_ids.split(","))) if interview_link.assigned_course_question_ids else []
+
+    if not common_ids and not course_ids:
         return f"No assigned questions for zoho_lead_id: {zoho_lead_id}"
 
-    question_id_list = list(map(int, interview_link.assigned_question_ids.split(",")))
+    # Fetch from both models
+    common_qs = list(CommonQuestion.active_objects.filter(id__in=common_ids))
+    course_qs = list(Question.active_objects.filter(id__in=course_ids))
 
-    # ✅ Fetch answer objects in order of submission
+    # Map by ID for quick access
+    common_map = {q.id: q for q in common_qs}
+    course_map = {q.id: q for q in course_qs}
+
+    # Preserve order: common first, then course
+    ordered_questions = []
+    for qid in common_ids:
+        if qid in common_map:
+            ordered_questions.append(common_map[qid])
+    for qid in course_ids:
+        if qid in course_map:
+            ordered_questions.append(course_map[qid])
+
+    # -----------------------------
+    # ✅ Fetch answers in order
+    # -----------------------------
     answers = list(StudentInterviewAnswers.objects.filter(
         zoho_lead_id=zoho_lead_id
-    ).order_by("created_at")[:len(question_id_list)])
+    ).order_by("created_at")[:len(ordered_questions)])
 
     if not answers:
         return f"No answers found for lead ID {zoho_lead_id}."
 
-    # ✅ Fetch questions by ID and preserve order from interview_link
-    questions_qs = CommonQuestion.active_objects.filter(id__in=question_id_list)
-    question_map = {q.id: q for q in questions_qs}
-    ordered_questions = [question_map[qid] for qid in question_id_list if qid in question_map]
-
     if len(ordered_questions) < len(answers):
-        return f"Some question IDs are missing from CommonQuestion."
+        logging.warning("Some questions missing or not matched.")
+
+
+    # if len(ordered_questions) < len(answers):
+    #     return f"Some question IDs are missing from CommonQuestion."
 
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
     video_files = []
 
-    # 🔁 Pair each question with its corresponding answer
-    for i, (answer, question) in enumerate(zip(answers, ordered_questions), start=1):
-        question_filename = f"question_{question.id}.webm"
-        question_path = os.path.join(uploads_folder, question_filename).replace("\\", "/")
-        answer_path = os.path.join(project_root, answer.video_path).replace("\\", "/")
+    # ----------------------------------------
+# BUILD ANSWER MAP BY QUESTION ID
+# ----------------------------------------
+    answers_qid_map = {}
 
-         # Skip Q&A pair if answer is missing or 0-byte
-        if not os.path.exists(answer_path) or os.path.getsize(answer_path) == 0:
-            logging.warning(
-                "Skipping Q&A pair: Answer missing or 0-byte, question not generated. "
-                "Question ID: %s, Answer Path: %s", question.id, answer_path
-            )
+    for ans in answers:
+        if ans.question_id:
+            answers_qid_map[ans.question_id] = ans
+
+
+    # ----------------------------------------
+    # LOOP QUESTIONS IN CORRECT ORDER
+    # ----------------------------------------
+    for question in ordered_questions:
+        qid = question.id
+
+        # Find matching answer
+        answer = answers_qid_map.get(qid)
+
+        if not answer:
+            logging.warning(f"Skipping: No answer for Question {qid}")
             continue
 
-        # if not os.path.exists(answer_path):
-        #     return f"Missing answer file: {answer_path}"
+        answer_path = os.path.join(project_root, answer.video_path).replace("\\", "/")
+
+        # Skip corrupted answer
+        if not os.path.exists(answer_path) or os.path.getsize(answer_path) == 0:
+            logging.warning(f"Skipping Question {qid}: Answer missing or 0-byte.")
+            continue
+
+        # Generate question video ONLY if answer exists
+        question_filename = f"question_{qid}.webm"
+        question_path = os.path.join(uploads_folder, question_filename).replace("\\", "/")
 
         if not os.path.exists(question_path):
-            generate_question_video(f"{question.question}", question_path, duration=2.0)
+            generate_question_video(
+                text=question.question,
+                output_path=question_path,
+                duration=2.0,
+                fontsize=12,
+                max_width_px=600
+            )
 
         video_files.append(question_path)
         video_files.append(answer_path)
+
 
 
 
@@ -491,7 +655,7 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
 
     # FFMPEG_PATH = '/home/YOUR_CPANEL_USERNAME/ffmpeg/ffmpeg'
     # FFMPEG_PATH = 'C:/ffmpeg/bin/ffmpeg.exe'
-    FFMPEG_PATH = '/usr/bin/ffmpeg'
+    # FFMPEG_PATH = '/usr/bin/ffmpeg'
 
     logging.info("uploads_folder: %s", uploads_folder)
     logging.info("output_filename: %s", output_filename)
@@ -585,7 +749,7 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
     
     if target_format == "webm":
         merge_command = (
-            f'{FFMPEG_PATH} -f concat -safe 0 -i "{list_file_path}" '
+            f'{settings.FFMPEG_PATH} -f concat -safe 0 -i "{list_file_path}" '
             f'-c:v libvpx -b:v 1M -r 30 -pix_fmt yuv420p '
             f'-c:a libopus -ar 48000 -ac 2 '
             f'-f webm "{output_path}"'
@@ -593,13 +757,13 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
 
     elif target_format == "mp4":
         merge_command = (
-            f'{FFMPEG_PATH} -f concat -safe 0 -i "{list_file_path}" '
+            f'{settings.FFMPEG_PATH} -f concat -safe 0 -i "{list_file_path}" '
             f'-map 0:v -map 0:a -c:v libx264 -preset veryfast -crf 28 '
             f'-vf scale=640:-2 -c:a aac -b:a 96k -movflags +faststart "{output_path}"'
         )
     elif target_format == "mov":
         merge_command = (
-            f'{FFMPEG_PATH} -f concat -safe 0 -i "{list_file_path}" '
+            f'{settings.FFMPEG_PATH} -f concat -safe 0 -i "{list_file_path}" '
             f'-c:v prores -c:a pcm_s16le "{output_path}"'
         )
     else:
@@ -629,21 +793,54 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
         # ✅ Transcribe full video and match segments to Q&A blocks
         import whisper
         model = whisper.load_model("small")
-        qa_blocks = build_qa_blocks_with_paths(ordered_questions, converted_files)
+
+        # ✅ NEW CALL: Pass answers_qid_map to function
+        qa_blocks = build_qa_blocks_with_paths(ordered_questions, answers_qid_map, uploads_folder)
+
+        if not qa_blocks:
+            logging.warning(f"⚠️  No valid Q&A pairs for transcription: {zoho_lead_id}")
+            return "No valid Q&A pairs found."
 
         qa_transcript = []
-        # for block in qa_blocks:
-        for idx, block in enumerate(qa_blocks, start=1):
-            question_text = block["question"]
+        transcription_log = []
+
+        # ❌ OLD: for idx, block in enumerate(qa_blocks, start=1):
+        # ✅ NEW: Loop through blocks with question_id
+        idx = 1  # ← manual counter
+        for block in qa_blocks:
+            question_id = block["question_id"]      # ← KEY: Use actual ID
+            question_text = block["question_text"]
             answer_file = block["a_file"]
+            
+            try:
+                logging.info(f"  📝 Transcribing Q.{question_id}...")
+                result = model.transcribe(answer_file, language="en", word_timestamps=False)
+                answer_text = result.get("text", "").strip()
+                
+                if not answer_text:
+                    answer_text = "[No response detected]"
+                
+                # ✅ Use question_id, NOT enumerate index
+                # qa_transcript.append(f"Q.{question_id}: {question_text}\nANS: {answer_text}\n")
+                #                        ↑ CORRECT: Actual question_id from database
 
-            result = model.transcribe(answer_file, language="en", word_timestamps=False)
-            answer_text = result.get("text", "").strip()
-
-            if not answer_text:
-                answer_text = "[No response detected]"
-
-            qa_transcript.append(f"Q.{idx}: {question_text}\nANS: {answer_text}\n")
+                qa_transcript.append(f"Q.{idx}: {question_text}\nANS: {answer_text}\n")
+                idx += 1  # Increment manual counter
+                
+                transcription_log.append({
+                    "question_id": question_id,
+                    "status": "success"
+                })
+                
+                logging.info(f"  ✅ Q.{question_id} transcribed")
+                
+            except Exception as e:
+                logging.error(f"  ❌ Transcription failed for Q.{question_id}: {str(e)}")
+                transcription_log.append({
+                    "question_id": question_id,
+                    "status": "failed",
+                    "error": str(e)
+                })
 
         transcript_output = "\n".join(qa_transcript)
         transcript_txt_path = os.path.splitext(output_path)[0] + "_transcript.txt"
@@ -653,13 +850,8 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
         # Save to DB
         interview_link.transcript_text = transcript_output
         interview_link.save(update_fields=["transcript_text"])
-
-        
         clean_transcript = transcript_output.strip()
-
-# Remove any spaces/tabs at the beginning of lines before "Q."
         clean_transcript = re.sub(r'^[ \t]+(Q\.\d+:)', r'\1', clean_transcript, flags=re.MULTILINE)
-
         formatted_transcript = escape(clean_transcript).replace("\n", "<br>")
 
         # ✅ Save Q&A transcript to file and DB
@@ -692,9 +884,10 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
 
 
         video_path = os.path.join(
-            "/home/ascenciaintervie/public_html/static/uploads/interview_videos",
+            # "/home/ascenciaintervie/public_html/static/uploads/interview_videos",
             # "/home/interview/public_html/static/uploads/interview_videos",
             # "C:/xampp/htdocs/vaibhav/ascencia_interviews/static/uploads/interview_videos",
+            settings.UPLOADS_FOLDER,
             zoho_lead_id,
             "merged_video.webm"
         )
@@ -717,6 +910,10 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
             student_manager_email= student_manager.email
 
 
+        student1 = Students.objects.get(zoho_lead_id=zoho_lead_id)
+        crm_id = student1.crm_id
+        logo_url, company_name = get_email_branding(crm_id)
+
         subject = "Interview Process Completed"
         recipient = [student_manager_email]
         # recipient = ["vaibhav@angel-portal.com"]
@@ -731,7 +928,7 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
                     
                     <!-- Logo Header -->
                     <div class="header" style="text-align: center; margin-bottom: 20px; border-bottom: 1px solid #eee;">
-                    <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Company Logo" style="height: 70px; width: auto; margin-bottom: 10px;">
+                    <img src="{logo_url}" alt="Company Logo" style="height: 70px; width: auto; margin-bottom: 10px;">
                     </div>
 
                     <!-- Illustration -->
@@ -767,7 +964,7 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
                     </div>
 
                     <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: left; margin-top: 30px;">
-                                                    Best regards,<br/>Ascencia Malta
+                                                    Best regards,<br/>{company_name}
                                                 </p>
                 </div>
                 
@@ -781,7 +978,9 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
             from_email=from_email,
             to=recipient,
         )
-
+        # 🔥 Add this to auto-apply CC everywhere
+        email.cc = settings.DEFAULT_CC_EMAILS
+        print(r"cc",settings.DEFAULT_CC_EMAILS)
         # Attach HTML version
         email.attach_alternative(html_content, "text/html")
         print(r"html_content",html_content)
@@ -823,7 +1022,7 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
          # Delete StudentInterviewAnswers after processing
         deleted_count, _ = StudentInterviewAnswers.objects.filter(zoho_lead_id=zoho_lead_id).delete()
         delted_student_interview = StudentInterview.objects.filter(zoho_lead_id=zoho_lead_id).update(interview_process='')
-
+        
         # ✅ Send "Thank You" Email to Student
         send_email(
             subject="Thank You for Completing Your Interview!",
@@ -887,7 +1086,7 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
                 <body>
                     <div class="email-container">
                         <div class="header">
-                            <img src="https://ascencia-interview.com/static/img/email_template_icon/ascencia_logo.png" alt="Ascencia Malta" />
+                            <img src="{logo_url}" alt="Ascencia Malta" />
                         </div>
                         <img src="https://ascencia-interview.com/static/img/email_template_icon/Thank_you-01.png" alt="Interview Completed" class="email-logo" />
                         
@@ -902,7 +1101,7 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
                         <p>We’re excited to support you on your journey!</p>
 
                         <p>Best regards,<br/>
-                        Ascencia Malta</p>
+                        {company_name}</p>
                     </div>
                 </body>
             </html>

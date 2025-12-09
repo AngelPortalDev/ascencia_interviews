@@ -28,13 +28,29 @@
     
     <!-- Main JS -->
     <script src="{% static 'js/common.js' %}"></script>
+     {% if messages %}
+        <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            {% for message in messages %}
+                Swal.fire({
+                    icon: "{{ message.tags }}",
+                    title: "{{ message.tags|title }}",
+                    text: "{{ message }}",
+                    showConfirmButton: true,
+                    confirmButtonText: "OK",
+                    timer: null
+                });
+            {% endfor %}
+        });
+        </script>
+        {% endif %}
     <script>
         $(document).ready(function() {
             $('.alert').each(function() {
                 var alert = $(this);
                 setTimeout(function() {
                     alert.fadeOut(); // Hide the alert after 5 seconds with fadeOut effect
-                }, 3000); // 5000 milliseconds = 5 seconds
+                }, 0000); // 5000 milliseconds = 5 seconds
             });
 
             if (!$.fn.DataTable.isDataTable('#DataTables_Table_0')) {

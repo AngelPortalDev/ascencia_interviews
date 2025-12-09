@@ -14,14 +14,28 @@
             <div class="row g-6">
               <div class="col-md-6">
                   <label class="form-label" for="crm_id">Institute</label>
-                  <select id="crm_id" name="crm_id" class="form-select">
+                  {% comment %} <select id="crm_id" name="crm_id" class="form-select select2" multiple>
                       <option value="" disabled {% if not request.POST.crm_id %}selected{% endif %}>Select Institute</option>
                         {% for institute in institutes %}
                           <option value="{{ institute.id }}" {% if request.POST.crm_id == institute.id|stringformat:"s" %}selected{% endif %}>
                             {{ institute.institute_name }}
                           </option>
                         {% endfor %}
-                  </select>
+                  </select> {% endcomment %}
+                  <select id="crm_id" name="crm_id" class="form-select select2" multiple>
+                    <option value="" disabled>Select Institute</option>
+                    {% for institute in institutes %}
+                        <option value="{{ institute.id }}"
+                            {% if institute.id|stringformat:"s" in selected_crm_ids %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ institute.institute_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+
                   {% if errors.crm_id %}
                       <small class="text-danger">{{ errors.crm_id }}</small>
                   {% endif %}
@@ -33,8 +47,18 @@
                       <small class="text-danger">{{ errors.question }}</small>
                   {% endif %}
                 </div>
+                
               
             </div>
+            <div class="row g-3 mt-3">
+            <div class="col-md-6">
+            <label class="form-label" for="time_limit">Answer Time (seconds)</label>
+            <input type="number" id="time_limit" name="time_limit" class="form-control" placeholder="30" value="{{ request.POST.time_limit|default:'30' }}" min="1">
+            {% if errors.time_limit %}
+                <small class="text-danger">{{ errors.time_limit }}</small>
+            {% endif %}
+        </div>
+    </div>
             <div class="pt-6">
                 <button type="submit" class="btn btn-primary mt-3">Submit</button>
             </div>

@@ -19,6 +19,8 @@ class CommonQuestion(models.Model):
         null=True,
         blank=True 
     )
+
+    time_limit = models.PositiveIntegerField(default=30, help_text="Time limit per question in seconds")  # 👈 NEW FIELD
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

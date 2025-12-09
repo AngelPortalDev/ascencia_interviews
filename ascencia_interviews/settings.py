@@ -20,6 +20,17 @@ pymysql.install_as_MySQLdb()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+# ✅ Load .env manually (simple version)
+from dotenv import load_dotenv
+# Load environment variables from .env file
+load_dotenv(os.path.join(BASE_DIR, '.env'))
+
+# ✅ Use environment variables directly (no fallbacks)
+FFMPEG_PATH = os.environ["FFMPEG_PATH"]
+FFMPEG_PROBE = os.environ["FFMPEG_PROBE"]  
+UPLOADS_FOLDER = os.environ["UPLOADS_FOLDER"]
+FONT_PATH = os.environ["FONT_PATH"]
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
@@ -105,48 +116,20 @@ CHANNEL_LAYERS = {
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'ascencia-interviews',
-#         'USER': 'root',
-#         'PASSWORD': '',
-#         'HOST': '127.0.0.1',  # Or your MySQL server address
-#         'PORT': '3306',       # Default MySQL port
-#     }
-# }
-
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'ascencia-interviews',
-#         'USER': 'root',
-#         'PASSWORD': '',
-#         'HOST': '127.0.0.1',  # Or your MySQL server address
-#         'PORT': '3306',       # Default MySQL port
-#     }
-# }
-
-
-# live
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'ascenciaintervie_db',
-        'USER': 'ascenciaintervie_db',
-        'PASSWORD': '}Qc,O3Sw-?).',
-        'HOST': '127.0.0.1',  # Or your MySQL server address
-        'PORT': '3306',  
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-            'init_command': "SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'"
-        }
+    "default": {
+        "ENGINE": os.getenv("DB_ENGINE", "django.db.backends.mysql"),
+        "NAME": os.getenv("DB_NAME"),
+        "USER": os.getenv("DB_USER"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "HOST": os.getenv("DB_HOST", "127.0.0.1"),
+        "PORT": os.getenv("DB_PORT", "3306"),
+        "OPTIONS": {
+            "charset": "utf8mb4",
+            "init_command": "SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'",
+        },
     }
 }
-
-
 
 
 # Password validation
@@ -224,22 +207,26 @@ LOGIN_URL = '/login'
 
 ADMIN_BASE_URL = "https://ascencia-interview.com"
 
-BUNNY_STREAM_API_KEY = "e31364b4-b2f4-4221-aac3bd5d34e5-6769-4f29"  # Replace with your actual Library Key
-BUNNY_STREAM_LIBRARY_ID = "390607"
+BUNNY_STREAM_API_KEY = os.getenv("BUNNY_STREAM_API_KEY")
+BUNNY_STREAM_LIBRARY_ID = os.getenv("BUNNY_STREAM_LIBRARY_ID")
 
 
-# Email Settings
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587 
-EMAIL_USE_TLS = True
-EMAIL_USE_SSL = False
-EMAIL_HOST_USER = "info@ascenciamalta.mt"
-EMAIL_HOST_PASSWORD = "uhwpqazcggprbbog"
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+# Email Configuration (works for local & dev)
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.zeptomail.in")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False") == "True"
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
 
+DEFAULT_CC_EMAILS = os.getenv("DEFAULT_CC_EMAILS", "")
 
-
+# Convert comma-separated string to list
+DEFAULT_CC_EMAILS = [
+    email.strip() for email in DEFAULT_CC_EMAILS.split(",") if email.strip()
+]
 
 
 
@@ -329,3 +316,18 @@ LOGGING = {
        
     },
 }
+
+
+
+# CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
+# CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/1")
+
+# CELERY_ACCEPT_CONTENT = ["json"]
+# CELERY_TASK_SERIALIZER = "json"
+# CELERY_RESULT_SERIALIZER = "json"
+# CELERY_TIMEZONE = "Asia/Kolkata"
+
+# # recommended for long tasks
+# CELERY_WORKER_PREFETCH_MULTIPLIER = int(os.getenv("CELERY_WORKER_PREFETCH_MULTIPLIER", 1))
+# CELERY_ACKS_LATE = True
+# CELERY_TASK_DEFAULT_QUEUE = "default"

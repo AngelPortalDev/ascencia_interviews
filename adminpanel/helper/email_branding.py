@@ -19,11 +19,11 @@ def get_email_branding(crm_id: str):
 
         # --- College De Paris (CDP India / ) ---
         "755071407": {
-            "logo_url": "https://dev.ascencia-interview.com/static/img/email_template_icon/cdp_india_logo.png",
+            "logo_url": "https://ascencia-interview.com/static/img/email_template_icon/cdp_india_logo.png",
             "company_name": "College De Paris"
         },
         "759439531": { #Intl
-            "logo_url": "https://dev.ascencia-interview.com/static/img/email_template_icon/cdp_india_logo.png",
+            "logo_url": "https://ascencia-interview.com/static/img/email_template_icon/cdp_india_logo.png",
             "company_name": "College De Paris"
         }
     }

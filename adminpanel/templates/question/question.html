@@ -48,6 +48,7 @@
                       <th>Sr No.</th>
                       <th>Question</th>
                       <th>Course</th>
+                      <th>Answer Time</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -57,6 +58,7 @@
                       <td>{{ forloop.counter }}</td>
                       <td class="text-start">{{ question.question }}</td>
                       <td class="text-start">{{ question.course_id }}</td>
+                      <td class="text-start">{{ question.time_limit }}</td>
                       <td>
                         <a href="{% url 'question_update' id=question.encoded_id %}" class="btn btn-warning btn-sm text-white">
                           <i class="bx bx-edit"></i> Update

@@ -9,6 +9,7 @@ def common_questions(request):
             {
                 'question': question.question,
                 'crm_id': question.crm_id,
+                'time_limit': question.time_limit,  # 👈 add this
                 'encoded_id': base64_encode(question.id)
             }
             for question in questions
@@ -44,26 +45,45 @@ def common_question_add(request):
     if request.method == 'POST':
         data = request.POST
         question = data.get('question')
-        crm_id = data.get('crm_id')
+        # crm_id = data.get('crm_id')
+        crm_ids = request.POST.getlist('crm_id')
 
-        if not crm_id:
+        time_limit = data.get('time_limit', 30)  # default 30 if not provided
+
+
+
+        if not crm_ids:
             errors['crm_id'] = "Institute is required."
         if not question:
             errors['question'] = "Question is required." 
         else:
-            if CommonQuestion.objects.filter(question=question).exists():
-                errors['question'] = "Question must be unique."
+            # if CommonQuestion.objects.filter(question=question).exists():
+            #     errors['question'] = "Question must be unique."
+            for cid in crm_ids:
+                if CommonQuestion.objects.filter(question=question, crm_id=cid).exists():
+                    errors['question'] = f"This question already exists for one of the selected institutes."
+                    break
+
+        try:
+            time_limit = int(time_limit)
+            if time_limit <= 0:
+                raise ValueError
+        except ValueError:
+            errors['time_limit'] = "Time limit must be a positive number."
 
         if errors:
             return render(request, 'common_question/common_question_add.html', {'errors': errors, 'institutes': institutes, "show_breadcrumb": True, "breadcrumb_items": breadcrumb_items, })
         try:
-            institute = Institute.objects.get(id=crm_id)
-            data_to_save = {
-                'question': question,
-                'crm_id': institute,
-            }
+            for cid in crm_ids:
+                institute = Institute.objects.get(id=cid)
+                data_to_save = {
+                    'question': question,
+                    'crm_id': institute,
+                    'time_limit': time_limit,
+                }
+                result = save_data(CommonQuestion, data_to_save)
 
-            result = save_data(CommonQuestion, data_to_save)
+            # result = save_data(CommonQuestion, data_to_save)
 
             if result['status']:
                 messages.success(request, "Question added successfully!")
@@ -110,14 +130,25 @@ def common_question_update(request, id):
     if request.method == 'POST':
         question = request.POST.get('question')
         crm_id = request.POST.get('crm_id')
+        time_limit = request.POST.get('time_limit', 30)  # default 30
 
         if not crm_id:
             errors['crm_id'] = "Institute is required."
         if not question:
             errors['question'] = "Question is required."
         else:
-            if CommonQuestion.objects.filter(question=question).exclude(id=id).exists():
-                errors['question'] = "Question must be unique."
+            # if CommonQuestion.objects.filter(question=question).exclude(id=id).exists():
+            #     errors['question'] = "Question must be unique."
+            if CommonQuestion.objects.filter(question=question, crm_id=crm_id).exclude(id=id).exists():
+                errors['question'] = "This question already exists for the selected institute."
+
+         # Validate time_limit
+        try:
+            time_limit = int(time_limit)
+            if time_limit <= 0:
+                raise ValueError
+        except ValueError:
+            errors['time_limit'] = "Time limit must be a positive number."
 
         if errors:
             question = get_object_or_404(CommonQuestion, id=id)
@@ -127,7 +158,8 @@ def common_question_update(request, id):
             institute = Institute.objects.get(id=crm_id)
             data = {
                 'question': question,
-                'crm_id': institute
+                'crm_id': institute,
+                'time_limit': time_limit,  # 👈 include time_limit
             }
 
             result = save_data(CommonQuestion, data, where={'id': id})
@@ -183,6 +215,7 @@ def questions(request):
             {
                 'question': question.question,
                 'course_id': question.course_id,
+                'time_limit': question.time_limit,  # 👈 add this
                 'encoded_id': base64_encode(question.id)
             }
             for question in questions
@@ -219,11 +252,20 @@ def question_add(request):
         data = request.POST
         question = data.get('question')
         course_id = data.get('course_id')
+        time_limit = data.get('time_limit', 30)  # default 30 if not provided
 
         if not question:
             errors['question'] = "Question is required."
         if not course_id:
             errors['course_id'] = "Course is required."
+
+
+        try:
+            time_limit = int(time_limit)
+            if time_limit <= 0:
+                raise ValueError
+        except ValueError:
+            errors['time_limit'] = "Time limit must be a positive number."
 
         if errors:
             return render(request, 'question/question_add.html', {'courses': courses, "show_breadcrumb": True, "breadcrumb_items": breadcrumb_items, 'errors': errors})
@@ -238,6 +280,7 @@ def question_add(request):
             data_to_save = {
                 'question': question,
                 'course_id': course,
+                'time_limit': time_limit,
             }
 
             result = save_data(Question, data_to_save)
@@ -280,11 +323,22 @@ def question_update(request, id):
     if request.method == 'POST':
         question = request.POST.get('question')
         course_id = request.POST.get('course_id')
+        time_limit = request.POST.get('time_limit', 30)  # default 30
+
 
         if not question:
             errors['question'] = "Question is required."
         if not course_id:
             errors['course_id'] = "Course is required."
+
+
+        try:
+            time_limit = int(time_limit)
+            if time_limit <= 0:
+                raise ValueError
+        except ValueError:
+            errors['time_limit'] = "Time limit must be a positive number."
+
 
         if errors:
             questions = get_object_or_404(Question, id=id)
@@ -301,6 +355,7 @@ def question_update(request, id):
             data = {
                 'question': question,
                 'course_id': course,
+                'time_limit': time_limit,  # 👈 include time_limit
             }
 
             result = save_data(Question, data, where={'id': id})

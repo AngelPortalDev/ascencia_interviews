@@ -81,17 +81,17 @@
                         </a>
                         
                         <!-- Active / Inactive -->
-                        {% if student_manager.is_active %}
+                          {% if student_manager.is_active %}
                           <a href="{% url 'toggle_student_manager_status' id=student_manager.encoded_id %}" 
-                            class="btn btn-outline-danger btn-sm shadow-sm bg-danger text-white toggle-status">
-                            <i class="bx bx-x-circle"></i> Inactive
-                          </a>
-                        {% else %}
+                              class="btn btn-outline-danger btn-sm shadow-sm bg-danger text-white toggle-status">
+                                <i class="bx bx-x-circle"></i> Inactive
+                            </a>
+                          {% else %}
                           <a href="{% url 'toggle_student_manager_status' id=student_manager.encoded_id %}" 
-                            class="btn btn-outline-success btn-sm shadow-sm bg-success text-white toggle-status">
-                            <i class="bx bx-check-circle"></i> Active
-                          </a>
-                        {% endif %}
+                              class="btn btn-outline-success btn-sm shadow-sm bg-success text-white toggle-status">
+                                <i class="bx bx-check-circle"></i> Active
+                            </a>
+                          {% endif %}
                       </td>
                     </tr>
                     {% endfor %}
@@ -107,4 +107,61 @@
 
     </div>
 
+
+
+    <!-- Confirmation Modal -->
+<div class="modal fade" id="confirmStatusModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Confirm Action</h5>
+        {% comment %} <button type="button" class="btn-close" data-bs-dismiss="modal"></button> {% endcomment %}
+      </div>
+
+      <div class="modal-body" id="confirmStatusMessage">
+        <!-- message inserted dynamically -->
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <a id="confirmStatusBtn" href="#" class="btn btn-primary">Yes, Continue</a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+    
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const toggleButtons = document.querySelectorAll('.toggle-status');
+
+    // Bootstrap modal instance
+    const modal = new bootstrap.Modal(document.getElementById('confirmStatusModal'));
+    const messageBox = document.getElementById('confirmStatusMessage');
+    const confirmBtn = document.getElementById('confirmStatusBtn');
+
+    toggleButtons.forEach(button => {
+        button.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            const url = this.getAttribute('href');
+            const isActivate = this.textContent.trim().includes("Active");
+
+            const message = isActivate 
+              ? "Are you sure you want to <strong>activate</strong> this Student Manager?"
+              : "Are you sure you want to <strong>deactivate</strong> this Student Manager?";
+
+            messageBox.innerHTML = message;
+            confirmBtn.setAttribute("href", url);
+
+            modal.show();
+        });
+    });
+});
+</script>
+
+
 {% endblock %}
+

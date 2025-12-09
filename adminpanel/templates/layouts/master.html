@@ -11,7 +11,7 @@
 {% include "layouts/head.html" %}
 
   <body>
-    {% if messages %}
+    {% comment %} {% if messages %}
       <div class="alert-container d-flex justify-content-center">
           {% for message in messages %}
               <div class="alert alert-{{ message.tags }}">
@@ -20,7 +20,7 @@
               </div>
           {% endfor %}
       </div>
-    {% endif %}
+    {% endif %} {% endcomment %}
     <!-- Layout wrapper -->
     <div class="layout-wrapper layout-content-navbar">
       <div class="layout-container">

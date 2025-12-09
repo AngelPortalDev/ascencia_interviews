@@ -14,13 +14,14 @@ from studentpanel.models.interview_link import StudentInterviewLink
 import base64
 from datetime import timedelta
 from django.core.mail import send_mail 
+from adminpanel.utils import send_email
 from studentpanel.models.student_Interview_status import StudentInterview
-import base64
 import pytz
 from django.utils.timezone import localtime
 from zoneinfo import ZoneInfo
 import logging
 from adminpanel.helper.email_branding import get_email_branding
+from django.utils.timezone import now
 
 logger = logging.getLogger('zoho_webhook_logger')
 
@@ -28,35 +29,35 @@ logger = logging.getLogger('zoho_webhook_logger')
 #     """Encodes a string to base64 (URL-safe)."""
 #     return base64.urlsafe_b64encode(value.encode()).decode()
 
-import base64
+
 
 def encode_base64(value) -> str:
     """Encodes a value to base64 (URL-safe)."""
     # Convert any non-string to string first
     return base64.urlsafe_b64encode(str(value).encode()).decode()
 
-def extend_first_interview_link(zoho_lead_id):
+def extend_first_interview_link(zoho_lead_id,hour):
 
     student = Students.objects.get(zoho_lead_id=zoho_lead_id)
     interviwelink = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id)
-
+    
     try:
         student = Students.objects.get(zoho_lead_id=zoho_lead_id)
     except Students.DoesNotExist:
         print(f"❌ No student found with Zoho Lead ID: {zoho_lead_id}")
-        return False
+        return False, "No student found", None
     
     # Fetch the StudentInterview record
     try:
         student_interview = StudentInterview.objects.get(zoho_lead_id=zoho_lead_id)
     except StudentInterview.DoesNotExist:
         print(f"❌ No interview record found for Zoho Lead ID: {zoho_lead_id}")
-        return False
+        return False, "No interview record found", None
 
     # Allow up to 4 attempts
-    if student_interview.extend_attempts >= 4:
+    if student_interview.extend_attempts >= 5:
         print("⚠️ Maximum 4 extension attempts reached, skipping.")
-        return False
+        return False, "Maximum extension attempts reached", None
 
     
     # Convert to Asia/Calcutta timezone
@@ -66,34 +67,44 @@ def extend_first_interview_link(zoho_lead_id):
     # 1️⃣ Check if already processed
 
     # 2️⃣ Get link for given Zoho Lead ID
-    student_links = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id)
+    # student_links = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id)
+    # student_links = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).order_by('-created_at')
     # print("student_links",student_links.interview_link_count)
 
-    if student_links.count() != 1:
-        print("❌ No unique student link found.")
-        return False
+    # if student_links.count() != 1:
+    #     print("❌ No unique student link found.")
+    #     return False
 
-    link = student_links.first()
+    # Fetch the LATEST created un-attended link (order by created_at DESC, not ID)
+    link = StudentInterviewLink.objects.filter(
+        zoho_lead_id=zoho_lead_id,
+        interview_attend=False
+    ).order_by('-created_at').first()
+
+    if not link:
+        print(f"❌ No un-attended interview link found for Zoho Lead ID: {zoho_lead_id}")
+        return False, "No un-attended interview link found", None
 
     # 3️⃣ Decode interview link count
     try:
         link_count = int(base64.b64decode(link.interview_link_count))
     except Exception as e:
         print(f"❌ Base64 decode failed: {e}")
-        return False
+        return False, "Base64 decode failed", None
 
     # 4️⃣ Validation checks
-    if link_count != 1:
-        print("❌ Link count is not 1")
-        return False
+    # if link_count != 2:
+    #     print("❌ Link count is not 1")
+    #     return False, "Link count is not 1", None
 
     if link.interview_attend:
         print("❌ Interview already attended")
-        return False
+        return False, "Interview already attended", None
 
     if link.expires_at > now():
         print("⏳ Link is still valid, no need to extend")
-        return False
+        return False, "Link is still valid", None
+
 
     # Optional: prevent double reminders
     # if link.reminder_sent:
@@ -101,7 +112,7 @@ def extend_first_interview_link(zoho_lead_id):
     #     return False
 
     # 5️⃣ All checks passed → extend expiry
-    link.expires_at = now() + timedelta(hours=72)
+    link.expires_at = now() + timedelta(hours=hour)
     link.is_expired = False
     link.reminder_sent = False
     link.reminder_1hr_sent= False
@@ -114,9 +125,9 @@ def extend_first_interview_link(zoho_lead_id):
     #     Extend_interview_link="YES"
     # )
     student_interview.extend_attempts += 1
-    student_interview.Extend_interview_link = "YES"  # keep for UI/backward compatibility
+    # student_interview.Extend_interview_link = "YES"  # keep for UI/backward compatibility
     student_interview.save(update_fields=["extend_attempts", "Extend_interview_link"])
-    print(f"✅ Interview link extended. Attempt {student_interview.extend_attempts}/4")
+    print(f"✅ Interview link extended. Attempt {student_interview.extend_attempts}/5")
 
     student_zoho_lead_id= student.zoho_lead_id
     
@@ -126,7 +137,11 @@ def extend_first_interview_link(zoho_lead_id):
     encoded_zoho_lead_id = encode_base64(zoho_lead_id)
     encoded_interview_link_send_count = link.interview_link_count
     interview_url = f'{settings.ADMIN_BASE_URL}/frontend/interview_panel/{encoded_zoho_lead_id}/{encoded_interview_link_send_count}'
-    interviwelink1 = StudentInterviewLink.objects.get(zoho_lead_id=zoho_lead_id)
+    # interviwelink1 = StudentInterviewLink.objects.get(zoho_lead_id=zoho_lead_id)
+    interviwelink1 = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead_id).order_by('-id').first()
+    if not interviwelink1:
+        print(f"❌ No interview link found for Zoho Lead ID: {zoho_lead_id}")
+        return False, "No interview link found", None
     interview_start = interviwelink1.created_at
     interview_end = interviwelink1.expires_at
     email = student.student_manager_email.strip().lower()
@@ -156,14 +171,15 @@ def extend_first_interview_link(zoho_lead_id):
     print("Start Date and time:", formatted_start)
     print("End Date and time:", formatted_end)
     # 7️⃣ Send notification email
-    send_mail(
+    send_email(
     subject="Interview Invitation for Student Interview",
-    message="Please view this email in HTML format.",  # plain text fallback
+    # message="Please view this email in HTML format.",  # plain text fallback
     from_email=settings.DEFAULT_FROM_EMAIL,
-    # recipient_list=["vaibhav@angel-portal.com"],
-    recipient_list=[student_email],
+    # recipient=["vaibhav@angel-portal.com"],
+    recipient=[student_email],
+    cc= [],
     
-    html_message=f"""
+    message=f"""
         <html>
             <head>
                 <style>
@@ -265,12 +281,12 @@ def extend_first_interview_link(zoho_lead_id):
 )
         
 
-    send_mail(
+    send_email(
     
-                                    from_email=settings.DEFAULT_FROM_EMAIL,
+                                    # from_email=settings.DEFAULT_FROM_EMAIL,
                                     subject="Interview Invitation Sent to Student",
-                                    message="Please view this email in HTML format.",
-                                    html_message=f"""
+                                    # message="Please view this email in HTML format.",
+                                    message=f"""
                                     <html>
                                     <head>
                                         <style>
@@ -345,14 +361,127 @@ def extend_first_interview_link(zoho_lead_id):
                                     </html>
                                     """,
                                     
-                                    # recipient_list=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
-                                    recipient_list=[student_manager_email],
+                                    # recipient=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
+                                    recipient=[student_manager_email],
                                     
                                 )
 
 
     print("✅ Interview link extended and email sent.")
-    return True
+    return True,"Link extended successfully.",interview_url
+
+# @csrf_exempt
+# def extend_interview_api(request, zoho_lead_id):
+#     if request.method != "POST":
+#         return JsonResponse({"success": False, "message": "Invalid method"}, status=405)
+
+#     result = extend_first_interview_link(zoho_lead_id,hour=96)
+
+#     return JsonResponse({"success": True, "message": "Extended successfully"})
+
+# @csrf_exempt
+# def extend_interview_api(request, zoho_lead_id):
+#     if request.method != "POST":
+#         return JsonResponse({"success": False, "message": "Invalid method"}, status=405)
+
+#     try:
+#         student_interview = StudentInterview.objects.get(zoho_lead_id=zoho_lead_id)
+#     except StudentInterview.DoesNotExist:
+#         return JsonResponse({"success": False, "message": "Student not found."})
+    
+#      # 👉 Get latest link to check interview_attend
+#     interview_link = StudentInterviewLink.objects.filter(
+#         zoho_lead_id=zoho_lead_id
+#     ).order_by('-id').first()
+
+
+#     # ❗ Block only when BOTH conditions match
+#     # Condition 1: interview_attend = 1
+#     # Condition 2: extended already YES
+#      # ❗ OR Condition → ANY TRUE = Block
+#     if (interview_link and interview_link.interview_attend == 1) \
+#             or student_interview.Extend_interview_link == "YES":
+#         return JsonResponse({
+#             "success": False,
+#             "message": "Interview already attended and extended once. Cannot extend again."
+#         })
+    
+#     # ❗ Check if already extended
+#     # if student_interview.Extend_interview_link == "YES":
+#     #     return JsonResponse({"success": False, "message": "Already extended once."})
+
+#     # 👉 First time — allow extension
+#     success, msg, interview_url = extend_first_interview_link(zoho_lead_id, hour=96)
+
+
+#     # 👉 Mark as extended (API only)
+#     student_interview.Extend_interview_link = "YES"
+#     student_interview.save(update_fields=["Extend_interview_link"])
+
+#     return JsonResponse({"success": True, "message": "Extended successfully", "interview_link": interview_url})
+
+
+@csrf_exempt
+def extend_interview_api(request, zoho_lead_id):
+    logger.info("=== extend_interview_api called ===")
+    check_only = request.GET.get("check_only") == "true"
+
+    # 1️⃣ Fetch student interview
+    try:
+        student_interview = StudentInterview.objects.get(zoho_lead_id=zoho_lead_id)
+    except StudentInterview.DoesNotExist:
+        return JsonResponse({"success": False, "message": "Student not found."})
+
+    # 2️⃣ Fetch ONLY latest interview link (as you said)
+    interview_link = StudentInterviewLink.objects.filter(
+        zoho_lead_id=zoho_lead_id
+    ).order_by("-id").first()
+
+    if not interview_link:
+        return JsonResponse({"success": False, "message": "No interview link found."})
+
+    # 3️⃣ If attended OR already extended → BLOCK
+    if interview_link.interview_attend == 1 or student_interview.Extend_interview_link == "YES":
+        return JsonResponse({
+            "success": False,
+            "message": "❌ Interview already attended or extended once."
+        })
+
+    # 4️⃣ EXPIRY CHECK (fixed)
+   
+    current_time = now()
+
+    # If NOT expired → do NOT extend
+    if interview_link.expires_at and interview_link.expires_at > current_time:
+        return JsonResponse({
+            "success": False,
+            "message": "⏳ Latest interview link is still valid. Cannot extend."
+        })
+
+    # If check_only mode → just return Yes
+    if check_only:
+        return JsonResponse({"success": True, "message": "Can extend"})
+
+    # 5️⃣ Extend now
+    success, msg, interview_url = extend_first_interview_link(
+        zoho_lead_id, hour=96
+    )
+
+    # 6️⃣ Mark extended
+    student_interview.Extend_interview_link = "YES"
+    student_interview.save(update_fields=["Extend_interview_link"])
+
+    # Also update flag in latest link
+    # interview_link.Extend_interview_link = "YES"
+    # interview_link.save(update_fields=["Extend_interview_link"])
+
+    return JsonResponse({
+        "success": True,
+        "message": "Extended successfully",
+        "interview_link": interview_url
+    })
+
+
 
 @csrf_exempt  # Disable CSRF for webhooks
 def students_leads_api(request):
@@ -382,9 +511,11 @@ def students_leads_api(request):
         print("extend_link",extend_link)
 
 
-        # if zoho_lead_id != "5204268000112707003":
+        # allowed_zoho_ids = ["4932235000170466001", "5204268000112707003"]
+
+        # if zoho_lead_id not in allowed_zoho_ids:
         #     return JsonResponse({"status": False, "error": "Unauthorized Zoho Lead Id"}, status=403)
-        # 4932235000170466001
+                
         
         
         
@@ -398,7 +529,7 @@ def students_leads_api(request):
         logger.debug("Incoming POST data: %s", request.POST.dict())
         
         if extend_link and extend_link.lower() == "yes":
-            extend_first_interview_link(zoho_lead_id)
+            extend_first_interview_link(zoho_lead_id,hour=72)
             logger.info("Extended first interview link for Zoho Lead Id: %s", zoho_lead_id)
             return JsonResponse({"status": True, "message": "Student updated successfully!"}, status=200)
 
@@ -628,7 +759,7 @@ def student_detail(request, zoho_lead_id):
     .order_by("-id")
     .first()
     )
-
+    browser_info = interview_link.browser_info if interview_link else None
     transcript_text = interview_link.transcript_text if interview_link and interview_link.transcript_text else "Transcript not available."
 
     breadcrumb_items = [
@@ -642,5 +773,7 @@ def student_detail(request, zoho_lead_id):
         "transcript_text": transcript_text,
         "show_breadcrumb": True,
         "breadcrumb_items": breadcrumb_items,
-        "BUNNY_STREAM_LIBRARY_ID": settings.BUNNY_STREAM_LIBRARY_ID
+        
+        "BUNNY_STREAM_LIBRARY_ID": settings.BUNNY_STREAM_LIBRARY_ID,
+        "browser_info": browser_info
     })

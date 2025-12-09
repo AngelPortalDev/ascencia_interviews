@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Webcam from "react-webcam";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -15,6 +15,13 @@ const StudentFaceEnrollment = () => {
   const [showCamera, setShowCamera] = useState(false);
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // ✅ Add this line here
+const [branding, setBranding] = useState({
+  logo: Logo,
+  name: "Face Authentication Enrollment",
+});
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -241,35 +248,56 @@ async function testRecording() {
 }
 
 // And your handleSubmit would be updated to:
+
+useEffect(() => {
+  const fetchBranding = async () => {
+    if (!encoded_zoho_lead_id) return;
+    try {
+      const response = await Axios.post(
+        `${process.env.REACT_APP_API_BASE_URL}interveiw-section/get-branding-by-zoho-id/`,
+        { zoho_lead_id: encoded_zoho_lead_id }
+      );
+      if (response.data.success) {
+        setBranding({
+          logo: response.data.logo_url || Logo,
+          name: response.data.company_name || "Face Authentication Enrollment",
+        });
+      }
+    } catch (err) {
+      console.error("Branding fetch failed:", err);
+    }
+  };
+  fetchBranding();
+}, [encoded_zoho_lead_id]);
+
 const handleSubmit = async () => {
-  setLoading(true);
+  // setLoading(true);
   // const testResult = await testRecording();
 
   // if (!testResult.success) {
   //   alert(`Recording setup failed: ${testResult.message}\n\nPlease check your browser permissions, or try again using another device or an incognito/private window.`);
   //   return;
   // }
-  // navigate(`/questions`, {
-  //   state: { encoded_zoho_lead_id, encoded_interview_link_send_count },
-  // });
+  navigate(`/questions`, {
+    state: { encoded_zoho_lead_id, encoded_interview_link_send_count },
+  });
 
-   try {
-    const testResult = await testRecording();
-    if (!testResult.success) {
-      alert(
-        `Recording setup failed: ${testResult.message}\n\nPlease check your browser permissions, or try again using another device or an incognito/private window.`
-      );
-      setLoading(false); 
-      return;
-    }
+  //  try {
+  //   const testResult = await testRecording();
+  //   if (!testResult.success) {
+  //     alert(
+  //       `Recording setup failed: ${testResult.message}\n\nPlease check your browser permissions, or try again using another device or an incognito/private window.`
+  //     );
+  //     return;
+  //   }
 
-    navigate(`/questions`, {
-      state: { encoded_zoho_lead_id, encoded_interview_link_send_count },
-    });
-  } catch (err) {
-    console.error(err);
-    setLoading(false);
-  }
+  //   navigate(`/questions`, {
+  //     state: { encoded_zoho_lead_id, encoded_interview_link_send_count },
+  //   });
+  // } catch (err) {
+  //   console.error(err);
+  //   setLoading(false);
+  // }
 };
 
   // const handleSubmit = async() => {
@@ -291,7 +319,7 @@ const handleSubmit = async () => {
       <div className="mx-auto max-w-4xl py-2 sm:py-4 lg:py-4">
         {/* <ToastContainer /> */}
         <div className="text-center mb-10">
-          <img src={Logo} alt="Logo" className="h-16 mx-auto" />
+          <img src={branding.logo} alt="Logo" className="h-16 mx-auto" />
           <h2 className="text-2xl font-bold mt-4 text-gray-800">
             Face Authentication Enrollment
           </h2>
