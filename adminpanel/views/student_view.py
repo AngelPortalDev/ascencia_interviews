@@ -175,8 +175,8 @@ def extend_first_interview_link(zoho_lead_id,hour):
     subject="Interview Invitation for Student Interview",
     # message="Please view this email in HTML format.",  # plain text fallback
     # from_email=settings.DEFAULT_FROM_EMAIL,
-    # recipient=["vaibhav@angel-portal.com"],
-    recipient=[student_email],
+    recipient=["vaibhav@angel-portal.com"],
+    # recipient=[student_email],
     cc= [],
     
     message=f"""
@@ -361,8 +361,8 @@ def extend_first_interview_link(zoho_lead_id,hour):
                                     </html>
                                     """,
                                     
-                                    # recipient=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
-                                    recipient=[student_manager_email],
+                                    recipient=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
+                                    # recipient=[student_manager_email],
                                     
                                 )
 
@@ -511,10 +511,10 @@ def students_leads_api(request):
         print("extend_link",extend_link)
 
 
-        # allowed_zoho_ids = ["4932235000170466001", "5204268000112707003"]
+        allowed_zoho_ids = ["4932235000170466001", "5204268000112707003"]
 
-        # if zoho_lead_id not in allowed_zoho_ids:
-        #     return JsonResponse({"status": False, "error": "Unauthorized Zoho Lead Id"}, status=403)
+        if zoho_lead_id not in allowed_zoho_ids:
+            return JsonResponse({"status": False, "error": "Unauthorized Zoho Lead Id"}, status=403)
                 
         
         
