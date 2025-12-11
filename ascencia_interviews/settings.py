@@ -205,7 +205,7 @@ LOGIN_URL = '/login'
 
 # ADMIN_BASE_URL = "https://bb91-103-71-112-194.ngrok-free.app"
 
-ADMIN_BASE_URL = "https://dev.ascencia-interview.com"
+ADMIN_BASE_URL = "https://ascencia-interview.com"
 
 BUNNY_STREAM_API_KEY = os.getenv("BUNNY_STREAM_API_KEY")
 BUNNY_STREAM_LIBRARY_ID = os.getenv("BUNNY_STREAM_LIBRARY_ID")
@@ -268,7 +268,7 @@ Q_CLUSTER = {
 
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://dev.ascencia-interview.com",
+    "https://ascencia-interview.com",
     "https://bb91-103-71-112-194.ngrok-free.app",
 ]
 
