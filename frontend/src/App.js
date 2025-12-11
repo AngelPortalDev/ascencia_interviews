@@ -25,7 +25,6 @@ function App() {
 
   const { termsAccept, audioVideoAccepted, isExamSubmitted } = usePermission();
 
-
   // const [hasAgreed, setHasAgreed] = useState(() => { 
   //   return localStorage.getItem("hasAgreed") === "true";
   // });
@@ -34,56 +33,148 @@ function App() {
   //   localStorage.setItem("hasAgreed", hasAgreed);
   // }, [hasAgreed]);
 
+// useEffect(() => {
+//   const currentPath = window.location.pathname;
+//   if (currentPath === "/frontend/notSupported") return;
+
+//   const ua = navigator.userAgent;
+
+//   const isIE = ua.indexOf("MSIE ") > -1 || ua.indexOf("Trident/") > -1;
+//   const isIOS = /iP(hone|ad|od)/.test(ua);
+
+//   const isOldAndroidBrowser =
+//     (ua.includes("Android") && ua.includes("AppleWebKit") && !ua.includes("Chrome")) ||
+//     (ua.toLowerCase().includes("samsungbrowser") && !ua.includes("Chrome"));
+
+//   const isBadBrowser =
+//     ua.includes("SamsungBrowser") ||
+//     ua.includes("UCBrowser") ||
+//     ua.includes("HeyTapBrowser");
+
+//   const isiOS = /iP(hone|ad|od)/.test(ua);
+
+//   const isChromeIOS = /CriOS/.test(ua);
+//   const isFirefoxIOS = /FxiOS/.test(ua);
+//   const isEdgeIOS = /EdgiOS/.test(ua);
+
+//   const isSafariOnIOS =
+//     isiOS &&
+//     !isChromeIOS &&
+//     !isFirefoxIOS &&
+//     !isEdgeIOS &&
+//     /Safari/.test(ua) &&
+//     !/GSA/.test(ua);
+
+//      const isSafariIOS =
+//         isIOS &&
+//         !isChromeIOS &&
+//         !isFirefoxIOS &&
+//         !isEdgeIOS &&
+//         /Safari/.test(ua) &&
+//         !/GSA/.test(ua); 
+
+//      let iOSVersion = null;
+//       if (isIOS) {
+//         const versionMatch = ua.match(/OS (\d+)_/);
+//         if (versionMatch && versionMatch[1]) {
+//           iOSVersion = parseInt(versionMatch[1], 10);
+//         }
+//       }
+
+//        const supportsMediaRecorder =
+//           window.MediaRecorder &&
+//           typeof MediaRecorder.isTypeSupported === "function" &&
+//           (
+//             MediaRecorder.isTypeSupported("video/mp4") ||
+//             MediaRecorder.isTypeSupported("video/mp4;codecs=h264,aac") ||
+//             MediaRecorder.isTypeSupported("audio/mp4")
+//           );
+
+//       const isUnsupportedIOS =
+//       isIOS &&
+//       (
+//         iOSVersion < 15 ||        
+//         !isSafariIOS ||             
+//         !supportsMediaRecorder      
+//       );
+
+//   //  Correct check: returns TRUE if browser does NOT support MediaRecorder properly
+//   const isMediaRecorderUnsupported =
+//     !window.MediaRecorder ||
+//     typeof MediaRecorder.isTypeSupported !== "function" ||
+//     !MediaRecorder.isTypeSupported("video/webm;codecs=vp8");
+
+//   // Optionally: Chrome version check
+//   const rawChrome = ua.match(/Chrom(e|ium)\/([0-9]+)\./);
+//   const chromeVersion = rawChrome ? parseInt(rawChrome[2], 10) : null;
+//   const isOldChrome = chromeVersion && chromeVersion < 70;
+
+// if (
+//   isIE ||
+//   isOldAndroidBrowser ||
+//   isBadBrowser ||
+//   isMediaRecorderUnsupported ||
+//   isOldChrome ||
+//   isUnsupportedIOS 
+// ) {
+//   alert("This browser is not supported. Please use the latest version of Chrome or Firefox.");
+//     window.location.replace("/frontend/notSupported");
+//   }
+// }, []);
 useEffect(() => {
   const currentPath = window.location.pathname;
   if (currentPath === "/frontend/notSupported") return;
 
   const ua = navigator.userAgent;
 
-  const isIE = ua.indexOf("MSIE ") > -1 || ua.indexOf("Trident/") > -1;
-
-  const isOldAndroidBrowser =
-    (ua.includes("Android") && ua.includes("AppleWebKit") && !ua.includes("Chrome")) ||
-    (ua.toLowerCase().includes("samsungbrowser") && !ua.includes("Chrome"));
-
-  const isBadBrowser =
-    ua.includes("SamsungBrowser") ||
-    ua.includes("UCBrowser") ||
-    ua.includes("HeyTapBrowser");
-
   const isiOS = /iP(hone|ad|od)/.test(ua);
+  let iOSVersion = null;
+  if (isiOS) {
+    const match = ua.match(/OS (\d+)_/);
+    if (match) iOSVersion = parseInt(match[1], 10);
+  }
 
+
+  const isSafariIOS = /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|GSA/.test(ua);
   const isChromeIOS = /CriOS/.test(ua);
-  const isFirefoxIOS = /FxiOS/.test(ua);
-  const isEdgeIOS = /EdgiOS/.test(ua);
 
-  const isSafariOnIOS =
+
+  const supportsIOSRecording =
+    window.MediaRecorder &&
+    typeof MediaRecorder.isTypeSupported === "function" &&
+    (
+      MediaRecorder.isTypeSupported("video/mp4;codecs=h264,aac") ||
+      MediaRecorder.isTypeSupported("video/mp4") 
+    );
+
+  const isUnsupportedIOS =
     isiOS &&
-    !isChromeIOS &&
-    !isFirefoxIOS &&
-    !isEdgeIOS &&
-    /Safari/.test(ua) &&
-    !/GSA/.test(ua);
+    (
+      iOSVersion < 15 ||                    
+      !(isSafariIOS || isChromeIOS) ||          
+      !supportsIOSRecording                    
+    );
 
-  //  Correct check: returns TRUE if browser does NOT support MediaRecorder properly
-  const isMediaRecorderUnsupported =
-    !window.MediaRecorder ||
-    typeof MediaRecorder.isTypeSupported !== "function" ||
-    !MediaRecorder.isTypeSupported("video/webm;codecs=vp8");
+  const isIE = ua.includes("MSIE ") || ua.includes("Trident/");
+  const isBadBrowser = ua.includes("UCBrowser") || ua.includes("HeyTapBrowser") || ua.includes("SamsungBrowser");
+  const isOldAndroidBrowser = ua.includes("Android") && ua.includes("AppleWebKit") && !ua.includes("Chrome");
 
-  // Optionally: Chrome version check
-  const rawChrome = ua.match(/Chrom(e|ium)\/([0-9]+)\./);
-  const chromeVersion = rawChrome ? parseInt(rawChrome[2], 10) : null;
+  // Chrome version check
+  const chromeMatch = ua.match(/Chrom(e|ium)\/([0-9]+)\./);
+  const chromeVersion = chromeMatch ? parseInt(chromeMatch[2], 10) : null;
   const isOldChrome = chromeVersion && chromeVersion < 70;
 
-if (
-  isIE ||
-  isOldAndroidBrowser ||
-  isBadBrowser ||
-  isMediaRecorderUnsupported ||
-  isOldChrome
-) {
-  alert("This browser is not supported. Please use the latest version of Chrome or Firefox.");
+  const isMediaRecorderUnsupported = !window.MediaRecorder || typeof MediaRecorder.isTypeSupported !== "function";
+
+  if (
+    isIE ||
+    isOldAndroidBrowser ||
+    isBadBrowser ||
+    isUnsupportedIOS ||
+    isMediaRecorderUnsupported ||
+    isOldChrome
+  ) {
+    alert("This browser is not supported. Please use the latest version of Chrome, Safari, or Firefox.");
     window.location.replace("/frontend/notSupported");
   }
 }, []);

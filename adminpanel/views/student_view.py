@@ -174,8 +174,6 @@ def extend_first_interview_link(zoho_lead_id,hour):
     send_email(
     subject="Interview Invitation for Student Interview",
     # message="Please view this email in HTML format.",  # plain text fallback
-    # from_email=settings.DEFAULT_FROM_EMAIL,
-    # recipient=["vaibhav@angel-portal.com"],
     recipient=[student_email],
     cc= [],
     
@@ -361,7 +359,6 @@ def extend_first_interview_link(zoho_lead_id,hour):
                                     </html>
                                     """,
                                     
-                                    # recipient=["vaibhav@angel-portal.com"],  # Replace with actual student manager email
                                     recipient=[student_manager_email],
                                     
                                 )
@@ -528,12 +525,8 @@ def students_leads_api(request):
 
         logger.debug("Incoming POST data: %s", request.POST.dict())
         
-        if extend_link and extend_link.lower() == "yes":
-            extend_first_interview_link(zoho_lead_id,hour=72)
-            logger.info("Extended first interview link for Zoho Lead Id: %s", zoho_lead_id)
-            return JsonResponse({"status": True, "message": "Student updated successfully!"}, status=200)
-
         try:
+            # 1️⃣ ALWAYS save student data first
             data_to_save = {
                 'first_name': first_name,
                 'last_name': last_name,
@@ -555,15 +548,22 @@ def students_leads_api(request):
             result = save_data(Students, data_to_save, where)
             print(r'result:', result)
             logger.info("Save data result: %s", result)
-            # return HttpResponse('here')
-            if result['status']:
-                return JsonResponse({"status": True, "message": "Student updated successfully!"}, status=200)
-            else:
+            
+            # If student data save fails, return error
+            if not result['status']:
                 logger.error("Failed to update student: %s", result.get('error'))
                 return JsonResponse({"status": False, "error": result.get('error', "Failed to update the student.")}, status=400)
 
+            # 2️⃣ THEN check if extend_link is requested (AFTER student data saved)
+            if extend_link and extend_link.lower() == "yes":
+                extend_first_interview_link(zoho_lead_id, hour=72)
+                logger.info("Extended first interview link for Zoho Lead Id: %s", zoho_lead_id)
+
+            # 3️⃣ Return success after all operations
+            return JsonResponse({"status": True, "message": "Student updated successfully!"}, status=200)
+
         except Exception as e:
-            logger.error("Failed to update student: %s", result.get('error'))
+            logger.error("Failed to update student: %s", str(e))
 
             return JsonResponse({"status": False, "error": str(e)}, status=500)
 

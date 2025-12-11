@@ -42,6 +42,8 @@ import textwrap
 from PIL import ImageFont
 import tempfile
 
+import math
+
 def get_uploads_folder():
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
     logging.info("project_root: %s", project_root)
@@ -113,6 +115,64 @@ def transcribe_complete_video(video_path):
 
     print(f"✅ Transcript saved: {transcript_txt_path}")
     return transcript_txt_path
+
+
+# CHUNK_SIZE = 5 * 1024 * 1024   # 5 MB
+
+# def upload_to_bunnystream(video_path):
+#     video_name = os.path.basename(video_path)
+#     library_id = settings.BUNNY_STREAM_LIBRARY_ID
+#     api_key = settings.BUNNY_STREAM_API_KEY
+
+#     logging.info(f"Uploading to Bunny Stream (CHUNK MODE): {video_name}")
+
+#     # 1️⃣ Create video entry
+#     create_url = f"https://video.bunnycdn.com/library/{library_id}/videos"
+#     create_headers = {
+#         "AccessKey": api_key,
+#         "Content-Type": "application/json"
+#     }
+#     create_res = requests.post(create_url, json={"title": video_name}, headers=create_headers)
+
+#     if create_res.status_code != 200:
+#         logging.error(f"Failed to create Bunny video entry: {create_res.text}")
+#         return None
+
+#     video_id = create_res.json().get("guid")
+#     if not video_id:
+#         logging.error("No video GUID returned from Bunny Stream")
+#         return None
+
+#     logging.info(f"Created Bunny Video GUID: {video_id}")
+
+#     # 2️⃣ Upload in chunks
+#     upload_url = f"https://video.bunnycdn.com/library/{library_id}/videos/{video_id}"
+
+#     file_size = os.path.getsize(video_path)
+#     total_chunks = math.ceil(file_size / CHUNK_SIZE)
+
+#     with open(video_path, "rb") as f:
+#         for chunk_index in range(total_chunks):
+#             start = chunk_index * CHUNK_SIZE
+#             end = min(start + CHUNK_SIZE - 1, file_size - 1)
+#             chunk_data = f.read(CHUNK_SIZE)
+
+#             logging.info(f"Uploading chunk {chunk_index+1}/{total_chunks}  ({start}-{end})")
+
+#             headers = {
+#                 "AccessKey": api_key,
+#                 "Content-Type": "application/octet-stream",
+#                 "Content-Range": f"bytes {start}-{end}/{file_size}"
+#             }
+
+#             response = requests.put(upload_url, headers=headers, data=chunk_data)
+
+#             if response.status_code not in (200, 201):
+#                 logging.error(f"Chunk upload failed: {response.text}")
+#                 return None
+
+#     logging.info("🔥 Chunk upload completed successfully!")
+#     return video_id
 
 
 def upload_to_bunnystream(video_path):
@@ -916,7 +976,6 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
 
         subject = "Interview Process Completed"
         recipient = [student_manager_email]
-        # recipient = ["vaibhav@angel-portal.com"]
         from_email = ''
         # url = video_path  # or your public URL if available
         url = f"https://video.bunnycdn.com/play/{settings.BUNNY_STREAM_LIBRARY_ID}/{video_id}"
@@ -1106,7 +1165,7 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
                 </body>
             </html>
             """,
-            # recipient=["vaibhav@angel-portal.com"]
+            
             recipient=[student_email],
             reply_to=[student_manager_email]
         )
