@@ -55,10 +55,14 @@ const DeepgramLiveCaptions = () => {
               console.error("MediaRecorder error:", e);
 
             setTimeout(() => {
-              recorder.start(250);
-              console.log("🎬 Recorder started after delay");
+              try {
+                recorder.start(250);
+                console.log("🎬 Recorder started after delay");
+              } catch (err) {
+                console.error("❌ Failed to start recorder:", err);
+              }
 
-              // 🕵️ Recorder Watchdog
+              // 🕵️ Recorder Watchdog - only restart if actually stopped
               recorderWatchdogRef.current = setInterval(() => {
                 if (
                   recorderRef.current &&
@@ -95,7 +99,7 @@ const DeepgramLiveCaptions = () => {
               setCaptions((prev) =>
                 prev.filter((caption) => caption.id !== id)
               );
-            },2000);
+            }, 2000);
           }
         } catch (err) {
           console.error("❌ Failed to parse message:", err);
@@ -117,32 +121,54 @@ const DeepgramLiveCaptions = () => {
     }
   };
 
-  // 🔁 Reconnect with delay
+  // Reconnect with delay
   const attemptReconnect = () => {
-    if (reconnectTimeoutRef.current) return; // avoid duplicate attempts
+    if (reconnectTimeoutRef.current) return;
     reconnectTimeoutRef.current = setTimeout(() => {
       reconnectTimeoutRef.current = null;
       connectWebSocketAndStartRecording();
-    }, 3000); // 3s delay
+    }, 3000);
   };
 
-  // 🧹 Clean up everything
+  // Clean up everything - STOP RECORDER FIRST before closing socket
   const cleanup = () => {
-    if (recorderRef.current?.state === "recording") {
-      recorderRef.current.stop();
+    console.log("🧹 Cleaning up...");
+    
+    // ⚠️ CRITICAL: Stop recorder FIRST so ondataavailable stops firing
+    if (recorderRef.current) {
+      try {
+        if (recorderRef.current.state === "recording") {
+          recorderRef.current.stop();
+        }
+      } catch (e) {
+        console.error("Error stopping recorder:", e);
+      }
     }
     recorderRef.current = null;
 
+    // Stop all audio tracks
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current.getTracks().forEach((track) => {
+        try {
+          track.stop();
+        } catch (e) {}
+      });
       streamRef.current = null;
     }
 
-    socketRef.current?.close();
-    socketRef.current = null;
-
+    // Clear intervals BEFORE closing socket
     clearInterval(pingIntervalRef.current);
     clearInterval(recorderWatchdogRef.current);
+
+    // NOW close socket safely (no more data being sent)
+    if (socketRef.current) {
+      try {
+        socketRef.current.close();
+      } catch (e) {
+        console.error("Error closing socket:", e);
+      }
+    }
+    socketRef.current = null;
   };
 
   useEffect(() => {
