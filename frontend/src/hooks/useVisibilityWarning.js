@@ -34,7 +34,7 @@ const useVisibilityWarning = (encoded_zoho_lead_id, encoded_interview_link_send_
               }else{
                 localStorage.clear();
                 sessionStorage.clear();
-                navigate(`/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`);
+                navigate(`/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}&reason=TAB_SWITCH_EXCEEDED`);
               }
             } 
           });

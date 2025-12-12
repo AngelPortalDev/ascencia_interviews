@@ -9,7 +9,8 @@ const InterviewSubmitted = () => {
   // const zoho_lead_id = params.get("lead");
   // const interview_link_count  = params.get("link");
   const zoho_lead_id = params.get("lead") || sessionStorage.getItem("zoho_lead_id");
-const interview_link_count  = params.get("link") || sessionStorage.getItem("interview_link_count");
+  const interview_link_count  = params.get("link") || sessionStorage.getItem("interview_link_count");
+  const reason = params.get("reason") || "NORMAL_SUBMISSION";
 
   console.log("zoho_lead_id",zoho_lead_id)
   console.log("interview_link_count",interview_link_count)
@@ -59,7 +60,8 @@ const interview_link_count  = params.get("link") || sessionStorage.getItem("inte
           {
             zoho_lead_id,
             interview_link_count: interview_link_count || "",
-            is_interview_submitted: true,
+            is_interview_submitted: true, 
+            submission_reason: reason, 
           },
           {
             headers: {

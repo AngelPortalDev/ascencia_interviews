@@ -507,14 +507,18 @@ def students_leads_api(request):
         print("Zoho lead id",zoho_lead_id)
         print("extend_link",extend_link)
 
+        current_host = request.get_host()
+        dev_hosts = [
+            "dev.ascencia-interview.com",
+            "192.168.1.56:8000",
+            "cc7dd28c582b.ngrok-free.app",
+        ]
+        is_dev = any(host in current_host for host in dev_hosts)
+        allowed_zoho_ids = ["4932235000170466001", "5204268000112707003"]
 
-        # allowed_zoho_ids = ["4932235000170466001", "5204268000112707003"]
-
-        # if zoho_lead_id not in allowed_zoho_ids:
-        #     return JsonResponse({"status": False, "error": "Unauthorized Zoho Lead Id"}, status=403)
-                
-        
-        
+        if is_dev:
+            if zoho_lead_id not in allowed_zoho_ids:
+                return JsonResponse({"status": False, "error": "Unauthorized Zoho Lead Id"}, status=403)
         
         program =  request.POST.get('Program')
         intake_year =  request.POST.get('Intake Year')

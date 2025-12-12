@@ -1047,7 +1047,7 @@ def merge_videos(zoho_lead_id,interview_link_count=None):
         # Check and attach the video
         if os.path.exists(video_path):
             file_size = os.path.getsize(video_path)
-            if file_size < 25 * 1024 * 1024:  # < 25MB
+            if file_size < 10 * 1024 * 1024:  # < 25MB
                 print(r"filesize",file_size)
                 with open(video_path, "rb") as f:
                     mime_type, _ = mimetypes.guess_type(video_path)

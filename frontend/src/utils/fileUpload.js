@@ -196,6 +196,12 @@ const getBrowserInfo = () => {
 const activeUploads = new Map();
 const activeAnalyses = new Map();
 
+//  Network error tracking and callback
+let networkErrorCallback = null;
+export const setNetworkErrorCallback = (callback) => {
+  networkErrorCallback = callback;
+};
+
 //  FIX: Upload with retry logic
 export const uploadFile = async (
   blob, 
@@ -320,9 +326,29 @@ const performUploadWithRetry = async (
       lastError = error;
       console.error(` Upload attempt ${attempt}/${maxRetries} failed for ${uploadId}:`, error.message);
 
+      // Network error detection - notify frontend
+      if (!error.response || error.code === 'ECONNABORTED' || error.code === 'ENOTFOUND' || !navigator.onLine) {
+        console.error(` Network error detected for ${uploadId}`);
+        if (networkErrorCallback) {
+          networkErrorCallback({
+            type: 'network_error',
+            uploadId,
+            error: error.message,
+            attempt
+          });
+        }
+      }
       
       if (error.response && error.response.status >= 400 && error.response.status < 500) {
         console.error(`Client error ${error.response.status}, not retrying`);
+        if (networkErrorCallback) {
+          networkErrorCallback({
+            type: 'api_error',
+            uploadId,
+            status: error.response.status,
+            error: error.response.data?.error || error.message
+          });
+        }
         break;
       }
 
@@ -426,7 +452,19 @@ const performAnalysis = async (
     return response.data;
   } catch (error) {
     console.error(` Analysis ${analysisId} failed:`, error);
-    // Silent failure - user doesn't need to know
+    
+    // Network error detection
+    if (!error.response || error.code === 'ECONNABORTED' || error.code === 'ENOTFOUND' || !navigator.onLine) {
+      console.error(` Backend disconnected during analysis for ${analysisId}`);
+      if (networkErrorCallback) {
+        networkErrorCallback({
+          type: 'backend_disconnected',
+          analysisId,
+          error: error.message
+        });
+      }
+    }
+    
     return null;
   }
 };
