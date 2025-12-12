@@ -94,6 +94,19 @@ const Questions = () => {
 
   // usePageUnloadHandler(encodedLead, encodedLink);
 
+    useEffect(() => {
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    if (!isSafari) return;
+
+    const nav = performance.getEntriesByType("navigation")[0];
+
+    if (nav && nav.type === "reload") {
+      navigate(
+        `/interviewsubmitted?lead=${safe_encoded_zoho_lead_id}&link=${safe_encoded_interview_link_send_count}&reason=PAGE_RELOADED`
+      );
+    }
+}, []);
+
   useEffect(() => {
     if (safe_encoded_zoho_lead_id) {
       sessionStorage.setItem("zoho_lead_id", safe_encoded_zoho_lead_id);
@@ -671,7 +684,7 @@ useEffect(() => {
       sessionStorage.clear();
       // setLoading(false);
       navigate(
-        `/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`
+        `/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}&reason=TIME_ENDED`
       );
     }
   }, [endCountdown, loading]);
@@ -682,7 +695,7 @@ useEffect(() => {
       sessionStorage.clear();
       // setLoading(false);
       navigate(
-        `/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`
+        `/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}&reason=TIME_ENDED`
       );
     }
   }, [endCountdownTwo, loading]);
@@ -865,7 +878,7 @@ useEffect(() => {
         localStorage.clear();
         sessionStorage.clear();
         navigate(
-          `/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`
+          `/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}&reason=NAVIGATION_LEFT`
         );
       } else {
         if (currentIndex === 0 || isNaN(currentIndex)) {
@@ -876,7 +889,7 @@ useEffect(() => {
           localStorage.clear();
           sessionStorage.clear();
           navigate(
-            `/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`
+            `/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}&reason=NAVIGATION_LEFT`
           );
         }
       }
