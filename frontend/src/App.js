@@ -150,7 +150,7 @@ useEffect(() => {
   const isUnsupportedIOS =
     isiOS &&
     (
-      iOSVersion < 15 ||                    
+      iOSVersion < 16.4 ||                    
       !(isSafariIOS || isChromeIOS) ||          
       !supportsIOSRecording                    
     );
