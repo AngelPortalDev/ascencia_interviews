@@ -467,86 +467,86 @@ def interview_questions(request):
     try:
         student = Students.objects.get(zoho_lead_id=zoho_lead_id)
         institute = Institute.objects.get(crm_id=student.crm_id)
-    except (Students.DoesNotExist, Institute.DoesNotExist):
-        return JsonResponse({'error': 'Student or Institute not found'}, status=404)
+    except (Students.DoesNotExist, Institute.DoesNotExist) as e:
+        return JsonResponse({'error': f'Student or Institute not found: {str(e)}'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': f'Unexpected error fetching student/institute: {str(e)}'}, status=500)
 
-    # Fetch questions
-    common_questions = list(CommonQuestion.active_objects.filter(crm_id=institute))
-    course_questions = []
-    if student.program:
-        matched_course = Course.active_objects.filter(
-            course_name__iexact=student.program.strip(),
-            crm_id=institute
-        ).first()
-        if matched_course:
-            course_questions = list(Question.active_objects.filter(course_id=matched_course))
+    try:
+        # Fetch questions
+        common_questions = list(CommonQuestion.active_objects.filter(crm_id=institute))
+        course_questions = []
+        if student.program:
+            matched_course = Course.active_objects.filter(
+                course_name__iexact=student.program.strip(),
+                crm_id=institute
+            ).first()
+            if matched_course:
+                course_questions = list(Question.active_objects.filter(course_id=matched_course))
 
-    # ----------------------------
-    # ✅ Assign questions logic
-    # ----------------------------
-    # ----- Assign Common Questions -----
-    if not interview_link.assigned_question_ids:
-        print("🟡 Assigning COMMON questions...")
+        # ----------------------------
+        # ✅ Assign questions logic
+        # ----------------------------
+        # ----- Assign Common Questions -----
+        if not interview_link.assigned_question_ids:
+            print("🟡 Assigning COMMON questions...")
 
-        if str(institute.crm_id) in ["755071407", "759439531"]:
-            selected_common = common_questions
-        else:
-            # first_three = common_questions[:3]
-            # remaining_common = common_questions[3:]
-            # random_three = random.sample(
-            #     remaining_common, 
-            #     min(3, len(remaining_common))
-            # ) if remaining_common else []
-            # selected_common = first_three + random_three
-            selected_common = common_questions
-            print("Selected COMMON Questions IDs:", [q.id for q in selected_common])
+            if str(institute.crm_id) in ["755071407", "759439531"]:
+                selected_common = common_questions
+            else:
+                selected_common = common_questions
+                print("Selected COMMON Questions IDs:", [q.id for q in selected_common])
 
-        interview_link.assigned_question_ids = ",".join(str(q.id) for q in selected_common)
-        print("🟢 Saved COMMON:", interview_link.assigned_question_ids)
+            interview_link.assigned_question_ids = ",".join(str(q.id) for q in selected_common)
+            print("🟢 Saved COMMON:", interview_link.assigned_question_ids)
 
-    # ----- Assign Course Questions -----
-    if not interview_link.assigned_course_question_ids:
-        print("🟡 Assigning COURSE questions...")
+        # ----- Assign Course Questions -----
+        if not interview_link.assigned_course_question_ids:
+            print("🟡 Assigning COURSE questions...")
 
-        selected_course = course_questions if course_questions else []
-        interview_link.assigned_course_question_ids = ",".join(str(q.id) for q in selected_course)
+            selected_course = course_questions if course_questions else []
+            interview_link.assigned_course_question_ids = ",".join(str(q.id) for q in selected_course)
 
-        print("🟢 Saved COURSE:", interview_link.assigned_course_question_ids)
+            print("🟢 Saved COURSE:", interview_link.assigned_course_question_ids)
 
-    interview_link.save()
-    # ----------------------------
-    # ✅ Prepare response
-    # ----------------------------
-    common_ids = list(map(int, interview_link.assigned_question_ids.split(','))) if interview_link.assigned_question_ids else []
-    course_ids = list(map(int, interview_link.assigned_course_question_ids.split(','))) if interview_link.assigned_course_question_ids else []
+        interview_link.save()
+        # ----------------------------
+        # ✅ Prepare response
+        # ----------------------------
+        common_ids = list(map(int, interview_link.assigned_question_ids.split(','))) if interview_link.assigned_question_ids else []
+        course_ids = list(map(int, interview_link.assigned_course_question_ids.split(','))) if interview_link.assigned_course_question_ids else []
 
-    # Fetch questions
-    common_qs = {q.id: q for q in CommonQuestion.objects.filter(id__in=common_ids)}
-    course_qs = {q.id: q for q in Question.objects.filter(id__in=course_ids)}
+        # Fetch questions
+        common_qs = {q.id: q for q in CommonQuestion.objects.filter(id__in=common_ids)}
+        course_qs = {q.id: q for q in Question.objects.filter(id__in=course_ids)}
 
-    ordered_data = []
+        ordered_data = []
 
-    # Common questions first
-    for qid in common_ids:
-        q_obj = common_qs.get(qid)
-        if q_obj:
-            ordered_data.append({
-                'encoded_id': qid,
-                'question': q_obj.question,
-                'time_limit': getattr(q_obj, 'time_limit', 30)
-            })
+        # Common questions first
+        for qid in common_ids:
+            q_obj = common_qs.get(qid)
+            if q_obj:
+                ordered_data.append({
+                    'encoded_id': qid,
+                    'question': q_obj.question,
+                    'time_limit': getattr(q_obj, 'time_limit', 30)
+                })
 
-    # Course questions next
-    for qid in course_ids:
-        q_obj = course_qs.get(qid)
-        if q_obj:
-            ordered_data.append({
-                'encoded_id': qid,
-                'question': q_obj.question,
-                'time_limit': getattr(q_obj, 'time_limit', 30)
-            })
+        # Course questions next
+        for qid in course_ids:
+            q_obj = course_qs.get(qid)
+            if q_obj:
+                ordered_data.append({
+                    'encoded_id': qid,
+                    'question': q_obj.question,
+                    'time_limit': getattr(q_obj, 'time_limit', 30)
+                })
 
-    return JsonResponse({'questions': ordered_data}, status=200)
+        return JsonResponse({'questions': ordered_data}, status=200)
+
+    except Exception as e:
+        print(f"❌ Error in interview_questions: {str(e)}")
+        return JsonResponse({'error': f'Failed to fetch questions: {str(e)}'}, status=500)
 
     
 @csrf_exempt

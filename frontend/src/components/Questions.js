@@ -26,6 +26,7 @@ import {
 import { interviewAddVideoPath } from "../utils/fileUpload.js";
 import Logo from "../assest/Logo.png";
 import usePageUnloadHandler from "../hooks/usePageUnloadHandler.js";
+import { setNetworkErrorCallback } from "../utils/fileUpload.js";
 
 const Questions = () => {
 
@@ -47,6 +48,7 @@ const Questions = () => {
   const [transcribedText, setTranscribedText] = useState(""); // To hold transcribed text
   const [activeQuestionId, setActiveQuestionId] = useState(null); // Track active question
   const [student, setStudent] = useState(null);
+  const [networkError, setNetworkError] = useState(null); // Track network/API errors
   const location = useLocation();
   const encoded_zoho_lead_id = location.state?.encoded_zoho_lead_id || null;
   const encoded_interview_link_send_count =
@@ -103,6 +105,15 @@ const Questions = () => {
       );
     }
   }, [safe_encoded_zoho_lead_id, safe_encoded_interview_link_send_count]);
+
+  // Setup network error callback
+  useEffect(() => {
+    setNetworkErrorCallback((errorData) => {
+      console.error("Network error detected:", errorData);
+      setNetworkError(errorData);
+      setLoading(false);
+    });
+  }, []);
 
   usePageUnloadHandler(
     safe_encoded_zoho_lead_id,
@@ -166,9 +177,24 @@ const Questions = () => {
         setActiveQuestionId(res.data.questions[0].question_id); // or encoded_id
       } else {
         console.warn("No questions found in the response.");
+        setNetworkError({
+          type: 'api_error',
+          error: 'No questions found. Please refresh to retry.'
+        });
       }
     } catch (error) {
       console.error("Error fetching interview questions:", error);
+      if (!error.response || error.code === 'ECONNABORTED' || error.code === 'ENOTFOUND' || !navigator.onLine) {
+        setNetworkError({
+          type: 'network_error',
+          error: error.message
+        });
+      } else {
+        setNetworkError({
+          type: 'backend_disconnected',
+          error: 'Failed to fetch questions. Please refresh to retry.'
+        });
+      }
     }
   };
   // Store countdown in the sessionstorage for resuem resume
@@ -939,6 +965,42 @@ useEffect(() => {
             </div>
           </div>
         </section>
+      </div>
+    );
+  }
+
+  // Network error page
+  if (networkError) {
+    return (
+      <div className="relative min-h-screen bg-gradient-to-r from-red-50 to-red-100 flex items-center justify-center">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+          <div className="text-center">
+            <div className="mb-4">
+              <img src={branding.logo} alt="AI Software" className="h-16 mx-auto" />
+            </div>
+            <h1 className="text-2xl font-bold text-red-600 mb-4">Connection Error</h1>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+              <p className="text-gray-700 font-semibold mb-2">
+                {networkError.type === 'network_error' 
+                  ? "Network Connection Lost" 
+                  : networkError.type === 'backend_disconnected'
+                  ? "Server Connection Lost"
+                  : "Server Error"}
+              </p>
+              <p className="text-gray-600 text-sm">
+                {networkError.type === 'network_error'
+                  ? "Your internet connection was interrupted. Please check your connection and refresh the page."
+                  : networkError.type === 'backend_disconnected'
+                  ? "The server went offline during your interview. Please refresh to reconnect."
+                  : `Error: ${networkError.error}`}
+              </p>
+            </div>
+            <p className="text-xs text-gray-500 mt-4">
+              Network was lost during your interview. Your progress has been saved. 
+              Please contact your Student Manager to reschedule or resume your interview.
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
