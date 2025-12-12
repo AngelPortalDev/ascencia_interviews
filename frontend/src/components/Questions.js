@@ -1136,8 +1136,8 @@ useEffect(() => {
             className="col-span-12 md:col-span-9 bg-white p-2 rounded-xl  text-black  "
             style={{ display: "hidden" }}
           >
-             <DeepgramLiveCaptions
-              />
+             {/* <DeepgramLiveCaptions
+              /> */}
           </div>
           <div className="col-span-12 md:col-span-3 bg-white p-2 rounded-xl pt-0 sm:mt-2 text-black interviewPlayer">
             {interviewPlayerMemo}
