@@ -749,15 +749,17 @@ def students_list(request):
             if not link:
                 return "Not Sent"
 
-            # 1️⃣ Expired check
-            expires_at = link.get('expires_at')
-            if expires_at and expires_at < timezone.now():
-                return "Expired"
+       
+            
 
             # 2️⃣ Interview done check
             if link.get('interview_attend'):
                 color = "green" if student.bunny_stream_video_id else "red"
                 return f'Interview Done <span style="display:inline-block;width:8px;height:8px;background-color:{color};border-radius:50%;margin-left:4px;"></span>'
+            
+            expires_at = link.get('expires_at')
+            if expires_at and expires_at < timezone.now():
+                return "Expired"
 
             # 3️⃣ First / Second link
             count = link.get('interview_link_count')
@@ -765,13 +767,8 @@ def students_list(request):
                 return "First Link Active"
             if count == "Mg==":
                 return "Second Link Active"
-
             # 4️⃣ Default
             return "Pending"
-
-
-
-
 
         def format_student_data(queryset):
             return [
