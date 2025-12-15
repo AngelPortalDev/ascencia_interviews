@@ -705,50 +705,72 @@ def students_list(request):
             return users_map.get(email, "N/A")
 
 
+        # def get_interview_status(student):
+        #     zid = student.zoho_lead_id
+
+        #     if not zid:
+        #         return "Not Sent"
+
+        #     # Interview completed
+        #     if zid in interview_done_ids:
+        #         if student.bunny_stream_video_id:
+        #             return (
+        #                 'Interview Done '
+        #                 '<span style="display:inline-block;width:8px;height:8px;'
+        #                 'background-color:green;border-radius:50%;margin-left:4px;"></span>'
+        #             )
+        #         else:
+        #             return (
+        #                 'Interview Done '
+        #                 '<span style="display:inline-block;width:8px;height:8px;'
+        #                 'background-color:red;border-radius:50%;margin-left:4px;"></span>'
+        #             )
+
+        #     link = link_map.get(zid)
+        #     if not link:
+        #         return "Not Sent"
+
+        #     expires_at = link.get('expires_at')
+        #     if expires_at and expires_at < timezone.now():
+        #         return "Expired"
+
+        #     if link['interview_link_count'] == "MQ==":
+        #         return "First Link Active"
+
+        #     if link['interview_link_count'] == "Mg==":
+        #         return "Second Link Active"
+
+        #     return "Pending"
+
         def get_interview_status(student):
-            zid = student.zoho_lead_id
+            # Get latest link from pre-fetched map
+            link = link_map.get(student.zoho_lead_id)
 
-            if not zid:
-                return "Not Sent"
-
-            # Interview completed
-            if zid in interview_done_ids:
-                if student.bunny_stream_video_id:
-                    return (
-                        'Interview Done '
-                        '<span style="display:inline-block;width:8px;height:8px;'
-                        'background-color:green;border-radius:50%;margin-left:4px;"></span>'
-                    )
-                else:
-                    return (
-                        'Interview Done '
-                        '<span style="display:inline-block;width:8px;height:8px;'
-                        'background-color:red;border-radius:50%;margin-left:4px;"></span>'
-                    )
-
-            # link = link_map.get(zid)
-
-            # if not link:
-            #     return "Not Sent"
-
-            # if link['expires_at'] and link['expires_at'] < timezone.now():
-            #     return "Expired"
-
-            link = link_map.get(zid)
             if not link:
                 return "Not Sent"
 
+            # 1️⃣ Expired check
             expires_at = link.get('expires_at')
             if expires_at and expires_at < timezone.now():
                 return "Expired"
 
-            if link['interview_link_count'] == "MQ==":
-                return "First Link Active"
+            # 2️⃣ Interview done check
+            if link.get('interview_attend'):
+                color = "green" if student.bunny_stream_video_id else "red"
+                return f'Interview Done <span style="display:inline-block;width:8px;height:8px;background-color:{color};border-radius:50%;margin-left:4px;"></span>'
 
-            if link['interview_link_count'] == "Mg==":
+            # 3️⃣ First / Second link
+            count = link.get('interview_link_count')
+            if count == "MQ==":
+                return "First Link Active"
+            if count == "Mg==":
                 return "Second Link Active"
 
+            # 4️⃣ Default
             return "Pending"
+
+
+
 
 
         def format_student_data(queryset):
