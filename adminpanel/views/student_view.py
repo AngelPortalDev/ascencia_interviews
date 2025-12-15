@@ -22,7 +22,7 @@ from zoneinfo import ZoneInfo
 import logging
 from adminpanel.helper.email_branding import get_email_branding
 from django.utils.timezone import now
-
+from django.db.models import Max
 logger = logging.getLogger('zoho_webhook_logger')
 
 # def encode_base64(value: str) -> str:
@@ -661,45 +661,95 @@ def students_list(request):
         # if intake_year.isdigit():
         #     intake_year = int(intake_year)
 
+
+        # ✅ ADD THIS BLOCK HERE (DO NOT REPLACE ANYTHING)
+# -------------------------------------------------
+# Prefetch interview related data (ONCE)
+# -------------------------------------------------
+
+      
+        # interview_done_ids = set(
+        #     StudentInterview.objects.values_list('zoho_lead_id', flat=True)
+        # )
+        interview_done_ids = set(
+            StudentInterview.objects.exclude(zoho_lead_id__isnull=True).values_list('zoho_lead_id', flat=True)
+        )
+
+
+        # Step 1: Get latest link IDs per student
+        latest_link_ids = (
+            StudentInterviewLink.objects
+            .values('zoho_lead_id')           # group by student
+            .annotate(latest_id=Max('id'))   # get max id per student
+            .values_list('latest_id', flat=True)
+        )
+
+        # Step 2: Fetch the latest links
+        latest_links = StudentInterviewLink.objects.filter(id__in=latest_link_ids).values(
+            'zoho_lead_id',
+            'interview_attend',
+            'expires_at',
+            'interview_link_count'
+        )
+
+        # Step 3: Create map
+        link_map = {link['zoho_lead_id']: link for link in latest_links}
+
+
+        # ⚡ Optimized User prefetch (replace old per-student query)
+        users_map = {user.email: f"{user.first_name} {user.last_name}" for user in User.objects.all()}
+
         def get_student_manager_name(email):
-            user = User.objects.filter(email=email).first()
-            return f"{user.first_name} {user.last_name}" if user else "N/A"
-        
-        # Get latest Interview Status
-        # -------------------------------
+            if not email:
+                return "N/A"
+            return users_map.get(email, "N/A")
+
+
         def get_interview_status(student):
-            link = StudentInterviewLink.objects.filter(
-                zoho_lead_id=student.zoho_lead_id
-            ).order_by('-id').first()
+            zid = student.zoho_lead_id
 
-            interview_record = StudentInterview.objects.filter(
-            zoho_lead_id=student.zoho_lead_id
-            ).first()
+            if not zid:
+                return "Not Sent"
 
+            # Interview completed
+            if zid in interview_done_ids:
+                if student.bunny_stream_video_id:
+                    return (
+                        'Interview Done '
+                        '<span style="display:inline-block;width:8px;height:8px;'
+                        'background-color:green;border-radius:50%;margin-left:4px;"></span>'
+                    )
+                else:
+                    return (
+                        'Interview Done '
+                        '<span style="display:inline-block;width:8px;height:8px;'
+                        'background-color:red;border-radius:50%;margin-left:4px;"></span>'
+                    )
+
+            # link = link_map.get(zid)
+
+            # if not link:
+            #     return "Not Sent"
+
+            # if link['expires_at'] and link['expires_at'] < timezone.now():
+            #     return "Expired"
+
+            link = link_map.get(zid)
             if not link:
                 return "Not Sent"
-            if link.interview_attend:
-                if student.bunny_stream_video_id:
-                    return 'Interview Done <span style="display:inline-block;width:8px;height:8px;background-color:green;border-radius:50%;margin-left:4px;"></span>'
-                else:
-                    return 'Interview Done <span style="display:inline-block;width:8px;height:8px;background-color:red;border-radius:50%;margin-left:4px;"></span>'
 
-                
-            
-            
-            if link.expires_at and link.expires_at < timezone.now():
+            expires_at = link.get('expires_at')
+            if expires_at and expires_at < timezone.now():
                 return "Expired"
-            # 🔹 New check: if extended link exists in StudentInterview
-            # if interview_record and interview_record.Extend_interview_link:
-            #     return "Extend Link"
-            
 
-            if link.interview_link_count == "MQ==":
+            if link['interview_link_count'] == "MQ==":
                 return "First Link Active"
-            if link.interview_link_count == "Mg==":
+
+            if link['interview_link_count'] == "Mg==":
                 return "Second Link Active"
-            
+
             return "Pending"
+
 
         def format_student_data(queryset):
             return [
