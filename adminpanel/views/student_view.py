@@ -668,9 +668,13 @@ def students_list(request):
 # -------------------------------------------------
 
       
+        # interview_done_ids = set(
+        #     StudentInterview.objects.values_list('zoho_lead_id', flat=True)
+        # )
         interview_done_ids = set(
-            StudentInterview.objects.values_list('zoho_lead_id', flat=True)
+            StudentInterview.objects.exclude(zoho_lead_id__isnull=True).values_list('zoho_lead_id', flat=True)
         )
+
 
         # Step 1: Get latest link IDs per student
         latest_link_ids = (
@@ -696,6 +700,8 @@ def students_list(request):
         users_map = {user.email: f"{user.first_name} {user.last_name}" for user in User.objects.all()}
 
         def get_student_manager_name(email):
+            if not email:
+                return "N/A"
             return users_map.get(email, "N/A")
 
 
@@ -720,12 +726,20 @@ def students_list(request):
                         'background-color:red;border-radius:50%;margin-left:4px;"></span>'
                     )
 
-            link = link_map.get(zid)
+            # link = link_map.get(zid)
 
+            # if not link:
+            #     return "Not Sent"
+
+            # if link['expires_at'] and link['expires_at'] < timezone.now():
+            #     return "Expired"
+
+            link = link_map.get(zid)
             if not link:
                 return "Not Sent"
 
-            if link['expires_at'] and link['expires_at'] < timezone.now():
+            expires_at = link.get('expires_at')
+            if expires_at and expires_at < timezone.now():
                 return "Expired"
 
             if link['interview_link_count'] == "MQ==":
