@@ -743,20 +743,21 @@ def students_list(request):
         #     return "Pending"
 
         def get_interview_status(student):
-            # Get latest link from pre-fetched map
             link = link_map.get(student.zoho_lead_id)
 
             if not link:
                 return "Not Sent"
 
-       
-            
-
-            # 2️⃣ Interview done check
+            # 1️⃣ Interview attended → FINAL STATUS
             if link.get('interview_attend'):
                 color = "green" if student.bunny_stream_video_id else "red"
-                return f'Interview Done <span style="display:inline-block;width:8px;height:8px;background-color:{color};border-radius:50%;margin-left:4px;"></span>'
-            
+                return (
+                    f'Interview Done '
+                    f'<span style="display:inline-block;width:8px;height:8px;'
+                    f'background-color:{color};border-radius:50%;margin-left:4px;"></span>'
+                )
+
+            # 2️⃣ Expired only if NOT attended
             expires_at = link.get('expires_at')
             if expires_at and expires_at < timezone.now():
                 return "Expired"
