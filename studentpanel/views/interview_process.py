@@ -597,3 +597,38 @@ def get_branding_by_zoho_id(request):
         return JsonResponse({"error": "Student not found"}, status=404)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+    
+@csrf_exempt
+def report_interview_exit(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid request method"}, status=405)
+
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    zoho_lead_id = data.get("zoho_lead_id")
+    interview_link_count = data.get("interview_link_count")
+
+    if not zoho_lead_id:
+        return JsonResponse({"error": "zoho_lead_id is required"}, status=400)
+
+    try:
+        link = StudentInterviewLink.objects.get(
+            zoho_lead_id=zoho_lead_id,
+            interview_link_count=interview_link_count
+        )
+    except StudentInterviewLink.DoesNotExist:
+        return JsonResponse({"error": "Interview link not found"}, status=404)
+
+    # ✅ Save exit info directly into separate columns
+    # link.exit_question_index = data.get("exit_question_index")
+    link.exit_question_id = data.get("exit_question_id")
+    # link.exit_question_text = data.get("exit_question_text")
+    # link.time_remaining = data.get("time_remaining")
+    link.exit_reason = data.get("exit_reason")
+
+    link.save()
+
+    return JsonResponse({"status": True, "message": "Exit reported successfully"}, status=200)
