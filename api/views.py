@@ -46,6 +46,14 @@ from datetime import timedelta
 from adminpanel.helper.email_branding import get_email_branding
 
 
+from decouple import config
+import uuid
+import time
+import requests
+from django.conf import settings
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
 
 logger = logging.getLogger('django')
 
@@ -1572,3 +1580,123 @@ def schedule_reminders_for_all():
     if not students_24h.exists() and not students_1h.exists():
         print(">>> No students found for any reminders <<<")
         
+
+@csrf_exempt
+def interview_create(request):
+    auth_header = request.headers.get("Authorization")
+
+     # 🔍 DEBUG PRINTS (TEMPORARY)
+    print("Authorization Header:", auth_header)
+    print("ENV API KEY:", config("Interview_API_SECRET_KEY"))
+
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+
+    token = auth_header.split(" ")[1]
+    print("TOKEN FROM HEADER:", token)
+
+    if token != config("Interview_API_SECRET_KEY"):
+        return JsonResponse({"error": "Invalid token"}, status=403)
+    
+    data = json.loads(request.body.decode("utf-8")) if request.body else {}
+
+    print("DATA:", data)
+
+    return JsonResponse({"status": True, "data": data}, status=200)
+    
+    # data = request.data
+
+
+
+
+
+DAILY_API_URL = "https://api.daily.co/v1"
+
+
+@csrf_exempt
+def get_daily_token(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Only POST allowed"}, status=405)
+
+    try:
+        body = json.loads(request.body.decode("utf-8"))
+    except Exception:
+        body = {}
+
+    # unique room every time (important)
+    room_name = f"interview-{uuid.uuid4()}"
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {settings.DAILY_API_KEY}",
+    }
+
+    # -------------------------------
+    # 1️⃣ Create Room
+    # -------------------------------
+    room_payload = {
+        "name": room_name,
+        "properties": {
+            "enable_recording": "cloud",
+            "max_participants": 1,
+            "exp": int(time.time()) + 3600,  # 1 hour
+            "enable_chat": False,
+            "enable_screenshare": False,
+        },
+    }
+
+    room_res = requests.post(
+        f"{DAILY_API_URL}/rooms",
+        headers=headers,
+        json=room_payload,
+    )
+
+    if room_res.status_code not in [200, 201]:
+        return JsonResponse(
+            {
+                "error": "Room creation failed",
+                "details": room_res.text,
+            },
+            status=500,
+        )
+
+    room_data = room_res.json()
+
+    # -------------------------------
+    # 2️⃣ Create Meeting Token
+    # -------------------------------
+    token_payload = {
+        "properties": {
+            "room_name": room_name,
+            "is_owner": True,
+            "exp": int(time.time()) + 3600,
+        }
+    }
+
+    token_res = requests.post(
+        f"{DAILY_API_URL}/meeting-tokens",
+        headers=headers,
+        json=token_payload,
+    )
+
+    if token_res.status_code != 200:
+        return JsonResponse(
+            {
+                "error": "Token creation failed",
+                "details": token_res.text,
+            },
+            status=500,
+        )
+
+    token_data = token_res.json()
+
+    # -------------------------------
+    # 3️⃣ Return to frontend
+    # -------------------------------
+    return JsonResponse(
+        {
+            "room_name": room_name,
+            "room_url": room_data.get("url"),
+            "token": token_data.get("token"),
+        }
+    )
