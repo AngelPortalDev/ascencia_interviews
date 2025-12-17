@@ -91,28 +91,86 @@ const [branding, setBranding] = useState({
 
 function hasMicActivity(stream) {
   return new Promise((resolve) => {
-    const audioContext = new AudioContext();
-    const analyser = audioContext.createAnalyser();
-    const source = audioContext.createMediaStreamSource(stream);
-    source.connect(analyser);
+    let audioContext = null;
+    let analyser = null;
+    let source = null;
+    let interval = null;
+    
+    try {
+      audioContext = new AudioContext();
+      analyser = audioContext.createAnalyser();
+      source = audioContext.createMediaStreamSource(stream);
+      source.connect(analyser);
 
-    const data = new Uint8Array(analyser.frequencyBinCount);
+      const data = new Uint8Array(analyser.frequencyBinCount);
 
-    let activity = false;
-    let checks = 0;
+      let activity = false;
+      let checks = 0;
 
-    const interval = setInterval(() => {
-      analyser.getByteFrequencyData(data);
-      const volume = data.reduce((a, b) => a + b, 0) / data.length;
-      if (volume > 5) activity = true;
-      checks++;
+      interval = setInterval(() => {
+        try {
+          analyser.getByteFrequencyData(data);
+          const volume = data.reduce((a, b) => a + b, 0) / data.length;
+          if (volume > 5) activity = true;
+          checks++;
 
-      if (checks > 20) { 
-        clearInterval(interval);
-        audioContext.close();
-        resolve(activity);
-      }
-    }, 100);
+          if (checks > 20) { 
+            clearInterval(interval);
+            interval = null;
+            
+            // Safe cleanup - disconnect source first
+            try {
+              if (source) {
+                source.disconnect();
+                source = null;
+              }
+            } catch (e) {
+              console.log('[Cleanup] Source disconnect:', e.message);
+            }
+            
+            // Safe cleanup - close AudioContext
+            try {
+              if (audioContext && audioContext.state !== 'closed') {
+                audioContext.close()
+                  .then(() => console.log('[Cleanup] AudioContext closed'))
+                  .catch(e => console.log('[Cleanup] AudioContext close:', e.message));
+              }
+            } catch (e) {
+              console.log('[Cleanup] AudioContext:', e.message);
+            }
+            
+            resolve(activity);
+          }
+        } catch (err) {
+          console.log('[MicActivity] Check error:', err.message);
+          if (interval) {
+            clearInterval(interval);
+            interval = null;
+          }
+          
+          // Safe cleanup on error
+          try {
+            if (source) source.disconnect();
+          } catch (e) {
+            console.log('[Error cleanup] Source:', e.message);
+          }
+          
+          try {
+            if (audioContext && audioContext.state !== 'closed') {
+              audioContext.close().catch(e => console.log('[Error cleanup] AudioContext:', e.message));
+            }
+          } catch (e) {
+            console.log('[Error cleanup] AudioContext check:', e.message);
+          }
+          
+          resolve(false);
+        }
+      }, 100);
+    } catch (err) {
+      console.log('[MicActivity] Init error:', err.message);
+      if (interval) clearInterval(interval);
+      resolve(false);
+    }
   });
 }
 
@@ -129,6 +187,7 @@ function getSupportedMimeType(types) {
 async function testRecording() {
   let stream = null;
   let recorder = null;
+  
   try {
     // 1. Check MediaStream for audio and video tracks
     stream = await navigator.mediaDevices.getUserMedia({
@@ -141,19 +200,60 @@ async function testRecording() {
 
     if (videoTracks.length === 0) {
       console.error("Recording test failed: No video track found in stream.");
-      return { success: false, message: "We couldn't detect your camera. Please ensure it's connected and enabled, and that you've granted permission to access it" };
+      
+      // Cleanup before returning
+      if (stream) {
+        stream.getTracks().forEach(t => {
+          try { t.stop(); } catch (e) { console.log('[Cleanup] Track:', e.message); }
+        });
+      }
+      
+      return { 
+        success: false, 
+        message: "We couldn't detect your camera. Please ensure it's connected and enabled, and that you've granted permission to access it" 
+      };
     }
+    
     if (audioTracks.length === 0) {
       console.error("Recording test failed: No audio track found in stream.");
-      return { success: false, message: "We couldn't detect your microphone. Please ensure it's connected and enabled, and that you've granted permission to access it" };
+      
+      // Cleanup before returning
+      if (stream) {
+        stream.getTracks().forEach(t => {
+          try { t.stop(); } catch (e) { console.log('[Cleanup] Track:', e.message); }
+        });
+      }
+      
+      return { 
+        success: false, 
+        message: "We couldn't detect your microphone. Please ensure it's connected and enabled, and that you've granted permission to access it" 
+      };
     }
     
     console.log(`Stream obtained. Video tracks: ${videoTracks.length}, Audio tracks: ${audioTracks.length}`);
 
-    const micHasSound = await hasMicActivity(stream);
-    console.log('micHasSound', micHasSound);
+    // Check mic activity with proper error handling
+    let micHasSound = false;
+    try {
+      micHasSound = await hasMicActivity(stream);
+      console.log('micHasSound', micHasSound);
+    } catch (err) {
+      console.log("Mic activity check failed:", err.message);
+      // Continue anyway - don't block on mic check failure
+    }
+    
     if (!micHasSound) {
-      return { success: false, message: "Your microphone is detected, but no sound was picked up. Please unmute or select the correct device." };
+      // Cleanup before returning
+      if (stream) {
+        stream.getTracks().forEach(t => {
+          try { t.stop(); } catch (e) { console.log('[Cleanup] Track:', e.message); }
+        });
+      }
+      
+      return { 
+        success: false, 
+        message: "Your microphone is detected, but no sound was picked up. Please unmute or select the correct device." 
+      };
     }
 
     // 2. Select a robust MIME type
@@ -166,7 +266,18 @@ async function testRecording() {
 
     if (!mimeType) {
       console.error("Recording test failed: No supported video/audio MIME type found for MediaRecorder.");
-      return { success: false, message: "Your browser isn't fully compatible with our recording system. Please try updating your browser or using a different one like Chrome, Firefox, or Edge." };
+      
+      // Cleanup before returning
+      if (stream) {
+        stream.getTracks().forEach(t => {
+          try { t.stop(); } catch (e) { console.log('[Cleanup] Track:', e.message); }
+        });
+      }
+      
+      return { 
+        success: false, 
+        message: "Your browser isn't fully compatible with our recording system. Please try updating your browser or using a different one like Chrome, Firefox, or Edge." 
+      };
     }
 
     recorder = new MediaRecorder(stream, {
@@ -174,30 +285,25 @@ async function testRecording() {
       audioBitsPerSecond: 64000,
       videoBitsPerSecond: 2000000,
     });
+    
     let chunks = [];
-    let hasVideoData = false;
-    let hasAudioData = false; 
 
     recorder.ondataavailable = e => {
       if (e.data.size > 0) {
-        console.log("Recorder started.",e.data.size);
+        console.log("Recorder data available:", e.data.size);
         chunks.push(e.data);
       }
     };
 
-    
-
     recorder.onerror = (e) => {
-        console.error("Recorder error during test:", e.error);
-        // If a specific error like 'EncodingError' occurs, it's a strong indicator
-        return { success: false, message: `Recording error: ${e.error.message}.` };
+      console.error("Recorder error during test:", e.error);
     };
 
     recorder.start();
     console.log("Recorder started.");
 
     // Record for a short duration
-    await new Promise(res => setTimeout(res, 1000)); // Increased duration to 2 seconds
+    await new Promise(res => setTimeout(res, 1000));
 
     // Stop the recorder
     recorder.stop();
@@ -206,43 +312,79 @@ async function testRecording() {
     await new Promise(res => (recorder.onstop = res));
     console.log("Recorder stopped.");
 
-    // Cleanup stream tracks
-    stream.getTracks().forEach(t => t.stop());
+    // Cleanup stream tracks safely
+    if (stream) {
+      stream.getTracks().forEach(t => {
+        try {
+          t.stop();
+        } catch (err) {
+          console.log("Track cleanup:", err.message);
+        }
+      });
+    }
 
     if (chunks.length === 0) {
-      console.log("chunks.length",chunks.length);
+      console.log("chunks.length", chunks.length);
       console.error("Recording test failed: No data chunks were recorded.");
-      return { success: false, message: "We couldn't capture any video or audio data. Please ensure your camera and microphone are working correctly." };
+      return { 
+        success: false, 
+        message: "We couldn't capture any video or audio data. Please ensure your camera and microphone are working correctly." 
+      };
     }
 
     // Attempt to create a blob to simulate final output
     const testBlob = new Blob(chunks, { type: mimeType });
     if (testBlob.size === 0) {
-      console.log("testBlob.size",testBlob.size);
+      console.log("testBlob.size", testBlob.size);
       console.error("Recording test failed: Created 0-byte blob.");
-      return { success: false, message: "The recording produced an an empty file. This might be a browser issue. Please try again or use a different browser" };
+      return { 
+        success: false, 
+        message: "The recording produced an empty file. This might be a browser issue. Please try again or use a different browser" 
+      };
     }
-    
 
     return { success: true, message: "Recording test passed." };
 
   } catch (err) {
     console.error("Comprehensive recording test failed:", err);
+    
     // More specific error messages for getUserMedia failures
     if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-      return { success: false, message: "Camera/microphone access denied. Please allow permissions." };
+      return { 
+        success: false, 
+        message: "Camera/microphone access denied. Please allow permissions." 
+      };
     } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
-      return { success: false, message: "No camera or microphone found." };
+      return { 
+        success: false, 
+        message: "No camera or microphone found." 
+      };
     } else if (err.name === "NotReadableError" || err.name === "TrackStartError") {
-        return { success: false, message: "Camera/microphone already in use or inaccessible." };
+      return { 
+        success: false, 
+        message: "Camera/microphone already in use or inaccessible." 
+      };
     } else if (err.name === "OverconstrainedError") {
-        return { success: false, message: "Browser could not satisfy media constraints. Try default audio:true." };
+      return { 
+        success: false, 
+        message: "Browser could not satisfy media constraints. Try default audio:true." 
+      };
     }
-    return { success: false, message: `An unexpected error occurred: ${err.message}.` };
+    
+    return { 
+      success: false, 
+      message: `An unexpected error occurred: ${err.message}.` 
+    };
   } finally {
     // Ensure tracks are always stopped in case of early exit
     if (stream) {
-      stream.getTracks().forEach(t => t.stop());
+      stream.getTracks().forEach(t => {
+        try {
+          t.stop();
+        } catch (err) {
+          console.log("Final cleanup:", err.message);
+        }
+      });
     }
   }
 }
@@ -282,36 +424,7 @@ const handleSubmit = async () => {
     state: { encoded_zoho_lead_id, encoded_interview_link_send_count },
   });
 
-  //  try {
-  //   const testResult = await testRecording();
-  //   if (!testResult.success) {
-  //     alert(
-  //       `Recording setup failed: ${testResult.message}\n\nPlease check your browser permissions, or try again using another device or an incognito/private window.`
-  //     );
-  //     return;
-  //   }
-
-  //   navigate(`/questions`, {
-  //     state: { encoded_zoho_lead_id, encoded_interview_link_send_count },
-  //   });
-  // } catch (err) {
-  //   console.error(err);
-  //   setLoading(false);
-  // }
 };
-
-  // const handleSubmit = async() => {
-
-  // const canRecord = await testRecording();
-
-  // if (!canRecord) {
-  //   alert("We couldn’t access your camera or microphone. Please check your browser permissions, or try again using another device or an incognito/private window.");
-  //   return;
-  // }
-  //   navigate(`/questions`, {
-  //     state: { encoded_zoho_lead_id, encoded_interview_link_send_count },
-  //   });
-  // };
 
   return (
     <>

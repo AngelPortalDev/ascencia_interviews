@@ -7,10 +7,10 @@
 # ]
 # app/routing.py
 # ascencia_interviews/routing.py
-from django.urls import re_path
-from channels.routing import ProtocolTypeRouter, URLRouter
-from channels.auth import AuthMiddlewareStack
-from ascencia_interviews.consumers import AudioStreamConsumer  # adjust if needed
+# from django.urls import re_path
+# from channels.routing import ProtocolTypeRouter, URLRouter
+# from channels.auth import AuthMiddlewareStack
+from ascencia_interviews.consumers import TranscriptionConsumer  # adjust if needed
 
 # application = ProtocolTypeRouter({
 #     "websocket": AuthMiddlewareStack(
@@ -20,6 +20,14 @@ from ascencia_interviews.consumers import AudioStreamConsumer  # adjust if neede
 #         ])
 #     )
 # })
+# websocket_urlpatterns = [
+#     re_path(r"(ws/)?audio/$", AudioStreamConsumer.as_asgi()),
+# ]
+
+
+from django.urls import re_path
+from .consumers import TranscriptionConsumer
+
 websocket_urlpatterns = [
-    re_path(r"(ws/)?audio/$", AudioStreamConsumer.as_asgi()),
+    re_path(r"ws/transcription/$", TranscriptionConsumer.as_asgi()),
 ]
