@@ -599,5 +599,5 @@ export const downloadFile = (blob, filename) => {
 };
 
 
-window.addEventListener("online", () => retryFailedUploads());
+// window.addEventListener("online", () => retryFailedUploads());
 // ********************************************** New End *************************************************

@@ -1,74 +1,107 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 // import { useEffect } from "react";
 // import { usePermission } from "../context/PermissionContext.js";
+// import { useNavigate } from "react-router-dom";
 
 // const usePageUnloadHandler = (encoded_zoho_lead_id, encoded_interview_link_send_count) => {
 //   const { submitExam } = usePermission();
+//   const navigate = useNavigate();
 
-
-
-//   console.log("zoho_lead_id",encoded_zoho_lead_id)
-//   console.log("encoded_interview_link_send_count",encoded_interview_link_send_count)
+//   // ✅ Save info during unload
 //   useEffect(() => {
 //     const handleBeforeUnload = (event) => {
-//       sessionStorage.setItem("isPageRefreshing", "true");
 
-//       // ✅ Store values for access after reload
-//       sessionStorage.setItem("zoho_lead_id", encoded_zoho_lead_id || "");
-//       sessionStorage.setItem("interview_link_count", encoded_interview_link_send_count || "");
+//       if (encoded_zoho_lead_id && encoded_interview_link_send_count) {
+//         sessionStorage.setItem("zoho_lead_id", encoded_zoho_lead_id);
+//         sessionStorage.setItem("interview_link_count", encoded_interview_link_send_count);
+//         sessionStorage.setItem("isPageRefreshing", "true");
+//       }
 
-
-//       // ❌ Avoid async in beforeunload — browser will ignore it
-//       console.log("🔄 Before unload triggered");
 //       event.preventDefault();
 //       event.returnValue = "";
 //     };
 
-//     const handlePageLoad = () => {
-//       if (sessionStorage.getItem("isPageRefreshing") === "true") {
-//         sessionStorage.removeItem("isPageRefreshing");
-
-//         // ✅ Safely submit now after reload
-//         submitExam();
-
-//         // Clear saved state
-//         localStorage.clear();
-//         sessionStorage.removeItem("timeSpent");
-//         sessionStorage.removeItem("currentQuestionIndex");
-
-//         const lead = sessionStorage.getItem("zoho_lead_id");
-//         const link = sessionStorage.getItem("interview_link_count");
-
-//         // ✅ Redirect with stored query params
-//         window.location.href = `/frontend/interviewsubmitted?lead=${lead}&link=${link}`;
-//       }
-//     };
-
 //     window.addEventListener("beforeunload", handleBeforeUnload);
-//     window.addEventListener("load", handlePageLoad);
 
 //     return () => {
 //       window.removeEventListener("beforeunload", handleBeforeUnload);
-//       window.removeEventListener("load", handlePageLoad);
 //     };
-//   }, [encoded_zoho_lead_id, encoded_interview_link_send_count, submitExam]);
+//   }, [encoded_zoho_lead_id, encoded_interview_link_send_count]);
+
+//   // ✅ On reload, get values directly from sessionStorage
+//   useEffect(() => {
+//     const isRefresh = sessionStorage.getItem("isPageRefreshing") === "true";
+//     const lead = sessionStorage.getItem("zoho_lead_id");
+//     const link = sessionStorage.getItem("interview_link_count");
+//     // const firstEncodeId = sessionStorage.getItem('first_encoded_id');
+//     const currentIndex = parseInt(sessionStorage.getItem("currentQuestionIndex"), 10);
+
+//     if (isRefresh && lead && link) {
+//       sessionStorage.removeItem("isPageRefreshing");
+//       sessionStorage.removeItem("timeSpent");
+//       sessionStorage.removeItem("currentQuestionIndex");
+
+//        if (currentIndex === 0 || isNaN(currentIndex)) {
+//             navigate('/goback');
+//           } else {
+//             submitExam();
+//             navigate(`/interviewsubmitted?lead=${lead}&link=${link}&reason=PAGE_RELOADED`);
+//           }
+   
+//       // sessionStorage.removeItem("interviewSubmitted");
+//       // localStorage.clear()
+//       // sessionStorage.clear()
+//     }
+//   }, [submitExam, navigate]);
 // };
 
-import { useEffect } from "react";
-import { usePermission } from "../context/PermissionContext.js";
+// export default usePageUnloadHandler;
+
+
+import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
-const usePageUnloadHandler = (encoded_zoho_lead_id, encoded_interview_link_send_count) => {
-  const { submitExam } = usePermission();
+const usePageUnloadHandler = (
+  encoded_zoho_lead_id,
+  encoded_interview_link_send_count,
+  getQuestions,
+  currentQuestionIndex,
+  countdown
+) => {
   const navigate = useNavigate();
+  const hasReportedExitRef = useRef(false);
 
-  // ✅ Save info during unload
+  //  REPORT EXIT USING sendBeacon (reliable on reload/close)
+  const reportExitOnUnload = (reason) => {
+    if (hasReportedExitRef.current) return;
+    hasReportedExitRef.current = true;
+
+    const question = getQuestions?.[currentQuestionIndex];
+
+    const payload = {
+      zoho_lead_id: atob(encoded_zoho_lead_id),
+      interview_link_count: encoded_interview_link_send_count,
+      exit_question_index: currentQuestionIndex + 1,
+      exit_question_id: question?.encoded_id || null,
+      exit_reason: reason,
+    };
+
+    navigator.sendBeacon(
+      `${process.env.REACT_APP_API_BASE_URL}interveiw-section/interview-exit/`,
+      JSON.stringify(payload)
+    );
+  };
+
+  // Handle refresh / tab close
   useEffect(() => {
     const handleBeforeUnload = (event) => {
-
       if (encoded_zoho_lead_id && encoded_interview_link_send_count) {
         sessionStorage.setItem("zoho_lead_id", encoded_zoho_lead_id);
         sessionStorage.setItem("interview_link_count", encoded_interview_link_send_count);
         sessionStorage.setItem("isPageRefreshing", "true");
+
+        //  IMPORTANT
+        reportExitOnUnload("PAGE_RELOADED");
       }
 
       event.preventDefault();
@@ -76,37 +109,26 @@ const usePageUnloadHandler = (encoded_zoho_lead_id, encoded_interview_link_send_
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [encoded_zoho_lead_id, encoded_interview_link_send_count, currentQuestionIndex]);
 
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, [encoded_zoho_lead_id, encoded_interview_link_send_count]);
-
-  // ✅ On reload, get values directly from sessionStorage
+  // After reload → redirect user (NO submit)
   useEffect(() => {
     const isRefresh = sessionStorage.getItem("isPageRefreshing") === "true";
     const lead = sessionStorage.getItem("zoho_lead_id");
     const link = sessionStorage.getItem("interview_link_count");
-    // const firstEncodeId = sessionStorage.getItem('first_encoded_id');
-    const currentIndex = parseInt(sessionStorage.getItem("currentQuestionIndex"), 10);
 
     if (isRefresh && lead && link) {
       sessionStorage.removeItem("isPageRefreshing");
       sessionStorage.removeItem("timeSpent");
       sessionStorage.removeItem("currentQuestionIndex");
 
-       if (currentIndex === 0 || isNaN(currentIndex)) {
-            navigate('/goback');
-          } else {
-            submitExam();
-            navigate(`/interviewsubmitted?lead=${lead}&link=${link}`);
-          }
-   
-      // sessionStorage.removeItem("interviewSubmitted");
-      // localStorage.clear()
-      // sessionStorage.clear()
+      navigate(
+        `/interviewsubmitted?lead=${lead}&link=${link}&reason=PAGE_RELOADED`
+      );
     }
-  }, [submitExam, navigate]);
+  }, [navigate]);
 };
 
 export default usePageUnloadHandler;
+
