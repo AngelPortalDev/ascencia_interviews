@@ -491,7 +491,8 @@ def students_leads_api(request):
         email = request.POST.get('Email')
         phone = request.POST.get('Phone')
         dob = request.POST.get('DOB')
-        formatted_date = ""
+        # formatted_date = ""
+        formatted_date = None
         if dob:  # ✅ Only parse if dob is provided and not empty
             try:
                 date_object = datetime.strptime(dob, "%m-%d-%Y")
@@ -749,7 +750,7 @@ def students_list(request):
                 return "Not Sent"
 
             # 1️⃣ Interview attended → FINAL STATUS
-            if link.get('interview_attend'):
+            if link.get('interview_attend') is True:
                 color = "green" if student.bunny_stream_video_id else "red"
                 return (
                     f'Interview Done '
@@ -835,6 +836,10 @@ def student_detail(request, zoho_lead_id):
     )
     browser_info = interview_link.browser_info if interview_link else None
     transcript_text = interview_link.transcript_text if interview_link and interview_link.transcript_text else "Transcript not available."
+      # ✅ Fetch exit details
+    exit_question_id = interview_link.exit_question_id if interview_link and interview_link.exit_question_id else None
+    exit_reason = interview_link.exit_reason if interview_link and interview_link.exit_reason else None
+
 
     breadcrumb_items = [
         {"name": "Dashboard", "url": reverse('admindashboard')},
@@ -849,5 +854,8 @@ def student_detail(request, zoho_lead_id):
         "breadcrumb_items": breadcrumb_items,
         
         "BUNNY_STREAM_LIBRARY_ID": settings.BUNNY_STREAM_LIBRARY_ID,
-        "browser_info": browser_info
+        "browser_info": browser_info,
+        "exit_question_id": exit_question_id,
+        "exit_reason": exit_reason
+
     })

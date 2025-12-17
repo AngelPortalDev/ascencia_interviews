@@ -145,7 +145,21 @@
                   loading="lazy"
                 ></iframe>
               </div>
-              <p>Browser Info: {{ browser_info|default:"N/A" }}</p>
+           
+              {% if browser_info %}
+                <p>Browser Info: {{ browser_info }}</p>
+              {% endif %}
+              {% if exit_question_id or exit_reason %}
+              <div style="margin-top:10px; padding:10px; background:#f1f1f1; border-left:4px solid #e74c3c; border-radius:5px;">
+                <strong>Details:</strong><br>
+                {% if exit_question_id %}
+                  Question ID: {{ exit_question_id }}<br>
+                {% endif %}
+                {% if exit_reason %}
+                  Reason: {{ exit_reason }}
+                {% endif %}
+              </div>
+            {% endif %}
             </div>
           </div>
 
