@@ -27,7 +27,7 @@ import { interviewAddVideoPath } from "../utils/fileUpload.js";
 import Logo from "../assest/Logo.png";
 import usePageUnloadHandler from "../hooks/usePageUnloadHandler.js";
 import { setNetworkErrorCallback } from "../utils/fileUpload.js";
-
+import useVisibilityWarning from '../hooks/useVisibilityWarning.js';
 
 // // Suppress specific AudioContext errors
 
@@ -113,19 +113,9 @@ const Questions = () => {
   const endCountdownStartedRef = useRef(false);
   const endCountdownStartedRefTwo = useRef(false);
   const hasHandledZeroRef = useRef(false);
+  const popstateHandlerRef = useRef(false);
   const isMobileOrIOS = () => /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-
-
-  // usePageReloadSubmit(
-  //   videoRef,
-  //   mediaRecorderRef,
-  //   audioRecorderRef,
-  //   recordedChunksRef,
-  //   recordedAudioChunksRef
-  // );
-
-  // usePageUnloadHandler(encodedLead, encodedLink);
 
 
 const reportInterviewExit = (reason) => {
@@ -224,6 +214,19 @@ const reportInterviewExit = (reason) => {
     countdown
 
   );
+
+   useVisibilityWarning(
+    safe_encoded_zoho_lead_id,
+    safe_encoded_interview_link_send_count,
+    currentQuestionIndex,
+    getQuestions
+  );
+
+  useEffect(() => {
+  if (activeQuestionId) {
+    sessionStorage.setItem("currentQuestionId", activeQuestionId);
+  }
+}, [activeQuestionId]);
 
   // usePageUnloadHandler(encoded_zoho_lead_id,encoded_interview_link_send_count);
   const navigate = useNavigate();
@@ -895,40 +898,90 @@ useEffect(() => {
 
   // Go back button via back button browser
 
+  // window.history.pushState(null, null, window.location.href);
+
+  // window.onpopstate = function () {
+  //   // Show the confirmation dialog
+  //   const userConfirmed = window.confirm(
+  //     "Are you sure you want to leave this page? Your interview process will not be saved..."
+  //   );
+
+  //   if (!userConfirmed) {
+  //     // If user cancels, push the current state again to block navigation
+  //     window.history.pushState(null, null, window.location.href);
+  //   } else {
+  //     if (safe_encoded_zoho_lead_id && safe_encoded_interview_link_send_count) {
+  //       reportInterviewExit("NAVIGATION_LEFT");
+  //       localStorage.clear();
+  //       sessionStorage.clear();
+  //       navigate(
+  //         `/interviewsubmitted?lead=${safe_encoded_zoho_lead_id}&link=${safe_encoded_interview_link_send_count}&reason=NAVIGATION_LEFT`
+  //       );
+  //     } else {
+  //       if (currentIndex === 0 || isNaN(currentIndex)) {
+  //         localStorage.clear();
+  //         sessionStorage.clear();
+  //         navigate("/goback");
+  //       } else {
+  //         localStorage.clear();
+  //         sessionStorage.clear();
+  //         navigate(
+  //           `/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}&reason=NAVIGATION_LEFT`
+  //         );
+  //       }
+  //     }
+  //   }
+  // };
+
+
+useEffect(() => {
+  if (popstateHandlerRef.current) return; 
+  
+  popstateHandlerRef.current = true;
+  
   window.history.pushState(null, null, window.location.href);
 
-  window.onpopstate = function () {
-    // Show the confirmation dialog
+  const handlePopState = () => {
     const userConfirmed = window.confirm(
       "Are you sure you want to leave this page? Your interview process will not be saved..."
     );
 
     if (!userConfirmed) {
-      // If user cancels, push the current state again to block navigation
       window.history.pushState(null, null, window.location.href);
     } else {
-      if (safe_encoded_zoho_lead_id && safe_encoded_interview_link_send_count) {
+      const isFirstQuestion = currentQuestionIndex === 0;
+
+      if (isFirstQuestion) {
+        localStorage.clear();
+        sessionStorage.clear();
+        navigate(
+          `/goback?lead=${safe_encoded_zoho_lead_id}&link=${safe_encoded_interview_link_send_count}`,
+          { replace: true }
+        );
+      } else {
         reportInterviewExit("NAVIGATION_LEFT");
         localStorage.clear();
         sessionStorage.clear();
         navigate(
-          `/interviewsubmitted?lead=${safe_encoded_zoho_lead_id}&link=${safe_encoded_interview_link_send_count}&reason=NAVIGATION_LEFT`
+          `/interviewsubmitted?lead=${safe_encoded_zoho_lead_id}&link=${safe_encoded_interview_link_send_count}&reason=NAVIGATION_LEFT`,
+          { replace: true }
         );
-      } else {
-        if (currentIndex === 0 || isNaN(currentIndex)) {
-          localStorage.clear();
-          sessionStorage.clear();
-          navigate("/goback");
-        } else {
-          localStorage.clear();
-          sessionStorage.clear();
-          navigate(
-            `/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}&reason=NAVIGATION_LEFT`
-          );
-        }
       }
     }
   };
+
+  window.addEventListener("popstate", handlePopState);
+
+  return () => {
+    window.removeEventListener("popstate", handlePopState);
+    popstateHandlerRef.current = false;
+  };
+}, [
+  safe_encoded_zoho_lead_id,
+  safe_encoded_interview_link_send_count,
+  currentQuestionIndex,
+  navigate,
+]);
 
   {
     showUploading && (
