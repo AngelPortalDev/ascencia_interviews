@@ -17,7 +17,7 @@ import InterviewPlayer from "./InterviewPlayer.js";
 import { toast } from "react-toastify";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { usePermission } from "../context/PermissionContext.js";
-import DeepgramLiveCaptions from "./DeepgramLiveCaptions.js";
+// import OpenAIRealtimeMicWS from "./OpenAIRealtimeMicWS.js";
 import {
   startRecording,
   stopRecording,
@@ -27,6 +27,39 @@ import { interviewAddVideoPath } from "../utils/fileUpload.js";
 import Logo from "../assest/Logo.png";
 import usePageUnloadHandler from "../hooks/usePageUnloadHandler.js";
 import { setNetworkErrorCallback } from "../utils/fileUpload.js";
+import useVisibilityWarning from '../hooks/useVisibilityWarning.js';
+
+// // Suppress specific AudioContext errors
+
+if (typeof window !== 'undefined') {
+  const originalError = window.console.error;
+  window.console.error = (...args) => {
+    const errorMsg = args[0]?.toString() || '';
+    if (
+      errorMsg.includes('AudioContext') ||
+      errorMsg.includes('close a closed') ||
+      errorMsg.includes('Audio context')
+    ) {
+      console.log('[Suppressed]', ...args);
+      return;
+    }
+    originalError.apply(console, args);
+  };
+
+  window.addEventListener('error', (event) => {
+    const errorMsg = event.message || event.error?.message || '';
+    if (
+      errorMsg.includes('AudioContext') ||
+      errorMsg.includes('close a closed') ||
+      errorMsg.includes('Audio context')
+    ) {
+      console.log('[Suppressed Runtime Error]:', errorMsg);
+      event.preventDefault();
+      event.stopPropagation();
+      return false;
+    }
+  }, true);
+}
 
 const Questions = () => {
 
@@ -80,21 +113,47 @@ const Questions = () => {
   const endCountdownStartedRef = useRef(false);
   const endCountdownStartedRefTwo = useRef(false);
   const hasHandledZeroRef = useRef(false);
+  const popstateHandlerRef = useRef(false);
   const isMobileOrIOS = () => /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 
 
-  // usePageReloadSubmit(
-  //   videoRef,
-  //   mediaRecorderRef,
-  //   audioRecorderRef,
-  //   recordedChunksRef,
-  //   recordedAudioChunksRef
-  // );
+const reportInterviewExit = (reason) => {
+  const zoho_lead_id =
+    sessionStorage.getItem("zoho_lead_id") || encoded_zoho_lead_id;
 
-  // usePageUnloadHandler(encodedLead, encodedLink);
+  const interview_link_count =
+    sessionStorage.getItem("interview_link_count") ||
+    encoded_interview_link_send_count;
 
-    useEffect(() => {
+  const exit_question_index = Number(
+    sessionStorage.getItem("currentQuestionIndex")
+  );
+
+  const payload = {
+    zoho_lead_id: atob(zoho_lead_id),
+    interview_link_count,
+    exit_question_index,
+    exit_question_id: exit_question_index,
+    exit_reason: reason,
+  };
+
+  if (!zoho_lead_id || !interview_link_count) {
+    console.warn("❌ Missing interview identifiers, exit not reported");
+    return;
+  }
+
+  navigator.sendBeacon(
+    `${process.env.REACT_APP_API_BASE_URL}interveiw-section/interview-exit/`,
+    JSON.stringify(payload)
+  );
+};
+
+
+
+
+  // For Safri reload detection
+  useEffect(() => {
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
     if (!isSafari) return;
 
@@ -119,6 +178,25 @@ const Questions = () => {
     }
   }, [safe_encoded_zoho_lead_id, safe_encoded_interview_link_send_count]);
 
+// Enhanced network status monitoring
+  useEffect(() => {
+    
+    const handleOffline = () => {
+      console.log(' Connection lost');
+      setNetworkError({
+        type: 'network_error',
+        error: 'Your internet connection was lost. Please check your connection.'
+      });
+    };
+    
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+    
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [networkError]);
+
   // Setup network error callback
   useEffect(() => {
     setNetworkErrorCallback((errorData) => {
@@ -130,8 +208,25 @@ const Questions = () => {
 
   usePageUnloadHandler(
     safe_encoded_zoho_lead_id,
-    safe_encoded_interview_link_send_count
+    safe_encoded_interview_link_send_count,
+    getQuestions,
+    currentQuestionIndex,
+    countdown
+
   );
+
+   useVisibilityWarning(
+    safe_encoded_zoho_lead_id,
+    safe_encoded_interview_link_send_count,
+    currentQuestionIndex,
+    getQuestions
+  );
+
+  useEffect(() => {
+  if (activeQuestionId) {
+    sessionStorage.setItem("currentQuestionId", activeQuestionId);
+  }
+}, [activeQuestionId]);
 
   // usePageUnloadHandler(encoded_zoho_lead_id,encoded_interview_link_send_count);
   const navigate = useNavigate();
@@ -213,6 +308,12 @@ const Questions = () => {
   // Store countdown in the sessionstorage for resuem resume
   useEffect(() => {
     // Stop the timer if countdown reaches 0 or during loading
+
+      // if (networkError) {
+      //   return;
+      // }
+
+
     if (countdown <= 0 || loading) {
       return;
     }
@@ -286,7 +387,7 @@ const Questions = () => {
     } else if (countdown === 0 && toastId.current) {
       toastId.current = null;
     }
-  }, [countdown]);
+  }, [countdown,networkError]);
 
   // ************* Get First Question id *********
 
@@ -369,10 +470,13 @@ const Questions = () => {
       setActiveQuestionId(newQuestionId);
     }
 
-    if (toastId.current) {
-      toast.dismiss(toastId.current);
-      toastId.current = null;
-    }
+     if (networkError) {
+      if (toastId.current) {
+        toast.dismiss(toastId.current);
+        toastId.current = null;
+      }
+      return; // Stop the countdown completely
+  }
 
     try {
       await stopRecording(
@@ -452,84 +556,16 @@ const Questions = () => {
     encoded_interview_link_send_count,
   ]);
 
-  const handleSubmitNew = useCallback(async () => {
-    setLoading(true); // Show loading spinner
-
-    const newQuestionId = getQuestions[currentQuestionIndex]?.encoded_id;
-    console.log("newQuestionId", newQuestionId);
-    if (!newQuestionId) {
-      console.error("Error: newQuestionId is undefined or invalid.");
-      setLoading(false);
-      return;
-    }
-
-    if (newQuestionId !== activeQuestionId) {
-      setActiveQuestionId(newQuestionId);
-    }
-
-    try {
-      // Wait for recording to stop and trigger upload
-      await stopRecording(
-        videoRef,
-        mediaRecorderRef,
-        audioRecorderRef,
-        recordedChunksRef,
-        recordedAudioChunksRef,
-        setVideoFilePath,
-        setAudioFilePath,
-        zoho_lead_id,
-        activeQuestionId,
-        last_question_id,
-        async () => {
-          // ✅ Call API to upload final video/audio
-          const response = await interviewAddVideoPath(
-            videoFilePath,
-            audioFilePath,
-            zoho_lead_id,
-            newQuestionId,
-            last_question_id
-          );
-
-          console.log("Final response after last question:", response);
-          console.log("newQuestionId", newQuestionId);
-          console.log("last_question_id", last_question_id);
-
-          if (newQuestionId === last_question_id) {
-            console.log("✅ All done. Navigating to /interviewsubmitted...");
-            localStorage.setItem("interviewSubmitted", "true");
-            submitExam();
-            localStorage.clear();
-            sessionStorage.clear();
-            // navigate("/interviewsubmitted");
-            navigate(
-              `/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`
-            );
-          } else {
-            console.error("Upload failed or incomplete:", response);
-            // optionally show an error screen or retry
-          }
-        }
-      );
-    } catch (error) {
-      console.error("Error in handleSubmitNew:", error);
-    } finally {
-      setLoading(false); // Hide loading only after all operations
-    }
-  }, [
-    activeQuestionId,
-    getQuestions,
-    currentQuestionIndex,
-    last_question_id,
-    submitExam,
-    zoho_lead_id,
-    videoFilePath,
-    audioFilePath,
-    navigate,
-  ]);
 
   // ************* Handle Countdown *************
 useEffect(() => {
   const handleNextQuestion = async () => {
+
+    if (networkError) {
+      console.log(' Network error exists - skipping question transition');
+      return;
+    }
+
     const currentQId = getQuestions[currentQuestionIndex]?.encoded_id;
     const isLastQuestion = currentQId === last_question_id;
 
@@ -862,39 +898,90 @@ useEffect(() => {
 
   // Go back button via back button browser
 
+  // window.history.pushState(null, null, window.location.href);
+
+  // window.onpopstate = function () {
+  //   // Show the confirmation dialog
+  //   const userConfirmed = window.confirm(
+  //     "Are you sure you want to leave this page? Your interview process will not be saved..."
+  //   );
+
+  //   if (!userConfirmed) {
+  //     // If user cancels, push the current state again to block navigation
+  //     window.history.pushState(null, null, window.location.href);
+  //   } else {
+  //     if (safe_encoded_zoho_lead_id && safe_encoded_interview_link_send_count) {
+  //       reportInterviewExit("NAVIGATION_LEFT");
+  //       localStorage.clear();
+  //       sessionStorage.clear();
+  //       navigate(
+  //         `/interviewsubmitted?lead=${safe_encoded_zoho_lead_id}&link=${safe_encoded_interview_link_send_count}&reason=NAVIGATION_LEFT`
+  //       );
+  //     } else {
+  //       if (currentIndex === 0 || isNaN(currentIndex)) {
+  //         localStorage.clear();
+  //         sessionStorage.clear();
+  //         navigate("/goback");
+  //       } else {
+  //         localStorage.clear();
+  //         sessionStorage.clear();
+  //         navigate(
+  //           `/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}&reason=NAVIGATION_LEFT`
+  //         );
+  //       }
+  //     }
+  //   }
+  // };
+
+
+useEffect(() => {
+  if (popstateHandlerRef.current) return; 
+  
+  popstateHandlerRef.current = true;
+  
   window.history.pushState(null, null, window.location.href);
 
-  window.onpopstate = function () {
-    // Show the confirmation dialog
+  const handlePopState = () => {
     const userConfirmed = window.confirm(
       "Are you sure you want to leave this page? Your interview process will not be saved..."
     );
 
     if (!userConfirmed) {
-      // If user cancels, push the current state again to block navigation
       window.history.pushState(null, null, window.location.href);
     } else {
-      if (encoded_zoho_lead_id && encoded_interview_link_send_count) {
+      const isFirstQuestion = currentQuestionIndex === 0;
+
+      if (isFirstQuestion) {
         localStorage.clear();
         sessionStorage.clear();
         navigate(
-          `/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}&reason=NAVIGATION_LEFT`
+          `/goback?lead=${safe_encoded_zoho_lead_id}&link=${safe_encoded_interview_link_send_count}`,
+          { replace: true }
         );
       } else {
-        if (currentIndex === 0 || isNaN(currentIndex)) {
-          localStorage.clear();
-          sessionStorage.clear();
-          navigate("/goback");
-        } else {
-          localStorage.clear();
-          sessionStorage.clear();
-          navigate(
-            `/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}&reason=NAVIGATION_LEFT`
-          );
-        }
+        reportInterviewExit("NAVIGATION_LEFT");
+        localStorage.clear();
+        sessionStorage.clear();
+        navigate(
+          `/interviewsubmitted?lead=${safe_encoded_zoho_lead_id}&link=${safe_encoded_interview_link_send_count}&reason=NAVIGATION_LEFT`,
+          { replace: true }
+        );
       }
     }
   };
+
+  window.addEventListener("popstate", handlePopState);
+
+  return () => {
+    window.removeEventListener("popstate", handlePopState);
+    popstateHandlerRef.current = false;
+  };
+}, [
+  safe_encoded_zoho_lead_id,
+  safe_encoded_interview_link_send_count,
+  currentQuestionIndex,
+  navigate,
+]);
 
   {
     showUploading && (
@@ -985,8 +1072,8 @@ useEffect(() => {
   // Network error page
   if (networkError) {
     return (
-      <div className="relative min-h-screen bg-gradient-to-r from-red-50 to-red-100 flex items-center justify-center">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+      <div className="relative min-h-screen bg-white flex items-center justify-center">
+        <div className="max-w-md w-full rounded-lg shadow-lg p-8 connectionlostbgcard">
           <div className="text-center">
             <div className="mb-4">
               <img src={branding.logo} alt="AI Software" className="h-16 mx-auto" />
@@ -1138,6 +1225,7 @@ useEffect(() => {
           >
              {/* <DeepgramLiveCaptions
               /> */}
+              {/* <OpenAIRealtimeMicWS /> */}
           </div>
           <div className="col-span-12 md:col-span-3 bg-white p-2 rounded-xl pt-0 sm:mt-2 text-black interviewPlayer">
             {interviewPlayerMemo}

@@ -491,7 +491,8 @@ def students_leads_api(request):
         email = request.POST.get('Email')
         phone = request.POST.get('Phone')
         dob = request.POST.get('DOB')
-        formatted_date = ""
+        # formatted_date = ""
+        formatted_date = None
         if dob:  # ✅ Only parse if dob is provided and not empty
             try:
                 date_object = datetime.strptime(dob, "%m-%d-%Y")
@@ -743,21 +744,24 @@ def students_list(request):
         #     return "Pending"
 
         def get_interview_status(student):
-            # Get latest link from pre-fetched map
             link = link_map.get(student.zoho_lead_id)
 
             if not link:
                 return "Not Sent"
 
-            # 1️⃣ Expired check
+            # 1️⃣ Interview attended → FINAL STATUS
+            if link.get('interview_attend') is True:
+                color = "green" if student.bunny_stream_video_id else "red"
+                return (
+                    f'Interview Done '
+                    f'<span style="display:inline-block;width:8px;height:8px;'
+                    f'background-color:{color};border-radius:50%;margin-left:4px;"></span>'
+                )
+
+            # 2️⃣ Expired only if NOT attended
             expires_at = link.get('expires_at')
             if expires_at and expires_at < timezone.now():
                 return "Expired"
-
-            # 2️⃣ Interview done check
-            if link.get('interview_attend'):
-                color = "green" if student.bunny_stream_video_id else "red"
-                return f'Interview Done <span style="display:inline-block;width:8px;height:8px;background-color:{color};border-radius:50%;margin-left:4px;"></span>'
 
             # 3️⃣ First / Second link
             count = link.get('interview_link_count')
@@ -765,13 +769,8 @@ def students_list(request):
                 return "First Link Active"
             if count == "Mg==":
                 return "Second Link Active"
-
             # 4️⃣ Default
             return "Pending"
-
-
-
-
 
         def format_student_data(queryset):
             return [
@@ -837,6 +836,10 @@ def student_detail(request, zoho_lead_id):
     )
     browser_info = interview_link.browser_info if interview_link else None
     transcript_text = interview_link.transcript_text if interview_link and interview_link.transcript_text else "Transcript not available."
+      # ✅ Fetch exit details
+    exit_question_id = interview_link.exit_question_id if interview_link and interview_link.exit_question_id else None
+    exit_reason = interview_link.exit_reason if interview_link and interview_link.exit_reason else None
+
 
     breadcrumb_items = [
         {"name": "Dashboard", "url": reverse('admindashboard')},
@@ -851,5 +854,8 @@ def student_detail(request, zoho_lead_id):
         "breadcrumb_items": breadcrumb_items,
         
         "BUNNY_STREAM_LIBRARY_ID": settings.BUNNY_STREAM_LIBRARY_ID,
-        "browser_info": browser_info
+        "browser_info": browser_info,
+        "exit_question_id": exit_question_id,
+        "exit_reason": exit_reason
+
     })

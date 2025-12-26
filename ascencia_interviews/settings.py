@@ -30,7 +30,7 @@ FFMPEG_PATH = os.environ["FFMPEG_PATH"]
 FFMPEG_PROBE = os.environ["FFMPEG_PROBE"]  
 UPLOADS_FOLDER = os.environ["UPLOADS_FOLDER"]
 FONT_PATH = os.environ["FONT_PATH"]
-
+DAILY_API_KEY = os.environ["REACT_APP_DAILY_API_KEY"]
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
@@ -205,7 +205,7 @@ LOGIN_URL = '/login'
 
 # ADMIN_BASE_URL = "https://bb91-103-71-112-194.ngrok-free.app"
 
-ADMIN_BASE_URL = "https://ascencia-interview.com"
+ADMIN_BASE_URL = os.environ["ADMIN_BASE_URL"]
 
 BUNNY_STREAM_API_KEY = os.getenv("BUNNY_STREAM_API_KEY")
 BUNNY_STREAM_LIBRARY_ID = os.getenv("BUNNY_STREAM_LIBRARY_ID")
@@ -268,9 +268,9 @@ Q_CLUSTER = {
 
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://ascencia-interview.com",
-    "https://bb91-103-71-112-194.ngrok-free.app",
+    os.environ["CSRF_TRUSTED_ORIGINS"]
 ]
+CORS_ALLOW_CREDENTIALS = True
 
 CSRF_COOKIE_SECURE = True 
 CSRF_COOKIE_SAMESITE = 'None'

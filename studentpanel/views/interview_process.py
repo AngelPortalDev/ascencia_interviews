@@ -597,3 +597,36 @@ def get_branding_by_zoho_id(request):
         return JsonResponse({"error": "Student not found"}, status=404)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+    
+@csrf_exempt
+def report_interview_exit(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid request method"}, status=405)
+
+    try:
+        data = json.loads(request.body)
+    except Exception:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    zoho_lead_id = data.get("zoho_lead_id")
+    if not zoho_lead_id:
+        return JsonResponse({"error": "zoho_lead_id is required"}, status=400)
+
+    # Convert to integer if DB field is BigInteger
+    try:
+        zoho_lead_id = int(zoho_lead_id)
+    except (TypeError, ValueError):
+        return JsonResponse({"error": "Invalid zoho_lead_id"}, status=400)
+
+    link = StudentInterviewLink.objects.filter(
+        zoho_lead_id=zoho_lead_id
+    ).order_by("-id").first()
+
+    if not link:
+        return JsonResponse({"error": "Interview link not found"}, status=404)
+
+    link.exit_question_id = data.get("exit_question_id")
+    link.exit_reason = data.get("exit_reason")
+    link.save()
+
+    return JsonResponse({"status": True, "message": "Exit reported successfully"})

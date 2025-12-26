@@ -50,6 +50,8 @@ class StudentInterviewLink(models.Model):
         blank=True,
         help_text="Stores student's browser name and version"
     )
+    exit_question_id = models.CharField(max_length=255, null=True, blank=True)
+    exit_reason = models.CharField(max_length=255, null=True, blank=True)
     def save(self, *args, **kwargs):
         """Ensure expiration logic is applied before saving."""
         if self.expires_at <= now():
