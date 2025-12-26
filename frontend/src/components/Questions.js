@@ -17,7 +17,7 @@ import InterviewPlayer from "./InterviewPlayer.js";
 import { toast } from "react-toastify";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { usePermission } from "../context/PermissionContext.js";
-import OpenAIRealtimeMicWS from "./OpenAIRealtimeMicWS.js";
+// import OpenAIRealtimeMicWS from "./OpenAIRealtimeMicWS.js";
 import {
   startRecording,
   stopRecording,
@@ -1225,7 +1225,7 @@ useEffect(() => {
           >
              {/* <DeepgramLiveCaptions
               /> */}
-              <OpenAIRealtimeMicWS />
+              {/* <OpenAIRealtimeMicWS /> */}
           </div>
           <div className="col-span-12 md:col-span-3 bg-white p-2 rounded-xl pt-0 sm:mt-2 text-black interviewPlayer">
             {interviewPlayerMemo}

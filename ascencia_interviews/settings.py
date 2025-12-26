@@ -30,7 +30,7 @@ FFMPEG_PATH = os.environ["FFMPEG_PATH"]
 FFMPEG_PROBE = os.environ["FFMPEG_PROBE"]  
 UPLOADS_FOLDER = os.environ["UPLOADS_FOLDER"]
 FONT_PATH = os.environ["FONT_PATH"]
-
+DAILY_API_KEY = os.environ["REACT_APP_DAILY_API_KEY"]
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
