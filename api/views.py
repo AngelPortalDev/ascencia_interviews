@@ -1598,7 +1598,7 @@ def interview_create(request):
             return JsonResponse({"error": "Unauthorized"}, status=401)
 
         token = auth_header.split(" ")[1]
-        expected_token = config("Interview_API_Secret_Key")
+        expected_token = config("INTERVIEW_API_SECRET_KEY")
 
         if token != expected_token:
             return JsonResponse({"error": "Invalid token"}, status=403)
