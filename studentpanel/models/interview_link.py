@@ -13,6 +13,11 @@ class InterviewResult(Enum):
 class StudentInterviewLink(models.Model):
     zoho_lead_id = models.CharField(max_length=255, help_text="Unique identifier from Zoho CRM")
     interview_link = models.URLField(help_text="Interview link for the student")
+    # Daily.co recording fields
+    recording_id = models.CharField(max_length=255, null=True, blank=True, help_text="Daily.co recording id")
+    recording_json = models.JSONField(null=True, blank=True, help_text="Raw recording JSON from Daily.co stop response")
+    recording_files = models.JSONField(null=True, blank=True, help_text="List of raw file paths and metadata")
+    process_status = models.CharField(max_length=50, null=True, blank=True, help_text="Processing status: created/downloaded/compressed/failed")
     created_at = models.DateTimeField(auto_now_add=True, help_text="Timestamp when the link was generated")
     expires_at = models.DateTimeField(default=default_expiry, help_text="Expiration timestamp (48 hours after creation)")
     interview_attend = models.BooleanField(default=False, help_text="Indicates if the student attended the interview")
