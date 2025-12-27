@@ -1,5 +1,6 @@
 from django.urls import path
-from .views import (
+
+from .services.daily_co import (
     get_daily_token,
     start_daily_recording,
     stop_daily_recording
