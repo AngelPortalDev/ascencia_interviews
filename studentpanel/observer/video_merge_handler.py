@@ -487,6 +487,7 @@ def build_qa_blocks_with_paths(ordered_questions, answers_qid_map, uploads_folde
     return qa_blocks
 
 def merge_videos(zoho_lead_id,interview_link_count=None):
+    time.sleep(10)
     logger.info("[MERGE TRIGGERED] zoho_lead_id=%s", zoho_lead_id)
     uploads_folder = os.path.join(get_uploads_folder(), zoho_lead_id)
     logging.info("uploads_folder: %s", uploads_folder)

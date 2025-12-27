@@ -37,6 +37,8 @@ import pytz
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 from studentpanel.models.student_Interview_status import StudentInterview
+
+from studentpanel.models.student_interview_answer import StudentInterviewAnswers
 from django.core.mail import send_mail
 import logging
 from django.core.mail import EmailMultiAlternatives
@@ -45,7 +47,10 @@ from datetime import timedelta
 
 from adminpanel.helper.email_branding import get_email_branding
 
-
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from django_q.tasks import async_task
 from decouple import config
 import uuid
 import time
@@ -248,6 +253,10 @@ def name_match_ratio(name1, name2):
 
 
 def update_zoho_lead(crm_id, lead_id, update_data):
+      # ✅ Skip Zoho update for specific CRM ID
+    if crm_id == "771809604":
+        logging.info(f"CRM ID {crm_id} → Zoho update skipped intentionally")
+        return True
     try:
         access_token = ZohoAuth.get_access_token(crm_id)  # Ensure a fresh token
         url = f"https://www.zohoapis.com/crm/v2/Leads/{lead_id}"
@@ -1579,124 +1588,127 @@ def schedule_reminders_for_all():
 
     if not students_24h.exists() and not students_1h.exists():
         print(">>> No students found for any reminders <<<")
-        
 
 @csrf_exempt
 def interview_create(request):
-    auth_header = request.headers.get("Authorization")
-
-     # 🔍 DEBUG PRINTS (TEMPORARY)
-    print("Authorization Header:", auth_header)
-    print("ENV API KEY:", config("Interview_API_SECRET_KEY"))
-
-    if not auth_header or not auth_header.startswith("Bearer "):
-        return JsonResponse({"error": "Unauthorized"}, status=401)
-
-    token = auth_header.split(" ")[1]
-    print("TOKEN FROM HEADER:", token)
-
-    if token != config("Interview_API_SECRET_KEY"):
-        return JsonResponse({"error": "Invalid token"}, status=403)
-    
-    data = json.loads(request.body.decode("utf-8")) if request.body else {}
-
-    print("DATA:", data)
-
-    return JsonResponse({"status": True, "data": data}, status=200)
-    
-    # data = request.data
-
-
-
-
-
-DAILY_API_URL = "https://api.daily.co/v1"
-
-
-@csrf_exempt
-def get_daily_token(request):
-    if request.method != "POST":
-        return JsonResponse({"error": "Only POST allowed"}, status=405)
-
     try:
-        body = json.loads(request.body.decode("utf-8"))
-    except Exception:
-        body = {}
+        auth_header = request.headers.get("Authorization", "")
 
-    # unique room every time (important)
-    room_name = f"interview-{uuid.uuid4()}"
+        if not auth_header.startswith("Bearer "):
+            return JsonResponse({"error": "Unauthorized"}, status=401)
 
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {settings.DAILY_API_KEY}",
-    }
+        token = auth_header.split(" ")[1]
+        expected_token = config("Interview_API_Secret_Key")
 
-    # -------------------------------
-    # 1️⃣ Create Room
-    # -------------------------------
-    room_payload = {
-        "name": room_name,
-        "properties": {
-            "enable_recording": "cloud",
-            "max_participants": 1,
-            "exp": int(time.time()) + 3600,  # 1 hour
-            "enable_chat": False,
-            "enable_screenshare": False,
-        },
-    }
+        if token != expected_token:
+            return JsonResponse({"error": "Invalid token"}, status=403)
 
-    room_res = requests.post(
-        f"{DAILY_API_URL}/rooms",
-        headers=headers,
-        json=room_payload,
-    )
+        # ====== STEP 5: Parse Request Body ======
+        data = json.loads(request.body.decode("utf-8")) if request.body else {}
 
-    if room_res.status_code not in [200, 201]:
-        return JsonResponse(
-            {
-                "error": "Room creation failed",
-                "details": room_res.text,
-            },
-            status=500,
+        # ====== STEP 6: Normalize and Validate Required Fields ======
+        if "zoho_lead_id" not in data and "zoholeadid" in data:
+            data["zoho_lead_id"] = data["zoholeadid"]
+
+        if "zoho_lead_id" not in data:
+            return JsonResponse(
+                {"error": "Missing: zoho_lead_id (or zoholeadid)"},
+                status=400
+            )
+
+        # ====== STEP 7: Prepare Student Data ======
+        student_defaults = {
+            "first_name": data.get("first_name", ""),
+            "last_name": data.get("last_name", ""),
+            "email": data.get("email", ""),
+            "phone": data.get("phone", ""),
+            "program": data.get("program", ""),
+            "crm_id": data.get("crm_id", "") or "771809604",
+            "intake_year": data.get("intake_year", ""),
+            "intake_month": data.get("intake_month", ""),
+            "dob": data.get("dob", None),
+            "student_manager_email": data.get("student_manager_email", "") or "vaibhav@yopmail.com",
+            "student_id": data.get("student_id", ""),
+            "interview_process": data.get("interview_process", ""),
+        }
+
+        # ====== STEP 8: Save/Update Student ======
+        zoho_lead_id = data["zoho_lead_id"]
+
+        student, created = Students.objects.update_or_create(
+            zoho_lead_id=zoho_lead_id,
+            defaults=student_defaults
         )
 
-    room_data = room_res.json()
+        # ====== STEP 9: Wait for Observer Signal ======
+        time.sleep(1)
 
-    # -------------------------------
-    # 2️⃣ Create Meeting Token
-    # -------------------------------
-    token_payload = {
-        "properties": {
-            "room_name": room_name,
-            "is_owner": True,
-            "exp": int(time.time()) + 3600,
+        # ====== STEP 10: Fetch Interview Link ======
+        try:
+            interview_link = StudentInterviewLink.objects.get(
+                zoho_lead_id=zoho_lead_id
+            )
+
+            interview_url = interview_link.interview_link
+
+            # ====== STEP 11: Determine Interview Status ======
+            bunny_id = student.bunny_stream_video_id
+            interview_attend = interview_link.interview_attend
+
+                # 1️⃣ Interview fully completed (HIGHEST PRIORITY)
+            if interview_attend and bunny_id:
+                interview_status = "Interview Done"
+                bunny_url = f"https://video.bunnycdn.com/play/{settings.BUNNY_STREAM_LIBRARY_ID}/{bunny_id}"
+
+            # 2️⃣ Interview expired (only if NOT completed)
+            elif interview_link.is_expired:
+                interview_status = "Expired"
+                bunny_url = None
+
+            # 3️⃣ Interview submitted but merge running
+            elif interview_attend:
+                interview_status = "Processing"
+                bunny_url = None
+
+            # 4️⃣ Interview link active
+            else:
+                interview_status = "Link Active"
+                bunny_url = None
+
+
+            # ====== STEP 12: Format Expiry Date ======
+            tz = pytz.timezone("Europe/Malta")
+            expires_local = localtime(
+                interview_link.expires_at
+            ).astimezone(tz)
+
+            expires_str = expires_local.strftime("%Y-%m-%d %H:%M:%S")
+
+        except StudentInterviewLink.DoesNotExist:
+            return JsonResponse(
+                {"error": "Interview link not created yet"},
+                status=500
+            )
+
+        # ====== STEP 13: Build Response ======
+        response_data = {
+            "status": "success",
+            "interview_url": interview_url,
+            "expires_at": expires_str,
+            "interview_status": interview_status,
+            "bunny_stream_video_url": bunny_url
         }
-    }
 
-    token_res = requests.post(
-        f"{DAILY_API_URL}/meeting-tokens",
-        headers=headers,
-        json=token_payload,
-    )
+        return JsonResponse(response_data, status=200)
 
-    if token_res.status_code != 200:
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    except Exception as e:
+        logger.error(f"interview_create error: {str(e)}")
         return JsonResponse(
-            {
-                "error": "Token creation failed",
-                "details": token_res.text,
-            },
-            status=500,
+            {"status": "error", "error": str(e)},
+            status=500
         )
 
-    token_data = token_res.json()
 
-    # -------------------------------
-    # 3️⃣ Return to frontend
-    # -------------------------------
-    return JsonResponse(
-        {
-            "room_name": room_name,
-            "room_url": room_data.get("url"),
-            "token": token_data.get("token"),
-        }
-    )

@@ -20,76 +20,56 @@ from adminpanel.utils import send_email
 import base64
 from datetime import timedelta
 from django.contrib.auth.models import User
-
+from django_q.tasks import async_task
+import requests
 process_queue = Queue()
 lock = threading.Lock()
 
 from adminpanel.helper.email_branding import get_email_branding
 
+
 class APIDataFetcher:
     def notify(self, publisher):
+        crm_id = publisher.crm_id
+        API_TOKEN = None
 
-        # API_URL = f"https://www.zohoapis.com/crm/v2/Leads/{publisher.zoho_lead_id}/Attachments"
+        # 1️⃣ Generate Zoho token only if CRM ID is configured
+        if crm_id and crm_id in ZohoAuth.ZOHO_CREDENTIALS:
+            try:
+                API_TOKEN = ZohoAuth.get_access_token(crm_id)
+                print(f"✅ Zoho token generated for CRM ID {crm_id}")
+            except Exception as e:
+                print(f"❌ Zoho token failed for CRM ID {crm_id}: {e}")
+        else:
+            print(f"⚠️ CRM ID {crm_id} not configured → Skipping Zoho API")
+            API_TOKEN = None
 
-        API_URL = f"https://www.zohoapis.com/crm/v2/Leads/{publisher.zoho_lead_id}"
+        # 2️⃣ Call Zoho API only if token exists
+        if API_TOKEN:
+            try:
+                API_URL = f"https://www.zohoapis.com/crm/v2/Leads/{publisher.zoho_lead_id}"
+                headers = {
+                    "Authorization": f"Bearer {API_TOKEN}",
+                    "Content-Type": "application/json"
+                }
+                response = requests.get(API_URL, headers=headers, timeout=10)
+                response.raise_for_status()
+                data = response.json()
+                print("✅ Zoho data fetched")
+            except requests.RequestException as e:
+                print(f"❌ Zoho API failed: {e}")
+        else:
+            print("ℹ️ Zoho API skipped (no token)")
 
-        # API_TOKEN = ZohoAuth.get_access_token()
-        # print(r'API_TOKEN:', API_TOKEN)
-
-        zoho_lead_id = publisher.zoho_lead_id
-        # if zoho_lead_id == '5204268000112707003':
-        # if zoho_lead_id in ['5204268000112707003', '5204268000116210079']:
-        crm_id = publisher.crm_id 
-        API_TOKEN = ZohoAuth.get_access_token(crm_id)
-            # API_TOKEN = ZohoAuth.get_access_token()
-        print(r'API_TOKEN:', API_TOKEN)
-        # else:
-        #     raise ValueError("Invalid Zoho Lead ID. Access token generation is not allowed.")
-
-
-        headers = {
-            "Authorization": f"Bearer {API_TOKEN}",
-            "Content-Type": "application/json"
-        }
-
-        try:
-            response = requests.get(API_URL, headers=headers)
-            response.raise_for_status()
-            data = response.json()
-            # count = len(data['data'])
-            
-            # if data.get('data') and len(data['data']) > 0:
-            #     highest_education_doc = data['data'][0].get('Highest_Education_Doc', [])
-
-                # if highest_education_doc: 
-                #     attachment_Id = data['data'][0]['Highest_Education_Doc'][0]['attachment_Id']
-                #     file_Id = data['data'][0]['Highest_Education_Doc'][0]['file_Id']
-                #     file_Name = data['data'][0]['Highest_Education_Doc'][0]['file_Name']
-
-                #     # for item in data['data']:
-                #         # file_id = item['$file_id']
-                #         # parent_id = item['Parent_Id']['id']
-                #         # file_name = item['File_Name']
-
-                #     encoded_file_name = quote(file_Name)
-
-                #     file_url = (
-                #         f"https://crm.zoho.com/crm/org{publisher.crm_id}/ViewAttachment?"
-                #         f"fileId={file_Id}&module=Leads&parentId={publisher.zoho_lead_id}&id={attachment_Id}"
-                #         f"&name={encoded_file_name}&downLoadMode=pdfViewPlugin"
-                #     )
-                    # process_queue.put((file_url, publisher, API_TOKEN))
-                    # process_documents()
-                    # if zoho_lead_id in ['5204268000112707003', '5204268000116210079']:
-                # if publisher.mindee_verification_status != 'Inprogress':
-                #     # publisher.mindee_verification_status = 'Inprogress'
-                #     # publisher.save(update_fields=['mindee_verification_status']) 
-                #     time.sleep(10)
-            async_task("adminpanel.observer.document_check_observer.process_documents_task", publisher, API_TOKEN)
+        # 3️⃣ Always trigger Observer task to create interview link
+        async_task(
+            "adminpanel.observer.document_check_observer.process_documents_task",
+            publisher,
+            API_TOKEN  # can be None
+        )
+        print("✅ Observer task triggered (interview link creation)")
 
 
-        except requests.RequestException as e:
-            print(f"❌ API request failed: {e}")
 
 # def process_documents():
 #     """Manages the document processing queue to avoid overload."""
@@ -181,7 +161,7 @@ def process_documents_task(publisher, API_TOKEN):
         "program": publisher.program,
         "zoho_lead_id": publisher.zoho_lead_id,
         "crm_id": publisher.crm_id,
-        "API_TOKEN": API_TOKEN,
+        "API_TOKEN": API_TOKEN or "",
     }
     # files = {"document": (file_url, file_response.content, "application/pdf")}
 
