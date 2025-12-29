@@ -47,6 +47,7 @@ const Questions = () => {
   const isTransitioningRef = useRef(false);
 
   const location = useLocation();
+  const navigate = useNavigate();
 
   // ================= SWIPER REF =================
   const swiperRef = useRef(null);
@@ -429,7 +430,10 @@ const Questions = () => {
 
         if (next <= 0) {
           clearInterval(completionTimerRef.current);
-          window.location.href = `/interviewsubmitted?lead=${encoded_zoho_lead_id}`;
+          // window.location.href = `/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`;
+          navigate(
+        `/interviewsubmitted?lead=${encoded_zoho_lead_id}&link=${encoded_interview_link_send_count}`
+      );
           return 0;
         }
 
@@ -559,11 +563,11 @@ const Questions = () => {
   // ================= ERROR =================
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="bg-white p-6 rounded max-w-md">
-          <p className="text-red-500 mb-4">{error}</p>
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+          <p className="text-red-500 mb-4 text-center">{error}</p>
           <button
-            className="bg-pink-500 text-white px-4 py-2 rounded w-full"
+            className="bg-pink-500 text-white px-4 py-2 rounded w-full hover:bg-pink-600 transition-colors"
             onClick={() => window.location.reload()}
           >
             Retry
@@ -576,8 +580,11 @@ const Questions = () => {
   // ================= LOADING QUESTIONS =================
   if (!questions.length) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white">
-        Loading interview...
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 via-purple-50 to-pink-100">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-700 text-lg">Loading interview...</p>
+        </div>
       </div>
     );
   }
@@ -589,138 +596,189 @@ const Questions = () => {
 
   const shouldShowLoadingOverlay = isTransitioning || !isTimerActive;
 
+
+
   // ================= UI =================
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-pink-400 to-purple-500">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between text-white mb-6">
-          <h3 className="text-black text-xl sm:text-2xl mb-2">
-            <img src={Logo} alt="AI Software" className="h-16 sm:h-16" />
-          </h3>
-          <div className="flex items-center gap-2">
-            <span
-              className={`text-lg font-semibold ${
-                countdown <= 10 ? "text-red-300" : ""
-              }`}
-            >
-              ⏱ {formatTime(countdown)}
-            </span>
-          </div>
-        </div>
+    <div className="min-h-screen w-full bg-gradient-to-br from-pink-50 via-purple-50 to-pink-100 relative overflow-hidden">
+      <div className="w-full h-full flex flex-col">
+        {/* Header with Logo and Timer */}
+        <div className="w-full px-3 py-3 sm:px-6 sm:py-4">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex justify-between items-center gap-2">
+              {/* Logo */}
+              <div className="flex items-center flex-shrink-0">
+                <img 
+                  src={Logo} 
+                  alt="AI Software" 
+                  className="h-10 xs:h-10 sm:h-12 md:h-16 w-auto object-contain" 
+                />
+              </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-white p-6 rounded-xl">
-            {/* SWIPER CONTAINER */}
-            <Swiper
-              modules={[Navigation, Pagination]}
-              spaceBetween={30}
-              slidesPerView={1}
-              allowTouchMove={false}
-              onSwiper={(swiper) => {
-                swiperRef.current = swiper;
-              }}
-              onSlideChange={handleSlideChange}
-              navigation={{
-                prevEl: ".swiper-button-prev-custom",
-                nextEl: ".swiper-button-next-custom",
-              }}
-              allowSlidePrev={false}
-              simulateTouch={false}
-              resistanceRatio={0}
-              className="mb-6"
-            >
-              {questions.map((question, index) => (
-                <SwiperSlide key={question.encoded_id || index}>
-                  <div className="flex-col flex items-center">
-                    <h2 className="text-xl font-bold">{question.question}</h2>
-                    <p className="text-sm mb-2 mt-5">
-                      Question {currentQuestionIndex + 1} of {questions.length}
-                    </p>
-                  </div>
-                </SwiperSlide>
-              ))}
-            </Swiper>
-
-            <button
-              onClick={handleNext}
-              disabled={!isNextEnabled}
-              className={`bg-pink-500 text-white py-3 rounded w-full
-                  ${!isNextEnabled ? "opacity-40 cursor-not-allowed" : ""}
-                `}
-            >
-              Next
-            </button>
-
-            {/* NAVIGATION BUTTONS */}
-            <div className="flex gap-4 mt-4">
-              <button
-                className="swiper-button-prev-custom bg-gray-300 text-gray-500 py-3 rounded cursor-not-allowed opacity-50 flex-1"
-                disabled={true}
-              >
-                <ChevronLeft size={28} />
-              </button>
-
-              <button
-                onClick={handleNext}
-                disabled={!isNextEnabled}
-                className={`swiper-button-next-custom bg-pink-500 text-white py-3 rounded 
-                    transition flex items-center justify-center flex-1
-                    ${
-                      !isNextEnabled
-                        ? "opacity-40 cursor-not-allowed"
-                        : "hover:bg-pink-600"
-                    }
-                  `}
-              >
-                {isTransitioning ? (
-                  "Loading..."
-                ) : currentQuestionIndex === questions.length - 1 ? (
-                  "Submit Interview"
-                ) : (
-                  <ChevronRight size={28} />
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* VIDEO */}
-          <div className="bg-black rounded-xl h-96 relative overflow-hidden flex items-center justify-center">
-            <div
-              ref={videoContainerRef}
-              className="w-full h-full"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            />
-
-            {shouldShowLoadingOverlay && !loading && (
-              <div className="absolute inset-0 flex items-center justify-center text-white bg-black bg-opacity-75 z-10 rounded-xl">
-                <div className="text-center">
-                  {isTransitioning ? (
-                    <>
-                      <div className="mb-4">
-                        <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
-                      </div>
-                      <p className="text-lg font-semibold mb-2">
-                        Saving your response...
-                      </p>
-                      <p className="text-sm opacity-75">
-                        Preparing next question
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="mb-2">Connecting camera...</p>
-                    </>
-                  )}
+              {/* Countdown Timer */}
+              <div className="flex-shrink-0">
+                <div className="font-bold text-sm xs:text-base sm:text-xl md:text-2xl tracking-wide sm:tracking-wider text-red-500 whitespace-nowrap">
+                  <span className="hidden xs:inline">COUNTDOWN = </span>
+                  <span className="xs:hidden">⏱ </span>
+                  {formatTime(countdown)}
                 </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 flex items-center justify-center px-3 py-4 sm:px-6 sm:py-6">
+          <div className="w-full max-w-7xl mx-auto">
+            {/* Question Container - Centered */}
+            <div className="flex flex-col items-center gap-4 min-h-[250px] xs:min-h-[300px] sm:min-h-[400px]">
+              <div className="w-full max-w-5xl relative">
+                {/* Navigation Arrow Left */}
+                <button
+                  className="absolute left-0 xs:left-1 sm:left-3 md:left-4 top-1/2 -translate-y-1/2 z-10 
+                    w-8 h-8 xs:w-10 xs:h-10 sm:w-12 sm:h-12 md:w-14 md:h-14
+                    rounded-full bg-white/50 hover:bg-white/70 active:bg-white/80
+                    shadow-md flex items-center justify-center 
+                    text-gray-300 cursor-not-allowed transition-all
+                    touch-manipulation"
+                  disabled
+                  aria-label="Previous question"
+                >
+                  <ChevronLeft 
+                    className="w-5 h-5 xs:w-6 xs:h-6 sm:w-7 sm:h-7 md:w-9 md:h-9" 
+                    strokeWidth={2} 
+                  />
+                </button>
+
+                {/* Question Card with Swiper */}
+                <div className="text-center px-10 xs:px-12 sm:px-16 md:px-20 py-4 sm:py-6 md:py-8">
+                  <Swiper
+                    modules={[Navigation, Pagination]}
+                    spaceBetween={30}
+                    slidesPerView={1}
+                    allowTouchMove={false}
+                    onSwiper={(swiper) => {
+                      swiperRef.current = swiper;
+                    }}
+                    onSlideChange={handleSlideChange}
+                    allowSlidePrev={false}
+                    simulateTouch={false}
+                    resistanceRatio={0}
+                    className="mb-4 sm:mb-6 md:mb-8"
+                  >
+                    {questions.map((question, index) => (
+                      <SwiperSlide key={question.encoded_id || index}>
+                        <h1 className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl 
+                          font-normal text-gray-700 leading-relaxed
+                          break-words hyphens-auto">
+                          {question.question}
+                        </h1>
+                      </SwiperSlide>
+                    ))}
+                  </Swiper>
+                  
+                  {/* Question Counter */}
+                  <p className="text-gray-600 text-sm xs:text-base sm:text-lg md:text-xl font-medium">
+                    {currentQuestionIndex + 1} / {questions.length}
+                  </p>
+                </div>
+
+                {/* Navigation Arrow Right */}
+                <button
+                  onClick={handleNext}
+                  disabled={!isNextEnabled}
+                  className={`absolute right-0 xs:right-1 sm:right-3 md:right-4 top-1/2 -translate-y-1/2 z-10 
+                    w-8 h-8 xs:w-10 xs:h-10 sm:w-12 sm:h-12 md:w-14 md:h-14
+                    rounded-full shadow-lg flex items-center justify-center 
+                    transition-all touch-manipulation
+                    ${isNextEnabled  || currentQuestionIndex === questions.length - 1
+                      ? 'bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white cursor-pointer hover:scale-105 active:scale-95' 
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-60'
+                    }`}
+                  aria-label="Next question"
+                >
+                  <ChevronRight 
+                    className="w-5 h-5 xs:w-6 xs:h-6 sm:w-7 sm:h-7 md:w-9 md:h-9" 
+                    strokeWidth={2.5} 
+                  />
+                </button>
+              </div>
+
+              {/* Next Button - Below Swiper Right Side */}
+              <div className="w-full max-w-5xl flex justify-end pt-2">
+                <button
+                  onClick={handleNext}
+                  disabled={!isNextEnabled}
+                  className={`px-6 xs:px-8 sm:px-10 md:px-12 py-2.5 xs:py-3 sm:py-3
+                    rounded-md font-medium text-sm xs:text-base
+                    transition-all shadow-lg
+                    touch-manipulation whitespace-nowrap
+                    ${isNextEnabled 
+                      ? 'bg-pink-500 hover:bg-pink-600 active:bg-pink-700 text-white cursor-pointer hover:shadow-xl active:scale-95' 
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-60'
+                    }`}
+                  aria-label={currentQuestionIndex === questions.length - 1 ? 'Submit interview' : 'Next question'}
+                >
+                  {isTransitioning ? 'Loading...' : 
+                   currentQuestionIndex === questions.length - 1 ? 'Submit' : 'Next'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Video Box - Bottom Right (Responsive positioning) */}
+        <div className="fixed 
+          bottom-16 right-20 xs:bottom-20 xs:right-3
+          sm:bottom-6 sm:right-6
+          w-52 h-40 xs:w-56 xs:h-40
+          sm:w-64 sm:h-48 md:w-72 md:h-52
+          bg-gray-900 rounded-lg sm:rounded-xl md:rounded-2xl 
+          shadow-xl sm:shadow-2xl overflow-hidden z-20 
+          border-2 sm:border-3 md:border-4 border-white
+          touch-manipulation">
+          <div
+            ref={videoContainerRef}
+            className="w-full h-full"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          />
+
+          {shouldShowLoadingOverlay && !loading && (
+            <div className="absolute inset-0 flex items-center justify-center 
+              text-white bg-black bg-opacity-80 z-10 
+              rounded-lg sm:rounded-xl md:rounded-2xl">
+              <div className="text-center px-3 xs:px-4">
+                {isTransitioning ? (
+                  <>
+                    <div className="mb-2 xs:mb-3">
+                      <div className="w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10 
+                        border-2 xs:border-3 border-white border-t-transparent 
+                        rounded-full animate-spin mx-auto"></div>
+                    </div>
+                    <p className="text-xs sm:text-sm font-semibold mb-1">
+                      Saving your response...
+                    </p>
+                    <p className="text-xs opacity-75 hidden xs:block">
+                      Preparing next question
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs sm:text-sm">Connecting camera...</p>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Add spacing at bottom for mobile to prevent video overlap with next button */}
+      <div className="h-24 sm:h-0"></div>
     </div>
   );
 };
