@@ -679,14 +679,19 @@ def stop_daily_recording(request):
                         interview_row.id,
                         interview_row.zoho_lead_id
                     )
-
-                        async_task(
+                        
+                        task_id = async_task(
                             'api.tasks.download_recordings_job',
                             interview_row.zoho_lead_id,
                             None, None, None,
                             interview_row.id,
                             daily_api_key
                         )
+
+                        logger.info(
+                        "[stop_daily_recording] async_task QUEUED task_id=%s",
+                        task_id
+                    )
 
                         interview_row.process_status = "download_triggered"
                         interview_row.save(update_fields=["process_status"])
