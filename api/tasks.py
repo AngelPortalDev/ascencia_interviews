@@ -90,12 +90,23 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
             recordings.append({'question_number': None, 'recording_id': rid})
     else:
         if interview_row:
+            # rjson = interview_row.recording_json or {}
+            # started = rjson.get('started_recordings') if isinstance(rjson, dict) else None
+            # if started and isinstance(started, list):
+            #     for item in started:
+            #         if isinstance(item, dict) and item.get('recording_id'):
+            #             recordings.append({'question_number': item.get('question_number'), 'recording_id': item.get('recording_id')})
             rjson = interview_row.recording_json or {}
-            started = rjson.get('started_recordings') if isinstance(rjson, dict) else None
-            if started and isinstance(started, list):
-                for item in started:
-                    if isinstance(item, dict) and item.get('recording_id'):
-                        recordings.append({'question_number': item.get('question_number'), 'recording_id': item.get('recording_id')})
+            started = rjson.get("started_recordings") or []
+
+            recordings = []
+            for item in started:
+                if isinstance(item, dict):
+                    rid = item.get('recording_id')
+                    qnum = item.get('question_number')
+                    if rid:
+                        recordings.append({'recording_id': rid, 'question_number': qnum})
+
 
     # Apply question filters
     wanted = None
@@ -194,18 +205,42 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
             fname = f"interview_video_{zoho_lead}_{qnum or rid}_{int(time.time())}.mp4"
 
         # Save final videos into interview_videos (user requested location)
+        # dest_path = os.path.join(videos_dir, fname)
+        # try:
+        #     with requests.get(dl_url, stream=True, timeout=60) as r:
+        #         r.raise_for_status()
+        #         with open(dest_path, 'wb') as fh:
+        #             for chunk in r.iter_content(chunk_size=1024 * 1024):
+        #                 if chunk:
+        #                     fh.write(chunk)
+
+        #     relpath = os.path.relpath(dest_path, base)
+        #     downloaded.append({'recording_id': rid, 'question_number': qnum, 'url': dl_url, 'raw_path': relpath, 'name': fname})
+
         dest_path = os.path.join(videos_dir, fname)
+        success = False
         try:
             with requests.get(dl_url, stream=True, timeout=60) as r:
                 r.raise_for_status()
                 with open(dest_path, 'wb') as fh:
-                    for chunk in r.iter_content(chunk_size=1024 * 1024):
+                    for chunk in r.iter_content(chunk_size=1024*1024):
                         if chunk:
                             fh.write(chunk)
+            # check file exists and size > 1KB
+            if os.path.exists(dest_path) and os.path.getsize(dest_path) > 1024:
+                success = True
+        except Exception as e:
+            print(f"[download_recordings_job] failed downloading {rid}: {e}")
 
+        if success:
             relpath = os.path.relpath(dest_path, base)
             downloaded.append({'recording_id': rid, 'question_number': qnum, 'url': dl_url, 'raw_path': relpath, 'name': fname})
+        else:
+            downloaded.append({'recording_id': rid, 'question_number': qnum, 'url': dl_url, 'error': 'download_failed'})
+            print(f"[download_recordings_job] download failed for {rid}")
 
+        # Save/update StudentInterviewAnswers row with video path
+        try:
             # Map to StudentInterviewAnswers - try to derive question number if missing,
             # then update-or-create (when qnum available) or create a new row otherwise.
             try:
@@ -253,13 +288,30 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
                 prior = []
             prior.extend(downloaded)
             interview_row.recording_files = prior
-            interview_row.process_status = 'downloaded' if downloaded else interview_row.process_status
-            # persist status and files explicitly
-            try:
-                interview_row.save(update_fields=['recording_files', 'process_status'])
-            except Exception:
-                # fallback to full save if update_fields not supported
-                interview_row.save()
+            # interview_row.process_status = 'downloaded' if downloaded else interview_row.process_status
+            # # persist status and files explicitly``
+            # try:
+            #     interview_row.save(update_fields=['recording_files', 'process_status'])
+            # except Exception:
+            #     # fallback to full save if update_fields not supported
+            #     interview_row.save()
+
+            # Check if all recordings downloaded successfully
+            all_downloaded = True
+            for d in downloaded:
+                if not d.get('raw_path') or not os.path.exists(os.path.join(base, d['raw_path'])) or os.path.getsize(os.path.join(base, d['raw_path'])) < 1024:
+                    all_downloaded = False
+                    break
+
+            if all_downloaded:
+                interview_row.process_status = 'downloaded'
+                try:
+                    interview_row.save(update_fields=['recording_files', 'process_status'])
+                except Exception:
+                    interview_row.save()
+            else:
+                print(f"[download_recordings_job] Not all recordings downloaded successfully, skipping process_status update.")
+
 
             # trigger downstream merge/transcribe flow via async task when status is 'downloaded'
             try:
