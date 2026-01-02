@@ -13,6 +13,10 @@ from studentpanel.models.student_interview_answer import StudentInterviewAnswers
 from django.conf import settings
 
 from studentpanel.models.interview_link import StudentInterviewLink
+
+import logging
+
+logger = logging.getLogger('zoho_webhook_logger')
 # import merge processor to trigger after download
 try:
     from studentpanel.observer.dailycomerging import process_interview_by_zoho
@@ -63,6 +67,11 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
     - `daily_api_key` if provided will be used; otherwise the function expects
       `DAILY_API_KEY` to be available via settings or environment.
     """
+    logger.info(
+    "[download_recordings_job] START zoho=%s interview_id=%s recording_ids=%s",
+    zoho_lead, interview_id, recording_ids
+)
+
     if daily_api_key:
         DAILY_API_KEY = daily_api_key
     else:
@@ -79,6 +88,12 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
         zoho_lead = zoho_lead or (getattr(interview_row, 'zoho_lead_id', None) if interview_row else None)
     elif zoho_lead:
         interview_row = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead).order_by('-id').first()
+        logger.info(
+    "[download_recordings_job] interview_row resolved zoho=%s found=%s",
+    zoho_lead,
+    bool(interview_row)
+)
+
 
     if not zoho_lead:
         return {'ok': False, 'error': 'zoho_lead_required'}
@@ -127,6 +142,12 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
         recordings = [r for r in recordings if (r.get('question_number') in wanted or (isinstance(r.get('question_number'), int) and r.get('question_number') in wanted))]
 
     if not recordings:
+        logger.warning(
+    "[download_recordings_job] NO RECORDINGS zoho=%s recording_json=%s",
+    zoho_lead,
+    getattr(interview_row, "recording_json", None)
+)
+
         return {'ok': False, 'message': 'no_recordings_found'}
 
     base, videos_dir = _ensure_dirs(zoho_lead)
@@ -135,6 +156,11 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
 
     headers_daily = {'Authorization': f'Bearer {DAILY_API_KEY}', 'Content-Type': 'application/json'}
     downloaded = []
+
+    logger.info(
+    "[download_recordings_job] DOWNLOAD LOOP START count=%s",
+    len(recordings)
+)
 
     for rec in recordings:
         rid = rec.get('recording_id')
@@ -161,7 +187,14 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
                     dl_url = m.get('download_link') or m.get('download_url') or m.get('url') or m.get('data', {}).get('download_link')
                     s3_key = m.get('s3_key') or m.get('data', {}).get('s3_key')
             # log helpful debug info
-            print(f"[download_recordings_job] access-link status for {rid}: {getattr(access_res, 'status_code', None)} dl_url={'SET' if dl_url else 'NONE'}")
+            # print(f"[download_recordings_job] access-link status for {rid}: {getattr(access_res, 'status_code', None)} dl_url={'SET' if dl_url else 'NONE'}")
+            logger.info(
+    "[download_recordings_job] ACCESS LINK rid=%s status=%s has_url=%s",
+    rid,
+    getattr(access_res, 'status_code', None),
+    bool(dl_url)
+)
+
         except Exception as e:
             print(f"[download_recordings_job] access-link error for {rid}: {e}")
             dl_url = None
@@ -219,6 +252,11 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
 
         dest_path = os.path.join(videos_dir, fname)
         success = False
+        logger.info(
+    "[download_recordings_job] DOWNLOAD START rid=%s qnum=%s dest=%s",
+    rid, qnum, dest_path
+)
+
         try:
             with requests.get(dl_url, stream=True, timeout=60) as r:
                 r.raise_for_status()
@@ -226,16 +264,36 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
                     for chunk in r.iter_content(chunk_size=1024*1024):
                         if chunk:
                             fh.write(chunk)
+
+                actual_size = os.path.getsize(dest_path) if os.path.exists(dest_path) else 0
+
+                logger.info(
+                    "[download_recordings_job] DOWNLOAD END rid=%s size=%s bytes",
+                    rid, actual_size
+                )
+
             # check file exists and size > 1KB
             if os.path.exists(dest_path) and os.path.getsize(dest_path) > 1024:
                 success = True
         except Exception as e:
-            print(f"[download_recordings_job] failed downloading {rid}: {e}")
+            logger.exception(
+                "[download_recordings_job] DOWNLOAD FAILED rid=%s",
+                rid
+            )
+
 
         if success:
+            logger.info(
+            "[download_recordings_job] DOWNLOAD OK rid=%s path=%s",
+            rid, relpath
+        )
             relpath = os.path.relpath(dest_path, base)
             downloaded.append({'recording_id': rid, 'question_number': qnum, 'url': dl_url, 'raw_path': relpath, 'name': fname})
         else:
+            logger.error(
+            "[download_recordings_job] DOWNLOAD INVALID rid=%s",
+            rid
+        )
             downloaded.append({'recording_id': rid, 'question_number': qnum, 'url': dl_url, 'error': 'download_failed'})
             print(f"[download_recordings_job] download failed for {rid}")
 
@@ -265,7 +323,12 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
                         question_id=resolved_qnum,
                         defaults={'video_path': relpath}
                     )
-                    print(f"[download_recordings_job] StudentInterviewAnswers {'created' if created else 'updated'} for zoho={zoho_lead} q={resolved_qnum}")
+                    # print(f"[download_recordings_job] StudentInterviewAnswers {'created' if created else 'updated'} for zoho={zoho_lead} q={resolved_qnum}")
+                    logger.info(
+                        "[download_recordings_job] ANSWER SAVED zoho=%s qnum=%s path=%s",
+                        zoho_lead, resolved_qnum, relpath
+                    )
+
                 else:
                     # No question number available: create a new answer row to record the video path
                     obj = StudentInterviewAnswers.objects.create(
@@ -273,7 +336,12 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
                         question_id=None,
                         video_path=relpath
                     )
-                    print(f"[download_recordings_job] StudentInterviewAnswers created (no qnum) id={obj.id} zoho={zoho_lead}")
+                    # print(f"[download_recordings_job] StudentInterviewAnswers created (no qnum) id={obj.id} zoho={zoho_lead}")
+                    logger.info(
+                        "[download_recordings_job] ANSWER SAVED zoho=%s qnum=%s path=%s",
+                        zoho_lead, resolved_qnum, relpath
+                    )
+
             except Exception as e:
                 print(f"[download_recordings_job] failed to save/create answer row for {rid}: {e}")
 
@@ -299,12 +367,22 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
             # Check if all recordings downloaded successfully
             all_downloaded = True
             for d in downloaded:
+                logger.info(
+                "[download_recordings_job] DOWNLOAD SUMMARY zoho=%s all_downloaded=%s",
+                zoho_lead, all_downloaded
+            )
+
                 if not d.get('raw_path') or not os.path.exists(os.path.join(base, d['raw_path'])) or os.path.getsize(os.path.join(base, d['raw_path'])) < 1024:
                     all_downloaded = False
                     break
 
             if all_downloaded:
                 interview_row.process_status = 'downloaded'
+                logger.info(
+                    "[download_recordings_job] STATUS UPDATED zoho=%s status=downloaded",
+                    zoho_lead
+                )
+
                 try:
                     interview_row.save(update_fields=['recording_files', 'process_status'])
                 except Exception:
@@ -316,6 +394,11 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
             # trigger downstream merge/transcribe flow via async task when status is 'downloaded'
             try:
                 if interview_row.process_status == 'downloaded':
+                    logger.info(
+                    "[download_recordings_job] TRIGGER MERGE zoho=%s",
+                    zoho_lead
+                )
+
                     try:
                         from django_q.tasks import async_task
                         async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead, interview_row.interview_link_count)
@@ -324,7 +407,8 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
                         print(f"[download_recordings_job] failed to enqueue merge_videos: {e}")
             except Exception as e:
                 print(f"[download_recordings_job] failed to trigger merge: {e}")
-    except Exception:
-        pass
+    except Exception as e:
+        logger.exception("[download_recordings_job] FINAL ERROR")
+
 
     return {'ok': True, 'downloaded': downloaded}

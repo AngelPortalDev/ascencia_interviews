@@ -18,7 +18,9 @@ from django.views.decorators.csrf import csrf_exempt
 from api.tasks import get_assigned_questions_count,get_recorded_questions_count
 
 
+import logging
 
+logger = logging.getLogger('zoho_webhook_logger')
 
 DAILY_API_URL = "https://api.daily.co/v1"
 DAILY_API_KEY = "6bde2a9e8a80082522e59abebd2769ef7f6b1c88ca2f842ce99a7968a71f87a3"
@@ -423,6 +425,8 @@ def start_daily_recording(request):
 
 @csrf_exempt
 def stop_daily_recording(request):
+    logger.info("[stop_daily_recording] CALLED")
+
     try:
         # Accept both DRF Request (request.data) and Django HttpRequest (request.body)
         if hasattr(request, 'data'):
@@ -430,6 +434,11 @@ def stop_daily_recording(request):
         else:
             try:
                 req_data = json.loads(request.body.decode('utf-8')) if request.body else {}
+                logger.info(
+                "[stop_daily_recording] Payload received: %s",
+                req_data
+            )
+
             except Exception:
                 req_data = {}
 
@@ -440,6 +449,12 @@ def stop_daily_recording(request):
         zoho_lead = req_data.get('zoho_lead_id') or req_data.get('zoho_lead') or None
         room_name = req_data.get('room_name') or req_data.get('room')
         recording_id = req_data.get('recording_id') or req_data.get('recordingId')
+
+        logger.info(
+        "[stop_daily_recording] Extracted zoho=%s room=%s rid=%s",
+        zoho_lead, room_name, recording_id
+    )
+
 
         # Attempt to stop the recording on Daily.co so the room becomes idle for the next start
         try:
@@ -453,6 +468,11 @@ def stop_daily_recording(request):
                     stop_url = f"{DAILY_API_URL}/rooms/{room_name}/recordings/stop"
 
                     print(f"[stop_daily_recording] Attempting stop via recording ID: {recording_id}")
+                    logger.info(
+                    "[stop_daily_recording] Attempting Daily STOP zoho=%s room=%s rid=%s",
+                    zoho_lead, room_name, recording_id
+                )
+
                     r = requests.post(stop_url, headers=headers_daily, json={}, timeout=10)
                     stop_responses.append((stop_url, r.status_code, r.text))
                     if r.status_code in (200, 201):
@@ -466,6 +486,11 @@ def stop_daily_recording(request):
                     stop_url = f"{DAILY_API_URL}/rooms/{room_name}/recordings/stop"
                     # stop_url = f"{DAILY_API_URL}/rooms/{room_name}/recordings/stop"
                     print(f"[stop_daily_recording] Attempting stop via room name: {room_name}")
+                    logger.info(
+                    "[stop_daily_recording] Attempting Daily STOP zoho=%s room=%s rid=%s",
+                    zoho_lead, room_name, recording_id
+                )
+
                     r2 = requests.post(stop_url, headers=headers_daily, json={}, timeout=10)
                     stop_responses.append((stop_url, r2.status_code, r2.text))
                     if r2.status_code in (200, 201):
@@ -474,6 +499,12 @@ def stop_daily_recording(request):
                     stop_responses.append((f"room_stop_exception:{room_name}", None, str(e)))
 
             print(f"[stop_daily_recording] stop attempts: {stop_responses}")
+
+            logger.info(
+            "[stop_daily_recording] Stop responses ok=%s responses=%s",
+            stop_ok, stop_responses
+        )
+
 
             # If we issued a stop, poll the recording metadata briefly to ensure the recording is no longer 'recording'
             if stop_ok and recording_id:
@@ -485,7 +516,17 @@ def stop_daily_recording(request):
                         if mr.status_code == 200:
                             meta = mr.json()
                             status = (meta.get('status') or meta.get('state') or '').lower()
+                            logger.info(
+                            "[stop_daily_recording] Polling rid=%s status=%s",
+                            recording_id, status
+                        )
+
                             if status and status not in ('recording', 'started', 'in_progress', 'active'):
+                                logger.info(
+                                    "[stop_daily_recording] Recording stopped rid=%s final_status=%s",
+                                    recording_id, status
+                                )
+
                                 print(f"[stop_daily_recording] recording {recording_id} status now: {status}")
                                 break
                         time.sleep(2)
@@ -504,6 +545,11 @@ def stop_daily_recording(request):
 
         # Find existing interview link row for this zoho_lead (do NOT create a new one)
         interview_row = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead).order_by('-id').first()
+        logger.info(
+        "[stop_daily_recording] Interview row found=%s zoho=%s",
+        bool(interview_row), zoho_lead
+    )
+
         if not interview_row:
             return JsonResponse({"ok": False, "message": "No existing StudentInterviewLink for zoho_lead", "zoho_lead": zoho_lead}, status=200)
 
@@ -577,6 +623,11 @@ def stop_daily_recording(request):
             interview_row.process_status = 'recordings_saved'
             interview_row.save(update_fields=['recording_json', 'process_status'])
 
+            logger.info(
+            "[stop_daily_recording] recording_json saved interview_id=%s status=%s",
+            interview_row.id,
+            interview_row.process_status
+        )
 
 
 
@@ -592,6 +643,11 @@ def stop_daily_recording(request):
 
                 assigned_count = get_assigned_questions_count(interview_row)
                 recorded_count = get_recorded_questions_count(interview_row)
+                logger.info(
+                "[stop_daily_recording] Completion check interview_id=%s assigned=%s recorded=%s",
+                interview_row.id, assigned_count, recorded_count
+            )
+
 
                 print(f"📊 Assigned questions count : {assigned_count}")
                 print(f"📊 Recorded questions count : {recorded_count}")
@@ -618,6 +674,11 @@ def stop_daily_recording(request):
                         daily_api_key = getattr(settings, 'DAILY_API_KEY', None)
 
                         print(f"🔐 DAILY_API_KEY present: {bool(daily_api_key)}")
+                        logger.info(
+                        "[stop_daily_recording] Triggering download task interview_id=%s zoho=%s",
+                        interview_row.id,
+                        interview_row.zoho_lead_id
+                    )
 
                         async_task(
                             'api.tasks.download_recordings_job',
@@ -629,12 +690,24 @@ def stop_daily_recording(request):
 
                         interview_row.process_status = "download_triggered"
                         interview_row.save(update_fields=["process_status"])
+                        logger.info(
+                        "[stop_daily_recording] Status updated → download_triggered interview_id=%s",
+                        interview_row.id
+                    )
+
 
                         print("🎯 DOWNLOAD TASK TRIGGERED SUCCESSFULLY")
                 else:
                     print("⏳ Interview NOT complete yet — waiting for more recordings")
+                    logger.info(
+                    "[stop_daily_recording] Interview not complete interview_id=%s assigned=%s recorded=%s",
+                    interview_row.id, assigned_count, recorded_count
+                )
+
 
             except Exception as e:
+                logger.exception("[stop_daily_recording] Unhandled exception")
+
                 import traceback
                 print("❌ INTERVIEW COMPLETE CHECK FAILED")
                 traceback.print_exc()
@@ -646,11 +719,15 @@ def stop_daily_recording(request):
             # except Exception as e:
             #     print(f"[stop_daily_recording] failed to queue download job: {e}")
         except Exception as e:
+            logger.exception("[stop_daily_recording] Unhandled exception")
+
             print(f"[stop_daily_recording] Failed to save recording JSON: {e}")
             return JsonResponse({"ok": False, "message": "save_failed", "error": str(e)}, status=500)
 
         return JsonResponse({"ok": True, "message": "recording_json_saved", "zoho_lead": zoho_lead}, status=200)
     except Exception as e:
+        logger.exception("[stop_daily_recording] Unhandled exception")
+
         print(f"[stop_daily_recording] Exception: {e}")
         return JsonResponse({"ok": False, "error": str(e)}, status=500)
 
