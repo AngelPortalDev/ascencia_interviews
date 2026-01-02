@@ -9,6 +9,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from django_q.tasks import async_task
 import os
+
+from sklearn import base
 from studentpanel.models.interview_process_model import Students
 from studentpanel.models.interview_link import StudentInterviewLink
 from django.utils.timezone import now
@@ -638,11 +640,11 @@ def stop_daily_recording(request):
                 traceback.print_exc()
 
             # Attempt to enqueue background download job so recordings are fetched
-            try:
-                async_task('api.tasks.download_recordings_job', zoho_lead, None, None, None, interview_row.id, getattr(settings, 'DAILY_API_KEY', None))
-                print(f"[stop_daily_recording] queued download_recordings_job for zoho_lead={zoho_lead} interview_id={interview_row.id}")
-            except Exception as e:
-                print(f"[stop_daily_recording] failed to queue download job: {e}")
+            # try:
+            #     # async_task('api.tasks.download_recordings_job', zoho_lead, None, None, None, interview_row.id, getattr(settings, 'DAILY_API_KEY', None))
+            #     # print(f"[stop_daily_recording] queued download_recordings_job for zoho_lead={zoho_lead} interview_id={interview_row.id}")
+            # except Exception as e:
+            #     print(f"[stop_daily_recording] failed to queue download job: {e}")
         except Exception as e:
             print(f"[stop_daily_recording] Failed to save recording JSON: {e}")
             return JsonResponse({"ok": False, "message": "save_failed", "error": str(e)}, status=500)
@@ -748,7 +750,9 @@ def download_recordings(request):
         if not recordings:
             return JsonResponse({"ok": False, "message": "No recordings found to download"}, status=200)
 
-        base = getattr(settings, 'BASE_DIR', os.getcwd())
+        # base = getattr(settings, 'BASE_DIR', os.getcwd())
+        # uploads_root = os.path.join(base, 'static', 'uploads')
+        base = settings.MEDIA_ROOT
         uploads_root = os.path.join(base, 'static', 'uploads')
         zoho_dir = os.path.join(uploads_root, str(zoho_lead))
         raw_dir = os.path.join(zoho_dir, 'raw')

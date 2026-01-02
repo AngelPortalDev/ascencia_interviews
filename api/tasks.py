@@ -4,6 +4,7 @@ import requests
 import re
 from datetime import datetime, timezone
 from django.conf import settings
+from sklearn import base
 
 from studentpanel.models.interview_process_model import Students
 from studentpanel.models.student_Interview_status import StudentInterview
@@ -23,7 +24,9 @@ except Exception:
 
 
 def _ensure_dirs(zoho_lead):
-    base = getattr(settings, 'BASE_DIR', os.getcwd())
+    # base = getattr(settings, 'BASE_DIR', os.getcwd())
+    # uploads_root = os.path.join(base, 'static', 'uploads')
+    base = settings.MEDIA_ROOT
     uploads_root = os.path.join(base, 'static', 'uploads')
     videos_dir = os.path.join(uploads_root, 'interview_videos', str(zoho_lead))
 
