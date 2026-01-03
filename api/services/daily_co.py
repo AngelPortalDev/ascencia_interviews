@@ -23,7 +23,7 @@ import logging
 logger = logging.getLogger('zoho_webhook_logger')
 
 DAILY_API_URL = "https://api.daily.co/v1"
-# DAILY_API_KEY = "6bde2a9e8a80082522e59abebd2769ef7f6b1c88ca2f842ce99a7968a71f87a3"
+DAILY_API_KEY = "6bde2a9e8a80082522e59abebd2769ef7f6b1c88ca2f842ce99a7968a71f87a3"
 
 # ============ DAILY.CO TOKEN ENDPOINT ============
 # @api_view(["POST"])
@@ -163,7 +163,7 @@ def get_daily_token(request):
 
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {settings.DAILY_API_KEY}",
+            "Authorization": f"Bearer {DAILY_API_KEY}",
         }
 
         room_payload = {
@@ -315,7 +315,7 @@ def start_daily_recording(request):
         
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {settings.DAILY_API_KEY}",
+            "Authorization": f"Bearer {DAILY_API_KEY}",
         }
         
         # Start recording for this room with proper layout object
@@ -458,7 +458,7 @@ def stop_daily_recording(request):
 
         # Attempt to stop the recording on Daily.co so the room becomes idle for the next start
         try:
-            headers_daily = {'Authorization': f'Bearer {settings.DAILY_API_KEY}', 'Content-Type': 'application/json'}
+            headers_daily = {'Authorization': f'Bearer {DAILY_API_KEY}', 'Content-Type': 'application/json'}
             stop_ok = False
             stop_responses = []
             # First try stopping by recording id (preferred)
@@ -678,10 +678,10 @@ def stop_daily_recording(request):
                         "[stop_daily_recording] Triggering download task interview_id=%s zoho=%s",
                         interview_row.id,
                         interview_row.zoho_lead_id,
-                        settings.DAILY_API_KEY
+                        DAILY_API_KEY
                     )
                         
-                        if not settings.DAILY_API_KEY:
+                        if not DAILY_API_KEY:
                             logger.error(
                                 "[stop_daily_recording] DAILY_API_KEY missing – cannot trigger download interview_id=%s",
                                 interview_row.id
@@ -692,7 +692,7 @@ def stop_daily_recording(request):
                                 interview_row.zoho_lead_id,
                                 None, None, None,
                                 interview_row.id,
-                                settings.DAILY_API_KEY
+                                DAILY_API_KEY
                             )
 
                             logger.info(
