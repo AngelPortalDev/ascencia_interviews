@@ -5,7 +5,7 @@ import json
 from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes,authentication_classes
 from rest_framework.permissions import AllowAny
 from django_q.tasks import async_task
 import os
@@ -143,6 +143,7 @@ DAILY_API_KEY = "6bde2a9e8a80082522e59abebd2769ef7f6b1c88ca2f842ce99a7968a71f87a
 
 @csrf_exempt
 @api_view(["POST"])
+@authentication_classes([])   
 @permission_classes([AllowAny])
 def get_daily_token(request):
     try:
