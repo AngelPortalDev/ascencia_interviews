@@ -37,9 +37,6 @@ def _ensure_dirs(zoho_lead):
     return base, videos_dir
 
 
-DAILY_API_URL = "https://api.daily.co/v1"
-DAILY_API_KEY1 = "6bde2a9e8a80082522e59abebd2769ef7f6b1c88ca2f842ce99a7968a71f87a3"
-
 def get_assigned_questions_count(interview_row):
     common_ids = interview_row.assigned_question_ids
     course_ids = interview_row.assigned_course_question_ids
@@ -76,8 +73,16 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
 
     if daily_api_key:
         DAILY_API_KEY = daily_api_key
+        logger.info(
+            "[download_recordings_job] DAILY_API_KEY provided via argument: %s",
+            bool(DAILY_API_KEY)
+        )
     else:
-        DAILY_API_KEY = DAILY_API_KEY1
+        DAILY_API_KEY = getattr(settings, 'DAILY_API_KEY', None)
+        logger.info(
+            "[download_recordings_job] DAILY_API_KEY resolved from settings: %s",
+            bool(DAILY_API_KEY)
+        )
 
     if not zoho_lead and not interview_id and not recording_ids:
         return {'ok': False, 'error': 'missing_identifiers'}
@@ -153,7 +158,7 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
 
 
 
-    headers_daily = {'Authorization': f'Bearer {DAILY_API_KEY1}', 'Content-Type': 'application/json'}
+    headers_daily = {'Authorization': f'Bearer {DAILY_API_KEY}', 'Content-Type': 'application/json'}
     downloaded = []
 
     for rec in recordings:
