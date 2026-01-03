@@ -19,7 +19,9 @@ try:
 except Exception:
     process_interview_by_zoho = None
 
+import logging
 
+logger = logging.getLogger('zoho_webhook_logger')
 
 
 
@@ -64,6 +66,11 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
     - `daily_api_key` if provided will be used; otherwise the function expects
       `DAILY_API_KEY` to be available via settings or environment.
     """
+    logger.info(
+    "[download_recordings_job] START zoho=%s interview_id=%s recording_ids=%s",
+    zoho_lead, interview_id, bool(recording_ids)
+)
+
     if daily_api_key:
         DAILY_API_KEY = daily_api_key
     else:
@@ -79,6 +86,12 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
         zoho_lead = zoho_lead or (getattr(interview_row, 'zoho_lead_id', None) if interview_row else None)
     elif zoho_lead:
         interview_row = StudentInterviewLink.objects.filter(zoho_lead_id=zoho_lead).order_by('-id').first()
+    
+    logger.info(
+    "[download_recordings_job] interview_row resolved=%s zoho=%s",
+    bool(interview_row),
+    zoho_lead
+)
 
     if not zoho_lead:
         return {'ok': False, 'error': 'zoho_lead_required'}
@@ -117,6 +130,13 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
 
     if not recordings:
         return {'ok': False, 'message': 'no_recordings_found'}
+    
+    logger.info(
+    "[download_recordings_job] recordings_to_download count=%s details=%s",
+    len(recordings),
+    [(r.get('question_number'), r.get('recording_id')) for r in recordings]
+)
+
 
     base, videos_dir = _ensure_dirs(zoho_lead)
 
@@ -128,13 +148,30 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
     for rec in recordings:
         rid = rec.get('recording_id')
         qnum = rec.get('question_number')
+        logger.info(
+    "[download_recordings_job] requesting access-link rid=%s",
+    rid
+)
+
         if not rid:
             continue
 
         dl_url = None
         # Primary: request access-link (provides a time-limited S3 download URL)
         try:
-            access_res = requests.get(f"https://api.daily.co/v1/recordings/{rid}/access-link", headers=headers_daily, timeout=15)
+            access_res = requests.get(
+                f"https://api.daily.co/v1/recordings/{rid}/access-link",
+                headers=headers_daily,
+                timeout=15
+            )
+
+            logger.info(
+                "[download_recordings_job] access-link response rid=%s status=%s body=%s",
+                rid,
+                access_res.status_code,
+                access_res.text[:300]
+            )
+
             if access_res.status_code == 200:
                 ar = access_res.json()
                 # Prefer explicit download_link; fall back to other keys
@@ -149,10 +186,21 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
                     m = meta_res.json()
                     dl_url = m.get('download_link') or m.get('download_url') or m.get('url') or m.get('data', {}).get('download_link')
                     s3_key = m.get('s3_key') or m.get('data', {}).get('s3_key')
+                    logger.warning(
+                        "[download_recordings_job] access-link failed rid=%s status=%s",
+                        rid,
+                        access_res.status_code
+                    )
+
             # log helpful debug info
-            print(f"[download_recordings_job] access-link status for {rid}: {getattr(access_res, 'status_code', None)} dl_url={'SET' if dl_url else 'NONE'}")
+            # print(f"[download_recordings_job] access-link status for {rid}: {getattr(access_res, 'status_code', None)} dl_url={'SET' if dl_url else 'NONE'}")
         except Exception as e:
-            print(f"[download_recordings_job] access-link error for {rid}: {e}")
+            # print(f"[download_recordings_job] access-link error for {rid}: {e}")
+            logger.exception(
+            "[download_recordings_job] access-link exception rid=%s",
+            rid
+        )
+
             dl_url = None
             s3_key = None
 
@@ -195,6 +243,10 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
 
         # Save final videos into interview_videos (user requested location)
         dest_path = os.path.join(videos_dir, fname)
+        logger.info(
+    "[download_recordings_job] downloading rid=%s q=%s filename=%s",
+    rid, qnum, fname
+)
         try:
             with requests.get(dl_url, stream=True, timeout=60) as r:
                 r.raise_for_status()
@@ -202,7 +254,10 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
                     for chunk in r.iter_content(chunk_size=1024 * 1024):
                         if chunk:
                             fh.write(chunk)
-
+            logger.info(
+                "[download_recordings_job] download success rid=%s path=%s",
+                rid, dest_path
+            )
             relpath = os.path.relpath(dest_path, base)
             downloaded.append({'recording_id': rid, 'question_number': qnum, 'url': dl_url, 'raw_path': relpath, 'name': fname})
 
@@ -230,7 +285,14 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
                         question_id=resolved_qnum,
                         defaults={'video_path': relpath}
                     )
-                    print(f"[download_recordings_job] StudentInterviewAnswers {'created' if created else 'updated'} for zoho={zoho_lead} q={resolved_qnum}")
+                    # print(f"[download_recordings_job] StudentInterviewAnswers {'created' if created else 'updated'} for zoho={zoho_lead} q={resolved_qnum}")
+                    logger.info(
+                    "[download_recordings_job] StudentInterviewAnswers %s zoho=%s q=%s",
+                    "created" if created else "updated",
+                    zoho_lead,
+                    resolved_qnum
+                )
+
                 else:
                     # No question number available: create a new answer row to record the video path
                     obj = StudentInterviewAnswers.objects.create(
@@ -238,7 +300,14 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
                         question_id=None,
                         video_path=relpath
                     )
-                    print(f"[download_recordings_job] StudentInterviewAnswers created (no qnum) id={obj.id} zoho={zoho_lead}")
+                    # print(f"[download_recordings_job] StudentInterviewAnswers created (no qnum) id={obj.id} zoho={zoho_lead}")
+                    logger.warning(
+                        "[download_recordings_job] answer saved without question_number zoho=%s rid=%s",
+                        zoho_lead,
+                        rid
+                    )
+
+
             except Exception as e:
                 print(f"[download_recordings_job] failed to save/create answer row for {rid}: {e}")
 
@@ -267,7 +336,13 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
                     try:
                         from django_q.tasks import async_task
                         async_task("studentpanel.observer.video_merge_handler.merge_videos", zoho_lead, interview_row.interview_link_count)
-                        print(f"[download_recordings_job] enqueued merge_videos for zoho={zoho_lead} interview_link_count={interview_row.interview_link_count}")
+                        # print(f"[download_recordings_job] enqueued merge_videos for zoho={zoho_lead} interview_link_count={interview_row.interview_link_count}")
+                        logger.info(
+                            "[download_recordings_job] merge_videos enqueued zoho=%s link_count=%s",
+                            zoho_lead,
+                            interview_row.interview_link_count
+                        )
+
                     except Exception as e:
                         print(f"[download_recordings_job] failed to enqueue merge_videos: {e}")
             except Exception as e:
