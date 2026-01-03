@@ -23,8 +23,7 @@ import logging
 
 logger = logging.getLogger('zoho_webhook_logger')
 
-DAILY_API_URL = "https://api.daily.co/v1"
-DAILY_API_KEY = "6bde2a9e8a80082522e59abebd2769ef7f6b1c88ca2f842ce99a7968a71f87a3"
+
 
 def _ensure_dirs(zoho_lead):
     # base = getattr(settings, 'BASE_DIR', os.getcwd())
