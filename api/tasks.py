@@ -23,7 +23,8 @@ import logging
 
 logger = logging.getLogger('zoho_webhook_logger')
 
-
+DAILY_API_URL = "https://api.daily.co/v1"
+DAILY_API_KEY = "6bde2a9e8a80082522e59abebd2769ef7f6b1c88ca2f842ce99a7968a71f87a3"
 
 def _ensure_dirs(zoho_lead):
     # base = getattr(settings, 'BASE_DIR', os.getcwd())
@@ -79,6 +80,14 @@ def download_recordings_job(zoho_lead, recording_ids=None, question_id=None, que
     if not zoho_lead and not interview_id and not recording_ids:
         return {'ok': False, 'error': 'missing_identifiers'}
 
+
+    if not DAILY_API_KEY:
+        logger.error(
+            "[download_recordings_job] DAILY_API_KEY missing – aborting download zoho=%s interview_id=%s",
+            zoho_lead,
+            interview_id
+        )
+        return {'ok': False, 'error': 'daily_api_key_missing'}
     # Resolve interview row
     interview_row = None
     if interview_id:
