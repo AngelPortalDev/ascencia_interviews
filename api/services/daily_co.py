@@ -685,12 +685,14 @@ def stop_daily_recording(request):
                             interview_row.zoho_lead_id,
                             None, None, None,
                             interview_row.id,
-                            daily_api_key
+                            # daily_api_key
+                            daily_api_key=getattr(settings, 'DAILY_API_KEY', None),
                         )
 
                         logger.info(
                         "[stop_daily_recording] async_task QUEUED task_id=%s",
-                        task_id
+                        task_id,
+                        daily_api_key
                     )
 
                         interview_row.process_status = "download_triggered"
