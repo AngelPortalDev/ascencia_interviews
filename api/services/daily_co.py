@@ -672,14 +672,14 @@ def stop_daily_recording(request):
                         from django_q.tasks import async_task
                         from django.conf import settings
 
-                        # daily_api_key = getattr(settings, 'DAILY_API_KEY', None)
+                        daily_api_key = getattr(settings, 'DAILY_API_KEY', None)
 
-                        print(f"🔐 DAILY_API_KEY present: {bool(DAILY_API_KEY)}")
+                        print(f"🔐 DAILY_API_KEY present: {bool(daily_api_key)}")
                         logger.info(
                         "[stop_daily_recording] Triggering download task interview_id=%s zoho=%s",
                         interview_row.id,
                         interview_row.zoho_lead_id,
-                        DAILY_API_KEY
+                        daily_api_key
                     )
                         
                         task_id = async_task(
@@ -687,7 +687,7 @@ def stop_daily_recording(request):
                             interview_row.zoho_lead_id,
                             None, None, None,
                             interview_row.id,
-                            DAILY_API_KEY
+                            daily_api_key
                         )
 
                         logger.info(
