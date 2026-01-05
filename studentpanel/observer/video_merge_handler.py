@@ -67,14 +67,16 @@ def convert_video(input_path, output_path, target_format):
 
     if target_format == "webm":
         command = (
-            f'{settings.FFMPEG_PATH} -y -i "{input_path}" '
-            f'-vf "fps=30,scale=640:480" '  # force 30 fps and resize
-            f'-pix_fmt yuv420p '
-            f'-c:v libvpx -b:v 1M -quality good -cpu-used 4 '
-            f'-qmin 10 -qmax 42 '
-            f'-c:a libopus -b:a 96k '
-            f'-f webm "{output_path}"'
-    )
+            f'{settings.FFMPEG_PATH} -y '
+            f'-fflags +genpts -avoid_negative_ts make_zero '
+            f'-i "{input_path}" '
+            f'-vf "scale=640:480,fps=30" '
+            f'-c:v libvpx -deadline realtime -cpu-used 4 '
+            f'-b:v 0 -crf 32 '
+            f'-c:a libopus -ar 48000 -ac 2 -b:a 96k '
+            f'-movflags +faststart '
+            f'"{output_path}"'
+        )
 
 
     elif target_format == "mp4":
