@@ -52,43 +52,54 @@ def get_uploads_folder():
     return uploads_folder.replace("\\", "/")
 
 def convert_video(input_path, output_path, target_format):
-   
     logging.info("output_path: %s", output_path)
-    logging.info("target_format path: %s", target_format)
-    # if target_format == "webm":
-    #     command = (
-    #         f'{FFMPEG_PATH} -y -i "{input_path}" '
-    #         f'-vf scale=640:480 -r 30 -pix_fmt yuv420p '
-    #         f'-c:v libvpx -b:v 1M -quality good -cpu-used 4 '
-    #         f'-qmin 10 -qmax 42 '
-    #         f'-c:a libopus -application voip -b:a 96k '
-    #         f'-f webm "{output_path}"'
-    #     )
+    logging.info("target_format: %s", target_format)
 
     if target_format == "webm":
         command = (
             f'{settings.FFMPEG_PATH} -y '
-            f'-fflags +genpts -avoid_negative_ts make_zero '
+            f'-fflags +genpts '
             f'-i "{input_path}" '
             f'-vf "scale=640:480,fps=30" '
-            f'-c:v libvpx -deadline realtime -cpu-used 4 '
-            f'-b:v 0 -crf 32 '
+            f'-vsync cfr '
+            f'-pix_fmt yuv420p '
+            f'-c:v libvpx '
+            f'-b:v 1M '
+            f'-maxrate 1.2M '
+            f'-bufsize 2M '
+            f'-g 60 '
+            f'-keyint_min 60 '
+            f'-auto-alt-ref 0 '
             f'-c:a libopus -ar 48000 -ac 2 -b:a 96k '
+            f'-f webm '
+            f'"{output_path}"'
+        )
+
+    elif target_format == "mp4":
+        command = (
+            f'{settings.FFMPEG_PATH} -y '
+            f'-i "{input_path}" '
+            f'-c:v libx264 -preset fast -crf 23 '
+            f'-pix_fmt yuv420p '
+            f'-c:a aac -b:a 128k '
             f'-movflags +faststart '
             f'"{output_path}"'
         )
 
-
-    elif target_format == "mp4":
-        command = f'ffmpeg -i "{input_path}" -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -movflags +faststart "{output_path}"'
     elif target_format == "mov":
-        command = f'ffmpeg -i "{input_path}" -c:v prores -c:a pcm_s16le "{output_path}"'
+        command = (
+            f'{settings.FFMPEG_PATH} -y '
+            f'-i "{input_path}" '
+            f'-c:v prores -profile:v 3 '
+            f'-c:a pcm_s16le '
+            f'"{output_path}"'
+        )
+
     else:
         raise ValueError(f"Unsupported format: {target_format}")
 
     subprocess.run(command, shell=True, check=True)
 
-warnings.filterwarnings("ignore", message="FP16 is not supported on CPU; using FP32 instead")
 
 def transcribe_complete_video(video_path):
     if not os.path.exists(video_path):
