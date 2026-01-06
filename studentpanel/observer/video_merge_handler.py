@@ -53,55 +53,41 @@ def get_uploads_folder():
 
 
 def convert_video(input_path, output_path, target_format):
-    import subprocess
-    import logging
-    from django.conf import settings
-
-    logging.info("Input path: %s", input_path)
-    logging.info("Output path: %s", output_path)
+   
+    logging.info("output_path: %s", output_path)
+    logging.info("target_format path: %s", target_format)
+    # if target_format == "webm":
+    #     command = (
+    #         f'{FFMPEG_PATH} -y -i "{input_path}" '
+    #         f'-vf scale=640:480 -r 30 -pix_fmt yuv420p '
+    #         f'-c:v libvpx -b:v 1M -quality good -cpu-used 4 '
+    #         f'-qmin 10 -qmax 42 '
+    #         f'-c:a libopus -application voip -b:a 96k '
+    #         f'-f webm "{output_path}"'
+    #     )
 
     if target_format == "webm":
         command = (
-            f'{settings.FFMPEG_PATH} -y '
-            f'-fflags +genpts '
-            f'-i "{input_path}" '
-            f'-vf "scale=640:480:flags=lanczos,fps=30" '
-            f'-r 30 -vsync cfr -video_track_timescale 30000 '
-            f'-c:v libvpx '
-            f'-b:v 2M -maxrate 2M -bufsize 4M '
-            f'-cpu-used 0 -deadline good '
+            f'{settings.FFMPEG_PATH} -y -i "{input_path}" '
+            f'-vf "fps=30,scale=640:480" '  # force 30 fps and resize
             f'-pix_fmt yuv420p '
-            f'-c:a libopus '
-            f'-b:a 128k -ar 48000 -ac 2 '
-            f'-af "aresample=async=1000" '
-            f'-movflags +faststart '
-            f'"{output_path}"'
-        )
+            f'-c:v libvpx -b:v 1M -quality good -cpu-used 4 '
+            f'-qmin 10 -qmax 42 '
+            f'-c:a libopus -b:a 96k '
+            f'-f webm "{output_path}"'
+    )
+
 
     elif target_format == "mp4":
-        command = (
-            f'{settings.FFMPEG_PATH} -y -i "{input_path}" '
-            f'-c:v libx264 -preset fast -crf 23 '
-            f'-pix_fmt yuv420p '
-            f'-c:a aac -b:a 128k -ar 48000 '
-            f'-movflags +faststart '
-            f'"{output_path}"'
-        )
-
+        command = f'ffmpeg -i "{input_path}" -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -movflags +faststart "{output_path}"'
     elif target_format == "mov":
-        command = (
-            f'{settings.FFMPEG_PATH} -y -i "{input_path}" '
-            f'-c:v prores -profile:v 3 '
-            f'-c:a pcm_s16le '
-            f'"{output_path}"'
-        )
-
+        command = f'ffmpeg -i "{input_path}" -c:v prores -c:a pcm_s16le "{output_path}"'
     else:
         raise ValueError(f"Unsupported format: {target_format}")
 
-    logging.info("Running FFmpeg: %s", command)
     subprocess.run(command, shell=True, check=True)
 
+warnings.filterwarnings("ignore", message="FP16 is not supported on CPU; using FP32 instead")
 
 
 
