@@ -44,6 +44,10 @@ import tempfile
 
 import math
 
+import logging
+
+logger = logging.getLogger('zoho_webhook_logger')
+
 def get_uploads_folder():
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
     logging.info("project_root: %s", project_root)
@@ -111,9 +115,11 @@ def convert_video(input_path, output_path, target_format):
             "-movflags", "+faststart",
             output_path,
         ]
+        logging.info("FFmpeg command1: %s", " ".join(command))
     
     elif target_format == "mp4":
         command = f'ffmpeg -i "{input_path}" -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -movflags +faststart "{output_path}"'
+        logging.info("FFmpeg command2: %s", command)
     elif target_format == "mov":
         command = f'ffmpeg -i "{input_path}" -c:v prores -c:a pcm_s16le "{output_path}"'
     else:
