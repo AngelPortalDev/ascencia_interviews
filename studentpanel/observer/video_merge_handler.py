@@ -66,9 +66,9 @@ def convert_video(input_path, output_path, target_format):
     logging.info("target_format path: %s", target_format)
 
     FFMPEG_PATH = imageio_ffmpeg.get_ffmpeg_exe()
-    logging.info("Using FFmpeg: %s", FFMPEG_PATH)
-    logging.info("Input path: %s", input_path)
-    logging.info("Output path: %s", output_path)
+    logger.info("Using FFmpeg: %s", FFMPEG_PATH)
+    logger.info("Input path: %s", input_path)
+    logger.info("Output path: %s", output_path)
 
     if target_format == "webm":
         command = (
@@ -95,11 +95,12 @@ def convert_video(input_path, output_path, target_format):
             "-movflags", "+faststart",
             output_path,
         )
-        logging.info("FFmpeg command1: %s", " ".join(command))
+       
+        logger.info("FFmpeg command1: %s", " ".join(command))
 
     elif target_format == "mp4":
         command = f'ffmpeg -i "{input_path}" -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -movflags +faststart "{output_path}"'
-        logging.info("FFmpeg command2: %s", command)
+        logger.info("FFmpeg command2: %s", command)
 
     elif target_format == "mov":
         command = f'ffmpeg -i "{input_path}" -c:v prores -c:a pcm_s16le "{output_path}"'
