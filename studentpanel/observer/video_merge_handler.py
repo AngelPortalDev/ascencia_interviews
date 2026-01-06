@@ -56,6 +56,15 @@ def convert_video(input_path, output_path, target_format):
    
     logging.info("output_path: %s", output_path)
     logging.info("target_format path: %s", target_format)
+    import subprocess
+    import logging
+    import imageio_ffmpeg
+
+    FFMPEG_PATH = imageio_ffmpeg.get_ffmpeg_exe()
+
+    logging.info("Using FFmpeg: %s", FFMPEG_PATH)
+    logging.info("Input path: %s", input_path)
+    logging.info("Output path: %s", output_path)
     # if target_format == "webm":
     #     command = (
     #         f'{FFMPEG_PATH} -y -i "{input_path}" '
@@ -66,18 +75,43 @@ def convert_video(input_path, output_path, target_format):
     #         f'-f webm "{output_path}"'
     #     )
 
+    # if target_format == "webm":
+    #     command = (
+    #         f'{settings.FFMPEG_PATH} -y -i "{input_path}" '
+    #         f'-vf "fps=30,scale=640:480" '  # force 30 fps and resize
+    #         f'-pix_fmt yuv420p '
+    #         f'-c:v libvpx -b:v 1M -quality good -cpu-used 4 '
+    #         f'-qmin 10 -qmax 42 '
+    #         f'-c:a libopus -b:a 96k '
+    #         f'-f webm "{output_path}"'
+    # )
+
     if target_format == "webm":
-        command = (
-            f'{settings.FFMPEG_PATH} -y -i "{input_path}" '
-            f'-vf "fps=30,scale=640:480" '  # force 30 fps and resize
-            f'-pix_fmt yuv420p '
-            f'-c:v libvpx -b:v 1M -quality good -cpu-used 4 '
-            f'-qmin 10 -qmax 42 '
-            f'-c:a libopus -b:a 96k '
-            f'-f webm "{output_path}"'
-    )
-
-
+        command = [
+            FFMPEG_PATH,
+            "-y",
+            "-fflags", "+genpts",
+            "-i", input_path,
+            "-vf", "scale=640:480:flags=lanczos,fps=30",
+            "-r", "30",
+            "-vsync", "cfr",
+            "-video_track_timescale", "30000",
+            "-c:v", "libvpx",
+            "-b:v", "2M",
+            "-maxrate", "2M",
+            "-bufsize", "4M",
+            "-cpu-used", "0",
+            "-deadline", "good",
+            "-pix_fmt", "yuv420p",
+            "-c:a", "libopus",
+            "-b:a", "128k",
+            "-ar", "48000",
+            "-ac", "2",
+            "-af", "aresample=async=1000",
+            "-movflags", "+faststart",
+            output_path,
+        ]
+    
     elif target_format == "mp4":
         command = f'ffmpeg -i "{input_path}" -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -movflags +faststart "{output_path}"'
     elif target_format == "mov":
