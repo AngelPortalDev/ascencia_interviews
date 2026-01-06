@@ -27,6 +27,8 @@ function OpenAIRealtimeMicWS() {
       const ws = new WebSocket('wss://dev.ascencia-interview.com/ws/transcription/');
       socketRef.current = ws;
       console.log('WebSocket URL:', ws);
+      console.log('WS created');
+      console.log('Initial readyState:', ws.readyState);
 
       ws.onopen = async () => {
         setStatus('🎤 Recording...');
@@ -63,6 +65,8 @@ function OpenAIRealtimeMicWS() {
         recorderNode.connect(audioContext.destination);
       };
 
+
+
       ws.onmessage = (e) => {
         const data = JSON.parse(e.data);
         if (data.text) {
@@ -77,9 +81,13 @@ function OpenAIRealtimeMicWS() {
         setStatus('Connection error');
       };
 
-      ws.onclose = () => {
+      ws.onclose = (e) => {
         setStatus('Connection closed');
         stopRecording();
+        console.log('WS CLOSED ');
+        console.log('code:', e.code);
+        console.log('reason:', e.reason);
+        console.log('wasClean:', e.wasClean);
       };
 
     } catch (err) {
