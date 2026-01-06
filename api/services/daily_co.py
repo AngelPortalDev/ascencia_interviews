@@ -319,6 +319,25 @@ def start_daily_recording(request):
             "Authorization": f"Bearer {DAILY_API_KEY}",
         }
         
+
+        # 🚫 CRITICAL: Prevent overlapping recordings
+        check = requests.get(
+            f"{DAILY_API_URL}/rooms/{room_name}/recordings",
+            headers=headers,
+            timeout=10
+        )
+
+        if check.status_code == 200:
+            active = [
+                r for r in check.json().get("data", [])
+                if r.get("status") == "recording"
+            ]
+            if active:
+                return JsonResponse(
+                    {"error": "Recording already running. Stop previous recording first."},
+                    status=409
+                )
+
         # Start recording for this room with proper layout object
         response = requests.post(
             f"{DAILY_API_URL}/rooms/{room_name}/recordings/start",
@@ -463,23 +482,36 @@ def stop_daily_recording(request):
             stop_ok = False
             stop_responses = []
             # First try stopping by recording id (preferred)
-            if recording_id:
-                try:
-                    # stop_url = f"{DAILY_API_URL}/recordings/{recording_id}/stop"
-                    stop_url = f"{DAILY_API_URL}/rooms/{room_name}/recordings/stop"
+            # ✅ STOP DAILY RECORDING — ROOM ONLY (CORRECT)
+            try:
+                if not room_name:
+                    raise ValueError("room_name is required to stop recording")
 
-                    print(f"[stop_daily_recording] Attempting stop via recording ID: {recording_id}")
-                    logger.info(
-                    "[stop_daily_recording] Attempting Daily STOP zoho=%s room=%s rid=%s",
-                    zoho_lead, room_name, recording_id
+                stop_url = f"{DAILY_API_URL}/rooms/{room_name}/recordings/stop"
+
+                print(f"[stop_daily_recording] Stopping Daily recording via ROOM: {room_name}")
+                logger.info(
+                    "[stop_daily_recording] Daily STOP via room zoho=%s room=%s",
+                    zoho_lead, room_name
                 )
 
-                    r = requests.post(stop_url, headers=headers_daily, json={}, timeout=10)
-                    stop_responses.append((stop_url, r.status_code, r.text))
-                    if r.status_code in (200, 201):
-                        stop_ok = True
-                except Exception as e:
-                    stop_responses.append((f"recording_stop_exception:{recording_id}", None, str(e)))
+                r = requests.post(
+                    stop_url,
+                    headers=headers_daily,
+                    json={},
+                    timeout=10
+                )
+
+                stop_responses.append((stop_url, r.status_code, r.text))
+
+                if r.status_code in (200, 201):
+                    stop_ok = True
+                else:
+                    stop_ok = False
+
+            except Exception as e:
+                stop_ok = False
+                stop_responses.append(("room_stop_exception", None, str(e)))
 
             # Fallback: stop by room endpoint
             if not stop_ok and room_name:
@@ -508,31 +540,7 @@ def stop_daily_recording(request):
 
 
             # If we issued a stop, poll the recording metadata briefly to ensure the recording is no longer 'recording'
-            if stop_ok and recording_id:
-                deadline = time.time() + 20
-                while time.time() < deadline:
-                    try:
-                        meta_url = f"{DAILY_API_URL}/recordings/{recording_id}"
-                        mr = requests.get(meta_url, headers=headers_daily, timeout=10)
-                        if mr.status_code == 200:
-                            meta = mr.json()
-                            status = (meta.get('status') or meta.get('state') or '').lower()
-                            logger.info(
-                            "[stop_daily_recording] Polling rid=%s status=%s",
-                            recording_id, status
-                        )
-
-                            if status and status not in ('recording', 'started', 'in_progress', 'active'):
-                                logger.info(
-                                    "[stop_daily_recording] Recording stopped rid=%s final_status=%s",
-                                    recording_id, status
-                                )
-
-                                print(f"[stop_daily_recording] recording {recording_id} status now: {status}")
-                                break
-                        time.sleep(2)
-                    except Exception:
-                        time.sleep(2)
+            
         except Exception as e:
             print(f"[stop_daily_recording] error while attempting stop: {e}")
         if not zoho_lead and room_name and isinstance(room_name, str) and room_name.startswith('interview-'):
