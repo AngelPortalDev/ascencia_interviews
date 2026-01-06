@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 import pymysql
 import os
+import imageio_ffmpeg
 
 pymysql.install_as_MySQLdb()
 
@@ -26,7 +27,8 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 # ✅ Use environment variables directly (no fallbacks)
-FFMPEG_PATH = os.environ["FFMPEG_PATH"]
+# FFMPEG_PATH = os.environ["FFMPEG_PATH"]
+FFMPEG_PATH = imageio_ffmpeg.get_ffmpeg_exe()
 FFMPEG_PROBE = os.environ["FFMPEG_PROBE"]  
 UPLOADS_FOLDER = os.environ["UPLOADS_FOLDER"]
 FONT_PATH = os.environ["FONT_PATH"]
