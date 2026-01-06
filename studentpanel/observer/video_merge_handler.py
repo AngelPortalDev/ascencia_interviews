@@ -51,45 +51,46 @@ def get_uploads_folder():
     logging.info("uploads folder text: %s", uploads_folder)
     return uploads_folder.replace("\\", "/")
 
+
 def convert_video(input_path, output_path, target_format):
-    logging.info("output_path: %s", output_path)
-    logging.info("target_format: %s", target_format)
+    import subprocess
+    import logging
+    from django.conf import settings
+
+    logging.info("Input path: %s", input_path)
+    logging.info("Output path: %s", output_path)
 
     if target_format == "webm":
         command = (
             f'{settings.FFMPEG_PATH} -y '
             f'-fflags +genpts '
             f'-i "{input_path}" '
-            f'-vf "scale=640:480,fps=30" '
-            f'-vsync cfr '
-            f'-pix_fmt yuv420p '
+            f'-vf "scale=640:480:flags=lanczos,fps=30" '
+            f'-r 30 -vsync cfr -video_track_timescale 30000 '
             f'-c:v libvpx '
-            f'-b:v 1M '
-            f'-maxrate 1.2M '
-            f'-bufsize 2M '
-            f'-g 60 '
-            f'-keyint_min 60 '
-            f'-auto-alt-ref 0 '
-            f'-c:a libopus -ar 48000 -ac 2 -b:a 96k '
-            f'-f webm '
+            f'-b:v 2M -maxrate 2M -bufsize 4M '
+            f'-cpu-used 0 -deadline good '
+            f'-pix_fmt yuv420p '
+            f'-c:a libopus '
+            f'-b:a 128k -ar 48000 -ac 2 '
+            f'-af "aresample=async=1000" '
+            f'-movflags +faststart '
             f'"{output_path}"'
         )
 
     elif target_format == "mp4":
         command = (
-            f'{settings.FFMPEG_PATH} -y '
-            f'-i "{input_path}" '
+            f'{settings.FFMPEG_PATH} -y -i "{input_path}" '
             f'-c:v libx264 -preset fast -crf 23 '
             f'-pix_fmt yuv420p '
-            f'-c:a aac -b:a 128k '
+            f'-c:a aac -b:a 128k -ar 48000 '
             f'-movflags +faststart '
             f'"{output_path}"'
         )
 
     elif target_format == "mov":
         command = (
-            f'{settings.FFMPEG_PATH} -y '
-            f'-i "{input_path}" '
+            f'{settings.FFMPEG_PATH} -y -i "{input_path}" '
             f'-c:v prores -profile:v 3 '
             f'-c:a pcm_s16le '
             f'"{output_path}"'
@@ -98,7 +99,10 @@ def convert_video(input_path, output_path, target_format):
     else:
         raise ValueError(f"Unsupported format: {target_format}")
 
+    logging.info("Running FFmpeg: %s", command)
     subprocess.run(command, shell=True, check=True)
+
+
 
 
 def transcribe_complete_video(video_path):
