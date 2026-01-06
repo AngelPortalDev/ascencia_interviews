@@ -30,7 +30,7 @@ export const useTabSwitchDetection = (onExceeded, isInterviewCompleted) => {
               " Warning 2: This is your final warning. One more tab switch will end the interview.",
               { autoClose: 3000 }
             );
-          } else if (tabSwitchCountRef.current >= 3) {
+          } else if (tabSwitchCountRef.current > 2) {
             onExceeded();  // Call the callback
           }
         }
