@@ -65,6 +65,7 @@ function OpenAIRealtimeMicWS() {
       ws.onmessage = (e) => {
         const data = JSON.parse(e.data);
         if (data.text) {
+          console.log("User said:", data.text);
           setCaption(data.text);
           setIsPartial(data.type === 'partial');
         }
