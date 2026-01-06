@@ -55,8 +55,11 @@ ASSEMBLY_API_KEY = "6af9609039af426f822ac6a728aa94b3"
 
 class TranscriptionConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        print(f" WebSocket path received: '{self.scope['path']}'")
+        
+        print(f" Full scope: {self.scope}")
         await self.accept()
-        print("✅ Browser connected")
+        print(" Browser connected")
         
         # Initialize buffer
         self.audio_buffer = bytearray()
