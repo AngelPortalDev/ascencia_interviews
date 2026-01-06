@@ -57,41 +57,21 @@ def get_uploads_folder():
 
 
 def convert_video(input_path, output_path, target_format):
-   
-    logging.info("output_path: %s", output_path)
-    logging.info("target_format path: %s", target_format)
     import subprocess
     import logging
     import imageio_ffmpeg
+    import warnings
+
+    logging.info("output_path: %s", output_path)
+    logging.info("target_format path: %s", target_format)
 
     FFMPEG_PATH = imageio_ffmpeg.get_ffmpeg_exe()
-
     logging.info("Using FFmpeg: %s", FFMPEG_PATH)
     logging.info("Input path: %s", input_path)
     logging.info("Output path: %s", output_path)
-    # if target_format == "webm":
-    #     command = (
-    #         f'{FFMPEG_PATH} -y -i "{input_path}" '
-    #         f'-vf scale=640:480 -r 30 -pix_fmt yuv420p '
-    #         f'-c:v libvpx -b:v 1M -quality good -cpu-used 4 '
-    #         f'-qmin 10 -qmax 42 '
-    #         f'-c:a libopus -application voip -b:a 96k '
-    #         f'-f webm "{output_path}"'
-    #     )
-
-    # if target_format == "webm":
-    #     command = (
-    #         f'{settings.FFMPEG_PATH} -y -i "{input_path}" '
-    #         f'-vf "fps=30,scale=640:480" '  # force 30 fps and resize
-    #         f'-pix_fmt yuv420p '
-    #         f'-c:v libvpx -b:v 1M -quality good -cpu-used 4 '
-    #         f'-qmin 10 -qmax 42 '
-    #         f'-c:a libopus -b:a 96k '
-    #         f'-f webm "{output_path}"'
-    # )
 
     if target_format == "webm":
-        command = [
+        command = (
             FFMPEG_PATH,
             "-y",
             "-fflags", "+genpts",
@@ -114,20 +94,39 @@ def convert_video(input_path, output_path, target_format):
             "-af", "aresample=async=1000",
             "-movflags", "+faststart",
             output_path,
-        ]
+        )
         logging.info("FFmpeg command1: %s", " ".join(command))
-    
+
     elif target_format == "mp4":
         command = f'ffmpeg -i "{input_path}" -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k -movflags +faststart "{output_path}"'
         logging.info("FFmpeg command2: %s", command)
+
     elif target_format == "mov":
         command = f'ffmpeg -i "{input_path}" -c:v prores -c:a pcm_s16le "{output_path}"'
+
     else:
         raise ValueError(f"Unsupported format: {target_format}")
 
-    subprocess.run(command, shell=True, check=True)
+    try:
+        if isinstance(command, (list, tuple)):
+            subprocess.run(command, check=True)
+        else:
+            subprocess.run(command, shell=True, check=True)
 
-warnings.filterwarnings("ignore", message="FP16 is not supported on CPU; using FP32 instead")
+    except subprocess.CalledProcessError:
+        logger.error("FFmpeg failed for file: %s", input_path, exc_info=True)
+        raise
+
+    except Exception:
+        logger.error("Unexpected error in convert_video()", exc_info=True)
+        raise
+
+
+warnings.filterwarnings(
+    "ignore",
+    message="FP16 is not supported on CPU; using FP32 instead"
+)
+
 
 
 
