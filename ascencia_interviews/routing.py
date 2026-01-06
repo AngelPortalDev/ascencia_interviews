@@ -30,8 +30,6 @@ from django.urls import path
 from .consumers import TranscriptionConsumer
 
 websocket_urlpatterns = [
-    # re_path(r"ws/transcription/$", TranscriptionConsumer.as_asgi()),
+    re_path(r"ws/transcription/$", TranscriptionConsumer.as_asgi()),
     # re_path(r"^transcription/?$", TranscriptionConsumer.as_asgi()),
-    path("ws/transcription/", TranscriptionConsumer.as_asgi()),
-
 ]

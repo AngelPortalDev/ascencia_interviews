@@ -26,6 +26,7 @@ function OpenAIRealtimeMicWS() {
       setStatus('Connecting to server...');
       const ws = new WebSocket('wss://dev.ascencia-interview.com/ws/transcription/');
       socketRef.current = ws;
+      console.log('WebSocket URL:', ws);
 
       ws.onopen = async () => {
         setStatus('🎤 Recording...');
