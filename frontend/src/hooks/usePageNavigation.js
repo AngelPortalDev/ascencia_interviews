@@ -5,7 +5,8 @@ export const usePageNavigation = (
   isInterviewCompletedRef
 ) => {
   const popstateHandlerRef = useRef(false);
-  const isHandlingNavRef = useRef(false);  // Track if we're already handling navigation
+  const isHandlingNavRef = useRef(false);
+  const exitReportedRef = useRef(false); 
 
   // Handle back button
   useEffect(() => {
@@ -25,18 +26,19 @@ export const usePageNavigation = (
       }
 
       isHandlingNavRef.current = true;
+      exitReportedRef.current = true;
 
       const userConfirmed = window.confirm(
         "Are you sure you want to leave this page? Your interview process will not be saved."
       );
 
       if (userConfirmed) {
-        localStorage.clear();
-        sessionStorage.clear();
+      
         reportInterviewExit("NAVIGATION_LEFT");
         window.location.replace("/frontend/goback");
       } else {
         isHandlingNavRef.current = false;
+        exitReportedRef.current = false;
         window.history.pushState(null, null, window.location.href);
       }
     };
@@ -58,8 +60,13 @@ export const usePageNavigation = (
 
       // Only prevent reload if user hasn't clicked back button
       if (!isHandlingNavRef.current) {
+        //  localStorage.clear();
+        // sessionStorage.clear();
+        exitReportedRef.current = true;
         sessionStorage.setItem("INTERVIEW_RELOADED", "true");
+       
         reportInterviewExit("PAGE_RELOAD");
+        window.location.replace("/frontend/goback");
 
         e.preventDefault();
         e.returnValue = "";

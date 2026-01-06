@@ -6,7 +6,7 @@ export const formatTime = (s) =>
 
 
 export const showOrUpdateWarningToast = (toastRef, secondsLeft) => {
-  const message = `⏳ You have only ${secondsLeft} second${
+  const message = ` You have only ${secondsLeft} second${
     secondsLeft !== 1 ? "s" : ""
   } left`;
 

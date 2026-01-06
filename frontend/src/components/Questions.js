@@ -21,6 +21,7 @@ import { useMediaPermissions } from "../utils/useMediaPermissions.js";
 import { useInterviewExit } from "../hooks/useInterviewExit.js";
 import { useTabSwitchDetection } from "../hooks/useTabSwitchDetection.js";
 import { usePageNavigation } from "../hooks/usePageNavigation.js";
+import OpenAIRealtimeMicWS from "./OpenAIRealtimeMicWS.js";
 
 const Questions = () => {
   // ================= STATE =================
@@ -106,6 +107,7 @@ const Questions = () => {
   const handleTabSwitchExceeded = async () => {
     try {
       isTabSwitchExceededRef.current = true;
+      isInterviewCompletedRef.current = true;
 
       // Stop recording if active
       if (isRecording) {
@@ -391,7 +393,9 @@ const Questions = () => {
         const next = prev - 1;
 
         if (next <= 0) {
-          handleNext();
+           setTimeout(() => {
+              handleNext();
+            }, 0);
           return 0;
         }
 
@@ -461,7 +465,7 @@ const Questions = () => {
       }
       isInterviewCompletedRef.current = true;
 
-      toast.success("Interview submitted");
+      // toast.success("Interview submitted");
     } catch (err) {
       console.error("Submit error:", err);
       toast.error("Submission failed");
@@ -514,7 +518,7 @@ const Questions = () => {
       const currentQ = currentQuestionIndex + 1;
       console.log(`\n === Transitioning from Question ${currentQ} ===`);
 
-      toast.info("Saving your response...", { autoClose: 1500 });
+      // toast.info("Saving your response...", { autoClose: 1500 });
 
       await stopQuestionRecording(currentQ);
 
@@ -560,6 +564,16 @@ const Questions = () => {
     !loading &&
     !isTransitioning;
 
+  const isLastQuestion = currentQuestionIndex === questions.length - 1;
+
+  const isNextArrowEnabled =
+  !isLastQuestion &&
+  isTimerActive &&
+  countdown <= initialTime / 2 &&
+  !loading &&
+  !isTransitioning;
+
+
   // ================= ERROR =================
   if (error) {
     return (
@@ -604,7 +618,7 @@ const Questions = () => {
       <div className="w-full h-full flex flex-col">
         {/* Header with Logo and Timer */}
         <div className="w-full px-3 py-3 sm:px-6 sm:py-4">
-          <div className="max-w-7xl mx-auto">
+          <div className="w-full mx-auto">
             <div className="flex justify-between items-center gap-2">
               {/* Logo */}
               <div className="flex items-center flex-shrink-0">
@@ -628,11 +642,11 @@ const Questions = () => {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 flex items-center justify-center px-3 py-4 sm:px-6 sm:py-6">
-          <div className="w-full max-w-7xl mx-auto">
+        <div className="flex-1 flex items-center justify-center px-3 py-0 sm:px-6 sm:py-0">
+          <div className="w-full  mx-auto">
             {/* Question Container - Centered */}
-            <div className="flex flex-col items-center gap-4 min-h-[250px] xs:min-h-[300px] sm:min-h-[400px]">
-              <div className="w-full max-w-5xl relative">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-full  relative">
                 {/* Navigation Arrow Left */}
                 <button
                   className="absolute left-0 xs:left-1 sm:left-3 md:left-4 top-1/2 -translate-y-1/2 z-10 
@@ -651,7 +665,7 @@ const Questions = () => {
                 </button>
 
                 {/* Question Card with Swiper */}
-                <div className="text-center px-10 xs:px-12 sm:px-16 md:px-20 py-4 sm:py-6 md:py-8">
+                <div className="text-center px-10 xs:px-12 sm:px-16 md:px-20 py-0 sm:py-6 md:py-0">
                   <Swiper
                     modules={[Navigation, Pagination]}
                     spaceBetween={30}
@@ -668,7 +682,7 @@ const Questions = () => {
                   >
                     {questions.map((question, index) => (
                       <SwiperSlide key={question.encoded_id || index}>
-                        <h1 className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl 
+                        <h1 className="text-base xs:text-lg sm:text-xl md:text-xl lg:text-xl 
                           font-normal text-gray-700 leading-relaxed
                           break-words hyphens-auto">
                           {question.question}
@@ -686,12 +700,12 @@ const Questions = () => {
                 {/* Navigation Arrow Right */}
                 <button
                   onClick={handleNext}
-                  disabled={!isNextEnabled}
+                  disabled={!isNextArrowEnabled}
                   className={`absolute right-0 xs:right-1 sm:right-3 md:right-4 top-1/2 -translate-y-1/2 z-10 
                     w-8 h-8 xs:w-10 xs:h-10 sm:w-12 sm:h-12 md:w-14 md:h-14
                     rounded-full shadow-lg flex items-center justify-center 
                     transition-all touch-manipulation
-                    ${isNextEnabled  || currentQuestionIndex === questions.length - 1
+                    ${isNextArrowEnabled
                       ? 'bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white cursor-pointer hover:scale-105 active:scale-95' 
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-60'
                     }`}
@@ -705,7 +719,7 @@ const Questions = () => {
               </div>
 
               {/* Next Button - Below Swiper Right Side */}
-              <div className="w-full max-w-5xl flex justify-end pt-2">
+              <div className="w-full  flex justify-end pt-2">
                 <button
                   onClick={handleNext}
                   disabled={!isNextEnabled}
@@ -728,53 +742,101 @@ const Questions = () => {
         </div>
 
         {/* Video Box - Bottom Right (Responsive positioning) */}
-        <div className="fixed 
-          bottom-16 right-20 xs:bottom-20 xs:right-3
-          sm:bottom-6 sm:right-6
-          w-52 h-40 xs:w-56 xs:h-40
-          sm:w-64 sm:h-48 md:w-72 md:h-52
-          bg-gray-900 rounded-lg sm:rounded-xl md:rounded-2xl 
-          shadow-xl sm:shadow-2xl overflow-hidden z-20 
-          border-2 sm:border-3 md:border-4 border-white
-          touch-manipulation">
-          <div
-            ref={videoContainerRef}
-            className="w-full h-full"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          />
+        {/* <div>
+          <div className="">
+                      <OpenAIRealtimeMicWS />
+          </div >
+          <div className="fixed 
+            bottom-16 right-20 xs:bottom-20 xs:right-3
+            sm:bottom-6 sm:right-6
+            w-52 h-40 xs:w-56 xs:h-40
+            sm:w-64 sm:h-48 md:w-72 md:h-52
+            bg-gray-900 rounded-lg sm:rounded-xl md:rounded-2xl 
+            shadow-xl sm:shadow-2xl overflow-hidden z-20 
+            border-2 sm:border-3 md:border-4 border-white
+            touch-manipulation">
+            <div
+              ref={videoContainerRef}
+              className="w-full h-full"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            />
 
-          {shouldShowLoadingOverlay && !loading && (
-            <div className="absolute inset-0 flex items-center justify-center 
-              text-white bg-black bg-opacity-80 z-10 
-              rounded-lg sm:rounded-xl md:rounded-2xl">
-              <div className="text-center px-3 xs:px-4">
-                {isTransitioning ? (
-                  <>
-                    <div className="mb-2 xs:mb-3">
-                      <div className="w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10 
-                        border-2 xs:border-3 border-white border-t-transparent 
-                        rounded-full animate-spin mx-auto"></div>
-                    </div>
-                    <p className="text-xs sm:text-sm font-semibold mb-1">
-                      Saving your response...
-                    </p>
-                    <p className="text-xs opacity-75 hidden xs:block">
-                      Preparing next question
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-xs sm:text-sm">Connecting camera...</p>
-                  </>
-                )}
+            {shouldShowLoadingOverlay && !loading && (
+              <div className="absolute inset-0 flex items-center justify-center 
+                text-white bg-black bg-opacity-80 z-10 
+                rounded-lg sm:rounded-xl md:rounded-2xl">
+                <div className="text-center px-3 xs:px-4">
+                  {isTransitioning ? (
+                    <>
+                      <div className="mb-2 xs:mb-3">
+                        <div className="w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10 
+                          border-2 xs:border-3 border-white border-t-transparent 
+                          rounded-full animate-spin mx-auto"></div>
+                      </div>
+                      <p className="text-xs sm:text-sm font-semibold mb-1">
+                        Saving your response...
+                      </p>
+                      <p className="text-xs opacity-75 hidden xs:block">
+                        Preparing next question
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-xs sm:text-sm">Connecting camera...</p>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+        </div> */}
+        {/* Audio + Video Row */}
+<div className="w-full  mx-auto px-3 sm:px-6 mt-6">
+  <div className="flex flex-col sm:flex-row gap-4 items-stretch">
+
+    {/* OpenAI Realtime Mic - 60% */}
+    <div className="w-full sm:w-[70%] bg-white rounded-xl  p-4">
+      <OpenAIRealtimeMicWS />
+    </div>
+
+    {/* Video Box - 40% */}
+    <div className="w-full sm:w-[30%] 
+      bg-gray-900 rounded-xl shadow-xl overflow-hidden 
+      border-2 border-white relative">
+
+      <div
+        ref={videoContainerRef}
+        className="w-full h-64 flex items-center justify-center"
+      />
+
+      {shouldShowLoadingOverlay && !loading && (
+        <div className="absolute inset-0 flex items-center justify-center 
+          text-white bg-black bg-opacity-80 z-10 rounded-xl">
+          <div className="text-center px-4">
+            {isTransitioning ? (
+              <>
+                <div className="mb-3">
+                  <div className="w-8 h-8 border-2 border-white border-t-transparent 
+                    rounded-full animate-spin mx-auto"></div>
+                </div>
+                <p className="text-sm font-semibold">Saving your response...</p>
+              </>
+            ) : (
+              <p className="text-sm">Connecting camera...</p>
+            )}
+          </div>
         </div>
+      )}
+    </div>
+
+  </div>
+</div>
+
+      
       </div>
 
       {/* Add spacing at bottom for mobile to prevent video overlap with next button */}

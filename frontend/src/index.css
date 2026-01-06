@@ -505,3 +505,30 @@ code {
 .connectionlostbgcard{
   background-color: #f7f7f7;
 }
+
+
+/* Hide both arrows by default */
+.hide-nav .swiper-button-next {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Show right arrow only when allowed */
+.show-nav .swiper-button-next {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Optional: keep previous arrow hidden always */
+.swiper-button-prev {
+  display: none;
+}
+
+
+.swiper-slide{
+  box-shadow: none !important;
+}
+
+.swiper-horizontal{
+  margin-bottom: 0 !important;
+}
