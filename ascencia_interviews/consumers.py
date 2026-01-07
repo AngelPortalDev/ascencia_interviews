@@ -51,15 +51,19 @@ import asyncio
 import websockets
 from channels.generic.websocket import AsyncWebsocketConsumer
 
+import logging
+
+logger = logging.getLogger('zoho_webhook_logger')
+
 ASSEMBLY_API_KEY = "6af9609039af426f822ac6a728aa94b3"
 
 class TranscriptionConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        print(f" WebSocket path received: '{self.scope['path']}'")
+        logger.info(f" WebSocket path received: '{self.scope['path']}'")
         
-        print(f" Full scope: {self.scope}")
+        logger.info(f" Full scope: {self.scope}")
         await self.accept()
-        print(" Browser connected")
+        logger.info(" Browser connected")
         
         # Initialize buffer
         self.audio_buffer = bytearray()
@@ -79,17 +83,18 @@ class TranscriptionConsumer(AsyncWebsocketConsumer):
                 streaming_url,
                 additional_headers=headers
             )
-            print("✅ AssemblyAI connected")
+            # print(" AssemblyAI connected")
+            logger.info(" AssemblyAI connected")
             
             # Start listening for transcriptions
             asyncio.create_task(self.receive_from_assembly())
             
         except Exception as e:
-            print(f"❌ Failed to connect to AssemblyAI: {e}")
+            logger.info(f" Failed to connect to AssemblyAI: {e}")
             await self.close()
 
     async def disconnect(self, close_code):
-        print("❌ Browser disconnected")
+        logger.info("Browser disconnected")
         
         # Send remaining audio
         if len(self.audio_buffer) > 0 and hasattr(self, 'assembly_ws'):
@@ -120,7 +125,7 @@ class TranscriptionConsumer(AsyncWebsocketConsumer):
                 try:
                     await self.assembly_ws.send(chunk_to_send)
                 except Exception as e:
-                    print(f"Error sending audio: {e}")
+                    logger.info(f"Error sending audio: {e}")
 
     async def receive_from_assembly(self):
         """Listen for messages from AssemblyAI"""
@@ -129,7 +134,7 @@ class TranscriptionConsumer(AsyncWebsocketConsumer):
                 data = json.loads(message)
                 
                 if data.get("type") == "SessionBegins":
-                    print(f"🎙️ Session started: {data.get('id')}")
+                    logger.info(f"Session started: {data.get('id')}")
                     
                 elif data.get("type") == "Turn":
                     if data.get("transcript"):
@@ -144,10 +149,10 @@ class TranscriptionConsumer(AsyncWebsocketConsumer):
                         }))
                         
                         if data.get("end_of_turn"):
-                            print(f"✅ Turn completed: {data.get('transcript')}")
+                            logger.info(f" Turn completed: {data.get('transcript')}")
                             
                 elif data.get("type") == "SessionTerminated":
-                    print("🔌 Session terminated")
+                    logger.info(" Session terminated")
                     
         except Exception as e:
-            print(f"Error receiving from AssemblyAI: {e}")
+            logger.info(f"Error receiving from AssemblyAI: {e}")
