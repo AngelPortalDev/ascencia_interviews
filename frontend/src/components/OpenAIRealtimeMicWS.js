@@ -184,37 +184,31 @@
 // export default OpenAIRealtimeMicWS;
 
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { float32To16BitPCM, recorderWorkletCode } from "../utils/audioProcessor.js";
 
 const log = (...args) => console.log("[MicWS]", ...args);
 
-function OpenAIRealtimeMicWS() {
+export default function OpenAIRealtimeMicWS() {
   const [caption, setCaption] = useState("Transcription will appear here...");
   const [isPartial, setIsPartial] = useState(false);
-  const [status, setStatus] = useState("Idle");
+  const [status, setStatus] = useState("Initializing...");
 
   const wsRef = useRef(null);
   const audioContextRef = useRef(null);
   const mediaStreamRef = useRef(null);
   const recorderNodeRef = useRef(null);
-  const isStoppedRef = useRef(false);
-
-  useEffect(() => {
-    start();
-
-    return () => {
-      stop();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const stoppedRef = useRef(false);
 
   /* ================= START ================= */
   const start = async () => {
-    try {
-      setStatus("Connecting...");
-      isStoppedRef.current = false;
+    if (wsRef.current) return;
 
+    stoppedRef.current = false;
+    setStatus("Connecting...");
+
+    try {
+      /* ---------- WebSocket ---------- */
       const ws = new WebSocket(
         "wss://dev.ascencia-interview.com/ws/transcription/"
       );
@@ -227,7 +221,7 @@ function OpenAIRealtimeMicWS() {
         log("WS OPEN ✅");
         setStatus("🎤 Recording...");
 
-        /* ==== MIC ==== */
+        /* ---------- Audio ---------- */
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: {
             echoCancellation: true,
@@ -239,6 +233,10 @@ function OpenAIRealtimeMicWS() {
 
         const audioContext = new AudioContext({ sampleRate: 16000 });
         audioContextRef.current = audioContext;
+
+        if (audioContext.state === "suspended") {
+          await audioContext.resume();
+        }
 
         await audioContext.audioWorklet.addModule(
           URL.createObjectURL(
@@ -258,11 +256,10 @@ function OpenAIRealtimeMicWS() {
         recorderNode.port.onmessage = (e) => {
           if (
             ws.readyState === WebSocket.OPEN &&
-            !isStoppedRef.current
+            !stoppedRef.current
           ) {
             const pcm = float32To16BitPCM(e.data);
             ws.send(pcm);
-            log("Audio sent:", pcm.byteLength);
           }
         };
 
@@ -278,17 +275,19 @@ function OpenAIRealtimeMicWS() {
             setIsPartial(data.type === "partial");
           }
         } catch {
-          log("Non-JSON message received");
+          log("Non-JSON message");
         }
       };
 
       ws.onerror = (e) => {
         log("WS ERROR ❌", e);
+        setStatus("WebSocket error");
       };
 
       ws.onclose = (e) => {
-        log("WS CLOSED ❌", e.code, e.reason);
-        stop();
+        log("WS CLOSED", e.code, e.reason);
+        wsRef.current = null;
+        setStatus("Stopped");
       };
     } catch (err) {
       log("START ERROR ❌", err);
@@ -298,39 +297,38 @@ function OpenAIRealtimeMicWS() {
 
   /* ================= STOP ================= */
   const stop = () => {
-    if (isStoppedRef.current) return;
-    isStoppedRef.current = true;
+    if (stoppedRef.current) return;
+    stoppedRef.current = true;
 
     log("Stopping...");
 
-    if (recorderNodeRef.current) {
-      recorderNodeRef.current.disconnect();
-      recorderNodeRef.current = null;
-    }
+    recorderNodeRef.current?.disconnect();
+    recorderNodeRef.current = null;
 
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach((t) => t.stop());
-      mediaStreamRef.current = null;
-    }
+    mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
+    mediaStreamRef.current = null;
 
-    if (audioContextRef.current) {
-      audioContextRef.current.close().catch(() => {});
-      audioContextRef.current = null;
-    }
+    audioContextRef.current?.close().catch(() => {});
+    audioContextRef.current = null;
 
-    if (wsRef.current) {
-      if (
-        wsRef.current.readyState === WebSocket.OPEN ||
-        wsRef.current.readyState === WebSocket.CONNECTING
-      ) {
-        wsRef.current.close();
-      }
-      wsRef.current = null;
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.close(1000, "Client stopped");
     }
+    wsRef.current = null;
 
     setStatus("Stopped");
   };
 
+  /* ================= AUTO START ON LOAD ================= */
+  useEffect(() => {
+    start();
+
+    return () => {
+      stop();
+    };
+  }, []);
+
+  /* ================= UI ================= */
   return (
     <div className="container">
       <h2>You're Saying:</h2>
@@ -339,5 +337,3 @@ function OpenAIRealtimeMicWS() {
     </div>
   );
 }
-
-export default OpenAIRealtimeMicWS;
