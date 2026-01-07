@@ -56,7 +56,7 @@ import logging
 logger = logging.getLogger('zoho_webhook_logger')
 
 ASSEMBLY_API_KEY = "6af9609039af426f822ac6a728aa94b3"
-logger.info(" AssemblyAI API Key set", ASSEMBLY_API_KEY is not None)
+logger.info("AssemblyAI API Key set: %s", bool(ASSEMBLY_API_KEY))
 
 class TranscriptionConsumer(AsyncWebsocketConsumer):
     logger.info(" TranscriptionConsumer initialized")
