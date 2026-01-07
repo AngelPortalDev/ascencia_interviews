@@ -341,24 +341,16 @@ def start_daily_recording(request):
         logger.info("[start_daily_recording] Starting recording for room: %s", room_name)
         # Start recording for this room with proper layout object
         response = requests.post(
-                f"{DAILY_API_URL}/rooms/{room_name}/recordings/start",
-                headers=headers,
-                json={
-                    "type": "cloud",          # ✅ REQUIRED by Daily
-                    "output": "webm",         # ✅ THIS fixes MP4 freezing
-                    "layout": {
-                        "preset": "default"
-                    },
-                    "video_size": {
-                        "width": 640,
-                        "height": 480
-                    }
-                },
-                timeout=15
-            )
-        logger.info("[start_daily_recording] Daily response status: %s", response.status_code)
-
-         # DEBUG: Log full response
+            f"{DAILY_API_URL}/rooms/{room_name}/recordings/start",
+            headers=headers,
+            json={
+                "type": "cloud",
+                "layout": {
+                    "preset": "default"
+                }
+            }
+        )
+        
         print(f" Response Status: {response.status_code}")
         print(f" Full Response: {response.json()}")  # DEBUG: Print entire response
         
