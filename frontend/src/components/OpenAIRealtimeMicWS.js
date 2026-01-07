@@ -183,7 +183,6 @@
 
 // export default OpenAIRealtimeMicWS;
 
-
 import React, { useState, useRef, useEffect } from 'react';
 import { float32To16BitPCM, recorderWorkletCode } from '../utils/audioProcessor.js';
 
@@ -198,12 +197,11 @@ function OpenAIRealtimeMicWS() {
   const mediaStreamRef = useRef(null);
 
   const isCleaningUpRef = useRef(false);
-  const hasStartedRef = useRef(false); // 🔒 Strict Mode guard
+  const hasStartedRef = useRef(false); // Prevent double start in Strict Mode
+  const reconnectTimeoutRef = useRef(null);
 
   /* ---------------------- EFFECT ---------------------- */
-
   useEffect(() => {
-    // Prevent React 18 Strict Mode double-start
     if (hasStartedRef.current) return;
     hasStartedRef.current = true;
 
@@ -211,11 +209,11 @@ function OpenAIRealtimeMicWS() {
 
     return () => {
       stopRecording();
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
     };
   }, []);
 
   /* ---------------------- START ---------------------- */
-
   const startRecording = async () => {
     try {
       if (socketRef.current) return;
@@ -233,13 +231,8 @@ function OpenAIRealtimeMicWS() {
         setIsRecording(true);
 
         const stream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            sampleRate: 16000,
-          },
+          audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 16000 },
         });
-
         mediaStreamRef.current = stream;
 
         const audioContext = new AudioContext({ sampleRate: 16000 });
@@ -248,9 +241,7 @@ function OpenAIRealtimeMicWS() {
         const source = audioContext.createMediaStreamSource(stream);
 
         await audioContext.audioWorklet.addModule(
-          URL.createObjectURL(
-            new Blob([recorderWorkletCode], { type: 'application/javascript' })
-          )
+          URL.createObjectURL(new Blob([recorderWorkletCode], { type: 'application/javascript' }))
         );
 
         const recorderNode = new AudioWorkletNode(audioContext, 'recorder-processor');
@@ -266,24 +257,34 @@ function OpenAIRealtimeMicWS() {
       };
 
       ws.onmessage = (e) => {
-        const data = JSON.parse(e.data);
-        if (data?.text) {
-          setCaption(data.text);
-          setIsPartial(data.type === 'partial');
+        try {
+          const data = JSON.parse(e.data);
+          if (data?.text) {
+            setCaption(data.text);
+            setIsPartial(data.type === 'partial');
+          }
+        } catch (err) {
+          console.error('Failed to parse WS message:', err);
         }
       };
 
       ws.onerror = (err) => {
         console.error('WebSocket error:', err);
-        setStatus('Connection error');
+        setStatus('Connection error. Retrying...');
       };
 
       ws.onclose = (e) => {
         console.log('WS CLOSED', e.code, e.wasClean);
-        setStatus('Connection closed');
-        // ❌ DO NOT cleanup here
-      };
+        setStatus('Connection closed. Reconnecting...');
 
+        // Attempt reconnect after short delay
+        if (!isCleaningUpRef.current) {
+          reconnectTimeoutRef.current = setTimeout(() => {
+            console.log('[Reconnect] Attempting to reconnect...');
+            startRecording();
+          }, 2000);
+        }
+      };
     } catch (err) {
       console.error('Start error:', err);
       setStatus('Failed to start');
@@ -291,7 +292,6 @@ function OpenAIRealtimeMicWS() {
   };
 
   /* ---------------------- STOP ---------------------- */
-
   const stopRecording = () => {
     if (isCleaningUpRef.current) return;
     isCleaningUpRef.current = true;
@@ -300,7 +300,7 @@ function OpenAIRealtimeMicWS() {
 
     // Stop mic
     if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach(t => t.stop());
+      mediaStreamRef.current.getTracks().forEach((t) => t.stop());
       mediaStreamRef.current = null;
     }
 
@@ -311,13 +311,21 @@ function OpenAIRealtimeMicWS() {
     }
 
     // Close WebSocket
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      socketRef.current.close(1000, 'Client stop');
+    if (socketRef.current) {
+      if (socketRef.current.readyState === WebSocket.OPEN) {
+        socketRef.current.close(1000, 'Client stop');
+      }
+      socketRef.current = null;
     }
-    socketRef.current = null;
 
     setIsRecording(false);
     setStatus('Stopped');
+
+    // Cleanup reconnect timeout
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
 
     setTimeout(() => {
       isCleaningUpRef.current = false;
@@ -325,15 +333,12 @@ function OpenAIRealtimeMicWS() {
   };
 
   /* ---------------------- UI ---------------------- */
-
   return (
     <div className="App">
       <div className="container">
         <h1>You&apos;re Saying:</h1>
 
-        <p className={`caption ${isPartial ? 'partial' : ''}`}>
-          {caption}
-        </p>
+        <p className={`caption ${isPartial ? 'partial' : ''}`}>{caption}</p>
 
         <p className="status">{status}</p>
       </div>
