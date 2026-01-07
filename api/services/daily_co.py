@@ -340,15 +340,20 @@ def start_daily_recording(request):
 
         # Start recording for this room with proper layout object
         response = requests.post(
-            f"{DAILY_API_URL}/rooms/{room_name}/recordings/start",
-            headers=headers,
-            json={
-                "type": "cloud",
-                "layout": {
-                    "preset": "default"
-                }
-            }
-        )
+                f"{DAILY_API_URL}/rooms/{room_name}/recordings/start",
+                headers=headers,
+                json={
+                    "type": "webm",
+                    "layout": {
+                        "preset": "default"
+                    },
+                    "video_size": {
+                        "width": 640,
+                        "height": 480
+                    }
+                },
+                timeout=15
+            )
         
         print(f" Response Status: {response.status_code}")
         print(f" Full Response: {response.json()}")  # DEBUG: Print entire response
