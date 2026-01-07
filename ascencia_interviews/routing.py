@@ -37,6 +37,6 @@ websocket_urlpatterns = [
     # re_path(r"^transcription$", TranscriptionConsumer.as_asgi()),
     # re_path(r"^/transcription/$", TranscriptionConsumer.as_asgi()),
     # re_path(r"transcription", TranscriptionConsumer.as_asgi()),
-    re_path(r".*", TranscriptionConsumer.as_asgi()),
+   re_path(r"^transcription/$", TranscriptionConsumer.as_asgi()),
     
 ]

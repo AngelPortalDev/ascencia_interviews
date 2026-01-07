@@ -1,61 +1,265 @@
-import React, { useState, useRef, useEffect } from 'react';
-// import './App.css';
-import { float32To16BitPCM, recorderWorkletCode } from '../utils/audioProcessor.js';
+// import React, { useState, useRef, useEffect } from 'react';
+// // import './App.css';
+// import { float32To16BitPCM, recorderWorkletCode } from '../utils/audioProcessor.js';
 
-function OpenAIRealtimeMicWS() {
-  const [isRecording, setIsRecording] = useState(false);
-  const [caption, setCaption] = useState('Transcription will appear here...');
-  const [status, setStatus] = useState('Connecting...');
+// function OpenAIRealtimeMicWS() {
+//   const [isRecording, setIsRecording] = useState(false);
+//   const [caption, setCaption] = useState('Transcription will appear here...');
+//   const [status, setStatus] = useState('Connecting...');
+//   const [isPartial, setIsPartial] = useState(false);
+
+//   const socketRef = useRef(null);
+//   const audioContextRef = useRef(null);
+//   const mediaStreamRef = useRef(null);
+//   const isCleaningUpRef = useRef(false);
+
+//   useEffect(() => {
+//     startRecording();
+
+//     return () => {
+//       stopRecording();
+//     };
+//   }, []);
+
+//   const startRecording = async () => {
+//     try {
+//       setStatus('Connecting to server...');
+//       const ws = new WebSocket('wss://dev.ascencia-interview.com/ws/transcription/');
+//       socketRef.current = ws;
+//       console.log('WebSocket URL:', ws);
+//       console.log('WS created');
+//       console.log('Initial readyState:', ws.readyState);
+
+//       ws.onopen = async () => {
+//         setStatus('🎤 Recording...');
+//         setIsRecording(true);
+
+//         const stream = await navigator.mediaDevices.getUserMedia({ 
+//           audio: {
+//             echoCancellation: true,
+//             noiseSuppression: true,
+//             sampleRate: 16000
+//           } 
+//         });
+//         mediaStreamRef.current = stream;
+
+//         const audioContext = new AudioContext({ sampleRate: 16000 });
+//         audioContextRef.current = audioContext;
+//         const source = audioContext.createMediaStreamSource(stream);
+
+//         await audioContext.audioWorklet.addModule(
+//           URL.createObjectURL(
+//             new Blob([recorderWorkletCode], { type: 'application/javascript' })
+//           )
+//         );
+
+//         const recorderNode = new AudioWorkletNode(audioContext, 'recorder-processor');
+
+//         recorderNode.port.onmessage = (e) => {
+//           if (ws.readyState === WebSocket.OPEN) {
+//             ws.send(float32To16BitPCM(e.data));
+//           }
+//         };
+
+//         source.connect(recorderNode);
+//         recorderNode.connect(audioContext.destination);
+//       };
+
+
+
+//       ws.onmessage = (e) => {
+//         const data = JSON.parse(e.data);
+//         if (data.text) {
+//           console.log("User said:", data.text);
+//           setCaption(data.text);
+//           setIsPartial(data.type === 'partial');
+//         }
+//       };
+
+//       ws.onerror = (err) => {
+//         console.error('WebSocket error:', err);
+//         setStatus('Connection error');
+//       };
+
+//       ws.onclose = (e) => {
+//         setStatus('Connection closed');
+//         stopRecording();
+//         console.log('WS CLOSED ');
+//         console.log('code:', e.code);
+//         console.log('reason:', e.reason);
+//         console.log('wasClean:', e.wasClean);
+//       };
+
+//     } catch (err) {
+//       console.error('Error starting recording:', err);
+//       setStatus('Failed to start recording');
+//     }
+//   };
+
+//   const stopRecording = () => {
+//     // Prevent multiple cleanup calls
+//     if (isCleaningUpRef.current) {
+//       console.log('[Cleanup] Already cleaning up, skipping...');
+//       return;
+//     }
+    
+//     isCleaningUpRef.current = true;
+
+//     // Stop media stream tracks
+//     if (mediaStreamRef.current) {
+//       try {
+//         mediaStreamRef.current.getTracks().forEach(track => {
+//           try {
+//             track.stop();
+//           } catch (e) {
+//             console.log('[Cleanup] Track stop:', e.message);
+//           }
+//         });
+//         mediaStreamRef.current = null;
+//       } catch (e) {
+//         console.log('[Cleanup] Media stream:', e.message);
+//       }
+//     }
+
+//     // Close AudioContext safely
+//     if (audioContextRef.current) {
+//       try {
+//         // Check if it's already closed before trying to close
+//         if (audioContextRef.current.state !== 'closed') {
+//           audioContextRef.current.close()
+//             .then(() => {
+//               console.log('[Cleanup] AudioContext closed successfully');
+//             })
+//             .catch((e) => {
+//               console.log('[Cleanup] AudioContext close error:', e.message);
+//             });
+//         } else {
+//           console.log('[Cleanup] AudioContext already closed');
+//         }
+//         audioContextRef.current = null;
+//       } catch (e) {
+//         console.log('[Cleanup] AudioContext:', e.message);
+//       }
+//     }
+
+//     // Close WebSocket
+//     if (socketRef.current) {
+//       try {
+//         if (socketRef.current.readyState === WebSocket.OPEN || 
+//             socketRef.current.readyState === WebSocket.CONNECTING) {
+//           socketRef.current.close();
+//         }
+//         socketRef.current = null;
+//       } catch (e) {
+//         console.log('[Cleanup] WebSocket:', e.message);
+//       }
+//     }
+
+//     setIsRecording(false);
+//     setStatus('Recording stopped');
+    
+//     // Reset cleanup flag after a short delay
+//     setTimeout(() => {
+//       isCleaningUpRef.current = false;
+//     }, 1000);
+//   };
+
+//   return (
+//     <div className="App">
+//       <div className="container">
+//       <h1>You're Saying:</h1>
+
+//         {/* <div className="status">{status}</div> */}
+
+//         <div className="caption-container">
+//           <p className={`caption ${isPartial ? 'partial' : ''}`}>
+//             {caption}
+//           </p>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
+
+// export default OpenAIRealtimeMicWS;
+
+
+import React, { useRef, useState, useEffect } from "react";
+import { float32To16BitPCM, recorderWorkletCode } from "../utils/audioProcessor.js";
+
+const log = (...args) => console.log("[MicWS]", ...args);
+
+export default function OpenAIRealtimeMicWS() {
+  const [caption, setCaption] = useState("Transcription will appear here...");
   const [isPartial, setIsPartial] = useState(false);
+  const [status, setStatus] = useState("Initializing...");
 
-  const socketRef = useRef(null);
+  const wsRef = useRef(null);
   const audioContextRef = useRef(null);
   const mediaStreamRef = useRef(null);
-  const isCleaningUpRef = useRef(false);
+  const recorderNodeRef = useRef(null);
+  const stoppedRef = useRef(false);
 
-  useEffect(() => {
-    startRecording();
+  /* ================= START ================= */
+  const start = async () => {
+    if (wsRef.current) return;
 
-    return () => {
-      stopRecording();
-    };
-  }, []);
+    stoppedRef.current = false;
+    setStatus("Connecting...");
 
-  const startRecording = async () => {
     try {
-      setStatus('Connecting to server...');
-      const ws = new WebSocket('wss://dev.ascencia-interview.com/ws/transcription/');
-      socketRef.current = ws;
-      console.log('WebSocket URL:', ws);
+      /* ---------- WebSocket ---------- */
+      const ws = new WebSocket(
+        "wss://dev.ascencia-interview.com/ws/transcription/"
+      );
+      ws.binaryType = "arraybuffer";
+      wsRef.current = ws;
+
+      log("WS created");
 
       ws.onopen = async () => {
-        setStatus('🎤 Recording...');
-        setIsRecording(true);
+        log("WS OPEN ✅");
+        setStatus("🎤 Recording...");
 
-        const stream = await navigator.mediaDevices.getUserMedia({ 
+        /* ---------- Audio ---------- */
+        const stream = await navigator.mediaDevices.getUserMedia({
           audio: {
             echoCancellation: true,
             noiseSuppression: true,
-            sampleRate: 16000
-          } 
+            sampleRate: 16000,
+          },
         });
         mediaStreamRef.current = stream;
 
         const audioContext = new AudioContext({ sampleRate: 16000 });
         audioContextRef.current = audioContext;
-        const source = audioContext.createMediaStreamSource(stream);
+
+        if (audioContext.state === "suspended") {
+          await audioContext.resume();
+        }
 
         await audioContext.audioWorklet.addModule(
           URL.createObjectURL(
-            new Blob([recorderWorkletCode], { type: 'application/javascript' })
+            new Blob([recorderWorkletCode], {
+              type: "application/javascript",
+            })
           )
         );
 
-        const recorderNode = new AudioWorkletNode(audioContext, 'recorder-processor');
+        const source = audioContext.createMediaStreamSource(stream);
+        const recorderNode = new AudioWorkletNode(
+          audioContext,
+          "recorder-processor"
+        );
+        recorderNodeRef.current = recorderNode;
 
         recorderNode.port.onmessage = (e) => {
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(float32To16BitPCM(e.data));
+          if (
+            ws.readyState === WebSocket.OPEN &&
+            !stoppedRef.current
+          ) {
+            const pcm = float32To16BitPCM(e.data);
+            ws.send(pcm);
           }
         };
 
@@ -64,113 +268,72 @@ function OpenAIRealtimeMicWS() {
       };
 
       ws.onmessage = (e) => {
-        const data = JSON.parse(e.data);
-        if (data.text) {
-          console.log("User said:", data.text);
-          setCaption(data.text);
-          setIsPartial(data.type === 'partial');
-        }
-      };
-
-      ws.onerror = (err) => {
-        console.error('WebSocket error:', err);
-        setStatus('Connection error');
-      };
-
-      ws.onclose = () => {
-        setStatus('Connection closed');
-        stopRecording();
-      };
-
-    } catch (err) {
-      console.error('Error starting recording:', err);
-      setStatus('Failed to start recording');
-    }
-  };
-
-  const stopRecording = () => {
-    // Prevent multiple cleanup calls
-    if (isCleaningUpRef.current) {
-      console.log('[Cleanup] Already cleaning up, skipping...');
-      return;
-    }
-    
-    isCleaningUpRef.current = true;
-
-    // Stop media stream tracks
-    if (mediaStreamRef.current) {
-      try {
-        mediaStreamRef.current.getTracks().forEach(track => {
-          try {
-            track.stop();
-          } catch (e) {
-            console.log('[Cleanup] Track stop:', e.message);
+        try {
+          const data = JSON.parse(e.data);
+          if (data.text) {
+            setCaption(data.text);
+            setIsPartial(data.type === "partial");
           }
-        });
-        mediaStreamRef.current = null;
-      } catch (e) {
-        console.log('[Cleanup] Media stream:', e.message);
-      }
-    }
-
-    // Close AudioContext safely
-    if (audioContextRef.current) {
-      try {
-        // Check if it's already closed before trying to close
-        if (audioContextRef.current.state !== 'closed') {
-          audioContextRef.current.close()
-            .then(() => {
-              console.log('[Cleanup] AudioContext closed successfully');
-            })
-            .catch((e) => {
-              console.log('[Cleanup] AudioContext close error:', e.message);
-            });
-        } else {
-          console.log('[Cleanup] AudioContext already closed');
+        } catch {
+          log("Non-JSON message");
         }
-        audioContextRef.current = null;
-      } catch (e) {
-        console.log('[Cleanup] AudioContext:', e.message);
-      }
-    }
+      };
 
-    // Close WebSocket
-    if (socketRef.current) {
-      try {
-        if (socketRef.current.readyState === WebSocket.OPEN || 
-            socketRef.current.readyState === WebSocket.CONNECTING) {
-          socketRef.current.close();
-        }
-        socketRef.current = null;
-      } catch (e) {
-        console.log('[Cleanup] WebSocket:', e.message);
-      }
-    }
+      ws.onerror = (e) => {
+        log("WS ERROR ❌", e);
+        setStatus("WebSocket error");
+      };
 
-    setIsRecording(false);
-    setStatus('Recording stopped');
-    
-    // Reset cleanup flag after a short delay
-    setTimeout(() => {
-      isCleaningUpRef.current = false;
-    }, 1000);
+      ws.onclose = (e) => {
+        log("WS CLOSED", e.code, e.reason);
+        wsRef.current = null;
+        setStatus("Stopped");
+      };
+    } catch (err) {
+      log("START ERROR ❌", err);
+      setStatus("Failed to start");
+    }
   };
 
+  /* ================= STOP ================= */
+  const stop = () => {
+    if (stoppedRef.current) return;
+    stoppedRef.current = true;
+
+    log("Stopping...");
+
+    recorderNodeRef.current?.disconnect();
+    recorderNodeRef.current = null;
+
+    mediaStreamRef.current?.getTracks().forEach((t) => t.stop());
+    mediaStreamRef.current = null;
+
+    audioContextRef.current?.close().catch(() => {});
+    audioContextRef.current = null;
+
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.close(1000, "Client stopped");
+    }
+    wsRef.current = null;
+
+    setStatus("Stopped");
+  };
+
+  /* ================= AUTO START ON LOAD ================= */
+  useEffect(() => {
+    start();
+
+    return () => {
+      stop();
+    };
+  }, []);
+
+  /* ================= UI ================= */
   return (
-    <div className="App">
-      <div className="container">
-      <h1>You're Saying:</h1>
-
-        {/* <div className="status">{status}</div> */}
-
-        <div className="caption-container">
-          <p className={`caption ${isPartial ? 'partial' : ''}`}>
-            {caption}
-          </p>
-        </div>
-      </div>
+    <div className="container">
+      <h2>You're Saying:</h2>
+      <p className={isPartial ? "partial" : ""}>{caption}</p>
+      <small>{status}</small>
     </div>
   );
 }
-
-export default OpenAIRealtimeMicWS;
