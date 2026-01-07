@@ -306,6 +306,7 @@ def get_daily_token(request):
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def start_daily_recording(request):
+    logger.info("[start_daily_recording] CALLED")
     try:
         room_name = request.data.get("room_name")
         question_number = request.data.get("question_number")
@@ -337,13 +338,14 @@ def start_daily_recording(request):
                     {"error": "Recording already running. Stop previous recording first."},
                     status=409
                 )
-
+        logger.info("[start_daily_recording] Starting recording for room: %s", room_name)
         # Start recording for this room with proper layout object
         response = requests.post(
                 f"{DAILY_API_URL}/rooms/{room_name}/recordings/start",
                 headers=headers,
                 json={
-                    "type": "webm",
+                    "type": "cloud",          # ✅ REQUIRED by Daily
+                    "output": "webm",         # ✅ THIS fixes MP4 freezing
                     "layout": {
                         "preset": "default"
                     },
@@ -354,7 +356,9 @@ def start_daily_recording(request):
                 },
                 timeout=15
             )
-        
+        logger.info("[start_daily_recording] Daily response status: %s", response.status_code)
+
+         # DEBUG: Log full response
         print(f" Response Status: {response.status_code}")
         print(f" Full Response: {response.json()}")  # DEBUG: Print entire response
         
@@ -363,7 +367,7 @@ def start_daily_recording(request):
                 {"error": "Failed to start recording", "details": response.text},
                 status=500
             )
-        
+        logger.info("[start_daily_recording] Recording started successfully for room: %s", room_name)
         recording_data = response.json()
         print(f" Recording Data: {recording_data}")  # DEBUG
         
@@ -374,7 +378,7 @@ def start_daily_recording(request):
             recording_data.get("data", {}).get("id") or
             str(question_number)  # Fallback: use question number as ID
         )
-        
+        logger.info("[start_daily_recording] Recording ID: %s", recording_id)
         print(f" Recording started for Q{question_number}: {recording_id}")
 
         # Persist mapping of question_number -> recording_id in existing interview row (do NOT create new)
@@ -389,7 +393,7 @@ def start_daily_recording(request):
                     if len(parts) >= 2:
                         candidate_zoho = parts[1]
                         interview_row = StudentInterviewLink.objects.filter(zoho_lead_id=candidate_zoho).order_by('-id').first()
-
+            logger.info("[start_daily_recording] Interview row found: %s", interview_row)
             if interview_row:
                     # store started recording mapping in recording_json.started_recordings
                     # Merge/update semantics: avoid creating duplicate entries for the
@@ -435,6 +439,7 @@ def start_daily_recording(request):
                     interview_row.save(update_fields=['recording_json'])
         except Exception as e:
             print(f"Could not persist start-recording mapping: {e}")
+            logger.error("[start_daily_recording] Failed to persist recording mapping: %s", str(e))
         
         return JsonResponse({
             "recording_id": recording_id,
@@ -445,6 +450,7 @@ def start_daily_recording(request):
         
     except Exception as e:
         print(f" Exception: {str(e)}")
+        logger.error("[start_daily_recording] Exception: %s", str(e))
         return JsonResponse({"error": str(e)}, status=500)
 
 
