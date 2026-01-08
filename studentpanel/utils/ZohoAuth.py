@@ -46,13 +46,13 @@ class ZohoAuth:
     ZOHO_CREDENTIALS = {
         "771809603": {  # Ascencia Malta
             "client_id": "1000.7ED8CAF9C95QVFKAFORL6ZI3D6SQCS",  
-            "client_secret": "bdffd3ef1302e199b24edcd0017115733af5927b52",  
-            "refresh_token": "1000.6e8e4e04b17ef7515d974e3e24fb2579.6757812a7accb6f428db9cf0f6d8d9c2"  
+            "client_secret": "5f7ffc1df3c6f1c1ccf10f791fbb93ead5b45e9a10",  
+            "refresh_token": "1000.59c57f4a0304d537efd8ff172660220e.60637d067a605d6b2d88c3250e84b397"  
         },
         "771661420":{  #india
             "client_id": "1000.B9BWXZLVKXOM71BCVWF3K1MSU0FIJX",
-            "client_secret": "b236e7008315921814ad4fcc480374361b968eb4e0",
-            "refresh_token": "1000.59874d22ad5569d7c5efd49774bc48a8.f98660728b67e62704ba193733b87023"
+            "client_secret": "8eb0653e537b2b638c2f126a55bd4ec985f24ab4a9",
+            "refresh_token": "1000.90f7507d43193266ae3c58327a8f7ca4.2f69bb18c217ad00e381f395b8249e28"
         },
         "755071407":{   #cdp india
              "client_id": "1000.DF90S3HTTPHIX1D42TR3PTCOZAXM6U",
