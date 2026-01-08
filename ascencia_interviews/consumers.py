@@ -170,107 +170,66 @@ logger = logging.getLogger('zoho_webhook_logger')
 ASSEMBLY_API_KEY = "6af9609039af426f822ac6a728aa94b3"
 
 class TranscriptionConsumer(AsyncWebsocketConsumer):
-    logger.info("TranscriptionConsumer initialized")
 
     async def connect(self):
-        logger.info(f"WebSocket path received: '{self.scope['path']}'")
-        logger.info(f"Full scope: {self.scope}")
-
         await self.accept()
         logger.info("Browser connected")
 
-        # Initialize buffer and constants
         self.audio_buffer = bytearray()
-        self.SAMPLE_RATE = 16000
+        self.SAMPLE_RATE = None
         self.BYTES_PER_SAMPLE = 2
-        self.MIN_CHUNK_SIZE = int((self.SAMPLE_RATE * self.BYTES_PER_SAMPLE * 100) / 1000)
-
-        # AssemblyAI streaming URL
-        streaming_url = (
-            "wss://streaming.assemblyai.com/v3/ws"
-            "?sample_rate=16000&encoding=pcm_s16le&speech_model=universal-streaming-english"
-        )
-
-        try:
-            # Headers for AssemblyAI
-            headers = {"Authorization": ASSEMBLY_API_KEY}
-
-            # Connect to AssemblyAI using extra_headers for compatibility
-            self.assembly_ws = await websockets.connect(
-                streaming_url,
-                extra_headers=[(k, v) for k, v in headers.items()]
-            )
-            logger.info("Connected to AssemblyAI")
-
-            # Start listening for AssemblyAI messages
-            asyncio.create_task(self.receive_from_assembly())
-
-        except Exception as e:
-            logger.error(f"Failed to connect to AssemblyAI: {e}")
-            await self.close()
-
-    async def disconnect(self, close_code):
-        logger.info(f"Browser disconnected (code={close_code})")
-
-        # Send remaining audio buffer
-        if hasattr(self, "assembly_ws") and len(self.audio_buffer) > 0:
-            try:
-                await self.assembly_ws.send(bytes(self.audio_buffer))
-            except Exception as e:
-                logger.warning(f"Failed to send remaining audio: {e}")
-
-        # Close AssemblyAI connection safely
-        if hasattr(self, "assembly_ws"):
-            try:
-                await self.assembly_ws.send(json.dumps({"type": "TerminateSession"}))
-                await self.assembly_ws.close()
-                logger.info("AssemblyAI connection closed")
-            except Exception as e:
-                logger.warning(f"Failed to close AssemblyAI connection: {e}")
+        self.MIN_CHUNK_SIZE = None
+        self.assembly_ws = None
 
     async def receive(self, bytes_data=None, text_data=None):
-        """Receive audio chunks from browser"""
-        if bytes_data and hasattr(self, "assembly_ws"):
+        # 🔑 Receive sample rate FIRST
+        if text_data:
+            msg = json.loads(text_data)
+            if msg.get("type") == "sample_rate":
+                self.SAMPLE_RATE = msg["value"]
+                self.MIN_CHUNK_SIZE = int(
+                    (self.SAMPLE_RATE * self.BYTES_PER_SAMPLE * 100) / 1000
+                )
+
+                streaming_url = (
+                    "wss://streaming.assemblyai.com/v3/ws"
+                    f"?sample_rate={self.SAMPLE_RATE}"
+                    "&encoding=pcm_s16le&speech_model=universal-streaming-english"
+                )
+
+                self.assembly_ws = await websockets.connect(
+                    streaming_url,
+                    extra_headers=[("Authorization", ASSEMBLY_API_KEY)],
+                )
+
+                asyncio.create_task(self.receive_from_assembly())
+                logger.info(f"AssemblyAI connected @ {self.SAMPLE_RATE} Hz")
+            return
+
+        if bytes_data and self.assembly_ws:
             self.audio_buffer.extend(bytes_data)
 
-            # Send in 100ms chunks
             while len(self.audio_buffer) >= self.MIN_CHUNK_SIZE:
                 chunk = bytes(self.audio_buffer[:self.MIN_CHUNK_SIZE])
                 self.audio_buffer = self.audio_buffer[self.MIN_CHUNK_SIZE:]
-                try:
-                    await self.assembly_ws.send(chunk)
-                except Exception as e:
-                    logger.warning(f"Error sending audio chunk: {e}")
+                await self.assembly_ws.send(chunk)
 
     async def receive_from_assembly(self):
-        """Listen to AssemblyAI streaming messages"""
         try:
             async for message in self.assembly_ws:
                 data = json.loads(message)
 
-                if data.get("type") == "SessionBegins":
-                    logger.info(f"AssemblyAI session started: {data.get('id')}")
-
-                elif data.get("type") == "Turn":
-                    transcript = data.get("transcript")
-                    if transcript:
-                        message_type = "final" if data.get("end_of_turn") else "partial"
-
-                        # Send transcript to browser
-                        await self.send(text_data=json.dumps({
-                            "text": transcript,
-                            "type": message_type,
-                            "confidence": data.get("end_of_turn_confidence"),
-                            "end_of_turn": data.get("end_of_turn")
-                        }))
-
-                        if data.get("end_of_turn"):
-                            logger.info(f"Turn completed: {transcript}")
-
-                elif data.get("type") == "SessionTerminated":
-                    logger.info("AssemblyAI session terminated")
-
+                if data.get("type") == "Turn" and data.get("transcript"):
+                    await self.send(text_data=json.dumps({
+                        "text": data["transcript"],
+                        "type": "final" if data.get("end_of_turn") else "partial",
+                    }))
         except Exception as e:
-            logger.error(f"Error receiving from AssemblyAI: {e}")
-            if hasattr(self, "assembly_ws"):
-                await self.assembly_ws.close()
+            logger.error(f"AssemblyAI error: {e}")
+
+    async def disconnect(self, code):
+        logger.info("Browser disconnected")
+
+        if self.assembly_ws:
+            await self.assembly_ws.send(json.dumps({"type": "TerminateSession"}))
+            await self.assembly_ws.close()
