@@ -349,8 +349,7 @@
 // export default OpenAIRealtimeMicWS;
 
 
-
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { float32To16BitPCM, recorderWorkletCode } from '../utils/audioProcessor.js';
 
 function OpenAIRealtimeMicWS() {
@@ -363,15 +362,12 @@ function OpenAIRealtimeMicWS() {
   const mediaStreamRef = useRef(null);
   const processorRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
-  const isCleaningUpRef = useRef(false);
+  const cleaningUpRef = useRef(false);
 
   /* ---------------------- EFFECT ---------------------- */
   useEffect(() => {
     startRecording();
-
-    return () => {
-      stopRecording();
-    };
+    return () => stopRecording();
   }, []);
 
   /* ---------------------- START ---------------------- */
@@ -381,36 +377,39 @@ function OpenAIRealtimeMicWS() {
 
       setStatus('Connecting...');
 
-      const ws = new WebSocket('wss://dev.ascencia-interview.com/ws/transcription/');
+      const ws = new WebSocket(
+        'wss://dev.ascencia-interview.com/ws/transcription/'
+      );
       socketRef.current = ws;
 
       ws.onopen = async () => {
         setStatus('🎤 Recording...');
 
-        // ---- Get microphone ----
+        // 🎙️ Get microphone
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: {
             echoCancellation: true,
             noiseSuppression: true,
-            channelCount: 1
-          }
+            channelCount: 1,
+          },
         });
         mediaStreamRef.current = stream;
 
-        // ---- Audio context ----
+        // 🔊 AudioContext (DO NOT FORCE SAMPLE RATE)
         const AudioContextClass =
           window.AudioContext || window.webkitAudioContext;
-
-        const audioContext = new AudioContextClass({ sampleRate: 16000 });
+        const audioContext = new AudioContextClass();
         audioContextRef.current = audioContext;
 
-        //  REQUIRED for Firefox
+        // Required for Firefox / Safari
         await audioContext.resume();
+
+        console.log('Actual sample rate:', audioContext.sampleRate);
 
         const source = audioContext.createMediaStreamSource(stream);
 
         // ================================
-        // 1️ Try AudioWorklet (Chrome/Edge)
+        // AudioWorklet (Chrome / Edge)
         // ================================
         if (audioContext.audioWorklet && window.AudioWorkletNode) {
           try {
@@ -434,7 +433,7 @@ function OpenAIRealtimeMicWS() {
             };
 
             source.connect(recorderNode);
-            recorderNode.connect(audioContext.destination); // safe
+            recorderNode.connect(audioContext.destination);
 
             processorRef.current = recorderNode;
             return;
@@ -443,9 +442,9 @@ function OpenAIRealtimeMicWS() {
           }
         }
 
-        // ====================================
-        // 2️ Fallback: ScriptProcessor (FF/Safari)
-        // ====================================
+        // ================================
+        // ScriptProcessor (Firefox / Safari)
+        // ================================
         const processor = audioContext.createScriptProcessor(4096, 1, 1);
 
         processor.onaudioprocess = (e) => {
@@ -477,10 +476,10 @@ function OpenAIRealtimeMicWS() {
       };
 
       ws.onclose = () => {
+        if (cleaningUpRef.current) return;
+
         setStatus('Reconnecting...');
-        if (!isCleaningUpRef.current) {
-          reconnectTimeoutRef.current = setTimeout(startRecording, 2000);
-        }
+        reconnectTimeoutRef.current = setTimeout(startRecording, 2000);
       };
     } catch (err) {
       console.error('Start error:', err);
@@ -490,7 +489,7 @@ function OpenAIRealtimeMicWS() {
 
   /* ---------------------- STOP ---------------------- */
   const stopRecording = () => {
-    isCleaningUpRef.current = true;
+    cleaningUpRef.current = true;
 
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
@@ -518,7 +517,7 @@ function OpenAIRealtimeMicWS() {
     }
 
     setStatus('Stopped');
-    setTimeout(() => (isCleaningUpRef.current = false), 300);
+    setTimeout(() => (cleaningUpRef.current = false), 300);
   };
 
   /* ---------------------- UI ---------------------- */
@@ -536,4 +535,3 @@ function OpenAIRealtimeMicWS() {
 }
 
 export default OpenAIRealtimeMicWS;
-
